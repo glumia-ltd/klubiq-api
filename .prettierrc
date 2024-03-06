@@ -1,7 +1,8 @@
 {
   "singleQuote": true,
   "trailingComma": "all",
-  "editor.formatOnSave": false,
   "endOfLine": "lf",
-  "useTabs": true
+  "useTabs": true,
+  "jsxSingleQuote": true,
+  "tabWidth": 2
 }
