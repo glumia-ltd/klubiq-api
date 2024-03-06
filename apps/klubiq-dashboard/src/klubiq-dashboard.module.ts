@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
-import { KlubiqDashboardController } from './klubiq-dashboard.controller';
-import { KlubiqDashboardService } from './klubiq-dashboard.service';
 import { DatabaseModule } from '@app/common';
-import { UserModule } from './user/user.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
-	imports: [DatabaseModule, UserModule],
-	controllers: [KlubiqDashboardController],
-	providers: [KlubiqDashboardService],
+  imports: [DatabaseModule, UsersModule],
+  controllers: [],
+  providers: [],
 })
 export class KlubiqDashboardModule {}
