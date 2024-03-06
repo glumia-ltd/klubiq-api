@@ -4,9 +4,11 @@ import {
 	Column,
 	CreateDateColumn,
 	UpdateDateColumn,
-  ManyToMany
+  ManyToMany,
+  OneToOne
 } from 'typeorm';
 import { Role } from './role.entity';
+import { User } from '../../../../../apps/klubiq-dashboard/src/users/entities/user.entity';
 
 @Entity({ schema: 'klubiq' })
 export class UserProfile {
@@ -78,6 +80,9 @@ export class UserProfile {
 
   @ManyToMany(() => Role, (role) => role.users)
   roles: Role[];
+
+  @OneToOne(() => User, (dashboardUser) => dashboardUser.profile)
+  dashboardUser: User;
 
 	@CreateDateColumn()
 	createdDate: Date;
