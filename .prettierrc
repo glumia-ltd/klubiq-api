@@ -1,4 +1,7 @@
 {
   "singleQuote": true,
-  "trailingComma": "all"
+  "trailingComma": "all",
+  "editor.formatOnSave": false,
+  "endOfLine": "lf",
+  "useTabs": true
 }
