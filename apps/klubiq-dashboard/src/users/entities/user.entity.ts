@@ -12,7 +12,7 @@ export class User {
   @Column()
   isDeleted: boolean;
 
-  @OneToOne(() => UserProfile, (profile) => profile.user)
+  @OneToOne(() => UserProfile, (profile) => profile.dashboardUser)
   profile: UserProfile;
 
   @DeleteDateColumn()
