@@ -5,7 +5,7 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/rentals/tsconfig.app.json"
+    "tsConfigPath": "apps/klubiq-dashboard/tsconfig.app.json"
   },
   "projects": {
     "common": {
