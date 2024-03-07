@@ -13,6 +13,9 @@ async function bootstrap() {
     .setDescription('Klubiq PMS API')
     .setVersion('1.0')
     .addTag('klubiq')
+    .setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
+    .setLicense('MIT', 'https://mit-license.org/')
+    // .addServer('XXXXXXXXXXXXXXXXXXXXX')
     .build();
   const document = SwaggerModule.createDocument(app, config, options);
   SwaggerModule.setup('api', app, document);
