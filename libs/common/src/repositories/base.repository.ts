@@ -72,8 +72,8 @@ export abstract class BaseRepository<T> extends Repository<T> {
 	}
 
 	async createEntity(data: T): Promise<T> {
-		const entity = this.repository.create(data);
-		return this.repository.save(entity);
+		const entity = await this.repository.create(data);
+		return await this.repository.save(entity);
 	}
 
 	async updateEntity(id: FindOptionsWhere<T>, data: T): Promise<T> {

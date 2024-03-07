@@ -14,74 +14,74 @@ import { User } from '../../../../../apps/klubiq-dashboard/src/users/entities/us
 @Entity({ schema: 'klubiq' })
 export class UserProfile {
 	@PrimaryGeneratedColumn('uuid')
-	id: string;
+	id?: string;
 
 	@Column({ unique: true })
 	email: string;
 
 	@Column({ nullable: true })
-	phoneNumber: string;
+	phoneNumber?: string;
 
 	@Column({ nullable: true })
-	countryPhoneCode: string;
+	countryPhoneCode?: string;
 
 	@Column({ nullable: true })
-	street: string;
+	street?: string;
 
 	@Column({ nullable: true })
-	addressLine2: string;
+	addressLine2?: string;
 
 	@Column({ nullable: true })
-	state: string;
+	state?: string;
 
 	@Column({ nullable: true })
-	city: string;
+	city?: string;
 
 	@Column({ nullable: true })
-	country: string;
+	country?: string;
 
 	@Column({ nullable: true })
-	postalCode: string;
+	postalCode?: string;
 
 	@Column({ nullable: true })
-	formOfIdentity: string;
+	formOfIdentity?: string;
 
 	@Column({ nullable: true })
-	dateOfBirth: Date;
+	dateOfBirth?: Date;
 
 	@Column({ nullable: true })
-	gender: string;
+	gender?: string;
 
 	@Column({ nullable: true })
-	maritalStatus: string;
+	maritalStatus?: string;
 
 	@Column({ nullable: true })
-	familySize: number;
+	familySize?: number;
 
 	@Column({ nullable: true })
-	employmentStatus: string;
+	employmentStatus?: string;
 
 	@Column({ nullable: true })
-	occupation: string;
+	occupation?: string;
 
 	@Column({ nullable: true })
-	religion: string;
+	religion?: string;
 
 	@Column({ type: 'text', nullable: true })
-	bio: string;
+	bio?: string;
 
   @ManyToMany(() => Role, (role) => role.users)
 	@JoinTable()
-  roles: Role[];
+  roles?: Role[];
 
   @OneToOne(() => User, (dashboardUser) => dashboardUser.profile, {
 		 cascade: ['insert']
 		})
-  dashboardUser: User;
+  dashboardUser?: User;
 
 	@CreateDateColumn()
-	createdDate: Date;
+	createdDate?: Date;
 
 	@UpdateDateColumn()
-	updatedDate: Date;
+	updatedDate?: Date;
 }

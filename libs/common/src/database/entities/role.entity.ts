@@ -12,23 +12,23 @@ import { UserProfile } from './user-profile.entity';
 @Entity({ schema: 'klubiq' })
 export class Role {
 	@PrimaryGeneratedColumn()
-	id: number;
+	id?: number;
 
 	@Column()
 	roleName: string;
 
 	@Column({ type: 'text', nullable: true })
-	description: string;
+	description?: string;
 
   @ManyToMany(() => Permission, (permission) => permission.roles)
-  permissions: Permission[];
+  permissions?: Permission[];
 
   @ManyToMany(() => UserProfile, (userProfile) => userProfile.roles)
-  users: UserProfile[];
+  users?: UserProfile[];
 
 	@CreateDateColumn()
-	createdDate: Date;
+	createdDate?: Date;
 
 	@UpdateDateColumn()
-	updatedDate: Date;
+	updatedDate?: Date;
 }

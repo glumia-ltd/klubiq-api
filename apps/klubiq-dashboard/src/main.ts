@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder, SwaggerDocumentOptions } from '@nestjs/swagger';
 import { KlubiqDashboardModule } from './klubiq-dashboard.module';
 
+declare const module: any;
 async function bootstrap() {
   const app = await NestFactory.create(KlubiqDashboardModule);
 
@@ -20,5 +21,10 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config, options);
   SwaggerModule.setup('api', app, document);
   await app.listen(3000);
+
+  if(module.hot){
+    module.hot.accept();
+    module.hot.dispose(() => app.close());
+  }
 }
 bootstrap();

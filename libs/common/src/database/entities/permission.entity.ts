@@ -12,21 +12,21 @@ import { Role } from './role.entity';
 @Entity({ schema: 'klubiq' })
 export class Permission {
 	@PrimaryGeneratedColumn()
-	id: number;
+	id?: number;
 
 	@Column()
 	permissionName: string;
 
 	@Column({ type: 'text', nullable: true })
-	description: string;
+	description?: string;
 
 	@CreateDateColumn()
-	createdDate: Date;
+	createdDate?: Date;
 
 	@UpdateDateColumn()
-	updatedDate: Date;
+	updatedDate?: Date;
 
   @ManyToMany(() => Role, (role) => role.permissions)
 	@JoinTable()
-	roles: Role[];
+	roles?: Role[];
 }

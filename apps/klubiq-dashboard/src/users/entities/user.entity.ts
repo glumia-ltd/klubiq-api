@@ -4,10 +4,10 @@ import { UserProfile } from "@app/common";
 @Entity({ schema: 'dashboard' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id?: string;
 
-  @Column()
-  isActive: boolean;
+  @Column({default: true})
+  isActive?: boolean;
 
   @Column({ length: 100 })
   firstName: string;
@@ -15,13 +15,13 @@ export class User {
   @Column({ length: 100 })
   lastName: string;
 
-  @Column()
-  isDeleted: boolean;
+  @Column({default: false})
+  isDeleted?: boolean;
 
   @OneToOne(() => UserProfile, (profile) => profile.dashboardUser)
   @JoinColumn()
-  profile: UserProfile;
+  profile?: UserProfile;
 
   @DeleteDateColumn()
-  deletedDate: Date;
+  deletedDate?: Date;
 }
