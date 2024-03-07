@@ -16,15 +16,6 @@ export class UserProfile {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 
-	@Column({ length: 100 })
-	firstName: string;
-
-	@Column({ length: 100 })
-	lastName: string;
-
-	@Column({ length: 100 })
-	username: string;
-
 	@Column({ unique: true })
 	email: string;
 
@@ -83,7 +74,9 @@ export class UserProfile {
 	@JoinTable()
   roles: Role[];
 
-  @OneToOne(() => User, (dashboardUser) => dashboardUser.profile)
+  @OneToOne(() => User, (dashboardUser) => dashboardUser.profile, {
+		 cascade: ['insert']
+		})
   dashboardUser: User;
 
 	@CreateDateColumn()

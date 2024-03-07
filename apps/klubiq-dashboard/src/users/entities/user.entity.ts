@@ -9,6 +9,12 @@ export class User {
   @Column()
   isActive: boolean;
 
+  @Column({ length: 100 })
+  firstName: boolean;
+
+  @Column({ length: 100 })
+  lastName: boolean;
+
   @Column()
   isDeleted: boolean;
 
