@@ -19,7 +19,7 @@ import { Permission } from './entities/permission.entity';
 				password: configService.get<string>('DATABASE_PASSWORD'),
 				database: configService.get<string>('DATABASE_NAME'),
 				autoLoadEntities: true,
-				synchronize: configService.get<string>('ENV') === 'local',
+				synchronize: configService.get<boolean>('SYNCHRONIZE_DB'),
 				migrations: ['**/migrations']
 			}),
 			inject: [ConfigService],

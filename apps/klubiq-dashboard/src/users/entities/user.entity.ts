@@ -10,10 +10,10 @@ export class User {
   isActive: boolean;
 
   @Column({ length: 100 })
-  firstName: boolean;
+  firstName: string;
 
   @Column({ length: 100 })
-  lastName: boolean;
+  lastName: string;
 
   @Column()
   isDeleted: boolean;
