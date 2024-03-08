@@ -4,8 +4,8 @@ import { User } from "./entities/user.entity";
 import {EntityManager} from "typeorm";
 
 @Injectable()
-export class UserRepository extends BaseRepository<User> {
-  protected readonly logger = new Logger(UserRepository.name);
+export class UsersRepository extends BaseRepository<User> {
+  protected readonly logger = new Logger(UsersRepository.name);
   constructor(manager: EntityManager) {
     super(User, manager);
   }
