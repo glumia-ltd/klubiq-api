@@ -1,27 +1,37 @@
-import { Entity, PrimaryGeneratedColumn, DeleteDateColumn, Column, OneToOne, JoinColumn } from "typeorm";
-import { UserProfile } from "@app/common";
+import {
+	Entity,
+	PrimaryGeneratedColumn,
+	DeleteDateColumn,
+	Column,
+	OneToOne,
+	JoinColumn,
+} from 'typeorm';
+import { UserProfile } from '@app/common';
 
 @Entity({ schema: 'dashboard' })
 export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id?: string;
+	@PrimaryGeneratedColumn('uuid')
+	id?: string;
 
-  @Column({default: true})
-  isActive?: boolean;
+	@Column({ default: true })
+	isActive?: boolean;
 
-  @Column({ length: 100 })
-  firstName: string;
+	@Column({ unique: true })
+	firebaseId: string;
 
-  @Column({ length: 100 })
-  lastName: string;
+	@Column({ length: 100 })
+	firstName: string;
 
-  @Column({default: false})
-  isDeleted?: boolean;
+	@Column({ length: 100 })
+	lastName: string;
 
-  @OneToOne(() => UserProfile, (profile) => profile.dashboardUser)
-  @JoinColumn()
-  profile?: UserProfile;
+	@Column({ default: false })
+	isDeleted?: boolean;
 
-  @DeleteDateColumn()
-  deletedDate?: Date;
+	@OneToOne(() => UserProfile, (profile) => profile.dashboardUser)
+	@JoinColumn()
+	profile?: UserProfile;
+
+	@DeleteDateColumn()
+	deletedDate?: Date;
 }

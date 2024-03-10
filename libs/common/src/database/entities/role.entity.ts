@@ -4,7 +4,7 @@ import {
 	Column,
 	CreateDateColumn,
 	UpdateDateColumn,
-  ManyToMany,
+	ManyToMany,
 } from 'typeorm';
 import { Permission } from './permission.entity';
 import { UserProfile } from './user-profile.entity';
@@ -20,11 +20,11 @@ export class Role {
 	@Column({ type: 'text', nullable: true })
 	description?: string;
 
-  @ManyToMany(() => Permission, (permission) => permission.roles)
-  permissions?: Permission[];
+	@ManyToMany(() => Permission, (permission) => permission.roles)
+	permissions?: Permission[];
 
-  @ManyToMany(() => UserProfile, (userProfile) => userProfile.roles)
-  users?: UserProfile[];
+	@ManyToMany(() => UserProfile, (userProfile) => userProfile.roles)
+	users?: UserProfile[];
 
 	@CreateDateColumn()
 	createdDate?: Date;

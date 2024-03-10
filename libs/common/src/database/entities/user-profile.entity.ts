@@ -4,9 +4,9 @@ import {
 	Column,
 	CreateDateColumn,
 	UpdateDateColumn,
-  ManyToMany,
-  OneToOne,
-	JoinTable
+	ManyToMany,
+	OneToOne,
+	JoinTable,
 } from 'typeorm';
 import { Role } from './role.entity';
 import { User } from '../../../../../apps/klubiq-dashboard/src/users/entities/user.entity';
@@ -15,6 +15,9 @@ import { User } from '../../../../../apps/klubiq-dashboard/src/users/entities/us
 export class UserProfile {
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
+
+	@Column({ unique: true })
+	firebaseId: string;
 
 	@Column({ unique: true })
 	email: string;
@@ -70,14 +73,14 @@ export class UserProfile {
 	@Column({ type: 'text', nullable: true })
 	bio?: string;
 
-  @ManyToMany(() => Role, (role) => role.users)
+	@ManyToMany(() => Role, (role) => role.users)
 	@JoinTable()
-  roles?: Role[];
+	roles?: Role[];
 
-  @OneToOne(() => User, (dashboardUser) => dashboardUser.profile, {
-		 cascade: ['insert']
-		})
-  dashboardUser?: User;
+	@OneToOne(() => User, (dashboardUser) => dashboardUser.profile, {
+		cascade: ['insert'],
+	})
+	dashboardUser?: User;
 
 	@CreateDateColumn()
 	createdDate?: Date;

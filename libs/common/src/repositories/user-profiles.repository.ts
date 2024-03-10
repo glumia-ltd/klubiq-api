@@ -1,7 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { BaseRepository } from "@app/common";
+import { Injectable, Logger } from '@nestjs/common';
+import { BaseRepository } from '@app/common';
 import { UserProfile } from '../database/entities/user-profile.entity';
-import {EntityManager} from "typeorm";
+import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class UserProfilesRepository extends BaseRepository<UserProfile> {
