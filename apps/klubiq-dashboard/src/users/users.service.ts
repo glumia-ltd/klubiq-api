@@ -10,12 +10,15 @@ import { OrganizationUser } from './entities/organization-user.entity';
 
 @Injectable()
 export class UsersService {
+		private readonly usersRepository: UsersRepository;
+		private readonly userProfilesRepository: UserProfilesRepository;
 	constructor(
 		@InjectEntityManager() private entityManager: EntityManager,
-		private readonly usersRepository: UsersRepository,
-		private readonly userProfilesRepository: UserProfilesRepository,
 		private readonly authService: AuthService,
-	) {}
+	) {
+		this.usersRepository = new UsersRepository(entityManager);
+		this.userProfilesRepository = new UserProfilesRepository(entityManager);
+	}
 
 	// async create(createUserDto: CreateUserDto) {
 	// 	const user = new User();

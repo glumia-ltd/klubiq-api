@@ -1,5 +1,7 @@
-import { FirebaseAuthenticationService } from '@aginix/nestjs-firebase-admin';
-import { ForbiddenException, Injectable } from '@nestjs/common';
+// import { FirebaseAuthenticationService } from '@aginix/nestjs-firebase-admin';
+import {
+	// ForbiddenException,
+	Injectable } from '@nestjs/common';
 import { ICreateFirebaseUser } from './types/firebase.types';
 import { Auth, createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { FirebaseError, initializeApp } from 'firebase/app';
@@ -7,7 +9,9 @@ import { FirebaseError, initializeApp } from 'firebase/app';
 @Injectable()
 export class AuthService {
 	private auth: Auth;
-	constructor(private firebaseAuth: FirebaseAuthenticationService) {
+	constructor(
+		// private firebaseAuth: FirebaseAuthenticationService
+		) {
 		const firebaseConfig = JSON.parse(process.env.FIREBASE_SDK_CONFIG);
 		const app = initializeApp(firebaseConfig);
 		this.auth = getAuth(app);
@@ -25,78 +29,78 @@ export class AuthService {
 		} catch (err) {}
 	}
 
-	async getUser(uid: string) {
-		try {
-			const firebaseUser = await this.firebaseAuth.auth.getUser(uid);
-			return firebaseUser;
-		} catch (err) {
-			// TODO: Add the logger service here
-			throw new ForbiddenException(err.message);
-		}
-	}
+	// async getUser(uid: string) {
+	// 	try {
+	// 		const firebaseUser = await this.firebaseAuth.auth.getUser(uid);
+	// 		return firebaseUser;
+	// 	} catch (err) {
+	// 		// TODO: Add the logger service here
+	// 		throw new ForbiddenException(err.message);
+	// 	}
+	// }
 
-	async deleteUser(uid: string) {
-		try {
-			const result = await this.firebaseAuth.auth.deleteUser(uid);
-			return result;
-		} catch (err) {
-			// TODO: Add the logger service here
-			throw new ForbiddenException(err.message);
-		}
-	}
+	// async deleteUser(uid: string) {
+	// 	try {
+	// 		const result = await this.firebaseAuth.auth.deleteUser(uid);
+	// 		return result;
+	// 	} catch (err) {
+	// 		// TODO: Add the logger service here
+	// 		throw new ForbiddenException(err.message);
+	// 	}
+	// }
 
-	async changeUserPassword(uid: string, newPassword: string) {
-		try {
-			const updatedPassword = await this.firebaseAuth.auth.updateUser(uid, {
-				password: newPassword,
-			});
-			return updatedPassword;
-			// Password update was successful
-		} catch (err) {
-			// TODO: Add the logger service here
-			throw new Error(
-				'Failed to change the password. Please make sure the user exists and try again.',
-			);
-		}
-	}
+	// async changeUserPassword(uid: string, newPassword: string) {
+	// 	try {
+	// 		const updatedPassword = await this.firebaseAuth.auth.updateUser(uid, {
+	// 			password: newPassword,
+	// 		});
+	// 		return updatedPassword;
+	// 		// Password update was successful
+	// 	} catch (err) {
+	// 		// TODO: Add the logger service here
+	// 		throw new Error(
+	// 			'Failed to change the password. Please make sure the user exists and try again.',
+	// 		);
+	// 	}
+	// }
 
-	async resetPassword(email: string) {
-		try {
-			const resetPasswordLink =
-				await this.firebaseAuth.generatePasswordResetLink(email);
-			return resetPasswordLink;
-		} catch (err) {
-			// TODO: Add the logger service here
-			throw new ForbiddenException(err.message);
-		}
-	}
+	// async resetPassword(email: string) {
+	// 	try {
+	// 		const resetPasswordLink =
+	// 			await this.firebaseAuth.generatePasswordResetLink(email);
+	// 		return resetPasswordLink;
+	// 	} catch (err) {
+	// 		// TODO: Add the logger service here
+	// 		throw new ForbiddenException(err.message);
+	// 	}
+	// }
 
-	async verifyEmail(email: string) {
-		try {
-			const verifyEmailLink =
-				await this.firebaseAuth.generateEmailVerificationLink(email);
-			return verifyEmailLink;
-		} catch (err) {
-			// TODO: Add the logger service here
-			throw new Error(err.message);
-		}
-	}
+	// async verifyEmail(email: string) {
+	// 	try {
+	// 		const verifyEmailLink =
+	// 			await this.firebaseAuth.generateEmailVerificationLink(email);
+	// 		return verifyEmailLink;
+	// 	} catch (err) {
+	// 		// TODO: Add the logger service here
+	// 		throw new Error(err.message);
+	// 	}
+	// }
 
-	async updateUserWithVerifiedEmail(id: string) {
-		try {
-			await this.firebaseAuth.updateUser(id, {
-				emailVerified: true,
-			});
-		} catch (err) {
-			// TODO: Add the logger service here
-			throw new ForbiddenException(err.message);
-		}
-	}
+	// async updateUserWithVerifiedEmail(id: string) {
+	// 	try {
+	// 		await this.firebaseAuth.updateUser(id, {
+	// 			emailVerified: true,
+	// 		});
+	// 	} catch (err) {
+	// 		// TODO: Add the logger service here
+	// 		throw new ForbiddenException(err.message);
+	// 	}
+	// }
 
-	async getUserEmailVerificationStatus(email: string) {
-		const firebaseUser = await this.firebaseAuth.getUserByEmail(email);
-		return firebaseUser;
-	}
+	// async getUserEmailVerificationStatus(email: string) {
+	// 	const firebaseUser = await this.firebaseAuth.getUserByEmail(email);
+	// 	return firebaseUser;
+	// }
 
 	// The function to parse Firebase errors
 	parseFirebaseError(error: FirebaseError): string {

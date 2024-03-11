@@ -16,6 +16,7 @@ import * as Joi from 'joi';
 				DATABASE_PASSWORD: Joi.string().required(),
 				SYNCHRONIZE_DB: Joi.boolean().required(),
 				ENV: Joi.string().optional(),
+				FIREBASE_SDK_CONFIG: Joi.string().required(),
 			}),
 		}),
 	],
