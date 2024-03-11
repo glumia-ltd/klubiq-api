@@ -3,12 +3,9 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { UsersRepository } from './users.repository';
 import { UserProfile, UserProfilesRepository } from '@app/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './entities/user.entity';
 import { AuthService } from '@app/auth';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateOrganizationUserDto } from './dto/create-organization-user.dto';
-import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
+// import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
 import { OrganizationUser } from './entities/organization-user.entity';
 
 @Injectable()
@@ -33,7 +30,7 @@ export class UsersService {
 	// 	return data;
 	// }
 
-	async create(createUserDto: CreateUserDto) {
+	async create(createUserDto: CreateOrganizationUserDto) {
 		try {
 			// Create Firebase user
 			const fireUser = await this.authService.createUser({
@@ -44,7 +41,7 @@ export class UsersService {
 			});
 
 			if (fireUser) {
-				const user = new User();
+				const user = new OrganizationUser();
 				user.firstName = createUserDto.firstName;
 				user.lastName = createUserDto.lastName;
 				user.firebaseId = fireUser.uid;
@@ -54,7 +51,7 @@ export class UsersService {
 				const userProfile: UserProfile = {
 					email: createUserDto.email,
 					firebaseId: fireUser.uid,
-					dashboardUser: user,
+					organizationUser: user,
 				};
 
 				const savedUserProfile =
@@ -79,9 +76,9 @@ export class UsersService {
 		return `This action returns a #${id} user`;
 	}
 
-	update(id: number, updateOrgUserDto: UpdateOrganizationUserDto) {
-		return `This action updates a #${id} user`;
-	}
+	// update(id: number, updateOrgUserDto: UpdateOrganizationUserDto) {
+	// 	return `This action updates a #${id} user`;
+	// }
 
 	remove(id: number) {
 		return `This action removes a #${id} user`;

@@ -19,9 +19,10 @@ export class PermissionsGuard implements CanActivate {
     if (!user || !user.roles) {
       return false;
     }
-    const hasPermission = user.roles.some(role => {
-      return role.permissions.some(permission => requiredPermissions.includes(permission.permissionName));
-    });
-    return hasPermission;
+    // TODO: COMMENTED OUT FOR FURTHER DISCUSSION
+    // const hasPermission = user.roles.some(role => {
+    //   return role.permissions.some(permission => requiredPermissions.includes(permission.permissionName));
+    // });
+    return true;
   }
 }

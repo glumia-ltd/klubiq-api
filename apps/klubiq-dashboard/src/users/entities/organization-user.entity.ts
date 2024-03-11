@@ -19,6 +19,9 @@ export class OrganizationUser {
 	@Generated('increment')
 	organizationUserId?: number;
 
+	@Column({ unique: true })
+	firebaseId: string;
+
 	@Column({ default: true })
 	isActive?: boolean;
 
