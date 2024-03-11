@@ -21,6 +21,9 @@ export class UserProfile {
 	profileId?: number;
 
 	@Column({ unique: true })
+	firebaseId: string;
+
+	@Column({ unique: true })
 	email: string;
 
 	@Column()
