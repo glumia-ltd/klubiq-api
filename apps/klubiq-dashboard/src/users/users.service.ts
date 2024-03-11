@@ -3,27 +3,27 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { UsersRepository } from './users.repository';
 import { UserProfile, UserProfilesRepository } from '@app/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
+import { CreateOrganizationUserDto } from './dto/create-organization-user.dto';
+import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
+import { OrganizationUser } from './entities/organization-user.entity';
 
 @Injectable()
 export class UsersService {
 	private userRepository: UsersRepository;
 	private userProfileRepository: UserProfilesRepository;
-	constructor(@InjectEntityManager() private entityManager: EntityManager){
+	constructor(@InjectEntityManager() private entityManager: EntityManager) {
 		this.userRepository = new UsersRepository(this.entityManager);
 		this.userProfileRepository = new UserProfilesRepository(this.entityManager);
 	}
-	async create(createUserDto: CreateUserDto) {
-		const user = new User();
-		user.firstName = createUserDto.firstName;
-		user.lastName = createUserDto.lastName;
+	async create(createOrgUserDto: CreateOrganizationUserDto) {
+		const user = new OrganizationUser();
+		user.firstName = createOrgUserDto.firstName;
+		user.lastName = createOrgUserDto.lastName;
 
 		const userProfile: UserProfile = {
-			email: createUserDto.email,
-			dashboardUser: user
-		}
+			email: createOrgUserDto.email,
+			organizationUser: user,
+		};
 		const data = await this.userProfileRepository.createEntity(userProfile);
 		return data;
 	}
@@ -36,7 +36,7 @@ export class UsersService {
 		return `This action returns a #${id} user`;
 	}
 
-	update(id: number, updateUserDto: UpdateUserDto) {
+	update(id: number, updateOrgUserDto: UpdateOrganizationUserDto) {
 		return `This action updates a #${id} user`;
 	}
 

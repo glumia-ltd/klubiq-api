@@ -3,8 +3,8 @@ import { AuthService } from './auth.service';
 import { DatabaseModule } from '@app/common';
 
 @Module({
-  providers: [AuthService],
-  exports: [AuthService],
-  imports: [DatabaseModule],
+	providers: [AuthService],
+	exports: [AuthService],
+	imports: [DatabaseModule],
 })
 export class AuthModule {}

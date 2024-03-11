@@ -4,11 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '../config/config.module';
 import { Role } from './entities/role.entity';
 import { UserProfile } from './entities/user-profile.entity';
-import { Permission } from './entities/permission.entity';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Role, UserProfile, Permission]),
+		TypeOrmModule.forFeature([Role, UserProfile]),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],
 			useFactory: (configService: ConfigService) => ({
@@ -20,7 +19,7 @@ import { Permission } from './entities/permission.entity';
 				database: configService.get<string>('DATABASE_NAME'),
 				autoLoadEntities: true,
 				synchronize: configService.get<boolean>('SYNCHRONIZE_DB'),
-				migrations: ['**/migrations']
+				migrations: ['**/migrations'],
 			}),
 			inject: [ConfigService],
 		}),

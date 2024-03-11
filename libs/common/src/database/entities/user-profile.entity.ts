@@ -4,20 +4,27 @@ import {
 	Column,
 	CreateDateColumn,
 	UpdateDateColumn,
-  ManyToMany,
-  OneToOne,
-	JoinTable
+	ManyToMany,
+	OneToOne,
+	Generated,
+	JoinTable,
 } from 'typeorm';
 import { Role } from './role.entity';
-import { User } from '../../../../../apps/klubiq-dashboard/src/users/entities/user.entity';
+import { OrganizationUser } from '../../../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
 
-@Entity({ schema: 'klubiq' })
+@Entity({ schema: 'kdo' })
 export class UserProfile {
 	@PrimaryGeneratedColumn('uuid')
-	id?: string;
+	profileUuid?: string;
+
+	@Generated('increment')
+	profileId?: number;
 
 	@Column({ unique: true })
 	email: string;
+
+	@Column()
+	profilePicUrl?: string;
 
 	@Column({ nullable: true })
 	phoneNumber?: string;
@@ -52,32 +59,31 @@ export class UserProfile {
 	@Column({ nullable: true })
 	gender?: string;
 
-	@Column({ nullable: true })
-	maritalStatus?: string;
-
-	@Column({ nullable: true })
-	familySize?: number;
-
-	@Column({ nullable: true })
-	employmentStatus?: string;
-
-	@Column({ nullable: true })
-	occupation?: string;
-
-	@Column({ nullable: true })
-	religion?: string;
-
 	@Column({ type: 'text', nullable: true })
 	bio?: string;
 
-  @ManyToMany(() => Role, (role) => role.users)
-	@JoinTable()
-  roles?: Role[];
+	@ManyToMany(() => Role)
+	@JoinTable({
+		name: 'user_profile_roles',
+		joinColumn: {
+			name: 'userProfileId',
+			referencedColumnName: 'profileUuid',
+		},
+		inverseJoinColumn: {
+			name: 'roleId',
+			referencedColumnName: 'id',
+		},
+	})
+	roles?: Role[];
 
-  @OneToOne(() => User, (dashboardUser) => dashboardUser.profile, {
-		 cascade: ['insert']
-		})
-  dashboardUser?: User;
+	@OneToOne(
+		() => OrganizationUser,
+		(organizationUser) => organizationUser.profile,
+		{
+			cascade: ['insert'],
+		},
+	)
+	organizationUser?: OrganizationUser;
 
 	@CreateDateColumn()
 	createdDate?: Date;
