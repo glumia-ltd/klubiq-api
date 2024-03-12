@@ -18,6 +18,7 @@ export class UserProfile {
 	profileUuid?: string;
 
 	@Generated('increment')
+	@Column({ unique: true })
 	profileId?: number;
 
 	@Column({ unique: true })
