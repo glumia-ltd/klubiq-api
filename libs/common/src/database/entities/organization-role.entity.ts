@@ -1,4 +1,4 @@
-import { OrganizationUser } from './organization-user.entity';
+import { OrganizationUser } from '../../../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
 import {
 	Entity,
 	PrimaryGeneratedColumn,

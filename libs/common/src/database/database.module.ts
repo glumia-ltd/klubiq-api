@@ -4,10 +4,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '../config/config.module';
 import { Role } from './entities/role.entity';
 import { UserProfile } from './entities/user-profile.entity';
+import { Permission } from './entities/permission.entity';
+import { OrganizationRole } from './entities/organization-role.entity';
+import { Feature } from './entities/feature.entity';
+import { FeaturePermission } from './entities/feature-permission.entity';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Role, UserProfile]),
+		TypeOrmModule.forFeature([
+			Role, UserProfile,
+			Permission, OrganizationRole,
+			Feature, FeaturePermission]),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],
 			useFactory: (configService: ConfigService) => ({

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BaseRepository } from '@app/common';
-import { Permission } from '../../../../apps/klubiq-dashboard/src/users/entities/permission.entity';
+import { Permission } from '../database/entities/permission.entity';
 import { EntityManager } from 'typeorm';
 
 @Injectable()
