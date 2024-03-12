@@ -4,23 +4,29 @@ import {
 	Column,
 	CreateDateColumn,
 	UpdateDateColumn,
-	ManyToMany,
+	OneToMany,
 } from 'typeorm';
-import { UserProfile } from './user-profile.entity';
+import { FeaturePermission } from './feature-permission.entity';
 
-@Entity({ schema: 'kdo' })
-export class Role {
+@Entity({ schema: 'poo' })
+export class Feature {
 	@PrimaryGeneratedColumn()
 	id?: number;
 
 	@Column({ length: 255, unique: true })
 	name: string;
 
+	@Column()
+	alias: string;
+
 	@Column({ type: 'text', nullable: true })
 	description?: string;
 
-	@ManyToMany(() => UserProfile, (userProfile) => userProfile.roles)
-	users?: UserProfile[];
+	@OneToMany(
+		() => FeaturePermission,
+		(featurePermission) => featurePermission.feature,
+	)
+	featurePermissions: FeaturePermission[];
 
 	@CreateDateColumn()
 	createdDate?: Date;

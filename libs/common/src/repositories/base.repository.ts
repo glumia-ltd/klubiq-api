@@ -19,6 +19,7 @@ export abstract class BaseRepository<T> extends Repository<T> {
 	protected get repository(): Repository<T> {
 		return this.manager.getRepository(this.entity);
 	}
+
 	async findAll(relations: string[] = []): Promise<T[]> {
 		const data = await this.repository.find({ relations });
 		if (!data) {
@@ -50,6 +51,7 @@ export abstract class BaseRepository<T> extends Repository<T> {
 		}
 		return data;
 	}
+
 	async findAndCount(options?: FindManyOptions<T>): Promise<[T[], number]> {
 		const data = await this.repository.findAndCount(options);
 		if (!data) {

@@ -4,18 +4,18 @@ import {
 	Column,
 	CreateDateColumn,
 	UpdateDateColumn,
-	ManyToMany,
-	JoinTable
+	OneToMany,
 } from 'typeorm';
-import { Role } from './role.entity';
 
-@Entity({ schema: 'klubiq' })
+import { FeaturePermission } from './feature-permission.entity';
+
+@Entity({ schema: 'poo' })
 export class Permission {
 	@PrimaryGeneratedColumn()
 	id?: number;
 
-	@Column()
-	permissionName: string;
+	@Column({ length: 255, unique: true })
+	name: string;
 
 	@Column({ type: 'text', nullable: true })
 	description?: string;
@@ -26,7 +26,9 @@ export class Permission {
 	@UpdateDateColumn()
 	updatedDate?: Date;
 
-  @ManyToMany(() => Role, (role) => role.permissions)
-	@JoinTable()
-	roles?: Role[];
+	@OneToMany(
+		() => FeaturePermission,
+		(featurePermission) => featurePermission.permission,
+	)
+	featurePermissions: FeaturePermission[];
 }
