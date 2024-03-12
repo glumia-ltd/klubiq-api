@@ -5,33 +5,24 @@ import { UsersRepository } from './users.repository';
 import { UserProfile, UserProfilesRepository } from '@app/common';
 import { AuthService } from '@app/auth';
 import { CreateOrganizationUserDto } from './dto/create-organization-user.dto';
+import { OrganizationRepository } from '../organization/organization.repository';
 // import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
 import { OrganizationUser } from './entities/organization-user.entity';
+import { Organization } from '../organization/entities/organization.entity';
 
 @Injectable()
 export class UsersService {
 		private readonly usersRepository: UsersRepository;
 		private readonly userProfilesRepository: UserProfilesRepository;
+		private readonly OrganizationRepository: OrganizationRepository;
 	constructor(
 		@InjectEntityManager() private entityManager: EntityManager,
 		private readonly authService: AuthService,
 	) {
 		this.usersRepository = new UsersRepository(entityManager);
 		this.userProfilesRepository = new UserProfilesRepository(entityManager);
+		this.OrganizationRepository = new OrganizationRepository(entityManager);
 	}
-
-	// async create(createUserDto: CreateUserDto) {
-	// 	const user = new User();
-	// 	user.firstName = createUserDto.firstName;
-	// 	user.lastName = createUserDto.lastName;
-
-	// 	const userProfile: UserProfile = {
-	// 		email: createUserDto.email,
-	// 		dashboardUser: user
-	// 	}
-	// 	const data = await this.userProfileRepository.createEntity(userProfile);
-	// 	return data;
-	// }
 
 	async create(createUserDto: CreateOrganizationUserDto) {
 		debugger;
@@ -49,7 +40,6 @@ export class UsersService {
 				user.firstName = createUserDto.firstName;
 				user.lastName = createUserDto.lastName;
 				user.firebaseId = fireUser.uid;
-
 				/**To do: Fire and forget email service to send verification email to user */
 
 				const userProfile: UserProfile = {
@@ -69,7 +59,7 @@ export class UsersService {
 	}
 
 	async getUserByFireBaseId(firebaseId: string) {
-		return this.usersRepository.findOneByCondition({ firebaseId: firebaseId });
+		return this.usersRepository.findOneByCondition({ firebaseId: firebaseId }, ['profile', 'role', 'organization']);
 	}
 
 	findAll() {
@@ -86,5 +76,13 @@ export class UsersService {
 
 	remove(id: number) {
 		return `This action removes a #${id} user`;
+	}
+
+	private async preloadOrganization(name: string): Promise<Organization>	 {
+		const org = await this.OrganizationRepository.findOneByCondition({ name: name });
+		if (org) {
+			return org;
+		}
+		return {name} as Organization;
 	}
 }

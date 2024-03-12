@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 import { UserProfile } from '@app/common';
 import { OrganizationRole } from './organization-role.entity';
-import { Organization } from './organization.entity';
+import { Organization } from '../../organization/entities/organization.entity';
 
 @Entity({ schema: 'poo' })
 export class OrganizationUser {
@@ -55,7 +55,9 @@ export class OrganizationUser {
 	})
 	role?: OrganizationRole;
 
-	@ManyToOne(() => Organization)
+	@ManyToOne(() => Organization, {
+		cascade: ['update'],
+	})
 	@JoinColumn({
 		name: 'organizationUuid',
 		referencedColumnName: 'organizationUuid',

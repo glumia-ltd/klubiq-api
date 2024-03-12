@@ -8,7 +8,7 @@ import {
   CreateDateColumn,
 	UpdateDateColumn,
 } from 'typeorm';
-import { OrganizationUser } from './organization-user.entity';
+import { OrganizationUser } from '../../users/entities/organization-user.entity';
 
 @Entity({ schema: 'poo' })
 @Entity()
@@ -23,7 +23,7 @@ export class Organization {
 	@Column({ default: true })
 	isActive?: boolean;
 
-	@Column({ length: 100 })
+	@Column({ length: 100, unique: true })
 	name: string;
 
 	@Column({ default: false })

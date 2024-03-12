@@ -24,8 +24,8 @@ export class CreateOrganizationUserDto {
 	email: string;
 
 	@ApiProperty({
-		description: "User's email",
-		example: 'john.doe@test.com',
+		description: "User's password",
+		example: '123456789',
 	})
 	@IsString()
 	password: string;
