@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { UsersRepository } from './users.repository';
-import { UserProfile, UserProfilesRepository } from '@app/common';
+import { UserProfile, UserProfilesRepository, Role, RolesRepository } from '@app/common';
 import { AuthService } from '@app/auth';
 import { CreateOrganizationUserDto } from './dto/create-organization-user.dto';
 import { OrganizationRepository } from '../organization/organization.repository';
+
 // import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
 import { OrganizationUser } from './entities/organization-user.entity';
 import { Organization } from '../organization/entities/organization.entity';
@@ -14,14 +15,16 @@ import { Organization } from '../organization/entities/organization.entity';
 export class UsersService {
 		private readonly usersRepository: UsersRepository;
 		private readonly userProfilesRepository: UserProfilesRepository;
-		private readonly OrganizationRepository: OrganizationRepository;
+		private readonly organizationRepository: OrganizationRepository;
+		private readonly rolesRepository: RolesRepository;
 	constructor(
 		@InjectEntityManager() private entityManager: EntityManager,
 		private readonly authService: AuthService,
 	) {
 		this.usersRepository = new UsersRepository(entityManager);
 		this.userProfilesRepository = new UserProfilesRepository(entityManager);
-		this.OrganizationRepository = new OrganizationRepository(entityManager);
+		this.organizationRepository = new OrganizationRepository(entityManager);
+		this.rolesRepository = new RolesRepository(entityManager);
 	}
 
 	async create(createUserDto: CreateOrganizationUserDto) {
@@ -36,20 +39,25 @@ export class UsersService {
 			});
 
 			if (fireUser) {
+
+				const org = await this.preloadOrganization(createUserDto.companyName);
+				const systemRoles = await Promise.all(
+					createUserDto.roles.map(async (name) => this.preloadSystemRole(name))
+				);
 				const user : OrganizationUser = {
 					firstName:	 createUserDto.firstName,
 					lastName: createUserDto.lastName,
 					firebaseId: fireUser.uid,
-					organization: {
-						name: createUserDto.companyName,
-					}
+					organization: org
 				}
+
 				/**To do: Fire and forget email service to send verification email to user */
 
 				const userProfile: UserProfile = {
 					email: createUserDto.email,
 					firebaseId: fireUser.uid,
 					organizationUser: user,
+					roles: systemRoles,
 				};
 
 				const savedUserProfile =
@@ -83,10 +91,14 @@ export class UsersService {
 	}
 
 	private async preloadOrganization(name: string): Promise<Organization>	 {
-		const org = await this.OrganizationRepository.findOneByCondition({ name: name });
+		const org = await this.organizationRepository.findOneByCondition({ name: name });
 		if (org) {
 			return org;
 		}
 		return {name} as Organization;
+	}
+	private async preloadSystemRole(name: string): Promise<Role>	 {
+		const role = await this.rolesRepository.findOneByCondition({ name: name });
+		return role;
 	}
 }
