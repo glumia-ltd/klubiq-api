@@ -7,9 +7,12 @@ import {
 	Generated,
 	JoinColumn,
 	ManyToOne,
+	CreateDateColumn,
+	UpdateDateColumn,
 } from 'typeorm';
 import { UserProfile } from '@app/common';
 import { OrganizationRole } from './organization-role.entity';
+import { Organization } from '../../organization/entities/organization.entity';
 
 @Entity({ schema: 'poo' })
 export class OrganizationUser {
@@ -17,6 +20,7 @@ export class OrganizationUser {
 	organizationUserUuid?: string;
 
 	@Generated('increment')
+	@Column({ unique: true })
 	organizationUserId?: number;
 
 	@Column({ unique: true })
@@ -51,6 +55,21 @@ export class OrganizationUser {
 	})
 	role?: OrganizationRole;
 
+	@ManyToOne(() => Organization, {
+		cascade: ['update'],
+	})
+	@JoinColumn({
+		name: 'organizationUuid',
+		referencedColumnName: 'organizationUuid',
+	})
+	organization?: Organization;
+
 	@DeleteDateColumn()
 	deletedDate?: Date;
+
+	@CreateDateColumn()
+	createdDate?: Date;
+
+	@UpdateDateColumn()
+	updatedDate?: Date;
 }
