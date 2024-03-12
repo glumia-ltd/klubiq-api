@@ -36,10 +36,14 @@ export class UsersService {
 			});
 
 			if (fireUser) {
-				const user = new OrganizationUser();
-				user.firstName = createUserDto.firstName;
-				user.lastName = createUserDto.lastName;
-				user.firebaseId = fireUser.uid;
+				const user : OrganizationUser = {
+					firstName:	 createUserDto.firstName,
+					lastName: createUserDto.lastName,
+					firebaseId: fireUser.uid,
+					organization: {
+						name: createUserDto.companyName,
+					}
+				}
 				/**To do: Fire and forget email service to send verification email to user */
 
 				const userProfile: UserProfile = {

@@ -11,7 +11,7 @@ import {
 	UpdateDateColumn,
 } from 'typeorm';
 import { UserProfile } from '@app/common';
-import { OrganizationRole } from './organization-role.entity';
+import { OrganizationRole } from '../../../../../libs/common/src/database/entities/organization-role.entity';
 import { Organization } from '../../organization/entities/organization.entity';
 
 @Entity({ schema: 'poo' })
@@ -56,7 +56,7 @@ export class OrganizationUser {
 	role?: OrganizationRole;
 
 	@ManyToOne(() => Organization, {
-		cascade: ['update'],
+		cascade: true,
 	})
 	@JoinColumn({
 		name: 'organizationUuid',

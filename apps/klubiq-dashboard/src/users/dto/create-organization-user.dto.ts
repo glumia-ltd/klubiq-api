@@ -29,6 +29,13 @@ export class CreateOrganizationUserDto {
 	})
 	@IsString()
 	password: string;
+
+	@ApiProperty({
+		description: "Company name",
+		example: 'Acme',
+	})
+	@IsString()
+	companyName?: string;
 }
 
 export class UserSignUpResponseDataDto {
