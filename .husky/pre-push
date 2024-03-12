@@ -4,7 +4,7 @@
 echo -e "===\n>> Pre-push Hook: Checking branch name ..."
 
 BRANCH=`git rev-parse --abbrev-ref HEAD`
-PROTECTED_BRANCHES="^(main|develop)"
+PROTECTED_BRANCHES="^(dev|prod|qa|test|)"
 
 if [[ "$BRANCH" =~ $PROTECTED_BRANCHES ]]
 then
