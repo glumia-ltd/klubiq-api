@@ -34,6 +34,7 @@ export class UsersService {
 	// }
 
 	async create(createUserDto: CreateOrganizationUserDto) {
+		debugger;
 		try {
 			// Create Firebase user
 			const fireUser = await this.authService.createUser({

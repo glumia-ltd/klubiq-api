@@ -8,10 +8,12 @@ import { OrganizationRole } from './entities/organization-role.entity';
 import { Feature } from './entities/feature.entity';
 import { FeaturePermission } from './entities/feature-permission.entity';
 import { Permission } from './entities/permission.entity';
+import { AuthModule } from '@app/auth';
 
 @Module({
 	imports: [
 		DatabaseModule,
+		AuthModule,
 		TypeOrmModule.forFeature([
 			OrganizationUser,
 			OrganizationRole,

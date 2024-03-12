@@ -26,7 +26,7 @@ export class UserProfile {
 	@Column({ unique: true })
 	email: string;
 
-	@Column()
+	@Column({ nullable: true })
 	profilePicUrl?: string;
 
 	@Column({ nullable: true })

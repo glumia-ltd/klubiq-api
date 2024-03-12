@@ -23,6 +23,7 @@ export class UsersController {
     type: UserSignUpResponseDto,
   })
   async createUser(@Body() createUser: CreateOrganizationUserDto) {
+		debugger;
     return await this.usersService.create(createUser);
   }
 
