@@ -25,11 +25,11 @@ const firebaseAuthProvider = {
 			storageBucket: config.get<string>('FIREBASE_STORAGE_BUCKET'),
 			messagingSenderId: config.get<string>('FIREBASE_MESSAGING_SENDER_ID'),
 			appId: config.get<string>('FIREBASE_APP_ID'),
-			measurementId: config.get<string>('FIREBASE_MEASUREMENT_ID')
-		}
+			measurementId: config.get<string>('FIREBASE_MEASUREMENT_ID'),
+		};
 		return initializeApp(firebaseConfig);
-	}
-}
+	},
+};
 
 @Module({
 	providers: [AuthService, ConfigService, firebaseAuthProvider],

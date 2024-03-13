@@ -5,7 +5,7 @@ import {
 	Column,
 	Generated,
 	OneToMany,
-  CreateDateColumn,
+	CreateDateColumn,
 	UpdateDateColumn,
 } from 'typeorm';
 import { OrganizationUser } from '../../users/entities/organization-user.entity';
@@ -13,7 +13,7 @@ import { OrganizationUser } from '../../users/entities/organization-user.entity'
 @Entity({ schema: 'poo' })
 @Entity()
 export class Organization {
-@PrimaryGeneratedColumn('uuid')
+	@PrimaryGeneratedColumn('uuid')
 	organizationUuid?: string;
 
 	@Generated('increment')
@@ -37,10 +37,9 @@ export class Organization {
 	@DeleteDateColumn()
 	deletedDate?: Date;
 
-  @CreateDateColumn()
+	@CreateDateColumn()
 	createdDate?: Date;
 
 	@UpdateDateColumn()
 	updatedDate?: Date;
-
 }

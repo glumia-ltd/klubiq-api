@@ -1,4 +1,3 @@
-
 import {
 	Controller,
 	Get,
@@ -9,7 +8,10 @@ import {
 	Delete,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateOrganizationUserDto, UserSignUpResponseDto } from './dto/create-organization-user.dto';
+import {
+	CreateOrganizationUserDto,
+	UserSignUpResponseDto,
+} from './dto/create-organization-user.dto';
 // import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
 import { ApiOkResponse } from '@nestjs/swagger';
 
@@ -17,15 +19,15 @@ import { ApiOkResponse } from '@nestjs/swagger';
 export class UsersController {
 	constructor(private readonly usersService: UsersService) {}
 
-  @Post('/signup')
-  @ApiOkResponse({
-    description: 'Creates a new user and returns the data created',
-    type: UserSignUpResponseDto,
-  })
-  async createUser(@Body() createUser: CreateOrganizationUserDto) {
+	@Post('/signup')
+	@ApiOkResponse({
+		description: 'Creates a new user and returns the data created',
+		type: UserSignUpResponseDto,
+	})
+	async createUser(@Body() createUser: CreateOrganizationUserDto) {
 		debugger;
-    return await this.usersService.create(createUser);
-  }
+		return await this.usersService.create(createUser);
+	}
 
 	@Get()
 	findAll() {

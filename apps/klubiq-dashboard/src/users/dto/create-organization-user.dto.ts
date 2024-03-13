@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsEmail, IsNumber, IsObject, IsString, IsStrongPassword } from 'class-validator';
+import {
+	IsArray,
+	IsBoolean,
+	IsEmail,
+	IsNumber,
+	IsObject,
+	IsString,
+	IsStrongPassword,
+} from 'class-validator';
 
 export class CreateOrganizationUserDto {
 	@ApiProperty({
@@ -38,18 +46,18 @@ export class CreateOrganizationUserDto {
 	password: string;
 
 	@ApiProperty({
-		description: "Company name",
+		description: 'Company name',
 		example: 'Acme',
 	})
 	@IsString()
 	companyName: string;
 
 	@ApiProperty({
-		description: "User system roles",
-		example: ['admin','user'],
+		description: 'User system roles',
+		example: ['admin', 'user'],
 	})
 	@IsArray()
-	roles: string[]
+	roles: string[];
 }
 
 export class UserSignUpResponseDataDto {
@@ -96,9 +104,9 @@ export class UserSignUpResponseDataDto {
 	@ApiProperty()
 	@IsNumber()
 	__v: number;
-  }
+}
 
-  class UserResultWithToken {
+class UserResultWithToken {
 	@ApiProperty()
 	@IsObject()
 	newUser: UserSignUpResponseDataDto;
@@ -106,9 +114,9 @@ export class UserSignUpResponseDataDto {
 	@ApiProperty()
 	@IsString()
 	token: string;
-  }
+}
 
-  export class UserSignUpResponseDto {
+export class UserSignUpResponseDto {
 	@ApiProperty()
 	@IsBoolean()
 	error: boolean;
@@ -124,4 +132,4 @@ export class UserSignUpResponseDataDto {
 	@ApiProperty()
 	@IsObject()
 	data: UserResultWithToken;
-  }
+}

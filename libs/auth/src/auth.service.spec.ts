@@ -11,19 +11,24 @@ describe('AuthService', () => {
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [AuthService],
-		}).useMocker((token) => {
-			if(token === ConfigService) {
-				return {
-					get: jest.fn(),
+		})
+			.useMocker((token) => {
+				if (token === ConfigService) {
+					return {
+						get: jest.fn(),
+					};
 				}
-			}
-			if(typeof token === 'function') {
-				const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-				const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-				return new Mock();
-			}
-
-		}).overrideProvider(AuthService).useValue('').compile();
+				if (typeof token === 'function') {
+					const mockMetadata = moduleMocker.getMetadata(
+						token,
+					) as MockFunctionMetadata<any, any>;
+					const Mock = moduleMocker.generateFromMetadata(mockMetadata);
+					return new Mock();
+				}
+			})
+			.overrideProvider(AuthService)
+			.useValue('')
+			.compile();
 
 		service = module.get<AuthService>(AuthService);
 	});

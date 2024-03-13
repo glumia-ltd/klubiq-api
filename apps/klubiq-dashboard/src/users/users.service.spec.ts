@@ -11,11 +11,19 @@ describe('UsersService', () => {
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
-			providers: [UsersService, EntityManager,
-				AuthService, UsersRepository,
-				OrganizationRepository, RolesRepository,
-				UserProfilesRepository],
-		}).overrideProvider(AuthService).useValue('').compile();
+			providers: [
+				UsersService,
+				EntityManager,
+				AuthService,
+				UsersRepository,
+				OrganizationRepository,
+				RolesRepository,
+				UserProfilesRepository,
+			],
+		})
+			.overrideProvider(AuthService)
+			.useValue('')
+			.compile();
 
 		service = module.get<UsersService>(UsersService);
 	});

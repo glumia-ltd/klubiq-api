@@ -15,16 +15,17 @@ import { RepositoriesModule } from '@app/common';
 		DatabaseModule,
 		AuthModule,
 		OrganizationModule,
-		TypeOrmModule.forFeature([
-			OrganizationUser,
-		]),
-		RepositoriesModule
+		TypeOrmModule.forFeature([OrganizationUser]),
+		RepositoriesModule,
 	],
 	controllers: [UsersController],
-	providers: [UsersService, {
-		provide: UsersRepository,
-		useFactory: (em: EntityManager) => new UsersRepository(em),
-		inject: [EntityManager],
-	}],
+	providers: [
+		UsersService,
+		{
+			provide: UsersRepository,
+			useFactory: (em: EntityManager) => new UsersRepository(em),
+			inject: [EntityManager],
+		},
+	],
 })
 export class UsersModule {}

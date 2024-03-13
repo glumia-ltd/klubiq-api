@@ -1,20 +1,18 @@
 // import { FirebaseAuthenticationService } from '@aginix/nestjs-firebase-admin';
 import {
 	// ForbiddenException,
-	Inject, Injectable } from '@nestjs/common';
+	Inject,
+	Injectable,
+} from '@nestjs/common';
 import { ICreateFirebaseUser } from './types/firebase.types';
 //import { app } from 'firebase-admin';
 import { Auth, createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
-import { FirebaseError, FirebaseApp  } from 'firebase/app';
-
-
+import { FirebaseError, FirebaseApp } from 'firebase/app';
 
 @Injectable()
 export class AuthService {
-
 	private auth: Auth;
-	constructor( @Inject('FIREBASE_AUTH') private app: FirebaseApp) {
-
+	constructor(@Inject('FIREBASE_AUTH') private app: FirebaseApp) {
 		// const firebaseConfig = JSON.parse(process.env.FIREBASE_SDK_CONFIG);
 		//const app = initializeApp(firebaseConfig);
 		this.auth = getAuth(this.app);
@@ -22,7 +20,6 @@ export class AuthService {
 
 	async createUser(newUser: ICreateFirebaseUser) {
 		try {
-
 			const firebaseUser = await createUserWithEmailAndPassword(
 				this.auth,
 				newUser.email,

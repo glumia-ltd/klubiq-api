@@ -24,7 +24,7 @@ export class UsersService {
 		private readonly usersRepository: UsersRepository,
 		private readonly organizationRepository: OrganizationRepository,
 		private readonly userProfilesRepository: UserProfilesRepository,
-private readonly rolesRepository: RolesRepository,
+		private readonly rolesRepository: RolesRepository,
 	) {}
 
 	async create(createUserDto: CreateOrganizationUserDto) {
