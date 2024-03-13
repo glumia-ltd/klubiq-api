@@ -103,9 +103,6 @@ export class UsersService {
 
 	private async preloadOrganization(name: string): Promise<Organization> {
 		const org = await this.organizationRepository.findOrgByName(name);
-		if (!org) {
-			return { name } as Organization;
-		}
 		return org;
 	}
 	private async preloadSystemRole(name: string): Promise<Role> {
