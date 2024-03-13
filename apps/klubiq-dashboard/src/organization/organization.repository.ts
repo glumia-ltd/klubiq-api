@@ -9,4 +9,8 @@ export class OrganizationRepository extends BaseRepository<Organization> {
 	constructor(manager: EntityManager) {
 		super(Organization, manager);
 	}
+
+	async findOrgByName(name: string): Promise<Organization> {
+		return this.findOneBy({ name: name });
+	}
 }

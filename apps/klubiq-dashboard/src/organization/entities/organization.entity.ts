@@ -29,7 +29,9 @@ export class Organization {
 	@Column({ default: false })
 	isDeleted?: boolean;
 
-	@OneToMany(() => OrganizationUser, (orgUser) => orgUser.organization)
+	@OneToMany(() => OrganizationUser, (orgUser) => orgUser.organization, {
+		cascade: true,
+	})
 	users?: OrganizationUser[];
 
 	@DeleteDateColumn()
