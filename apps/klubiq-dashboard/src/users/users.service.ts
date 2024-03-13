@@ -12,9 +12,9 @@ import { Organization } from '../organization/entities/organization.entity';
 
 @Injectable()
 export class UsersService {
-		private readonly usersRepository: UsersRepository;
-		private readonly userProfilesRepository: UserProfilesRepository;
-		private readonly OrganizationRepository: OrganizationRepository;
+	private readonly usersRepository: UsersRepository;
+	private readonly userProfilesRepository: UserProfilesRepository;
+	private readonly OrganizationRepository: OrganizationRepository;
 	constructor(
 		@InjectEntityManager() private entityManager: EntityManager,
 		private readonly authService: AuthService,
@@ -24,46 +24,59 @@ export class UsersService {
 		this.OrganizationRepository = new OrganizationRepository(entityManager);
 	}
 
-	async create(createUserDto: CreateOrganizationUserDto) {
-		debugger;
+	async create(
+		createUserDto: CreateOrganizationUserDto,
+	): Promise<UserProfile | undefined> {
 		try {
-			// Create Firebase user
 			const fireUser = await this.authService.createUser({
 				email: createUserDto.email,
 				password: createUserDto.password,
 				displayName: createUserDto.firstName + ' ' + createUserDto.lastName,
-				emailVerified: false,
 			});
 
 			if (fireUser) {
-				const user : OrganizationUser = {
-					firstName:	 createUserDto.firstName,
-					lastName: createUserDto.lastName,
-					firebaseId: fireUser.uid,
-					organization: {
-						name: createUserDto.companyName,
-					}
+				const transaction =
+					await this.userProfilesRepository.manager.transaction(
+						async (entityManager) => {
+							const user: OrganizationUser = {
+								firstName: createUserDto.firstName,
+								lastName: createUserDto.lastName,
+								firebaseId: fireUser.uid,
+								organization: {
+									name: createUserDto.companyName,
+								},
+							};
+
+							const userProfile: UserProfile = {
+								email: createUserDto.email,
+								firebaseId: fireUser.uid,
+								organizationUser: user,
+							};
+
+							await entityManager.save(user);
+							const savedUserProfile = await entityManager.save(userProfile);
+							return savedUserProfile;
+						},
+					);
+
+				if (transaction) {
+					await this.authService.sendVerificationEmail(createUserDto.email);
+					return transaction;
 				}
-				/**To do: Fire and forget email service to send verification email to user */
-
-				const userProfile: UserProfile = {
-					email: createUserDto.email,
-					firebaseId: fireUser.uid,
-					organizationUser: user,
-				};
-
-				const savedUserProfile =
-					await this.userProfilesRepository.createEntity(userProfile);
-
-				return savedUserProfile;
+				return undefined;
 			}
 		} catch (error) {
+			console.error('Error creating user:', error);
 			throw error;
 		}
 	}
 
 	async getUserByFireBaseId(firebaseId: string) {
-		return this.usersRepository.findOneByCondition({ firebaseId: firebaseId }, ['profile', 'role', 'organization']);
+		return this.usersRepository.findOneByCondition({ firebaseId: firebaseId }, [
+			'profile',
+			'role',
+			'organization',
+		]);
 	}
 
 	findAll() {
@@ -82,11 +95,13 @@ export class UsersService {
 		return `This action removes a #${id} user`;
 	}
 
-	private async preloadOrganization(name: string): Promise<Organization>	 {
-		const org = await this.OrganizationRepository.findOneByCondition({ name: name });
+	private async preloadOrganization(name: string): Promise<Organization> {
+		const org = await this.OrganizationRepository.findOneByCondition({
+			name: name,
+		});
 		if (org) {
 			return org;
 		}
-		return {name} as Organization;
+		return { name } as Organization;
 	}
 }
