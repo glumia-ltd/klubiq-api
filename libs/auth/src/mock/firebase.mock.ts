@@ -1,4 +1,5 @@
-let FirebaseUserMock = {
+/* eslint-disable @typescript-eslint/no-unused-vars */
+const FirebaseUserMock = {
   name: 'Test User',
   iss: 'https://securetoken.google.com/rising-city-339410',
   aud: 'rising-city-339410',
