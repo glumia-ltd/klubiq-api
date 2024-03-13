@@ -9,3 +9,4 @@ export * from './database/entities/organization-role.entity';
 export * from './repositories/user-profiles.repository';
 export * from './repositories/permissions.repository';
 export * from './repositories/roles.repository';
+export * from './repositories/repositories.module';

@@ -18,17 +18,14 @@ import { Organization } from '../organization/entities/organization.entity';
 
 @Injectable()
 export class UsersService {
-	private readonly userProfilesRepository: UserProfilesRepository;
-	private readonly rolesRepository: RolesRepository;
 	constructor(
 		@InjectEntityManager() private entityManager: EntityManager,
 		private readonly authService: AuthService,
 		private readonly usersRepository: UsersRepository,
 		private readonly organizationRepository: OrganizationRepository,
-	) {
-		this.userProfilesRepository = new UserProfilesRepository(entityManager);
-		this.rolesRepository = new RolesRepository(entityManager);
-	}
+		private readonly userProfilesRepository: UserProfilesRepository,
+private readonly rolesRepository: RolesRepository,
+	) {}
 
 	async create(createUserDto: CreateOrganizationUserDto) {
 		debugger;

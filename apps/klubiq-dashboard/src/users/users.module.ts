@@ -8,6 +8,7 @@ import { OrganizationModule } from '../organization/organization.module';
 import { AuthModule } from '@app/auth';
 import { UsersRepository } from './users.repository';
 import { EntityManager } from 'typeorm';
+import { RepositoriesModule } from '@app/common';
 
 @Module({
 	imports: [
@@ -17,6 +18,7 @@ import { EntityManager } from 'typeorm';
 		TypeOrmModule.forFeature([
 			OrganizationUser,
 		]),
+		RepositoriesModule
 	],
 	controllers: [UsersController],
 	providers: [UsersService, {
