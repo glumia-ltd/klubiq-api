@@ -6,6 +6,7 @@ import {
 } from '@nestjs/swagger';
 import { KlubiqDashboardModule } from './klubiq-dashboard.module';
 import { HttpExceptionFilter } from '@app/common';
+import { HttpResponseInterceptor } from '@app/common';
 
 declare const module: any;
 
@@ -31,6 +32,7 @@ async function bootstrap() {
 
 	/// APP SETTINGS
 	app.useGlobalFilters(new HttpExceptionFilter());
+	app.useGlobalInterceptors(new HttpResponseInterceptor());
 	await app.listen(3000);
 
 	if (module.hot) {

@@ -11,3 +11,4 @@ export * from './repositories/permissions.repository';
 export * from './repositories/roles.repository';
 export * from './repositories/repositories.module';
 export * from './http-exception/http-exception.filter';
+export * from './http-response/http-response.interceptor'
