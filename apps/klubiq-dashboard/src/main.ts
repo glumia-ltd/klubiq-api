@@ -5,11 +5,14 @@ import {
 	SwaggerDocumentOptions,
 } from '@nestjs/swagger';
 import { KlubiqDashboardModule } from './klubiq-dashboard.module';
+import { HttpExceptionFilter } from '@app/common';
 
 declare const module: any;
+
 async function bootstrap() {
 	const app = await NestFactory.create(KlubiqDashboardModule);
 
+	/// SWAGGER CONFIGURATION
 	const options: SwaggerDocumentOptions = {
 		operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
 	};
@@ -24,6 +27,10 @@ async function bootstrap() {
 		.build();
 	const document = SwaggerModule.createDocument(app, config, options);
 	SwaggerModule.setup('api', app, document);
+	/// END SWAGGER CONFIGURATION
+
+	/// APP SETTINGS
+	app.useGlobalFilters(new HttpExceptionFilter());
 	await app.listen(3000);
 
 	if (module.hot) {
