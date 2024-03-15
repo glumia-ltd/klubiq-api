@@ -62,8 +62,8 @@ export class MailerSendService {
 	}
 
 	async sendDummmyEmail() {
-		const userEmail = '';
-		const userName = '';
+		const userEmail = 'folakamar@gmail.com';
+		const userName = 'Fola';
 		const verificationLink = 'here is the dummyLink';
 		const verifyEmailBody = verifyEmailTemplate(verificationLink);
 		const recipient = { email: userEmail, name: userName };

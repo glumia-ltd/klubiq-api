@@ -1,4 +1,5 @@
 import { MailerSendService } from '@app/common/email/email.service';
+import { MailerSendSMTPService } from '@app/common/email/smtp-email.service';
 import { Injectable } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import * as admin from 'firebase-admin';
@@ -10,6 +11,7 @@ export class AuthService {
 	constructor(
 		@Inject('FIREBASE_ADMIN') private firebaseAdminApp: admin.app.App,
 		private emailService: MailerSendService,
+		private emailSmtpService: MailerSendSMTPService
 	) {}
 
 	get auth(): auth.Auth {
@@ -178,6 +180,14 @@ export class AuthService {
 	async sendDummy() {
 		try {
 			await this.emailService.sendDummmyEmail();
+		} catch (err) {}
+	}
+
+	async sendDummySmtp() {
+		try {
+			const dummyEmail = await this.emailSmtpService.sendDummmyEmail();
+			console.log('dummyEmail', dummyEmail)
+			return dummyEmail
 		} catch (err) {}
 	}
 

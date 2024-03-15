@@ -5,6 +5,7 @@ import {
 } from '@nestjs/config';
 import * as Joi from 'joi';
 import { MailerSendService } from '../email/email.service';
+import { MailerSendSMTPService } from '../email/smtp-email.service';
 
 @Module({
 	imports: [
@@ -31,7 +32,7 @@ import { MailerSendService } from '../email/email.service';
 			}),
 		}),
 	],
-	providers: [ConfigService, MailerSendService],
-	exports: [ConfigService, MailerSendService],
+	providers: [ConfigService, MailerSendService, MailerSendSMTPService],
+	exports: [ConfigService, MailerSendService, MailerSendSMTPService],
 })
 export class ConfigModule {}

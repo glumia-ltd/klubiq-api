@@ -28,8 +28,8 @@ export class AuthController {
 	@Post('dummy-email')
 	async dummyEmail(): Promise<any> {
 		try {
-			await this.authService.sendDummy();
-			return { message: 'Email verification successful!' };
+			return  this.authService.sendDummy();
+			//  { message: 'Email verification successful!' };
 		} catch (err) {
 			console.error('Error verifying email:', err);
 			throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);

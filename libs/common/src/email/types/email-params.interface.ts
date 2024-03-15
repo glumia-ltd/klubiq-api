@@ -32,6 +32,6 @@ interface Attachment {
 }
 
 export const FromEmails = {
-    support: '',
-    name: ''
+    support: 'admin@glumia.ng',
+    name: 'Klubiq'
   };
