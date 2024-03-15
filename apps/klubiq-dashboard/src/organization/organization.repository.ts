@@ -9,4 +9,28 @@ export class OrganizationRepository extends BaseRepository<Organization> {
 	constructor(manager: EntityManager) {
 		super(Organization, manager);
 	}
+
+	async findOneOrCreateByName(name: string, relations: string[] = []) {
+		try {
+			const existingEntity = await this.repository.findOne({
+				where: { name: name },
+				relations,
+			});
+
+			if (!existingEntity) {
+				const newEntity = {
+					name: name,
+				};
+
+				const createdEntity = this.repository.create(newEntity);
+				const savedEntity = await this.repository.save(newEntity);
+				return savedEntity;
+			}
+
+			return existingEntity;
+		} catch (error) {
+			console.error('Error finding or creating entity:', error);
+			throw error;
+		}
+	}
 }

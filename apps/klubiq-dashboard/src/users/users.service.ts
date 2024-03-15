@@ -1,107 +1,107 @@
-import { Injectable } from '@nestjs/common';
-import { InjectEntityManager } from '@nestjs/typeorm';
-import { EntityManager } from 'typeorm';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { UsersRepository } from './users.repository';
-import { UserProfile, UserProfilesRepository } from '@app/common';
+// import { UserProfile, UserProfilesRepository } from '@app/common';
 import { AuthService } from '@app/auth';
 import { CreateOrganizationUserDto } from './dto/create-organization-user.dto';
 import { OrganizationRepository } from '../organization/organization.repository';
-// import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
 import { OrganizationUser } from './entities/organization-user.entity';
 import { Organization } from '../organization/entities/organization.entity';
+import { UserProfile } from '@app/common/database/entities/user-profile.entity';
+import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
 
 @Injectable()
 export class UsersService {
 	private readonly usersRepository: UsersRepository;
 	private readonly userProfilesRepository: UserProfilesRepository;
-	private readonly OrganizationRepository: OrganizationRepository;
+	private readonly organizationRepository: OrganizationRepository;
+	private readonly logger = new Logger(UsersService.name);
 	constructor(
 		@InjectEntityManager() private entityManager: EntityManager,
 		private readonly authService: AuthService,
 	) {
 		this.usersRepository = new UsersRepository(entityManager);
 		this.userProfilesRepository = new UserProfilesRepository(entityManager);
-		this.OrganizationRepository = new OrganizationRepository(entityManager);
+		this.organizationRepository = new OrganizationRepository(entityManager);
 	}
 
 	async create(
 		createUserDto: CreateOrganizationUserDto,
 	): Promise<UserProfile | undefined> {
+		const displayName = `${createUserDto.firstName} ${createUserDto.lastName}`;
 		try {
 			const fireUser = await this.authService.createUser({
 				email: createUserDto.email,
 				password: createUserDto.password,
-				displayName: createUserDto.firstName + ' ' + createUserDto.lastName,
+				displayName: displayName,
 			});
+			this.logger.debug('Firebase user created:', fireUser);
 
 			if (fireUser) {
-				const transaction =
-					await this.userProfilesRepository.manager.transaction(
-						async (entityManager) => {
-							const user: OrganizationUser = {
-								firstName: createUserDto.firstName,
-								lastName: createUserDto.lastName,
-								firebaseId: fireUser.uid,
-								organization: {
-									name: createUserDto.companyName,
-								},
-							};
-
-							const userProfile: UserProfile = {
-								email: createUserDto.email,
-								firebaseId: fireUser.uid,
-								organizationUser: user,
-							};
-
-							await entityManager.save(user);
-							const savedUserProfile = await entityManager.save(userProfile);
-							return savedUserProfile;
-						},
-					);
-
-				if (transaction) {
-					await this.authService.sendVerificationEmail(createUserDto.email);
-					return transaction;
-				}
-				return undefined;
+				const userProfile = await this.createUserWithOrganization(
+					fireUser,
+					createUserDto,
+				);
+				await this.authService.sendVerificationEmail(
+					createUserDto.email,
+					displayName,
+				);
+				return userProfile;
 			}
+
+			return undefined;
 		} catch (error) {
-			console.error('Error creating user:', error);
+			this.logger.error('Error creating user:', error);
 			throw error;
 		}
 	}
 
-	async getUserByFireBaseId(firebaseId: string) {
-		return this.usersRepository.findOneByCondition({ firebaseId: firebaseId }, [
-			'profile',
-			'role',
-			'organization',
-		]);
-	}
+	private async createUserWithOrganization(
+		fireUser: any,
+		createUserDto: CreateOrganizationUserDto,
+	): Promise<UserProfile> {
+		const entityManager = this.organizationRepository.manager;
 
-	findAll() {
-		return `This action returns all users`;
-	}
+		return entityManager.transaction(async (transactionalEntityManager) => {
+			const organization = await this.findOrCreateOrganization(
+				createUserDto.companyName, // Assuming this is the correct property name
+				transactionalEntityManager,
+			);
+			console.log('organization', organization);
+			const user = new OrganizationUser();
+			user.firstName = createUserDto.firstName;
+			user.lastName = createUserDto.lastName;
+			user.firebaseId = fireUser.uid;
+			user.organization = organization;
 
-	findOne(id: number) {
-		return `This action returns a #${id} user`;
-	}
+			const userProfile = new UserProfile();
+			userProfile.email = createUserDto.email;
+			userProfile.firebaseId = fireUser.uid;
+			userProfile.organizationUser = user;
 
-	// update(id: number, updateOrgUserDto: UpdateOrganizationUserDto) {
-	// 	return `This action updates a #${id} user`;
-	// }
+			await transactionalEntityManager.save(user);
+			await transactionalEntityManager.save(userProfile);
 
-	remove(id: number) {
-		return `This action removes a #${id} user`;
-	}
-
-	private async preloadOrganization(name: string): Promise<Organization> {
-		const org = await this.OrganizationRepository.findOneByCondition({
-			name: name,
+			this.logger.debug('User and profile created:', userProfile);
+			return userProfile;
 		});
-		if (org) {
-			return org;
+	}
+
+	private async findOrCreateOrganization(
+		name: string,
+		entityManager: EntityManager,
+	): Promise<Organization> {
+		const existingOrganization = await entityManager.findOne(Organization, {
+			where: { name: name },
+		});
+
+		if (existingOrganization) {
+			return existingOrganization;
 		}
-		return { name } as Organization;
+
+		const newOrganization = new Organization();
+		newOrganization.name = name;
+		return entityManager.save(newOrganization);
 	}
 }

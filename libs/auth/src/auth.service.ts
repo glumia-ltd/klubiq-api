@@ -1,15 +1,20 @@
+import { MailerSendService } from '@app/common/email/email.service';
 import { Injectable } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import * as admin from 'firebase-admin';
-import { FirebaseAdminService } from './firebase/firebase-admin.service';
+import * as auth from 'firebase-admin/auth';
 import { FirebaseError } from 'firebase/app';
 
 @Injectable()
 export class AuthService {
 	constructor(
-		@Inject(FirebaseAdminService)
-		private readonly firebaseAdmin: FirebaseAdminService,
+		@Inject('FIREBASE_ADMIN') private firebaseAdminApp: admin.app.App,
+		private emailService: MailerSendService,
 	) {}
+
+	get auth(): auth.Auth {
+		return this.firebaseAdminApp.auth();
+	}
 
 	async createUser(newUser: {
 		email: string;
@@ -17,25 +22,33 @@ export class AuthService {
 		displayName: string;
 	}): Promise<any> {
 		try {
-			const userRecord = await this.firebaseAdmin.auth.createUser({
+			const userRecord = await this.auth.createUser({
 				email: newUser.email,
 				emailVerified: false,
 				password: newUser.password,
 				displayName: newUser.displayName,
 			});
+			console.log('userRecord', userRecord);
 			return userRecord;
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
+			console.log('firebaseError', err);
 			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
 		}
 	}
 
-	async getUser(uid: string): Promise<admin.auth.UserRecord | undefined> {
+	async getUser(uid: string) {
 		try {
-			return await this.firebaseAdmin.auth.getUser(uid);
+			// Use the correct import and access auth through getAuth:
+			const userRecord = await this.auth.getUser(uid);
+			return userRecord;
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
-			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
+			// Handle the error appropriately, such as logging or returning a custom message:
+			console.error('Error fetching user:', err);
+			return firebaseErrorMessage
+				? firebaseErrorMessage
+				: 'An error occurred while retrieving the user.';
 		}
 	}
 
@@ -44,19 +57,19 @@ export class AuthService {
 		updateData: { email?: string; password?: string },
 	): Promise<void> {
 		try {
-			const user = await this.firebaseAdmin.auth.getUser(uid);
+			const user = await this.auth.getUser(uid);
 			if (!user) {
 				throw new Error('User not found');
 			}
 
 			if (updateData.email) {
-				await this.firebaseAdmin.auth.updateUser(uid, {
+				await this.auth.updateUser(uid, {
 					email: updateData.email,
 				});
 			}
 
 			if (updateData.password) {
-				await this.firebaseAdmin.auth.updateUser(uid, {
+				await this.auth.updateUser(uid, {
 					password: updateData.password,
 				});
 			}
@@ -68,7 +81,7 @@ export class AuthService {
 
 	async deleteUser(uid: string): Promise<void> {
 		try {
-			await this.firebaseAdmin.auth.deleteUser(uid);
+			await this.auth.deleteUser(uid);
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
 			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
@@ -77,11 +90,11 @@ export class AuthService {
 
 	async generateVerificationEmail(uid: string): Promise<void> {
 		try {
-			const user = await this.firebaseAdmin.auth.getUser(uid);
+			const user = await this.auth.getUser(uid);
 			if (!user) {
 				throw new Error('User not found');
 			}
-			await this.firebaseAdmin.auth.generateEmailVerificationLink(user.email);
+			await this.auth.generateEmailVerificationLink(user.email);
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
 			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
@@ -90,7 +103,7 @@ export class AuthService {
 
 	async generatePasswordResetEmail(email: string): Promise<void> {
 		try {
-			await this.firebaseAdmin.auth.generatePasswordResetLink(email);
+			await this.auth.generatePasswordResetLink(email);
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
 			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
@@ -99,7 +112,7 @@ export class AuthService {
 
 	async getUserVerificationStatus(uid: string): Promise<boolean> {
 		try {
-			const user = await this.firebaseAdmin.auth.getUser(uid);
+			const user = await this.auth.getUser(uid);
 			if (!user) {
 				throw new Error('User not found');
 			}
@@ -112,7 +125,7 @@ export class AuthService {
 
 	async markUserEmailVerified(uid: string): Promise<void> {
 		try {
-			const user = await this.firebaseAdmin.auth.updateUser(uid, {
+			const user = await this.auth.updateUser(uid, {
 				emailVerified: true,
 			});
 			if (!user) {
@@ -140,7 +153,7 @@ export class AuthService {
 		}
 	}
 
-	async sendVerificationEmail(email: string): Promise<void> {
+	async sendVerificationEmail(email: string, name: string): Promise<void> {
 		const serverVerifyEmailEndpoint = 'https://your-app.com/verify-email';
 
 		try {
@@ -153,12 +166,19 @@ export class AuthService {
 			const verificationLink = await admin
 				.auth()
 				.generatePasswordResetLink(email, actionCodeSettings);
-
+			console.log('verificationLink', verificationLink);
 			//TO:DO send email to user with verificationLink
+			await this.emailService.sendVerifyEmail(email, name, verificationLink);
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
 			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
 		}
+	}
+
+	async sendDummy() {
+		try {
+			await this.emailService.sendDummmyEmail();
+		} catch (err) {}
 	}
 
 	parseFirebaseError(error: FirebaseError): string {

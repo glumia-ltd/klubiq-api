@@ -55,9 +55,7 @@ export class OrganizationUser {
 	})
 	role?: OrganizationRole;
 
-	@ManyToOne(() => Organization, {
-		cascade: true,
-	})
+	@ManyToOne(() => Organization)
 	@JoinColumn({
 		name: 'organizationUuid',
 		referencedColumnName: 'organizationUuid',

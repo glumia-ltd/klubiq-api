@@ -5,16 +5,17 @@ import { UsersController } from './users.controller';
 import { DatabaseModule } from '@app/common';
 import { OrganizationUser } from './entities/organization-user.entity';
 import { AuthModule } from '@app/auth';
+import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
+
 
 @Module({
 	imports: [
 		DatabaseModule,
 		AuthModule,
-		TypeOrmModule.forFeature([
-			OrganizationUser,
-		]),
+		TypeOrmModule.forFeature([OrganizationUser]),
+		
 	],
 	controllers: [UsersController],
-	providers: [UsersService],
+	providers: [UsersService, UserProfilesRepository],
 })
 export class UsersModule {}

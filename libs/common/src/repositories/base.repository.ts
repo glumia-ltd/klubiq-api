@@ -5,6 +5,7 @@ import {
 	EntityManager,
 	FindOptionsWhere,
 	FindManyOptions,
+	Entity,
 } from 'typeorm';
 
 @Injectable()

@@ -4,6 +4,7 @@ import {
 	ConfigService,
 } from '@nestjs/config';
 import * as Joi from 'joi';
+import { MailerSendService } from '../email/email.service';
 
 @Module({
 	imports: [
@@ -23,10 +24,14 @@ import * as Joi from 'joi';
 				FIREBASE_APP_ID: Joi.string().required(),
 				FIREBASE_MESSAGING_SENDER_ID: Joi.string().required(),
 				FIREBASE_MEASUREMENT_ID: Joi.string().required(),
+				MAILER_SEND_API_KEY: Joi.string().required(),
+				FIREBASE_ADMIN_SDK_PROJECT_ID: Joi.string().required(),
+				FIREBASE_ADMIN_SDK_PRIVATE_KEY_ID: Joi.string().required(),
+				FIREBASE_ADMIN_SDK_PRIVATE_KEY: Joi.string().required(),
 			}),
 		}),
 	],
-	providers: [ConfigService],
-	exports: [ConfigService],
+	providers: [ConfigService, MailerSendService],
+	exports: [ConfigService, MailerSendService],
 })
 export class ConfigModule {}

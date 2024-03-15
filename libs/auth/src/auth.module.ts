@@ -4,6 +4,37 @@ import { DatabaseModule, ConfigModule } from '@app/common';
 import { ConfigService } from '@nestjs/config';
 import { initializeApp } from 'firebase/app';
 import { AuthController } from './auth.controller';
+import * as admin from 'firebase-admin';
+import path from 'path';
+
+const _firebaseConfig = require('../../../config.json');
+
+interface FirebaseConfig {
+	type: string;
+	project_id: string;
+	private_key_id: string;
+	private_key: string;
+	client_email: string;
+	client_id: string;
+	auth_uri: string;
+	token_uri: string;
+	auth_provider_x509_cert_url: string;
+	client_x509_cert_url: string;
+}
+const firebaseAdminConfig = _firebaseConfig as unknown as FirebaseConfig;
+
+const firebase_params = {
+	type: firebaseAdminConfig.type,
+	projectId: firebaseAdminConfig.project_id,
+	privateKeyId: firebaseAdminConfig.private_key_id,
+	privateKey: firebaseAdminConfig.private_key,
+	clientEmail: firebaseAdminConfig.client_email,
+	clientId: firebaseAdminConfig.client_id,
+	authUri: firebaseAdminConfig.auth_uri,
+	tokenUri: firebaseAdminConfig.token_uri,
+	authProviderX509CertUrl: firebaseAdminConfig.auth_provider_x509_cert_url,
+	clientC509CertUrl: firebaseAdminConfig.client_x509_cert_url,
+};
 
 const firebaseAuthProvider = {
 	provide: 'FIREBASE_AUTH',
@@ -22,8 +53,23 @@ const firebaseAuthProvider = {
 	},
 };
 
+const firebaseAdminProvider = {
+	provide: 'FIREBASE_ADMIN',
+	inject: [ConfigService],
+	useFactory: (config: ConfigService) => {
+		return admin.initializeApp({
+			credential: admin.credential.cert(firebase_params),
+		});
+	},
+};
+
 @Module({
-	providers: [AuthService, ConfigService, firebaseAuthProvider],
+	providers: [
+		AuthService,
+		ConfigService,
+		firebaseAuthProvider,
+		firebaseAdminProvider,
+	],
 	exports: [AuthService],
 	imports: [DatabaseModule, ConfigModule],
 	controllers: [AuthController],
