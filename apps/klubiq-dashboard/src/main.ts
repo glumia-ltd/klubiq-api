@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { WinstonModule } from 'nest-winston';
 import {
 	SwaggerModule,
 	DocumentBuilder,
@@ -7,11 +8,17 @@ import {
 import { KlubiqDashboardModule } from './klubiq-dashboard.module';
 import { HttpExceptionFilter } from '@app/common';
 import { HttpResponseInterceptor } from '@app/common';
+import { CustomLogging } from '@app/common';
 
 declare const module: any;
 
 async function bootstrap() {
-	const app = await NestFactory.create(KlubiqDashboardModule);
+	///CUSTOM LOGGER SERVICE
+	const customLogger = new CustomLogging();
+
+	const app = await NestFactory.create(KlubiqDashboardModule, {
+		logger: WinstonModule.createLogger(customLogger.createLoggerConfig),
+	});
 
 	/// SWAGGER CONFIGURATION
 	const options: SwaggerDocumentOptions = {
