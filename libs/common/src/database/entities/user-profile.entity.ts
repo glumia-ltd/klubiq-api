@@ -83,9 +83,6 @@ export class UserProfile {
 	@OneToOne(
 		() => OrganizationUser,
 		(organizationUser) => organizationUser.profile,
-		{
-			cascade: ['insert'],
-		},
 	)
 	organizationUser?: OrganizationUser;
 

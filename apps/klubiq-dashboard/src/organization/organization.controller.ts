@@ -7,10 +7,12 @@ import {
 	Param,
 	Delete,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 
+@ApiTags('organization')
 @Controller('organization')
 export class OrganizationController {
 	constructor(private readonly organizationService: OrganizationService) {}

@@ -11,7 +11,6 @@ import {
 import { OrganizationUser } from '../../users/entities/organization-user.entity';
 
 @Entity({ schema: 'poo' })
-@Entity()
 export class Organization {
 	@PrimaryGeneratedColumn('uuid')
 	organizationUuid?: string;
