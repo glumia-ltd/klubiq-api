@@ -12,9 +12,13 @@ import { FeaturePermission } from './entities/feature-permission.entity';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
-			Role, UserProfile,
-			Permission, OrganizationRole,
-			Feature, FeaturePermission]),
+			Role,
+			UserProfile,
+			Permission,
+			OrganizationRole,
+			Feature,
+			FeaturePermission,
+		]),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],
 			useFactory: (configService: ConfigService) => ({

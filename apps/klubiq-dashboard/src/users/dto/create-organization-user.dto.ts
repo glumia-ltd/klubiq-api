@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsObject, IsString } from 'class-validator';
+import {
+	IsArray,
+	IsBoolean,
+	IsEmail,
+	IsNumber,
+	IsObject,
+	IsString,
+	IsStrongPassword,
+} from 'class-validator';
 
 export class CreateOrganizationUserDto {
 	@ApiProperty({
@@ -21,6 +29,7 @@ export class CreateOrganizationUserDto {
 		example: 'john.doe@test.com',
 	})
 	@IsString()
+	@IsEmail()
 	email: string;
 
 	@ApiProperty({
@@ -28,14 +37,27 @@ export class CreateOrganizationUserDto {
 		example: '123456789',
 	})
 	@IsString()
+	@IsStrongPassword({
+		minLength: 6,
+		minUppercase: 1,
+		minNumbers: 1,
+		minSymbols: 1,
+	})
 	password: string;
 
 	@ApiProperty({
-		description: "Company name",
+		description: 'Company name',
 		example: 'Acme',
 	})
 	@IsString()
-	companyName?: string;
+	companyName: string;
+
+	@ApiProperty({
+		description: 'User system roles',
+		example: ['admin', 'user'],
+	})
+	@IsArray()
+	roles: string[];
 }
 
 export class UserSignUpResponseDataDto {
@@ -82,9 +104,9 @@ export class UserSignUpResponseDataDto {
 	@ApiProperty()
 	@IsNumber()
 	__v: number;
-  }
+}
 
-  class UserResultWithToken {
+class UserResultWithToken {
 	@ApiProperty()
 	@IsObject()
 	newUser: UserSignUpResponseDataDto;
@@ -92,9 +114,9 @@ export class UserSignUpResponseDataDto {
 	@ApiProperty()
 	@IsString()
 	token: string;
-  }
+}
 
-  export class UserSignUpResponseDto {
+export class UserSignUpResponseDto {
 	@ApiProperty()
 	@IsBoolean()
 	error: boolean;
@@ -110,4 +132,4 @@ export class UserSignUpResponseDataDto {
 	@ApiProperty()
 	@IsObject()
 	data: UserResultWithToken;
-  }
+}

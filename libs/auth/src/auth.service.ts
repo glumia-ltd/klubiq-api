@@ -1,111 +1,196 @@
-// import { FirebaseAuthenticationService } from '@aginix/nestjs-firebase-admin';
-import {
-	// ForbiddenException,
-	Inject, Injectable } from '@nestjs/common';
-import { ICreateFirebaseUser } from './types/firebase.types';
-//import { app } from 'firebase-admin';
-import { Auth, createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
-import { FirebaseError, FirebaseApp  } from 'firebase/app';
-
-
+import { MailerSendService } from '@app/common/email/email.service';
+import { MailerSendSMTPService } from '@app/common/email/smtp-email.service';
+import { Injectable } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
+import * as admin from 'firebase-admin';
+import * as auth from 'firebase-admin/auth';
+import { FirebaseError } from 'firebase/app';
 
 @Injectable()
 export class AuthService {
+	constructor(
+		@Inject('FIREBASE_ADMIN') private firebaseAdminApp: admin.app.App,
+		private emailService: MailerSendService,
+		private emailSmtpService: MailerSendSMTPService,
+	) {}
 
-	private auth: Auth;
-	constructor( @Inject('FIREBASE_AUTH') private app: FirebaseApp) {
-
-		// const firebaseConfig = JSON.parse(process.env.FIREBASE_SDK_CONFIG);
-		//const app = initializeApp(firebaseConfig);
-		this.auth = getAuth(this.app);
+	get auth(): auth.Auth {
+		return this.firebaseAdminApp.auth();
 	}
 
-	async createUser(newUser: ICreateFirebaseUser) {
+	async createUser(newUser: {
+		email: string;
+		password: string;
+		displayName: string;
+	}): Promise<any> {
 		try {
+			const userRecord = await this.auth.createUser({
+				email: newUser.email,
+				emailVerified: false,
+				password: newUser.password,
+				displayName: newUser.displayName,
+			});
+			console.log('userRecord', userRecord);
+			return userRecord;
+		} catch (err) {
+			const firebaseErrorMessage = this.parseFirebaseError(err);
+			console.log('firebaseError', err);
+			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
+		}
+	}
 
-			const firebaseUser = await createUserWithEmailAndPassword(
-				this.auth,
-				newUser.email,
-				newUser.password,
-			);
-			return firebaseUser.user;
+	async getUser(uid: string) {
+		try {
+			// Use the correct import and access auth through getAuth:
+			const userRecord = await this.auth.getUser(uid);
+			return userRecord;
+		} catch (err) {
+			const firebaseErrorMessage = this.parseFirebaseError(err);
+			// Handle the error appropriately, such as logging or returning a custom message:
+			console.error('Error fetching user:', err);
+			return firebaseErrorMessage
+				? firebaseErrorMessage
+				: 'An error occurred while retrieving the user.';
+		}
+	}
+
+	async updateUser(
+		uid: string,
+		updateData: { email?: string; password?: string },
+	): Promise<void> {
+		try {
+			const user = await this.auth.getUser(uid);
+			if (!user) {
+				throw new Error('User not found');
+			}
+
+			if (updateData.email) {
+				await this.auth.updateUser(uid, {
+					email: updateData.email,
+				});
+			}
+
+			if (updateData.password) {
+				await this.auth.updateUser(uid, {
+					password: updateData.password,
+				});
+			}
+		} catch (err) {
+			const firebaseErrorMessage = this.parseFirebaseError(err);
+			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
+		}
+	}
+
+	async deleteUser(uid: string): Promise<void> {
+		try {
+			await this.auth.deleteUser(uid);
+		} catch (err) {
+			const firebaseErrorMessage = this.parseFirebaseError(err);
+			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
+		}
+	}
+
+	async generateVerificationEmail(uid: string): Promise<void> {
+		try {
+			const user = await this.auth.getUser(uid);
+			if (!user) {
+				throw new Error('User not found');
+			}
+			await this.auth.generateEmailVerificationLink(user.email);
+		} catch (err) {
+			const firebaseErrorMessage = this.parseFirebaseError(err);
+			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
+		}
+	}
+
+	async generatePasswordResetEmail(email: string): Promise<void> {
+		try {
+			await this.auth.generatePasswordResetLink(email);
+		} catch (err) {
+			const firebaseErrorMessage = this.parseFirebaseError(err);
+			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
+		}
+	}
+
+	async getUserVerificationStatus(uid: string): Promise<boolean> {
+		try {
+			const user = await this.auth.getUser(uid);
+			if (!user) {
+				throw new Error('User not found');
+			}
+			return user.emailVerified;
+		} catch (err) {
+			const firebaseErrorMessage = this.parseFirebaseError(err);
+			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
+		}
+	}
+
+	async markUserEmailVerified(uid: string): Promise<void> {
+		try {
+			const user = await this.auth.updateUser(uid, {
+				emailVerified: true,
+			});
+			if (!user) {
+				throw new Error('User not found');
+			}
+		} catch (err) {
+			const firebaseErrorMessage = this.parseFirebaseError(err);
+			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
+		}
+	}
+
+	async verifyEmail(oobCode: string): Promise<void> {
+		try {
+			const decodedToken = await admin.auth().verifyIdToken(oobCode);
+			const uid = decodedToken.uid;
+
+			console.log('User successfully verified!');
+
+			// Update user's verification status in your database
+			await admin.auth().updateUser(uid, { emailVerified: true });
+		} catch (err) {
+			console.error('Error verifying code:', err);
+			const firebaseErrorMessage = this.parseFirebaseError(err);
+			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
+		}
+	}
+
+	async sendVerificationEmail(email: string, name: string): Promise<void> {
+		const serverVerifyEmailEndpoint = 'https://your-app.com/verify-email';
+
+		try {
+			const actionCodeSettings = {
+				url: serverVerifyEmailEndpoint,
+				handleCodeInApp: true,
+				continueUrl: serverVerifyEmailEndpoint,
+			};
+
+			const verificationLink = await admin
+				.auth()
+				.generatePasswordResetLink(email, actionCodeSettings);
+			console.log('verificationLink', verificationLink);
+			//TO:DO send email to user with verificationLink
+			await this.emailService.sendVerifyEmail(email, name, verificationLink);
+		} catch (err) {
+			const firebaseErrorMessage = this.parseFirebaseError(err);
+			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
+		}
+	}
+
+	async sendDummy() {
+		try {
+			await this.emailService.sendDummmyEmail();
 		} catch (err) {}
 	}
 
-	// async getUser(uid: string) {
-	// 	try {
-	// 		const firebaseUser = await this.firebaseAuth.auth.getUser(uid);
-	// 		return firebaseUser;
-	// 	} catch (err) {
-	// 		// TODO: Add the logger service here
-	// 		throw new ForbiddenException(err.message);
-	// 	}
-	// }
+	async sendDummySmtp() {
+		try {
+			const dummyEmail = await this.emailSmtpService.sendDummmyEmail();
+			console.log('dummyEmail', dummyEmail);
+			return dummyEmail;
+		} catch (err) {}
+	}
 
-	// async deleteUser(uid: string) {
-	// 	try {
-	// 		const result = await this.firebaseAuth.auth.deleteUser(uid);
-	// 		return result;
-	// 	} catch (err) {
-	// 		// TODO: Add the logger service here
-	// 		throw new ForbiddenException(err.message);
-	// 	}
-	// }
-
-	// async changeUserPassword(uid: string, newPassword: string) {
-	// 	try {
-	// 		const updatedPassword = await this.firebaseAuth.auth.updateUser(uid, {
-	// 			password: newPassword,
-	// 		});
-	// 		return updatedPassword;
-	// 		// Password update was successful
-	// 	} catch (err) {
-	// 		// TODO: Add the logger service here
-	// 		throw new Error(
-	// 			'Failed to change the password. Please make sure the user exists and try again.',
-	// 		);
-	// 	}
-	// }
-
-	// async resetPassword(email: string) {
-	// 	try {
-	// 		const resetPasswordLink =
-	// 			await this.firebaseAuth.generatePasswordResetLink(email);
-	// 		return resetPasswordLink;
-	// 	} catch (err) {
-	// 		// TODO: Add the logger service here
-	// 		throw new ForbiddenException(err.message);
-	// 	}
-	// }
-
-	// async verifyEmail(email: string) {
-	// 	try {
-	// 		const verifyEmailLink =
-	// 			await this.firebaseAuth.generateEmailVerificationLink(email);
-	// 		return verifyEmailLink;
-	// 	} catch (err) {
-	// 		// TODO: Add the logger service here
-	// 		throw new Error(err.message);
-	// 	}
-	// }
-
-	// async updateUserWithVerifiedEmail(id: string) {
-	// 	try {
-	// 		await this.firebaseAuth.updateUser(id, {
-	// 			emailVerified: true,
-	// 		});
-	// 	} catch (err) {
-	// 		// TODO: Add the logger service here
-	// 		throw new ForbiddenException(err.message);
-	// 	}
-	// }
-
-	// async getUserEmailVerificationStatus(email: string) {
-	// 	const firebaseUser = await this.firebaseAuth.getUserByEmail(email);
-	// 	return firebaseUser;
-	// }
-
-	// The function to parse Firebase errors
 	parseFirebaseError(error: FirebaseError): string {
 		let errorMessage: string;
 

@@ -1,29 +1,29 @@
 export interface FirebaseUser {
-  name: string;
-  picture: string;
-  iss: string;
-  aud: string;
-  auth_time: number;
-  user_id: string;
-  sub: string;
-  iat: number;
-  exp: number;
-  email: string;
-  email_verified: boolean;
-  firebase: Record<string, any>;
-  uid: string;
+	name: string;
+	picture: string;
+	iss: string;
+	aud: string;
+	auth_time: number;
+	user_id: string;
+	sub: string;
+	iat: number;
+	exp: number;
+	email: string;
+	email_verified: boolean;
+	firebase: Record<string, any>;
+	uid: string;
 }
 
 export interface ICreateFirebaseUser {
-  displayName: string;
-  email: string;
-  emailVerified: boolean;
-  password?: string;
-  phoneNumber?: string;
-  photoURL?: string | null;
+	displayName: string;
+	email: string;
+	emailVerified: boolean;
+	password?: string;
+	phoneNumber?: string;
+	photoURL?: string | null;
 }
 
 export type FirebaseError = {
-  code: string;
-  message: string;
+	code: string;
+	message: string;
 };

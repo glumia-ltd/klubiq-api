@@ -1,4 +1,6 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+npm run lint --concurrent false --relative
+npm run format --concurrent false --relative
 
-npm run lint-staged
+. "$(dirname "$0")/_/husky.sh"
+# . "$(dirname "$0")/_/prepare-commit-msg"
