@@ -7,7 +7,6 @@ import { initializeApp } from 'firebase/app';
 import { AuthController } from './auth.controller';
 import * as admin from 'firebase-admin';
 
-
 const _firebaseConfig = require('../../../config.json');
 
 interface FirebaseConfig {

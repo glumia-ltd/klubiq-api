@@ -33,7 +33,6 @@ export class UsersService {
 	): Promise<UserProfile | undefined> {
 		const displayName = `${createUserDto.firstName} ${createUserDto.lastName}`;
 		try {
-
 			// GET  ROLE
 			//TODO GET ROLE AND SET ROLE FOR USER
 			// const systemRoles = await Promise.all(
@@ -60,7 +59,6 @@ export class UsersService {
 
 			return undefined;
 		} catch (error) {
-
 			throw error;
 		}
 	}
@@ -139,7 +137,6 @@ export class UsersService {
 	remove(id: number) {
 		return `This action removes a #${id} user`;
 	}
-
 
 	private async preloadOrganization(name: string): Promise<Organization> {
 		const org = await this.organizationRepository.findOrgByName(name);

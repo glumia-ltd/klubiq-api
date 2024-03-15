@@ -28,7 +28,7 @@ export class AuthController {
 	@Post('dummy-email')
 	async dummyEmail(): Promise<any> {
 		try {
-			return  this.authService.sendDummySmtp();
+			return this.authService.sendDummySmtp();
 			//  { message: 'Email verification successful!' };
 		} catch (err) {
 			console.error('Error verifying email:', err);

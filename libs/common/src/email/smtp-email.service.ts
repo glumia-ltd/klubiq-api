@@ -1,7 +1,5 @@
 import * as nodemailer from 'nodemailer';
-import {
-	EmailInterfaceParams,
-} from './types/email-params.interface';
+import { EmailInterfaceParams } from './types/email-params.interface';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { verifyEmailTemplate } from './templates/verify-email.template';
@@ -9,8 +7,8 @@ import { verifyEmailTemplate } from './templates/verify-email.template';
 @Injectable()
 export class MailerSendSMTPService {
 	private readonly transporter: nodemailer.Transport;
-    private from: string;
-    private fromName: string;
+	private from: string;
+	private fromName: string;
 
 	constructor(private readonly configService: ConfigService) {
 		// Retrieve SMTP credentials (username, password, server, port) from configuration
@@ -18,8 +16,8 @@ export class MailerSendSMTPService {
 		const password = this.configService.get('SMTP_PASSWORD');
 		const server = this.configService.get('SMTP_SERVER');
 		const port = this.configService.get('SMTP_PORT');
-        this.from = this.configService.get('SMTP_FROM_EMAIL');
-        this.fromName = this.configService.get('SMTP_FROM_NAME')
+		this.from = this.configService.get('SMTP_FROM_EMAIL');
+		this.fromName = this.configService.get('SMTP_FROM_NAME');
 
 		// Create SMTP transporter with secure connection
 		this.transporter = nodemailer.createTransport({

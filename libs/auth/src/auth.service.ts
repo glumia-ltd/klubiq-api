@@ -11,7 +11,7 @@ export class AuthService {
 	constructor(
 		@Inject('FIREBASE_ADMIN') private firebaseAdminApp: admin.app.App,
 		private emailService: MailerSendService,
-		private emailSmtpService: MailerSendSMTPService
+		private emailSmtpService: MailerSendSMTPService,
 	) {}
 
 	get auth(): auth.Auth {
@@ -186,8 +186,8 @@ export class AuthService {
 	async sendDummySmtp() {
 		try {
 			const dummyEmail = await this.emailSmtpService.sendDummmyEmail();
-			console.log('dummyEmail', dummyEmail)
-			return dummyEmail
+			console.log('dummyEmail', dummyEmail);
+			return dummyEmail;
 		} catch (err) {}
 	}
 
