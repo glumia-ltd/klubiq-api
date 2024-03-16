@@ -9,7 +9,7 @@ import {
 	ManyToOne,
 	CreateDateColumn,
 	UpdateDateColumn,
-	Index
+	Index,
 } from 'typeorm';
 import { UserProfile } from '@app/common';
 import { OrganizationRole } from '@app/common';

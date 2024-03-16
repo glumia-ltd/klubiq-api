@@ -9,7 +9,7 @@ import {
 	RolesRepository,
 	OrganizationRole,
 	LANDLORD_ROLE,
-	ORG_OWNER_ROLE
+	ORG_OWNER_ROLE,
 } from '@app/common';
 import { AuthService } from '@app/auth';
 import { CreateOrganizationUserDto } from './dto/create-organization-user.dto';
@@ -71,7 +71,9 @@ export class UsersService {
 				transactionalEntityManager,
 			);
 			const systemRole = await this.getLandlordRole(transactionalEntityManager);
-			const organizationRole = await this.getOrgOwnerRole(transactionalEntityManager);
+			const organizationRole = await this.getOrgOwnerRole(
+				transactionalEntityManager,
+			);
 
 			const user = new OrganizationUser();
 			user.firstName = createUserDto.firstName;
@@ -94,12 +96,18 @@ export class UsersService {
 		});
 	}
 
-	private async getLandlordRole(entityManager: EntityManager):  Promise<Role> {
-		return await entityManager.findOne(Role, { where: { name: LANDLORD_ROLE } });
+	private async getLandlordRole(entityManager: EntityManager): Promise<Role> {
+		return await entityManager.findOne(Role, {
+			where: { name: LANDLORD_ROLE },
+		});
 	}
 
-	private async getOrgOwnerRole(entityManager: EntityManager):  Promise<OrganizationRole> {
-		return await entityManager.findOne(OrganizationRole, { where: { name: ORG_OWNER_ROLE } });
+	private async getOrgOwnerRole(
+		entityManager: EntityManager,
+	): Promise<OrganizationRole> {
+		return await entityManager.findOne(OrganizationRole, {
+			where: { name: ORG_OWNER_ROLE },
+		});
 	}
 
 	private async findOrCreateOrganization(

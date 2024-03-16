@@ -7,7 +7,7 @@ import {
 	OneToMany,
 	CreateDateColumn,
 	UpdateDateColumn,
-	Index
+	Index,
 } from 'typeorm';
 import { OrganizationUser } from '../../users/entities/organization-user.entity';
 

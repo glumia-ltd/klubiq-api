@@ -39,10 +39,12 @@ async function bootstrap() {
 	/// END SWAGGER CONFIGURATION
 
 	/// APP SETTINGS
-	app.useGlobalPipes(new ValidationPipe({
-		whitelist: true,
-		forbidNonWhitelisted: true,
-	}));
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			forbidNonWhitelisted: true,
+		}),
+	);
 	app.useGlobalFilters(new HttpExceptionFilter());
 	app.useGlobalInterceptors(new HttpResponseInterceptor());
 	await app.listen(3000);
