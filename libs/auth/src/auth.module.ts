@@ -8,6 +8,7 @@ import { AuthController } from './auth.controller';
 import * as admin from 'firebase-admin';
 
 const _firebaseConfig = require('../../../config.json');
+const app = admin.apps;
 
 interface FirebaseConfig {
 	type: string;
@@ -56,6 +57,9 @@ const firebaseAuthProvider = {
 const firebaseAdminProvider = {
 	provide: 'FIREBASE_ADMIN',
 	useFactory: () => {
+		if (app.length) {
+			return app[0];
+		}
 		return admin.initializeApp({
 			credential: admin.credential.cert(firebase_params),
 		});

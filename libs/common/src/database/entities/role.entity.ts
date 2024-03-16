@@ -4,7 +4,7 @@ import {
 	Column,
 	CreateDateColumn,
 	UpdateDateColumn,
-	ManyToMany,
+	OneToMany,
 } from 'typeorm';
 import { UserProfile } from './user-profile.entity';
 
@@ -19,7 +19,7 @@ export class Role {
 	@Column({ type: 'text', nullable: true })
 	description?: string;
 
-	@ManyToMany(() => UserProfile, (userProfile) => userProfile.roles)
+	@OneToMany(() => UserProfile, (userProfile) => userProfile.systemRole)
 	users?: UserProfile[];
 
 	@CreateDateColumn()

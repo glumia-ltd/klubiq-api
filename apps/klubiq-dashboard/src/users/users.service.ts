@@ -7,6 +7,9 @@ import {
 	UserProfilesRepository,
 	Role,
 	RolesRepository,
+	OrganizationRole,
+	LANDLORD_ROLE,
+	ORG_OWNER_ROLE
 } from '@app/common';
 import { AuthService } from '@app/auth';
 import { CreateOrganizationUserDto } from './dto/create-organization-user.dto';
@@ -33,12 +36,6 @@ export class UsersService {
 	): Promise<UserProfile | undefined> {
 		const displayName = `${createUserDto.firstName} ${createUserDto.lastName}`;
 		try {
-			// GET  ROLE
-			//TODO GET ROLE AND SET ROLE FOR USER
-			// const systemRoles = await Promise.all(
-			// 	createUserDto.roles.map(async (name) => this.preloadSystemRole(name)),
-			// );
-
 			const fireUser = await this.authService.createUser({
 				email: createUserDto.email,
 				password: createUserDto.password,
@@ -68,23 +65,26 @@ export class UsersService {
 		createUserDto: CreateOrganizationUserDto,
 	): Promise<UserProfile> {
 		const entityManager = this.organizationRepository.manager;
-
 		return entityManager.transaction(async (transactionalEntityManager) => {
 			const organization = await this.findOrCreateOrganization(
 				createUserDto.companyName, // Assuming this is the correct property name
 				transactionalEntityManager,
 			);
-			console.log('organization', organization);
+			const systemRole = await this.getLandlordRole(transactionalEntityManager);
+			const organizationRole = await this.getOrgOwnerRole(transactionalEntityManager);
+
 			const user = new OrganizationUser();
 			user.firstName = createUserDto.firstName;
 			user.lastName = createUserDto.lastName;
 			user.firebaseId = fireUser.uid;
 			user.organization = organization;
+			user.orgRole = organizationRole;
 
 			const userProfile = new UserProfile();
 			userProfile.email = createUserDto.email;
 			userProfile.firebaseId = fireUser.uid;
 			userProfile.organizationUser = user;
+			userProfile.systemRole = systemRole;
 
 			await transactionalEntityManager.save(user);
 			await transactionalEntityManager.save(userProfile);
@@ -92,6 +92,14 @@ export class UsersService {
 			this.logger.debug('User and profile created:', userProfile);
 			return userProfile;
 		});
+	}
+
+	private async getLandlordRole(entityManager: EntityManager):  Promise<Role> {
+		return await entityManager.findOne(Role, { where: { name: LANDLORD_ROLE } });
+	}
+
+	private async getOrgOwnerRole(entityManager: EntityManager):  Promise<OrganizationRole> {
+		return await entityManager.findOne(OrganizationRole, { where: { name: ORG_OWNER_ROLE } });
 	}
 
 	private async findOrCreateOrganization(
@@ -114,7 +122,7 @@ export class UsersService {
 	async getUserByFireBaseId(firebaseId: string) {
 		return this.usersRepository.findOneByCondition({ firebaseId: firebaseId }, [
 			'profile',
-			'role',
+			'orgRole',
 			'organization',
 		]);
 	}

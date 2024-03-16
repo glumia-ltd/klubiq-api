@@ -7,6 +7,7 @@ import {
 	OneToMany,
 	CreateDateColumn,
 	UpdateDateColumn,
+	Index
 } from 'typeorm';
 import { OrganizationUser } from '../../users/entities/organization-user.entity';
 
@@ -15,6 +16,7 @@ export class Organization {
 	@PrimaryGeneratedColumn('uuid')
 	organizationUuid?: string;
 
+	@Index()
 	@Generated('increment')
 	@Column({ unique: true })
 	organizationId?: number;
@@ -22,6 +24,7 @@ export class Organization {
 	@Column({ default: true })
 	isActive?: boolean;
 
+	@Index()
 	@Column({ length: 100, unique: true })
 	name: string;
 

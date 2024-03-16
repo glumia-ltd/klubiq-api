@@ -9,9 +9,10 @@ import {
 	ManyToOne,
 	CreateDateColumn,
 	UpdateDateColumn,
+	Index
 } from 'typeorm';
 import { UserProfile } from '@app/common';
-import { OrganizationRole } from '../../../../../libs/common/src/database/entities/organization-role.entity';
+import { OrganizationRole } from '@app/common';
 import { Organization } from '../../organization/entities/organization.entity';
 
 @Entity({ schema: 'poo' })
@@ -19,10 +20,12 @@ export class OrganizationUser {
 	@PrimaryGeneratedColumn('uuid')
 	organizationUserUuid?: string;
 
+	@Index()
 	@Generated('increment')
 	@Column({ unique: true })
 	organizationUserId?: number;
 
+	@Index()
 	@Column({ unique: true })
 	firebaseId: string;
 
@@ -41,21 +44,21 @@ export class OrganizationUser {
 	@Column({ default: false })
 	isAccountVerified?: boolean;
 
-	@OneToOne(() => UserProfile)
+	@OneToOne(() => UserProfile, { eager: true })
 	@JoinColumn({
 		name: 'profileUuid',
 		referencedColumnName: 'profileUuid',
 	})
 	profile?: UserProfile;
 
-	@ManyToOne(() => OrganizationRole)
+	@ManyToOne(() => OrganizationRole, { eager: true })
 	@JoinColumn({
 		name: 'roleId',
 		referencedColumnName: 'id',
 	})
-	role?: OrganizationRole;
+	orgRole?: OrganizationRole;
 
-	@ManyToOne(() => Organization)
+	@ManyToOne(() => Organization, { eager: true })
 	@JoinColumn({
 		name: 'organizationUuid',
 		referencedColumnName: 'organizationUuid',

@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-	IsArray,
 	IsBoolean,
 	IsEmail,
 	IsNumber,
@@ -51,13 +50,6 @@ export class CreateOrganizationUserDto {
 	})
 	@IsString()
 	companyName: string;
-
-	@ApiProperty({
-		description: 'User system roles',
-		example: ['admin', 'user'],
-	})
-	@IsArray()
-	roles: string[];
 }
 
 export class UserSignUpResponseDataDto {

@@ -49,7 +49,7 @@ export class CustomLogging {
 				winston.format.errors({ stack: true }),
 				winston.format.splat(),
 				winston.format.json(),
-				winston.format.colorize(),
+				winston.format.colorize({ all: true }),
 				this.myFormat,
 			),
 			transports: [

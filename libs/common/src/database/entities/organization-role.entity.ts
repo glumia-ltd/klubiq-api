@@ -29,7 +29,7 @@ export class OrganizationRole {
 	@UpdateDateColumn()
 	updatedDate?: Date;
 
-	@OneToMany(() => OrganizationUser, (orgUser) => orgUser.role)
+	@OneToMany(() => OrganizationUser, (orgUser) => orgUser.orgRole)
 	users?: OrganizationUser[];
 
 	@ManyToMany(

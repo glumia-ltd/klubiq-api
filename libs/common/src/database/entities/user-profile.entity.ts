@@ -4,10 +4,11 @@ import {
 	Column,
 	CreateDateColumn,
 	UpdateDateColumn,
-	ManyToMany,
+	ManyToOne,
 	OneToOne,
 	Generated,
-	JoinTable,
+	JoinColumn,
+	Index,
 } from 'typeorm';
 import { Role } from './role.entity';
 import { OrganizationUser } from '../../../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
@@ -17,13 +18,16 @@ export class UserProfile {
 	@PrimaryGeneratedColumn('uuid')
 	profileUuid?: string;
 
+	@Index()
 	@Generated('increment')
 	@Column({ unique: true })
 	profileId?: number;
 
+	@Index()
 	@Column({ unique: true })
 	firebaseId: string;
 
+	@Index()
 	@Column({ unique: true })
 	email: string;
 
@@ -66,19 +70,18 @@ export class UserProfile {
 	@Column({ type: 'text', nullable: true })
 	bio?: string;
 
-	@ManyToMany(() => Role)
-	@JoinTable({
-		name: 'user_profile_roles',
-		joinColumn: {
-			name: 'userProfileId',
-			referencedColumnName: 'profileUuid',
-		},
-		inverseJoinColumn: {
-			name: 'roleId',
-			referencedColumnName: 'id',
-		},
+	@Column({ default: false })
+	isTermsAndConditionAccepted?: boolean;
+
+	@Column({ default: false })
+	isPrivacyPolicyAgreed?: boolean;
+
+	@ManyToOne(() => Role, { eager: true })
+	@JoinColumn({
+		name: 'roleId',
+		referencedColumnName: 'id',
 	})
-	roles?: Role[];
+	systemRole?: Role;
 
 	@OneToOne(
 		() => OrganizationUser,
