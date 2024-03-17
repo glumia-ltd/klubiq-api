@@ -16,9 +16,7 @@ import { EntityManager } from 'typeorm';
 			inject: [EntityManager],
 		},
 	],
-	imports: [
-		TypeOrmModule.forFeature([Organization])
-	],
+	imports: [TypeOrmModule.forFeature([Organization])],
 	exports: [OrganizationRepository],
 })
 export class OrganizationModule {}

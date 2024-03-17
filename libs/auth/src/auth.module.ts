@@ -71,7 +71,11 @@ const firebaseAdminProvider = {
 		firebaseAdminProvider,
 	],
 	exports: [AuthService],
-	imports: [DatabaseModule, ConfigModule, forwardRef(()=>KlubiqDashboardModule) ],
+	imports: [
+		DatabaseModule,
+		ConfigModule,
+		forwardRef(() => KlubiqDashboardModule),
+	],
 	controllers: [AuthController],
 })
 export class AuthModule {}

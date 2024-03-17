@@ -16,7 +16,7 @@ import { AuthModule } from '@app/auth';
 		OrganizationModule,
 		TypeOrmModule.forFeature([OrganizationUser]),
 		RepositoriesModule,
-		forwardRef(()=>AuthModule)
+		forwardRef(() => AuthModule),
 	],
 	controllers: [UsersController],
 	providers: [
