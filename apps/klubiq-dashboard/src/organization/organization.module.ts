@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrganizationService } from './organization.service';
 import { OrganizationController } from './organization.controller';
 import { Organization } from './entities/organization.entity';
-import { AuthModule } from '@app/auth';
 import { OrganizationRepository } from './organization.repository';
 import { EntityManager } from 'typeorm';
 
@@ -17,7 +16,9 @@ import { EntityManager } from 'typeorm';
 			inject: [EntityManager],
 		},
 	],
-	imports: [TypeOrmModule.forFeature([Organization]), AuthModule],
+	imports: [
+		TypeOrmModule.forFeature([Organization])
+	],
 	exports: [OrganizationRepository],
 })
 export class OrganizationModule {}

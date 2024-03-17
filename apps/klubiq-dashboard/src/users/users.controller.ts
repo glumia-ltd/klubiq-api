@@ -3,7 +3,6 @@ import {
 	Get,
 	Post,
 	Body,
-	// Patch,
 	Param,
 	Delete,
 } from '@nestjs/common';
@@ -13,7 +12,6 @@ import {
 	CreateOrganizationUserDto,
 	UserSignUpResponseDto,
 } from './dto/create-organization-user.dto';
-// import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('users')
