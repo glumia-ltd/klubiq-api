@@ -6,6 +6,7 @@ import { EntityManager } from 'typeorm';
 import { UsersRepository } from './users.repository';
 import { OrganizationRepository } from '../organization/organization.repository';
 import { RolesRepository, UserProfilesRepository } from '@app/common';
+import * as AutoMapper from '@automapper/nestjs';
 
 describe('UsersController', () => {
 	let controller: UsersController;
@@ -21,6 +22,10 @@ describe('UsersController', () => {
 				OrganizationRepository,
 				RolesRepository,
 				UserProfilesRepository,
+				{
+					provide: AutoMapper.InjectMapper,
+					useValue: 'mapper',
+				},
 			],
 		})
 			.overrideProvider(AuthService)
