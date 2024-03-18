@@ -6,13 +6,18 @@ import { EntityManager } from 'typeorm';
 import { UsersRepository } from './users.repository';
 import { OrganizationRepository } from '../organization/organization.repository';
 import { RolesRepository, UserProfilesRepository } from '@app/common';
-import * as AutoMapper from '@automapper/nestjs';
+import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
+import { Mapper, createMapper } from '@automapper/core';
+import { classes } from '@automapper/classes';
 
 describe('UsersController', () => {
 	let controller: UsersController;
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	let mapper: Mapper;
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
+			imports: [AutomapperModule],
 			controllers: [UsersController],
 			providers: [
 				UsersService,
@@ -23,8 +28,10 @@ describe('UsersController', () => {
 				RolesRepository,
 				UserProfilesRepository,
 				{
-					provide: AutoMapper.InjectMapper,
-					useValue: 'mapper',
+					provide: getMapperToken(),
+					useValue: createMapper({
+						strategyInitializer: classes(),
+					}),
 				},
 			],
 		})
@@ -32,6 +39,7 @@ describe('UsersController', () => {
 			.useValue('')
 			.compile();
 
+		mapper = module.get<Mapper>(getMapperToken());
 		controller = module.get<UsersController>(UsersController);
 	});
 
