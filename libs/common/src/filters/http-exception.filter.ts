@@ -25,7 +25,7 @@ export class HttpExceptionFilter<T extends HttpException>
 			level: 'error',
 			message: exceptionResponse.toString,
 			err: error,
-			errCustomCode: 'k100',
+			errCustomCode: 'K100',
 		});
 		response
 			.status(status)

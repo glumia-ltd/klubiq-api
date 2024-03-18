@@ -9,6 +9,7 @@ import { AuthModule } from '@app/auth';
 import { UsersRepository } from './users.repository';
 import { EntityManager } from 'typeorm';
 import { RepositoriesModule } from '@app/common';
+import { OrgUserProfile } from './profiles/org-user-profile';
 
 @Module({
 	imports: [
@@ -21,6 +22,7 @@ import { RepositoriesModule } from '@app/common';
 	controllers: [UsersController],
 	providers: [
 		UsersService,
+		OrgUserProfile,
 		{
 			provide: UsersRepository,
 			useFactory: (em: EntityManager) => new UsersRepository(em),

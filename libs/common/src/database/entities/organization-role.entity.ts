@@ -11,12 +11,14 @@ import {
 } from 'typeorm';
 
 import { FeaturePermission } from './feature-permission.entity';
+import { AutoMap } from '@automapper/classes';
 
 @Entity({ schema: 'poo' })
 export class OrganizationRole {
 	@PrimaryGeneratedColumn()
 	id?: number;
 
+	@AutoMap()
 	@Column({ length: 255, unique: true })
 	name: string;
 

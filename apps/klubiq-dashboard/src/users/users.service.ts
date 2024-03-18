@@ -140,11 +140,11 @@ export class UsersService {
 	}
 
 	async findOne(id: number) {
-		return await this.usersRepository.findOneByCondition(
-			{ organizationUserId: id },
-			['profile', 'role', 'organization'],
-		);
+		return await this.usersRepository.findOneByCondition({
+			organizationUserId: id,
+		});
 	}
+	// ['profile', 'role', 'organization'],
 
 	// update(id: number, updateOrgUserDto: UpdateOrganizationUserDto) {
 	// 	return `This action updates a #${id} user`;
