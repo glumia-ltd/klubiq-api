@@ -196,12 +196,10 @@ export class AuthService {
 
 			const accessToken = credential.accessToken;
 			const idToken = credential.idToken;
-
-			const uid = credential.uid;
-			const displayName = credential.name;
 			const email = credential.email;
+			const existingUser = await this.userService.findByEmail(email);
 
-			return { accessToken, idToken, uid, displayName, email };
+			return { user: existingUser, accessToken: accessToken, idToken: idToken };
 		} catch (error) {
 			console.error('Error exchanging Google token:', error);
 			throw error;
