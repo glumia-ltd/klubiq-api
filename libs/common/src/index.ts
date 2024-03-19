@@ -11,6 +11,6 @@ export * from './repositories/permissions.repository';
 export * from './repositories/roles.repository';
 export * from './repositories/repositories.module';
 export * from './filters/http-exception.filter';
-export * from './http-response/http-response.interceptor';
+export * from './interceptors/http-response.interceptor';
 export * from './config/custom-logging';
 export * from './config/config.constants';
