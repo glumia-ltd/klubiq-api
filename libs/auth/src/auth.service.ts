@@ -41,23 +41,20 @@ export class AuthService {
 				password: newUser.password,
 				displayName: newUser.displayName,
 			});
-			console.log('userRecord', userRecord);
 			return userRecord;
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
-			console.log('firebaseError', err);
 			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
 		}
 	}
 
 	async getUser(uid: string) {
 		try {
-			// Use the correct import and access auth through getAuth:
 			const userRecord = await this.auth.getUser(uid);
 			return userRecord;
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
-			// Handle the error appropriately, such as logging or returning a custom message:
+
 			console.error('Error fetching user:', err);
 			return firebaseErrorMessage
 				? firebaseErrorMessage
@@ -179,8 +176,7 @@ export class AuthService {
 			const verificationLink = await admin
 				.auth()
 				.generatePasswordResetLink(email, actionCodeSettings);
-			console.log('verificationLink', verificationLink);
-			//TO:DO send email to user with verificationLink
+
 			await this.emailService.sendVerifyEmail(email, name, verificationLink);
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
