@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { DatabaseModule, ConfigModule } from '@app/common';
 import { ConfigService } from '@nestjs/config';
 import { initializeApp } from 'firebase/app';
 import { AuthController } from './auth.controller';
 import * as admin from 'firebase-admin';
+import { KlubiqDashboardModule } from 'apps/klubiq-dashboard/src/klubiq-dashboard.module';
 
 const _firebaseConfig = require('../../../config.json');
 const apps = admin.apps;
@@ -74,7 +75,11 @@ const firebaseAdminProvider = {
 		firebaseAdminProvider,
 	],
 	exports: [AuthService],
-	imports: [DatabaseModule, ConfigModule],
+	imports: [
+		DatabaseModule,
+		ConfigModule,
+		forwardRef(() => KlubiqDashboardModule),
+	],
 	controllers: [AuthController],
 })
 export class AuthModule {}

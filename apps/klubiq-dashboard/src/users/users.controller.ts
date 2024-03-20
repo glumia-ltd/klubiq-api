@@ -1,12 +1,4 @@
-import {
-	Controller,
-	Get,
-	Post,
-	Body,
-	// Patch,
-	Param,
-	Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
 	CreateOrganizationUserDto,
@@ -14,7 +6,6 @@ import {
 } from './dto/create-organization-user.dto';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-// import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { UserProfile } from '@app/common';
 import { OrganizationUser } from './entities/organization-user.entity';

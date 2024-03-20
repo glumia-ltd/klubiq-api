@@ -5,19 +5,30 @@ import { Inject } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import * as auth from 'firebase-admin/auth';
 import { FirebaseError } from 'firebase/app';
+import { userLoginDto } from './dto/user-login.dto';
+import { UsersService } from 'apps/klubiq-dashboard/src/users/users.service';
+import { Auth, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 
 @Injectable()
 export class AuthService {
+	private firebaseClientAuth: Auth;
 	constructor(
 		@Inject('FIREBASE_ADMIN') private firebaseAdminApp: admin.app.App,
+		@Inject('FIREBASE_AUTH') private firebaseClient: any,
 		private emailService: MailerSendService,
 		private emailSmtpService: MailerSendSMTPService,
-	) {}
+		private userService: UsersService,
+	) {
+		this.firebaseClientAuth = getAuth(this.firebaseClient);
+	}
 
 	get auth(): auth.Auth {
 		return this.firebaseAdminApp.auth();
 	}
 
+	get clientAuth() {
+		return this.firebaseClientAuth;
+	}
 	async createUser(newUser: {
 		email: string;
 		password: string;
@@ -30,23 +41,20 @@ export class AuthService {
 				password: newUser.password,
 				displayName: newUser.displayName,
 			});
-			console.log('userRecord', userRecord);
 			return userRecord;
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
-			console.log('firebaseError', err);
 			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
 		}
 	}
 
 	async getUser(uid: string) {
 		try {
-			// Use the correct import and access auth through getAuth:
 			const userRecord = await this.auth.getUser(uid);
 			return userRecord;
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
-			// Handle the error appropriately, such as logging or returning a custom message:
+
 			console.error('Error fetching user:', err);
 			return firebaseErrorMessage
 				? firebaseErrorMessage
@@ -168,13 +176,92 @@ export class AuthService {
 			const verificationLink = await admin
 				.auth()
 				.generatePasswordResetLink(email, actionCodeSettings);
-			console.log('verificationLink', verificationLink);
-			//TO:DO send email to user with verificationLink
+
 			await this.emailService.sendVerifyEmail(email, name, verificationLink);
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);
 			return firebaseErrorMessage ? firebaseErrorMessage : err.message;
 		}
+	}
+
+	async exchangeGoogleToken(authorizationCode: string) {
+		try {
+			const auth = admin.auth();
+
+			const credential = await auth.verifyIdToken(authorizationCode);
+
+			const accessToken = credential.accessToken;
+			const idToken = credential.idToken;
+			const email = credential.email;
+			const existingUser = await this.userService.findByEmail(email);
+
+			return { user: existingUser, accessToken: accessToken, idToken: idToken };
+		} catch (error) {
+			console.error('Error exchanging Google token:', error);
+			throw error;
+		}
+	}
+
+	async login(login: userLoginDto) {
+		const existingUser = await this.userService.findByEmail(login.email);
+		console.log(existingUser);
+		if (!existingUser) {
+			return {
+				error: true,
+				status: 400,
+				message:
+					'You do not have an account, kindly register before trying to log in',
+			};
+		}
+
+		const result = await signInWithEmailAndPassword(
+			this.firebaseClientAuth,
+			login.email,
+			login.password,
+		)
+			.then(async (userCredential) => {
+				// Signed in
+				const user = userCredential.user;
+				console.log('fireUser', user);
+				// check if user is verified
+				if (!user.emailVerified) {
+					// send verification email to user
+					await this.sendVerificationEmail(user.email, user.displayName);
+					// send error response to user asking to verify email
+					return {
+						error: true,
+						errorCode: 400,
+						message:
+							'Kindly verify your email, check your email for verification link',
+						data: null,
+					};
+				}
+
+				// TODO: send user and email saying that they successfully logged in
+				return {
+					user: existingUser,
+					token: (await userCredential.user.getIdTokenResult()).token,
+					refreshToken: user.refreshToken,
+				};
+			})
+			.catch(async (error) => {
+				// TODO: Add the logger service here
+				const match = error.message.match(/Firebase: Error \((.*?)\)/);
+				if (match && match[1]) {
+					const firebaseErrorMessage = match[1];
+					error.message = firebaseErrorMessage;
+				}
+
+				if (error.message === 'auth/wrong-password') {
+				}
+				return {
+					error: true,
+					errorCode: 401,
+					message: error.message,
+					data: null,
+				};
+			});
+		return result;
 	}
 
 	async sendDummy() {
