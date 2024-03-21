@@ -9,7 +9,12 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { userLoginDto } from './dto/user-login.dto';
+import {
+	userLoginDto,
+	OrgUserSignUpDto,
+	VerifyEmailDto,
+} from './dto/user-login.dto';
+import { SignUpResponseDto } from './dto/auth-response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -20,7 +25,7 @@ export class AuthController {
 	@ApiOkResponse({
 		description: 'Verifies user email',
 	})
-	async verifyEmail(@Body() data: { oobCode: string }): Promise<any> {
+	async verifyEmail(@Body() data: VerifyEmailDto): Promise<any> {
 		try {
 			await this.authService.verifyEmail(data.oobCode);
 			return { message: 'Email verification successful!' };
@@ -38,7 +43,6 @@ export class AuthController {
 		try {
 			return this.authService.login(data);
 		} catch (err) {
-			console.error('Error verifying email:', err);
 			throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -68,5 +72,15 @@ export class AuthController {
 			console.error('Error verifying email:', err);
 			throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
+	}
+
+	@Post('renter-signup')
+	@ApiOkResponse({
+		description: 'Creates a new Org user and returns the data an auth token',
+		type: SignUpResponseDto,
+	})
+	async createUser(@Body() createUser: OrgUserSignUpDto) {
+		const userData = await this.authService.createOrgUser(createUser);
+		return userData;
 	}
 }

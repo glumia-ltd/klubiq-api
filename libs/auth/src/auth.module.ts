@@ -7,6 +7,8 @@ import { initializeApp } from 'firebase/app';
 import { AuthController } from './auth.controller';
 import * as admin from 'firebase-admin';
 import { KlubiqDashboardModule } from 'apps/klubiq-dashboard/src/klubiq-dashboard.module';
+import { OrganizationModule } from 'apps/klubiq-dashboard/src/organization/organization.module';
+import { OrgUserProfile } from './profiles/org-user-profile';
 
 const _firebaseConfig = require('../../../config.json');
 const apps = admin.apps;
@@ -73,11 +75,13 @@ const firebaseAdminProvider = {
 		ConfigService,
 		firebaseAuthProvider,
 		firebaseAdminProvider,
+		OrgUserProfile,
 	],
 	exports: [AuthService],
 	imports: [
 		DatabaseModule,
 		ConfigModule,
+		OrganizationModule,
 		forwardRef(() => KlubiqDashboardModule),
 	],
 	controllers: [AuthController],

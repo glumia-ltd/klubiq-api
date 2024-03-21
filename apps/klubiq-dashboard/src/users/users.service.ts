@@ -2,21 +2,11 @@ import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { UsersRepository } from './users.repository';
-import {
-	UserProfile,
-	UserProfilesRepository,
-	Role,
-	RolesRepository,
-	OrganizationRole,
-	LANDLORD_ROLE,
-	ORG_OWNER_ROLE,
-} from '@app/common';
+import { UserProfilesRepository, Role, RolesRepository } from '@app/common';
 import { AuthService } from '@app/auth';
-import { CreateOrganizationUserDto } from './dto/create-organization-user.dto';
 import { OrganizationRepository } from '../organization/organization.repository';
 
 // import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
-import { OrganizationUser } from './entities/organization-user.entity';
 import { Organization } from '../organization/entities/organization.entity';
 
 @Injectable()
@@ -31,102 +21,6 @@ export class UsersService {
 		private readonly userProfilesRepository: UserProfilesRepository,
 		private readonly rolesRepository: RolesRepository,
 	) {}
-
-	async create(
-		createUserDto: CreateOrganizationUserDto,
-	): Promise<UserProfile | undefined> {
-		const displayName = `${createUserDto.firstName} ${createUserDto.lastName}`;
-		try {
-			const fireUser = await this.authService.createUser({
-				email: createUserDto.email,
-				password: createUserDto.password,
-				displayName: displayName,
-			});
-
-			if (fireUser) {
-				const userProfile = await this.createUserWithOrganization(
-					fireUser,
-					createUserDto,
-				);
-				await this.authService.sendVerificationEmail(
-					createUserDto.email,
-					displayName,
-				);
-				return userProfile;
-			}
-
-			return undefined;
-		} catch (error) {
-			throw error;
-		}
-	}
-
-	private async createUserWithOrganization(
-		fireUser: any,
-		createUserDto: CreateOrganizationUserDto,
-	): Promise<UserProfile> {
-		const entityManager = this.organizationRepository.manager;
-		return entityManager.transaction(async (transactionalEntityManager) => {
-			const organization = await this.findOrCreateOrganization(
-				createUserDto.companyName, // Assuming this is the correct property name
-				transactionalEntityManager,
-			);
-			const systemRole = await this.getLandlordRole(transactionalEntityManager);
-			const organizationRole = await this.getOrgOwnerRole(
-				transactionalEntityManager,
-			);
-
-			const user = new OrganizationUser();
-			user.firstName = createUserDto.firstName;
-			user.lastName = createUserDto.lastName;
-			user.firebaseId = fireUser.uid;
-			user.organization = organization;
-			user.orgRole = organizationRole;
-
-			const userProfile = new UserProfile();
-			userProfile.email = createUserDto.email;
-			userProfile.firebaseId = fireUser.uid;
-			userProfile.organizationUser = user;
-			userProfile.systemRole = systemRole;
-
-			await transactionalEntityManager.save(user);
-			await transactionalEntityManager.save(userProfile);
-
-			this.logger.debug('User and profile created:', userProfile);
-			return userProfile;
-		});
-	}
-
-	private async getLandlordRole(entityManager: EntityManager): Promise<Role> {
-		return await entityManager.findOne(Role, {
-			where: { name: LANDLORD_ROLE },
-		});
-	}
-
-	private async getOrgOwnerRole(
-		entityManager: EntityManager,
-	): Promise<OrganizationRole> {
-		return await entityManager.findOne(OrganizationRole, {
-			where: { name: ORG_OWNER_ROLE },
-		});
-	}
-
-	private async findOrCreateOrganization(
-		name: string,
-		entityManager: EntityManager,
-	): Promise<Organization> {
-		const existingOrganization = await entityManager.findOne(Organization, {
-			where: { name: name },
-		});
-
-		if (existingOrganization) {
-			return existingOrganization;
-		}
-
-		const newOrganization = new Organization();
-		newOrganization.name = name;
-		return entityManager.save(newOrganization);
-	}
 
 	async getUserByFireBaseId(firebaseId: string) {
 		return this.usersRepository.findOneByCondition({ firebaseId: firebaseId });
@@ -145,11 +39,6 @@ export class UsersService {
 			organizationUserId: id,
 		});
 	}
-	// ['profile', 'role', 'organization'],
-
-	// update(id: number, updateOrgUserDto: UpdateOrganizationUserDto) {
-	// 	return `This action updates a #${id} user`;
-	// }
 
 	remove(id: number) {
 		return `This action removes a #${id} user`;

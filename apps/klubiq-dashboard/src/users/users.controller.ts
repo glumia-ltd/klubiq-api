@@ -1,13 +1,9 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Param, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
-import {
-	CreateOrganizationUserDto,
-	UserResponseDto,
-} from './dto/create-organization-user.dto';
+import { UserResponseDto } from './dto/create-organization-user.dto';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { UserProfile } from '@app/common';
 import { OrganizationUser } from './entities/organization-user.entity';
 
 @ApiTags('users')
@@ -18,15 +14,7 @@ export class UsersController {
 		@InjectMapper() private readonly mapper: Mapper,
 	) {}
 
-	@Post('/signup')
-	@ApiOkResponse({
-		description: 'Creates a new user and returns the data created',
-		type: UserResponseDto,
-	})
-	async createUser(@Body() createUser: CreateOrganizationUserDto) {
-		const userData = await this.usersService.create(createUser);
-		return this.mapper.map(userData, UserProfile, UserResponseDto);
-	}
+	//return this.mapper.map(userData, UserProfile, UserResponseDto);
 
 	@Get()
 	findAll() {
