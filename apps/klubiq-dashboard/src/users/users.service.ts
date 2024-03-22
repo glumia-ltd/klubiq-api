@@ -1,12 +1,9 @@
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { UsersRepository } from './users.repository';
 import { UserProfilesRepository, Role, RolesRepository } from '@app/common';
-import { AuthService } from '@app/auth';
 import { OrganizationRepository } from '../organization/organization.repository';
-
-// import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
 import { Organization } from '../organization/entities/organization.entity';
 
 @Injectable()
@@ -14,8 +11,6 @@ export class UsersService {
 	private readonly logger = new Logger(UsersService.name);
 	constructor(
 		@InjectEntityManager() private entityManager: EntityManager,
-		@Inject(forwardRef(() => AuthService))
-		private readonly authService: AuthService,
 		private readonly usersRepository: UsersRepository,
 		private readonly organizationRepository: OrganizationRepository,
 		private readonly userProfilesRepository: UserProfilesRepository,

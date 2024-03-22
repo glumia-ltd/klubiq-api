@@ -15,10 +15,10 @@ import {
 	RenterLoginResponseDto,
 	SignUpResponseDto,
 } from './dto/auth-response.dto';
-import { UsersService } from 'apps/klubiq-dashboard/src/users/users.service';
 import { Auth, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { EntityManager } from 'typeorm';
 import { OrganizationRepository } from 'apps/klubiq-dashboard/src/organization/organization.repository';
+import { UserProfilesRepository } from '@app/common';
 import {
 	LANDLORD_ROLE,
 	ORG_OWNER_ROLE,
@@ -40,8 +40,8 @@ export class AuthService {
 		@InjectMapper() private readonly mapper: Mapper,
 		private emailService: MailerSendService,
 		private emailSmtpService: MailerSendSMTPService,
-		private userService: UsersService,
 		private readonly organizationRepository: OrganizationRepository,
+		private readonly userProfilesRepository: UserProfilesRepository,
 	) {
 		this.firebaseClientAuth = getAuth(this.firebaseClient);
 	}
@@ -268,7 +268,9 @@ export class AuthService {
 			const accessToken = credential.accessToken;
 			const idToken = credential.idToken;
 			const email = credential.email;
-			const existingUser = await this.userService.findByEmail(email);
+			const existingUser = await this.userProfilesRepository.findOneByCondition(
+				{ email: email },
+			);
 
 			return { user: existingUser, accessToken: accessToken, idToken: idToken };
 		} catch (error) {
@@ -280,7 +282,9 @@ export class AuthService {
 	}
 
 	async login(login: userLoginDto) {
-		const existingUser = await this.userService.findByEmail(login.email);
+		const existingUser = await this.userProfilesRepository.findOneByCondition({
+			email: login.email,
+		});
 		if (!existingUser) {
 			throw new UnauthorizedException(
 				'You do not have an account, kindly register before trying to log in',

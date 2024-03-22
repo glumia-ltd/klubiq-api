@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
@@ -8,7 +8,6 @@ import { OrganizationModule } from '../organization/organization.module';
 import { UsersRepository } from './users.repository';
 import { EntityManager } from 'typeorm';
 import { RepositoriesModule } from '@app/common';
-import { AuthModule } from '@app/auth';
 import { OrgUserProfile } from './profiles/org-user-profile';
 
 @Module({
@@ -17,7 +16,6 @@ import { OrgUserProfile } from './profiles/org-user-profile';
 		OrganizationModule,
 		TypeOrmModule.forFeature([OrganizationUser]),
 		RepositoriesModule,
-		forwardRef(() => AuthModule),
 	],
 	controllers: [UsersController],
 	providers: [
@@ -29,6 +27,6 @@ import { OrgUserProfile } from './profiles/org-user-profile';
 			inject: [EntityManager],
 		},
 	],
-	exports: [UsersService],
+	exports: [UsersService, UsersRepository],
 })
 export class UsersModule {}

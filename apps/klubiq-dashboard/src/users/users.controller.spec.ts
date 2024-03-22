@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { AuthService } from '@app/auth';
 import { EntityManager } from 'typeorm';
 import { UsersRepository } from './users.repository';
 import { OrganizationRepository } from '../organization/organization.repository';
@@ -22,7 +21,6 @@ describe('UsersController', () => {
 			providers: [
 				UsersService,
 				EntityManager,
-				AuthService,
 				UsersRepository,
 				OrganizationRepository,
 				RolesRepository,
@@ -34,10 +32,7 @@ describe('UsersController', () => {
 					}),
 				},
 			],
-		})
-			.overrideProvider(AuthService)
-			.useValue('')
-			.compile();
+		}).compile();
 
 		mapper = module.get<Mapper>(getMapperToken());
 		controller = module.get<UsersController>(UsersController);

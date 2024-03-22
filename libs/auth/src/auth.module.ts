@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { DatabaseModule, ConfigModule } from '@app/common';
 import { ConfigService } from '@nestjs/config';
 import { initializeApp } from 'firebase/app';
-import { AuthController } from './auth.controller';
 import * as admin from 'firebase-admin';
-import { KlubiqDashboardModule } from 'apps/klubiq-dashboard/src/klubiq-dashboard.module';
+import { RepositoriesModule } from '@app/common';
 import { OrganizationModule } from 'apps/klubiq-dashboard/src/organization/organization.module';
 import { OrgUserProfile } from './profiles/org-user-profile';
 
@@ -82,8 +81,7 @@ const firebaseAdminProvider = {
 		DatabaseModule,
 		ConfigModule,
 		OrganizationModule,
-		forwardRef(() => KlubiqDashboardModule),
+		RepositoriesModule,
 	],
-	controllers: [AuthController],
 })
 export class AuthModule {}

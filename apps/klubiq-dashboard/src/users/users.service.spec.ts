@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { EntityManager } from 'typeorm';
-import { AuthService } from '@app/auth';
 import { UsersRepository } from './users.repository';
 import { OrganizationRepository } from '../organization/organization.repository';
 import { RolesRepository, UserProfilesRepository } from '@app/common';
@@ -14,16 +13,12 @@ describe('UsersService', () => {
 			providers: [
 				UsersService,
 				EntityManager,
-				AuthService,
 				UsersRepository,
 				OrganizationRepository,
 				RolesRepository,
 				UserProfilesRepository,
 			],
-		})
-			.overrideProvider(AuthService)
-			.useValue('')
-			.compile();
+		}).compile();
 
 		service = module.get<UsersService>(UsersService);
 	});
