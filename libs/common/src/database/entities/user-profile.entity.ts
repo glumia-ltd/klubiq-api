@@ -108,6 +108,7 @@ export class UserProfile {
 	@OneToOne(
 		() => OrganizationUser,
 		(organizationUser) => organizationUser.profile,
+		{ eager: true },
 	)
 	organizationUser?: OrganizationUser;
 

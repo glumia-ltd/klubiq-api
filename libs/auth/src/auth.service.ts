@@ -74,11 +74,7 @@ export class AuthService {
 				);
 				fbid = null;
 				await this.sendVerificationEmail(createUserDto.email, displayName);
-				return await this.createCustomToken(
-					userProfile.firebaseId,
-					userProfile.systemRole.name,
-					userProfile.organizationUser.orgRole.name,
-				);
+				return await this.createCustomToken(userProfile.firebaseId);
 			}
 			return undefined;
 		} catch (error) {
@@ -344,17 +340,9 @@ export class AuthService {
 		} catch (err) {}
 	}
 
-	async createCustomToken(
-		firebaseId: string,
-		systemRole: string,
-		orgRole: string,
-	): Promise<any> {
+	async createCustomToken(firebaseId: string): Promise<any> {
 		try {
-			const claims = {
-				systemRole,
-				orgRole,
-			};
-			const jwtToken = await this.auth.createCustomToken(firebaseId, claims);
+			const jwtToken = await this.auth.createCustomToken(firebaseId);
 			return jwtToken;
 		} catch (err) {
 			const firebaseErrorMessage = this.parseFirebaseError(err);

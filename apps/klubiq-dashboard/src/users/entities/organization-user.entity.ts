@@ -53,7 +53,7 @@ export class OrganizationUser {
 	isAccountVerified?: boolean;
 
 	@AutoMap(() => UserProfile)
-	@OneToOne(() => UserProfile, { eager: true })
+	@OneToOne(() => UserProfile)
 	@JoinColumn({
 		name: 'profileUuid',
 		referencedColumnName: 'profileUuid',
