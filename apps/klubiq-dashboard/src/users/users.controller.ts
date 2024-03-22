@@ -1,35 +1,20 @@
-import {
-	Controller,
-	Get,
-	Post,
-	Body,
-	// Patch,
-	Param,
-	Delete,
-} from '@nestjs/common';
+import { Controller, Get, Param, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
-
-import {
-	CreateOrganizationUserDto,
-	UserSignUpResponseDto,
-} from './dto/create-organization-user.dto';
-// import { UpdateOrganizationUserDto } from './dto/update-organization-user.dto';
+import { UserResponseDto } from './dto/create-organization-user.dto';
+import { Mapper } from '@automapper/core';
+import { InjectMapper } from '@automapper/nestjs';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { OrganizationUser } from './entities/organization-user.entity';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-	constructor(private readonly usersService: UsersService) {}
+	constructor(
+		private readonly usersService: UsersService,
+		@InjectMapper() private readonly mapper: Mapper,
+	) {}
 
-	@Post('/signup')
-	@ApiOkResponse({
-		description: 'Creates a new user and returns the data created',
-		type: UserSignUpResponseDto,
-	})
-	async createUser(@Body() createUser: CreateOrganizationUserDto) {
-		debugger;
-		return await this.usersService.create(createUser);
-	}
+	//return this.mapper.map(userData, UserProfile, UserResponseDto);
 
 	@Get()
 	findAll() {
@@ -37,9 +22,23 @@ export class UsersController {
 	}
 
 	@Get(':id')
-	findOne(@Param('id') id: string) {
-		return this.usersService.findOne(+id);
+	@ApiOkResponse({
+		description: 'gets a user by id',
+		type: UserResponseDto,
+	})
+	async findOne(@Param('id') id: string) {
+		const userData = await this.usersService.findOne(+id);
+		return this.mapper.map(userData, OrganizationUser, UserResponseDto);
 	}
+
+	// @Get(':id')
+	// @ApiOkResponse({
+	// 	description: 'gets a user by id',
+	// 	type: OrganizationUser,
+	// })
+	// async findOne(@Param('id') id: string) {
+	// 	return await this.usersService.findOne(+id);
+	// }
 
 	// @Patch(':id')
 	// update(

@@ -1,6 +1,5 @@
 #!/bin/sh
-npm run lint --concurrent false --relative
-npm run format --concurrent false --relative
-
 . "$(dirname "$0")/_/husky.sh"
 # . "$(dirname "$0")/_/prepare-commit-msg"
+
+npx lint-staged --concurrent false --relative

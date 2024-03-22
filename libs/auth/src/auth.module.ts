@@ -4,11 +4,14 @@ import { AuthService } from './auth.service';
 import { DatabaseModule, ConfigModule } from '@app/common';
 import { ConfigService } from '@nestjs/config';
 import { initializeApp } from 'firebase/app';
-import { AuthController } from './auth.controller';
 import * as admin from 'firebase-admin';
+import { RepositoriesModule } from '@app/common';
+import { OrganizationModule } from 'apps/klubiq-dashboard/src/organization/organization.module';
+import { OrgUserProfile } from './profiles/org-user-profile';
 
 const _firebaseConfig = require('../../../config.json');
-
+const apps = admin.apps;
+console.log('Apps count: ', apps.length);
 interface FirebaseConfig {
 	type: string;
 	project_id: string;
@@ -56,6 +59,9 @@ const firebaseAuthProvider = {
 const firebaseAdminProvider = {
 	provide: 'FIREBASE_ADMIN',
 	useFactory: () => {
+		if (apps.length) {
+			return apps[0];
+		}
 		return admin.initializeApp({
 			credential: admin.credential.cert(firebase_params),
 		});
@@ -68,9 +74,14 @@ const firebaseAdminProvider = {
 		ConfigService,
 		firebaseAuthProvider,
 		firebaseAdminProvider,
+		OrgUserProfile,
 	],
 	exports: [AuthService],
-	imports: [DatabaseModule, ConfigModule],
-	controllers: [AuthController],
+	imports: [
+		DatabaseModule,
+		ConfigModule,
+		OrganizationModule,
+		RepositoriesModule,
+	],
 })
 export class AuthModule {}

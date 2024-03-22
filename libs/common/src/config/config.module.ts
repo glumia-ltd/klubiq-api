@@ -6,6 +6,8 @@ import {
 import * as Joi from 'joi';
 import { MailerSendService } from '../email/email.service';
 import { MailerSendSMTPService } from '../email/smtp-email.service';
+import { AutomapperModule } from '@automapper/nestjs';
+import { classes } from '@automapper/classes';
 
 @Module({
 	imports: [
@@ -33,6 +35,9 @@ import { MailerSendSMTPService } from '../email/smtp-email.service';
 				SMTP_FROM_EMAIL: Joi.string().required(),
 				SMTP_FROM_NAME: Joi.string().required(),
 			}),
+		}),
+		AutomapperModule.forRoot({
+			strategyInitializer: classes(),
 		}),
 	],
 	providers: [ConfigService, MailerSendService, MailerSendSMTPService],

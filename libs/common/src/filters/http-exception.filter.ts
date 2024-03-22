@@ -4,6 +4,7 @@ import {
 	ExceptionFilter,
 	HttpException,
 	Logger,
+	HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
 
@@ -17,15 +18,18 @@ export class HttpExceptionFilter<T extends HttpException>
 		const response = ctx.getResponse<Response>();
 		const status = exception.getStatus();
 		const exceptionResponse = exception.getResponse();
+		const errCustomCode =
+			status == HttpStatus.FAILED_DEPENDENCY ? 'K600' : 'K100';
 		const error =
-			typeof response === 'string'
+			typeof exceptionResponse === 'string'
 				? { message: exceptionResponse }
 				: (exceptionResponse as object);
+
 		this.logger.log({
 			level: 'error',
 			message: exceptionResponse.toString,
 			err: error,
-			errCustomCode: 'k100',
+			errCustomCode,
 		});
 		response
 			.status(status)

@@ -49,7 +49,10 @@ export class CustomLogging {
 				winston.format.errors({ stack: true }),
 				winston.format.splat(),
 				winston.format.json(),
-				winston.format.colorize(),
+				winston.format.colorize({
+					all: true,
+					colors: { info: 'blue', warn: 'yellow', error: 'red' },
+				}),
 				this.myFormat,
 			),
 			transports: [

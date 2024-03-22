@@ -1,62 +1,17 @@
-import { ApiProperty } from '@nestjs/swagger';
-import {
-	IsBoolean,
-	IsDate,
-	IsEmail,
-	IsNumber,
-	IsString,
-	IsStrongPassword,
-} from 'class-validator';
 import { AutoMap } from '@automapper/classes';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsDate, IsJWT, IsNumber, IsString } from 'class-validator';
 
-export class CreateOrganizationUserDto {
-	@AutoMap()
+export class SignUpResponseDto {
 	@ApiProperty({
-		description: "User's first name",
-		example: 'John',
+		description: 'jwt auth token',
+		example: 'a jwt token',
 	})
-	@IsString()
-	firstName: string;
-
-	@AutoMap()
-	@ApiProperty({
-		description: "User's last name",
-		example: 'Doe',
-	})
-	@IsString()
-	lastName: string;
-
-	@AutoMap()
-	@ApiProperty({
-		description: "User's email",
-		example: 'john.doe@test.com',
-	})
-	@IsString()
-	@IsEmail()
-	email: string;
-
-	@ApiProperty({
-		description: "User's password",
-		example: '123456789',
-	})
-	@IsString()
-	@IsStrongPassword({
-		minLength: 6,
-		minUppercase: 1,
-		minNumbers: 1,
-		minSymbols: 1,
-	})
-	password: string;
-
-	@ApiProperty({
-		description: 'Company name',
-		example: 'Acme',
-	})
-	@IsString()
-	companyName: string;
+	@IsJWT()
+	jwtToken: string;
 }
 
-export class UserResponseDto {
+export class RenterLoginResponseDto {
 	@AutoMap()
 	@ApiProperty()
 	@IsNumber()
