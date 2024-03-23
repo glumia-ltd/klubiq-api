@@ -17,7 +17,7 @@ import {
 } from './dto/auth-response.dto';
 import { Auth, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { EntityManager } from 'typeorm';
-import { OrganizationRepository } from 'apps/klubiq-dashboard/src/organization/organization.repository';
+import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/organization.repository';
 import { UserProfilesRepository } from '@app/common';
 import {
 	LANDLORD_ROLE,
@@ -26,8 +26,8 @@ import {
 	Role,
 	UserProfile,
 } from '@app/common';
-import { Organization } from 'apps/klubiq-dashboard/src/organization/entities/organization.entity';
-import { OrganizationUser } from 'apps/klubiq-dashboard/src/users/entities/organization-user.entity';
+import { Organization } from '../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
+import { OrganizationUser } from '../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 

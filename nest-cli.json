@@ -5,7 +5,8 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/klubiq-dashboard/tsconfig.app.json"
+    "tsConfigPath": "apps/klubiq-dashboard/tsconfig.app.json",
+    "plugins": ["@nestjs/swagger/plugin"]
   },
   "projects": {
     "common": {

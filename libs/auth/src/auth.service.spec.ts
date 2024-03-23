@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { UserProfilesRepository } from '@app/common';
-import { OrganizationRepository } from 'apps/klubiq-dashboard/src/organization/organization.repository';
+import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/organization.repository';
 import { MailerSendService } from '@app/common/email/email.service';
 import { MailerSendSMTPService } from '@app/common/email/smtp-email.service';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
@@ -9,10 +9,13 @@ import { Mapper, createMapper } from '@automapper/core';
 import { classes } from '@automapper/classes';
 import { ConfigService } from '@nestjs/config';
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
+import firebaseAdmin from 'firebase-admin';
+import auth from 'firebase/auth';
 
 const moduleMocker = new ModuleMocker(global);
-jest.mock('firebase-admin');
 jest.mock('firebase/auth');
+jest.mock('firebase/app');
+jest.mock('firebase-admin');
 
 describe('AuthService', () => {
 	let service: AuthService;
@@ -34,6 +37,14 @@ describe('AuthService', () => {
 						strategyInitializer: classes(),
 					}),
 				},
+				{
+					provide: 'FIREBASE_ADMIN',
+					useValue: firebaseAdmin,
+				},
+				{
+					provide: 'FIREBASE_AUTH',
+					useValue: auth,
+				},
 			],
 		})
 			.useMocker((token) => {
@@ -50,8 +61,6 @@ describe('AuthService', () => {
 					return new Mock();
 				}
 			})
-			.overrideProvider(AuthService)
-			.useValue('')
 			.compile();
 
 		service = module.get<AuthService>(AuthService);
