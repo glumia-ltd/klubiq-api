@@ -3,6 +3,9 @@
 /node_modules
 /build
 
+config.json
+fbase.config.json
+*.config.json
 # Logs
 logs
 *.log
@@ -30,10 +33,11 @@ lerna-debug.log*
 
 # IDE - VSCode
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/
+# .vscode/settings.json
+# .vscode/tasks.json
+# .vscode/launch.json
+# .vscode/extensions.json
 
 # dotenv environment variable files
 .env
