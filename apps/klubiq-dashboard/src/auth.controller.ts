@@ -63,17 +63,6 @@ export class AuthController {
 		}
 	}
 
-	@Post('dummy-email')
-	async dummyEmail(): Promise<any> {
-		try {
-			return this.authService.sendDummy();
-			//  { message: 'Email verification successful!' };
-		} catch (err) {
-			console.error('Error verifying email:', err);
-			throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
-
 	@Post('renter-signup')
 	@ApiOkResponse({
 		description: 'Creates a new Org user and returns the data an auth token',

@@ -1,6 +1,7 @@
 import { MailerSendService } from '@app/common/email/email.service';
 import { MailerSendSMTPService } from '@app/common/email/smtp-email.service';
 import {
+	ForbiddenException,
 	Injectable,
 	NotFoundException,
 	UnauthorizedException,
@@ -9,7 +10,6 @@ import { Inject } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import * as auth from 'firebase-admin/auth';
 import { FirebaseException } from './exception/firebase.exception';
-import { FirebaseError } from 'firebase/app';
 import { userLoginDto, OrgUserSignUpDto } from './dto/user-login.dto';
 import {
 	RenterLoginResponseDto,
@@ -30,6 +30,13 @@ import { Organization } from '../../../apps/klubiq-dashboard/src/organization/en
 import { OrganizationUser } from '../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
+import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
+
+//Enums to identify if it's a sign-up event or invite user event
+export enum CreateUserEventTypes {
+	CREATE_ORG_USER,
+	INVITE_ORG_USER,
+}
 
 @Injectable()
 export class AuthService {
@@ -42,6 +49,7 @@ export class AuthService {
 		private emailSmtpService: MailerSendSMTPService,
 		private readonly organizationRepository: OrganizationRepository,
 		private readonly userProfilesRepository: UserProfilesRepository,
+		private readonly errorMessageHelper: FirebaseErrorMessageHelper,
 	) {
 		this.firebaseClientAuth = getAuth(this.firebaseClient);
 	}
@@ -71,6 +79,7 @@ export class AuthService {
 				const userProfile = await this.createUserWithOrganization(
 					fireUser,
 					createUserDto,
+					CreateUserEventTypes.CREATE_ORG_USER,
 				);
 				fbid = null;
 				await this.sendVerificationEmail(createUserDto.email, displayName);
@@ -82,7 +91,17 @@ export class AuthService {
 			throw new FirebaseException(error);
 		}
 	}
-
+	async setCustomClaims(uuid: string, claims: any) {
+		try {
+			await this.auth.setCustomUserClaims(uuid, claims);
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(
+				firebaseErrorMessage ? firebaseErrorMessage : err.message,
+			);
+		}
+	}
 	async createUser(newUser: {
 		email: string;
 		password: string;
@@ -97,7 +116,8 @@ export class AuthService {
 			});
 			return userRecord;
 		} catch (err) {
-			const firebaseErrorMessage = this.parseFirebaseError(err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
@@ -109,7 +129,8 @@ export class AuthService {
 			const userRecord = await this.auth.getUser(uid);
 			return userRecord;
 		} catch (err) {
-			const firebaseErrorMessage = this.parseFirebaseError(err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
@@ -138,7 +159,8 @@ export class AuthService {
 				});
 			}
 		} catch (err) {
-			const firebaseErrorMessage = this.parseFirebaseError(err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
@@ -149,7 +171,8 @@ export class AuthService {
 		try {
 			await this.auth.deleteUser(uid);
 		} catch (err) {
-			const firebaseErrorMessage = this.parseFirebaseError(err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
@@ -164,7 +187,8 @@ export class AuthService {
 			}
 			await this.auth.generateEmailVerificationLink(user.email);
 		} catch (err) {
-			const firebaseErrorMessage = this.parseFirebaseError(err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
@@ -175,7 +199,8 @@ export class AuthService {
 		try {
 			await this.auth.generatePasswordResetLink(email);
 		} catch (err) {
-			const firebaseErrorMessage = this.parseFirebaseError(err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
@@ -190,7 +215,8 @@ export class AuthService {
 			}
 			return user.emailVerified;
 		} catch (err) {
-			const firebaseErrorMessage = this.parseFirebaseError(err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
@@ -206,7 +232,8 @@ export class AuthService {
 				throw new Error('User not found');
 			}
 		} catch (err) {
-			const firebaseErrorMessage = this.parseFirebaseError(err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
@@ -224,7 +251,8 @@ export class AuthService {
 			await admin.auth().updateUser(uid, { emailVerified: true });
 		} catch (err) {
 			console.error('Error verifying code:', err);
-			const firebaseErrorMessage = this.parseFirebaseError(err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
@@ -248,7 +276,8 @@ export class AuthService {
 
 			await this.emailService.sendVerifyEmail(email, name, verificationLink);
 		} catch (err) {
-			const firebaseErrorMessage = this.parseFirebaseError(err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
@@ -270,7 +299,8 @@ export class AuthService {
 
 			return { user: existingUser, accessToken: accessToken, idToken: idToken };
 		} catch (error) {
-			const firebaseErrorMessage = this.parseFirebaseError(error);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(error);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : error.message,
 			);
@@ -318,7 +348,8 @@ export class AuthService {
 				};
 			})
 			.catch(async (error) => {
-				const firebaseErrorMessage = this.parseFirebaseError(error);
+				const firebaseErrorMessage =
+					this.errorMessageHelper.parseFirebaseError(error);
 				throw new FirebaseException(
 					firebaseErrorMessage ? firebaseErrorMessage : error.message,
 				);
@@ -326,79 +357,17 @@ export class AuthService {
 		return result;
 	}
 
-	async sendDummy() {
-		try {
-			await this.emailService.sendDummmyEmail();
-		} catch (err) {}
-	}
-
-	async sendDummySmtp() {
-		try {
-			const dummyEmail = await this.emailSmtpService.sendDummmyEmail();
-			console.log('dummyEmail', dummyEmail);
-			return dummyEmail;
-		} catch (err) {}
-	}
-
 	async createCustomToken(firebaseId: string): Promise<any> {
 		try {
 			const jwtToken = await this.auth.createCustomToken(firebaseId);
 			return jwtToken;
 		} catch (err) {
-			const firebaseErrorMessage = this.parseFirebaseError(err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
 		}
-	}
-	parseFirebaseError(error: FirebaseError): string {
-		let errorMessage: string;
-
-		switch (error.code) {
-			// Authentication Errors
-			case 'auth/email-already-in-use':
-				errorMessage =
-					'This email is already in use. Please use a different email.';
-				break;
-			case 'auth/invalid-email':
-				errorMessage =
-					'The email address is not valid. Please enter a valid email address.';
-				break;
-			case 'auth/wrong-password':
-				errorMessage = 'Incorrect Email/Password. Please try again.';
-				break;
-			case 'auth/user-not-found':
-				errorMessage = 'No user found with this email. Please sign up first.';
-				break;
-			case 'auth/user-disabled':
-				errorMessage = 'This user has been disabled. Please contact support.';
-				break;
-			case 'auth/too-many-requests':
-				errorMessage = 'Too many attempts. Please try again later.';
-				break;
-
-			// Firestore Errors
-			case 'permission-denied':
-				errorMessage = 'You do not have permission to access this resource.';
-				break;
-			case 'not-found':
-				errorMessage = 'The requested resource does not exist.';
-				break;
-
-			// Storage Errors
-			case 'storage/object-not-found':
-				errorMessage = 'No object exists at the desired reference.';
-				break;
-			case 'storage/unauthorized':
-				errorMessage = 'You are not authorized to perform this operation.';
-				break;
-
-			// Default case for any other error
-			default:
-				errorMessage = 'An unexpected error occurred. Please try again.';
-		}
-
-		return errorMessage;
 	}
 
 	//PRIVATE METHODS FOR GETTING SYSTEM AND ORGANIZATION ROLES
@@ -416,15 +385,21 @@ export class AuthService {
 		});
 	}
 
+	// PRIVATE METHOD FOR GETTING ORGANIZATION. WHILE CREATING A NEW LANDLORD USER
 	private async findOrCreateOrganization(
 		name: string,
 		entityManager: EntityManager,
+		createEventType: CreateUserEventTypes,
 	): Promise<Organization> {
 		const existingOrganization = await entityManager.findOne(Organization, {
 			where: { name: name },
 		});
 
+		// IF IT'S A SIGNUP EVENT, THROW AN EXCEPTION  AS IT SHOULD BE A NEW ORGANIZATION. IF IT'S INVITE EVENT, USE THE EXISTING ORGANIZATION
 		if (existingOrganization) {
+			if (createEventType === CreateUserEventTypes.CREATE_ORG_USER) {
+				throw new ForbiddenException('Organization already exists');
+			}
 			return existingOrganization;
 		}
 
@@ -436,12 +411,14 @@ export class AuthService {
 	private async createUserWithOrganization(
 		fireUser: any,
 		createUserDto: OrgUserSignUpDto,
+		createEventType: CreateUserEventTypes,
 	): Promise<UserProfile> {
 		const entityManager = this.organizationRepository.manager;
 		return entityManager.transaction(async (transactionalEntityManager) => {
 			const organization = await this.findOrCreateOrganization(
-				createUserDto.companyName, // Assuming this is the correct property name
+				createUserDto.companyName,
 				transactionalEntityManager,
+				createEventType,
 			);
 			const systemRole = await this.getLandlordRole(transactionalEntityManager);
 			const organizationRole = await this.getOrgOwnerRole(
@@ -460,10 +437,15 @@ export class AuthService {
 			userProfile.firebaseId = fireUser.uid;
 			userProfile.organizationUser = user;
 			userProfile.systemRole = systemRole;
+			userProfile.isPrivacyPolicyAgreed = true;
+			userProfile.isTermsAndConditionAccepted = true;
 
 			await transactionalEntityManager.save(user);
 			await transactionalEntityManager.save(userProfile);
-
+			await this.setCustomClaims(userProfile.firebaseId, {
+				systemRole: systemRole.name,
+				organizationRole: organizationRole.name,
+			});
 			return userProfile;
 		});
 	}

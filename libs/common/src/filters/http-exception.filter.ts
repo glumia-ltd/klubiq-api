@@ -33,6 +33,6 @@ export class HttpExceptionFilter<T extends HttpException>
 		});
 		response
 			.status(status)
-			.json({ ...error, timestamp: new Date().toISOString() });
+			.json({ ...error, status, timestamp: new Date().toISOString() });
 	}
 }
