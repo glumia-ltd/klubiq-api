@@ -9,7 +9,7 @@ import { KlubiqDashboardModule } from './klubiq-dashboard.module';
 import { HttpExceptionFilter } from '@app/common';
 import { HttpResponseInterceptor } from '@app/common';
 import { CustomLogging } from '@app/common';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 
 declare const module: any;
 
@@ -32,6 +32,7 @@ async function bootstrap() {
 		.addTag('klubiq')
 		.setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
 		.setLicense('MIT', 'https://mit-license.org/')
+		.addBearerAuth()
 		// .addServer('XXXXXXXXXXXXXXXXXXXXX')
 		.build();
 	const document = SwaggerModule.createDocument(app, config, options);
@@ -39,6 +40,9 @@ async function bootstrap() {
 	/// END SWAGGER CONFIGURATION
 
 	/// APP SETTINGS
+	app.enableVersioning({
+		type: VersioningType.URI,
+	});
 	app.useGlobalPipes(
 		new ValidationPipe({
 			whitelist: true,
