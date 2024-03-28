@@ -8,6 +8,7 @@ import * as admin from 'firebase-admin';
 import { RepositoriesModule } from '@app/common';
 import { OrganizationModule } from 'apps/klubiq-dashboard/src/organization/organization.module';
 import { OrgUserProfile } from './profiles/org-user-profile';
+import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
 
 const _firebaseConfig = require('../../../config.json');
 const apps = admin.apps;
@@ -75,6 +76,7 @@ const firebaseAdminProvider = {
 		firebaseAuthProvider,
 		firebaseAdminProvider,
 		OrgUserProfile,
+		FirebaseErrorMessageHelper,
 	],
 	exports: [AuthService],
 	imports: [

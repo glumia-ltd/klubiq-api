@@ -12,15 +12,9 @@ export class userLoginDto {
 
 	@ApiProperty({
 		description: "User's password",
-		example: '123456789',
+		example: 'password',
 	})
 	@IsString()
-	@IsStrongPassword({
-		minLength: 6,
-		minUppercase: 1,
-		minNumbers: 1,
-		minSymbols: 1,
-	})
 	password: string;
 }
 
@@ -38,6 +32,19 @@ export class UserSignUpDto extends PartialType(userLoginDto) {
 	})
 	@IsString()
 	lastName: string;
+
+	@ApiProperty({
+		description: "User's password",
+		example: '123456789',
+	})
+	@IsString()
+	@IsStrongPassword({
+		minLength: 6,
+		minUppercase: 1,
+		minNumbers: 1,
+		minSymbols: 1,
+	})
+	password: string;
 }
 
 export class OrgUserSignUpDto extends PartialType(UserSignUpDto) {
