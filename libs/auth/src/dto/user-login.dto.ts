@@ -63,3 +63,12 @@ export class VerifyEmailDto {
 	@IsString()
 	oobCode: string;
 }
+
+export class LookUpUserDto {
+	@ApiProperty({
+		description: 'User email',
+	})
+	@IsString()
+	@IsEmail()
+	email: string;
+}

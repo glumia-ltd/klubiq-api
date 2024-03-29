@@ -308,9 +308,9 @@ export class AuthService {
 	}
 
 	async login(login: userLoginDto) {
-		const existingUser = await this.userProfilesRepository.findOneByCondition({
-			email: login.email,
-		});
+		const existingUser = await this.userProfilesRepository.getUserLoginInfo(
+			login.email,
+		);
 		if (!existingUser) {
 			throw new UnauthorizedException(
 				'You do not have an account, kindly register before trying to log in',
@@ -367,6 +367,14 @@ export class AuthService {
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);
+		}
+	}
+
+	async checkUserExist(email: string): Promise<boolean> {
+		try {
+			return await this.userProfilesRepository.checkUerExist(email);
+		} catch (err) {
+			throw err;
 		}
 	}
 

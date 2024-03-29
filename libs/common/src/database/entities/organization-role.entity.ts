@@ -15,6 +15,7 @@ import { AutoMap } from '@automapper/classes';
 
 @Entity({ schema: 'poo' })
 export class OrganizationRole {
+	@AutoMap()
 	@PrimaryGeneratedColumn()
 	id?: number;
 
@@ -22,6 +23,7 @@ export class OrganizationRole {
 	@Column({ length: 255, unique: true })
 	name: string;
 
+	@AutoMap()
 	@Column({ type: 'text', nullable: true })
 	description?: string;
 
@@ -34,9 +36,11 @@ export class OrganizationRole {
 	@OneToMany(() => OrganizationUser, (orgUser) => orgUser.orgRole)
 	users?: OrganizationUser[];
 
+	@AutoMap(() => [FeaturePermission])
 	@ManyToMany(
 		() => FeaturePermission,
 		(featurePermission) => featurePermission.organizationRoles,
+		{ eager: true },
 	)
 	@JoinTable({
 		name: 'role_feature_permissions',
