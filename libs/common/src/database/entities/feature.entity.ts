@@ -27,7 +27,6 @@ export class Feature {
 	@Column({ type: 'text', nullable: true })
 	description?: string;
 
-	@AutoMap(() => [FeaturePermission])
 	@OneToMany(
 		() => FeaturePermission,
 		(featurePermission) => featurePermission.feature,

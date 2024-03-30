@@ -3,6 +3,7 @@ import {
 	DatabaseModule,
 	RolesRepository,
 	UserProfilesRepository,
+	PermissionsModule,
 } from '@app/common';
 import { AuthModule } from '@app/auth';
 import { UsersModule } from './users/users.module';
@@ -11,6 +12,7 @@ import { UsersService } from './users/users.service';
 import { UsersRepository } from './users/users.repository';
 import { AuthController } from './auth/auth.controller';
 import { HealthModule } from './health/health.module';
+import { PublicController } from './public/public.controller';
 
 @Module({
 	imports: [
@@ -19,8 +21,9 @@ import { HealthModule } from './health/health.module';
 		AuthModule,
 		OrganizationModule,
 		HealthModule,
+		PermissionsModule,
 	],
-	controllers: [AuthController],
+	controllers: [AuthController, PublicController],
 	providers: [
 		UsersService,
 		UsersRepository,

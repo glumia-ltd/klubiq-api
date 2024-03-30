@@ -1,24 +1,30 @@
 import { AutoMap } from '@automapper/classes';
+import { MapperPickType } from '@automapper/classes/mapped-types';
+
 import { ApiProperty } from '@nestjs/swagger';
 import { Feature } from '../database/entities/feature.entity';
 import { Permission } from '../database/entities/permission.entity';
 
-export class OrgRoleDto {
+export class ViewFeaturePermissionDto {
 	@AutoMap()
 	@ApiProperty()
-	description?: string;
-
-	@AutoMap()
-	@ApiProperty()
-	featureId!: number;
+	featureName: string;
 
 	@AutoMap()
 	@ApiProperty()
-	alias?: string;
+	permissionName: string;
 
-	@AutoMap(() => Permission)
-	permission?: Permission;
+	@AutoMap()
+	@ApiProperty()
+	alias!: string;
 
-	@AutoMap(() => Feature)
-	feature?: Feature;
+	// @AutoMap(() => Permission)
+	// permission?: Permission;
+
+	// @AutoMap(() => Feature)
+	// feature?: Feature;
 }
+
+export class ViewFeatureDto extends MapperPickType(Feature, ['name']) {}
+
+export class ViewPermissionDto extends MapperPickType(Permission, ['name']) {}

@@ -15,18 +15,23 @@ import { AutoMap } from '@automapper/classes';
 
 @Entity({ schema: 'poo' })
 export class FeaturePermission {
+	@AutoMap()
 	@PrimaryGeneratedColumn()
 	featurePermissionId?: number;
 
+	@AutoMap()
 	@Column()
 	permissionId: number;
 
+	@AutoMap()
 	@Column()
 	featureId: number;
 
+	@AutoMap()
 	@Column({ length: 255, unique: true })
 	alias?: string;
 
+	@AutoMap()
 	@Column({ type: 'text', nullable: true })
 	description?: string;
 
@@ -40,13 +45,13 @@ export class FeaturePermission {
 	@ManyToOne(() => Permission, (permission) => permission.featurePermissions, {
 		eager: true,
 	})
-	permission?: Permission;
+	permission!: Permission;
 
 	@AutoMap(() => Feature)
 	@ManyToOne(() => Feature, (feature) => feature.featurePermissions, {
 		eager: true,
 	})
-	feature?: Feature;
+	feature!: Feature;
 
 	@ManyToMany(
 		() => OrganizationRole,

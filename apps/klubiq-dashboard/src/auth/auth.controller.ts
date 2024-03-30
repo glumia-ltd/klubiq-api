@@ -8,13 +8,13 @@ import {
 	Param,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { AuthService } from '../../../../libs/auth/src/auth.service';
 import {
+	AuthService,
 	userLoginDto,
 	OrgUserSignUpDto,
 	VerifyEmailDto,
-} from '../../../../libs/auth/src/dto/user-login.dto';
-import { SignUpResponseDto } from '../../../../libs/auth/src/dto/auth-response.dto';
+	SignUpResponseDto,
+} from '@app/auth';
 
 @ApiTags('auth')
 @Controller('auth')

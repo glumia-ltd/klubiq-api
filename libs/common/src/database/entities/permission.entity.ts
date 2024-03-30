@@ -30,7 +30,6 @@ export class Permission {
 	@UpdateDateColumn()
 	updatedDate?: Date;
 
-	@AutoMap(() => [FeaturePermission])
 	@OneToMany(
 		() => FeaturePermission,
 		(featurePermission) => featurePermission.permission,
