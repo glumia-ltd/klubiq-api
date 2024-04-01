@@ -27,7 +27,7 @@ import { classes } from '@automapper/classes';
 				FIREBASE_APP_ID: Joi.string().required(),
 				FIREBASE_MESSAGING_SENDER_ID: Joi.string().required(),
 				FIREBASE_MEASUREMENT_ID: Joi.string().required(),
-				API_KEY: Joi.string().required(),
+				EMAIL_API_KEY: Joi.string().required(),
 				SMTP_USERNAME: Joi.string().required(),
 				SMTP_PASSWORD: Joi.string().required(),
 				SMTP_SERVER: Joi.string().required(),
