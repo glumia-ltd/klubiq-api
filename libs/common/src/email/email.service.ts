@@ -37,7 +37,6 @@ export class MailerSendService {
 			if (response.statusCode == 201) {
 				throw new Error(`MailerSend API error: ${response.body}`);
 			}
-			console.log('Email sent successfully!'); // Log success message
 			return 'Email sent successfully';
 		} catch (error) {
 			console.error('Failed to send email with MailerSend:', error);

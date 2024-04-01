@@ -46,7 +46,6 @@ export class FirebaseAuthGuard implements CanActivate {
 			firebaseUser = await this.authService.auth.verifyIdToken(jwtToken);
 			return firebaseUser;
 		} catch (err) {
-			console.log('err', err);
 			throw new ForbiddenException(
 				'Invalid / expired token. Please login again',
 			);

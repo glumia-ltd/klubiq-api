@@ -27,3 +27,8 @@ export type FirebaseError = {
 	code: string;
 	message: string;
 };
+
+export enum AuthType {
+	Bearer,
+	None,
+}

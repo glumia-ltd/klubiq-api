@@ -20,7 +20,6 @@ export class PermissionsService {
 	async getOrgRoles(): Promise<ViewOrgRoleDto[]> {
 		try {
 			const roles = await this.organizationRoleRepository.findAll();
-			console.log('Total roles: ', roles.length);
 			const data = this.mapper.mapArrayAsync(
 				roles,
 				OrganizationRole,
@@ -28,7 +27,7 @@ export class PermissionsService {
 			);
 			return data;
 		} catch (err) {
-			console.log(err);
+			throw err;
 		}
 	}
 }

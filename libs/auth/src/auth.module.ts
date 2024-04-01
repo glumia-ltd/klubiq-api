@@ -12,7 +12,7 @@ import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
 
 const _firebaseConfig = require('../../../config.json');
 const apps = admin.apps;
-console.log('Apps count: ', apps.length);
+
 interface FirebaseConfig {
 	type: string;
 	project_id: string;
