@@ -1,8 +1,8 @@
 import {
 	CanActivate,
 	ExecutionContext,
-	ForbiddenException,
 	Injectable,
+	UnauthorizedException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
@@ -38,7 +38,7 @@ export class FirebaseAuthGuard implements CanActivate {
 		if (this.configService.get('LOCAL_USER') === 'true') return firebaseUser;
 		const jwtToken = token.split('Bearer ')[1];
 		if (!jwtToken) {
-			throw new ForbiddenException(
+			throw new UnauthorizedException(
 				'Invalid / expired token. Please login again',
 			);
 		}
@@ -48,7 +48,7 @@ export class FirebaseAuthGuard implements CanActivate {
 			return firebaseUser;
 		} catch (err) {
 			console.log('err', err);
-			throw new ForbiddenException(
+			throw new UnauthorizedException(
 				'Invalid / expired token. Please login again',
 			);
 		}

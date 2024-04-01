@@ -454,10 +454,13 @@ export class AuthService {
 			//   const decodedToken = this.jwtService.decode(token);
 			const decodedToken = await this.auth.verifyIdToken(token);
 			const systemRole = decodedToken.systemRole;
-			// const organizationRole = decodedToken.organizationRole;
+			const organizationRole = decodedToken.organizationRole;
 			const userRoles: UserRoles[] = [];
-			if (!systemRole) {
+			if (!!systemRole) {
 				userRoles.push(systemRole);
+			}
+			if (!!organizationRole) {
+				userRoles.push(organizationRole);
 			}
 
 			//   if (decodedToken) {
