@@ -44,6 +44,7 @@ export class FirebaseAuthGuard implements CanActivate {
 		}
 		try {
 			firebaseUser = await this.authService.auth.verifyIdToken(jwtToken);
+			console.log('firebaseUser', firebaseUser);
 			return firebaseUser;
 		} catch (err) {
 			console.log('err', err);

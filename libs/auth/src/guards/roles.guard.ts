@@ -1,27 +1,37 @@
-import { UserProfile } from '@app/common/database/entities/user-profile.entity';
+import { UserRoles } from '@app/common';
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { AuthService } from '../auth.service';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-	constructor(private readonly reflector: Reflector) {}
+	constructor(
+		private reflector: Reflector,
+		private authService: AuthService,
+	) {}
 
-	canActivate(context: ExecutionContext): boolean {
-		const requiredRoles = this.reflector.get<string[]>(
+	async canActivate(context: ExecutionContext): Promise<boolean> {
+		const requiredRoles = this.reflector.get<UserRoles[]>(
 			'roles',
 			context.getHandler(),
 		);
+
 		if (!requiredRoles) {
-			return true;
+			return true; // No roles required, allow access
 		}
+
 		const request = context.switchToHttp().getRequest();
-		const user: UserProfile = request.user;
-		if (!user || !user.roles) {
-			return false;
+		const token = request.headers.authorization?.split(' ')[1];
+		if (!token) {
+			return false; // No token provided, deny access
 		}
-		const hasRole = user.roles.some((role) =>
-			requiredRoles.includes(role.name),
+
+		const userRoles = await this.authService.getUserRolesFromToken(token);
+
+		const hasRequiredRole = requiredRoles.some((role) =>
+			userRoles.includes(role),
 		);
-		return hasRole;
+
+		return hasRequiredRole;
 	}
 }

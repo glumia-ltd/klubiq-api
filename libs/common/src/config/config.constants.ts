@@ -1,25 +1,28 @@
-export const SUPER_ADMIN_ROLE = 'SuperAdmin';
-export const ADMIN_ROLE = 'Admin';
-export const STAFF_ROLE = 'Staff';
-export const LANDLORD_ROLE = 'Landlord';
-export const TENANT_ROLE = 'Tenant';
-export const ORG_OWNER_ROLE = 'OrganizationOwner';
-export const PROPERTY_MANAGER_ROLE = 'PropertyManager';
-export const PROPERTY_OWNER_ROLE = 'PropertyOwner';
-export const LEASE_MANAGER_ROLE = 'LeaseManager';
-export const CUSTOM_ROLE = 'Custom';
+export enum UserRoles {
+	SUPER_ADMIN = 'SuperAdmin',
+	ADMIN = 'Admin',
+	STAFF = 'Staff',
+	LANDLORD = 'Landlord',
+	TENANT = 'Tenant',
+	ORG_OWNER = 'OrganizationOwner',
+	PROPERTY_MANAGER = 'PropertyManager',
+	PROPERTY_OWNER = 'PropertyOwner',
+	LEASE_MANAGER = 'LeaseManager',
+	CUSTOM = 'Custom',
+}
 
-export const SYSTEM_ROLES = [
-	SUPER_ADMIN_ROLE,
-	ADMIN_ROLE,
-	STAFF_ROLE,
-	LANDLORD_ROLE,
-	TENANT_ROLE,
+export const SYSTEM_ROLES: UserRoles[] = [
+	UserRoles.SUPER_ADMIN,
+	UserRoles.ADMIN,
+	UserRoles.STAFF,
+	UserRoles.LANDLORD,
+	UserRoles.TENANT,
 ];
-export const ORG_ROLES = [
-	ORG_OWNER_ROLE,
-	PROPERTY_MANAGER_ROLE,
-	PROPERTY_OWNER_ROLE,
-	LEASE_MANAGER_ROLE,
-	CUSTOM_ROLE,
+
+export const ORG_ROLES: UserRoles[] = [
+	UserRoles.ORG_OWNER,
+	UserRoles.PROPERTY_MANAGER,
+	UserRoles.PROPERTY_OWNER,
+	UserRoles.LEASE_MANAGER,
+	UserRoles.CUSTOM,
 ];
