@@ -5,3 +5,5 @@ export * from './dto/user-login.dto';
 export * from './guards/firebase-auth.guard';
 export * from './guards/authentication.guard';
 export * from './types/firebase.types';
+export * from './guards/roles.guard';
+export * from './decorators';

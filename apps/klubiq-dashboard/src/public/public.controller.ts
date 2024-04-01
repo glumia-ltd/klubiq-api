@@ -7,12 +7,11 @@ import {
 	HttpStatus,
 	//Param,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionsService, ViewOrgRoleDto } from '@app/common';
 import { Auth } from '@app/auth/decorators';
 import { AuthType } from '@app/auth';
 
-@ApiBearerAuth()
 @ApiTags('public')
 @Auth(AuthType.None)
 @Controller('public')

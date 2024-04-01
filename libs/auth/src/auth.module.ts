@@ -9,6 +9,7 @@ import { RepositoriesModule } from '@app/common';
 import { OrganizationModule } from 'apps/klubiq-dashboard/src/organization/organization.module';
 import { OrgUserProfile } from './profiles/org-user-profile';
 import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
+import { JwtService } from '@nestjs/jwt';
 
 const _firebaseConfig = require('../../../config.json');
 const apps = admin.apps;
@@ -77,6 +78,7 @@ const firebaseAdminProvider = {
 		firebaseAdminProvider,
 		OrgUserProfile,
 		FirebaseErrorMessageHelper,
+		JwtService,
 	],
 	exports: [AuthService],
 	imports: [
