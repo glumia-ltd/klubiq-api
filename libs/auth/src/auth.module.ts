@@ -6,13 +6,14 @@ import { ConfigService } from '@nestjs/config';
 import { initializeApp } from 'firebase/app';
 import * as admin from 'firebase-admin';
 import { RepositoriesModule } from '@app/common';
-import { OrganizationModule } from 'apps/klubiq-dashboard/src/organization/organization.module';
+import { OrganizationModule } from '../../../apps/klubiq-dashboard/src/organization/organization.module';
 import { OrgUserProfile } from './profiles/org-user-profile';
 import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
+import { JwtService } from '@nestjs/jwt';
 
 const _firebaseConfig = require('../../../config.json');
 const apps = admin.apps;
-console.log('Apps count: ', apps.length);
+
 interface FirebaseConfig {
 	type: string;
 	project_id: string;
@@ -77,6 +78,7 @@ const firebaseAdminProvider = {
 		firebaseAdminProvider,
 		OrgUserProfile,
 		FirebaseErrorMessageHelper,
+		JwtService,
 	],
 	exports: [AuthService],
 	imports: [

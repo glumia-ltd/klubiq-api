@@ -6,21 +6,26 @@ import {
 	HttpException,
 	HttpStatus,
 	Param,
+	HttpCode,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { AuthService } from '../../../libs/auth/src/auth.service';
 import {
+	AuthService,
 	userLoginDto,
 	OrgUserSignUpDto,
 	VerifyEmailDto,
-} from '../../../libs/auth/src/dto/user-login.dto';
-import { SignUpResponseDto } from '../../../libs/auth/src/dto/auth-response.dto';
+	SignUpResponseDto,
+} from '@app/auth';
+import { Auth } from '@app/auth/decorators/auth.decorator';
+import { AuthType } from '@app/auth/types/firebase.types';
 
 @ApiTags('auth')
+@Auth(AuthType.None)
 @Controller('auth')
 export class AuthController {
 	constructor(private readonly authService: AuthService) {}
 
+	@HttpCode(HttpStatus.OK)
 	@Post('verify-email')
 	@ApiOkResponse({
 		description: 'Verifies user email',
@@ -35,6 +40,7 @@ export class AuthController {
 		}
 	}
 
+	@HttpCode(HttpStatus.OK)
 	@Post('login')
 	@ApiOkResponse({
 		description: 'User logs in and returns user data and access token',

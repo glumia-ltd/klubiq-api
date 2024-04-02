@@ -22,12 +22,14 @@ export class HttpResponseInterceptor implements NestInterceptor {
 		const request = ctx.getRequest<Request>();
 		const statusCode = response.statusCode || HttpStatus.OK;
 		const status = statusCode < 300 ? 'success' : 'error';
+		const messageCopy =
+			statusCode < 300 ? 'The request was successful' : 'Error sending request';
 
 		return {
 			status,
 			path: request.path,
 			statusCode,
-			message: response.statusMessage ?? null,
+			message: response.statusMessage ?? messageCopy,
 			data: data,
 		};
 	}

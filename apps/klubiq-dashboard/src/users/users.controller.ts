@@ -1,13 +1,25 @@
-import { Controller, Get, Param, Delete } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Param,
+	Delete,
+	// UseGuards
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserResponseDto } from './dto/create-organization-user.dto';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationUser } from './entities/organization-user.entity';
+// import { RolesGuard } from '@app/auth/guards/roles.guard';
+import { UserRoles } from '@app/common';
+import { AuthType, Auth, Roles } from '@app/auth';
+// import { FirebaseAuthGuard } from '@app/auth/guards/firebase-auth.guard';
 
 @ApiTags('users')
 @Controller('users')
+@ApiBearerAuth()
+@Auth(AuthType.Bearer)
 export class UsersController {
 	constructor(
 		private readonly usersService: UsersService,
@@ -17,6 +29,10 @@ export class UsersController {
 	//return this.mapper.map(userData, UserProfile, UserResponseDto);
 
 	@Get()
+	@Roles(UserRoles.LANDLORD)
+	@ApiOkResponse({
+		description: 'Returns all the users available ',
+	})
 	findAll() {
 		return this.usersService.findAll();
 	}

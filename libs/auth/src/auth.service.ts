@@ -18,19 +18,14 @@ import {
 import { Auth, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { EntityManager } from 'typeorm';
 import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/organization.repository';
-import { UserProfilesRepository } from '@app/common';
-import {
-	LANDLORD_ROLE,
-	ORG_OWNER_ROLE,
-	OrganizationRole,
-	Role,
-	UserProfile,
-} from '@app/common';
+import { UserProfilesRepository, UserRoles } from '@app/common';
+import { OrganizationRole, Role, UserProfile } from '@app/common';
 import { Organization } from '../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
 import { OrganizationUser } from '../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
+import { JwtService } from '@nestjs/jwt';
 
 //Enums to identify if it's a sign-up event or invite user event
 export enum CreateUserEventTypes {
@@ -50,6 +45,7 @@ export class AuthService {
 		private readonly organizationRepository: OrganizationRepository,
 		private readonly userProfilesRepository: UserProfilesRepository,
 		private readonly errorMessageHelper: FirebaseErrorMessageHelper,
+		private jwtService: JwtService,
 	) {
 		this.firebaseClientAuth = getAuth(this.firebaseClient);
 	}
@@ -87,6 +83,7 @@ export class AuthService {
 			}
 			return undefined;
 		} catch (error) {
+			console.log('error', error);
 			await this.deleteUser(fbid);
 			throw new FirebaseException(error);
 		}
@@ -308,9 +305,9 @@ export class AuthService {
 	}
 
 	async login(login: userLoginDto) {
-		const existingUser = await this.userProfilesRepository.findOneByCondition({
-			email: login.email,
-		});
+		const existingUser = await this.userProfilesRepository.getUserLoginInfo(
+			login.email,
+		);
 		if (!existingUser) {
 			throw new UnauthorizedException(
 				'You do not have an account, kindly register before trying to log in',
@@ -370,10 +367,18 @@ export class AuthService {
 		}
 	}
 
+	async checkUserExist(email: string): Promise<boolean> {
+		try {
+			return await this.userProfilesRepository.checkUerExist(email);
+		} catch (err) {
+			throw err;
+		}
+	}
+
 	//PRIVATE METHODS FOR GETTING SYSTEM AND ORGANIZATION ROLES
 	private async getLandlordRole(entityManager: EntityManager): Promise<Role> {
 		return await entityManager.findOne(Role, {
-			where: { name: LANDLORD_ROLE },
+			where: { name: UserRoles.LANDLORD },
 		});
 	}
 
@@ -381,7 +386,7 @@ export class AuthService {
 		entityManager: EntityManager,
 	): Promise<OrganizationRole> {
 		return await entityManager.findOne(OrganizationRole, {
-			where: { name: ORG_OWNER_ROLE },
+			where: { name: UserRoles.ORG_OWNER },
 		});
 	}
 
@@ -420,11 +425,11 @@ export class AuthService {
 				transactionalEntityManager,
 				createEventType,
 			);
+
 			const systemRole = await this.getLandlordRole(transactionalEntityManager);
 			const organizationRole = await this.getOrgOwnerRole(
 				transactionalEntityManager,
 			);
-
 			const user = new OrganizationUser();
 			user.firstName = createUserDto.firstName;
 			user.lastName = createUserDto.lastName;
@@ -448,5 +453,63 @@ export class AuthService {
 			});
 			return userProfile;
 		});
+	}
+
+	async getUserRolesFromToken(token: string): Promise<UserRoles[]> {
+		try {
+			//   const decodedToken = this.jwtService.decode(token);
+			const decodedToken = await this.auth.verifyIdToken(token);
+			const systemRole = decodedToken.systemRole;
+			const organizationRole = decodedToken.organizationRole;
+			const userRoles: UserRoles[] = [];
+			if (!!systemRole) {
+				userRoles.push(systemRole);
+			}
+			if (!!organizationRole) {
+				userRoles.push(organizationRole);
+			}
+
+			//   if (decodedToken) {
+			// 	// Check for system roles
+			// 	if (decodedToken['systemRole']) {
+			// 	  userRoles.push(decodedToken['systemRole'] as UserRoles);
+			// 	}
+
+			// 	// Check for organization roles
+			// 	if (decodedToken['organizationRole']) {
+			// 	  userRoles.push(decodedToken['organizationRole'] as UserRoles);
+			// 	}
+
+			// 	// Add other roles as needed
+			// 	if (decodedToken['superAdminRole']) {
+			// 	  userRoles.push(decodedToken['superAdminRole'] as UserRoles);
+			// 	}
+
+			// 	if (decodedToken['adminRole']) {
+			// 	  userRoles.push(decodedToken['adminRole'] as UserRoles);
+			// 	}
+
+			// 	if (decodedToken['tenantRole']) {
+			// 	  userRoles.push(decodedToken['tenantRole'] as UserRoles);
+			// 	}
+
+			// 	if (decodedToken['propertyManagerRole']) {
+			// 	  userRoles.push(decodedToken['propertyManagerRole'] as UserRoles);
+			// 	}
+
+			// 	if (decodedToken['propertyOwnerRole']) {
+			// 	  userRoles.push(decodedToken['propertyOwnerRole'] as UserRoles);
+			// 	}
+
+			// 	if (decodedToken['leaseManagerRole']) {
+			// 	  userRoles.push(decodedToken['leaseManagerRole'] as UserRoles);
+			// 	}
+			//   }
+
+			return userRoles;
+		} catch (error) {
+			console.error('Error decoding token:', error);
+			return [];
+		}
 	}
 }

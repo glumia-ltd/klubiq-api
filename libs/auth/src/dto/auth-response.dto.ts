@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsDate, IsJWT, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsJWT, IsNumber, IsString } from 'class-validator';
 
 export class SignUpResponseDto {
 	@ApiProperty({
@@ -40,17 +40,12 @@ export class RenterLoginResponseDto {
 	@AutoMap()
 	@ApiProperty()
 	@IsString()
-	systemRole: string;
+	systemRoleName: string;
 
 	@AutoMap()
 	@ApiProperty()
 	@IsString()
-	orgRole: string;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsBoolean()
-	isDeleted: boolean;
+	orgRoleName: string;
 
 	@AutoMap()
 	@ApiProperty()
@@ -64,68 +59,8 @@ export class RenterLoginResponseDto {
 
 	@AutoMap()
 	@ApiProperty()
-	@IsString()
-	phoneNumber: string;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsString()
-	countryPhoneCode: string;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsString()
-	street: string;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsString()
-	addressLine2: string;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsString()
-	state: string;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsString()
-	city: string;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsString()
-	country: string;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsString()
-	postalCode: string;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsString()
-	formOfIdentity: string;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsDate()
-	dateOfBirth: Date;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsString()
-	gender: string;
-
-	@AutoMap()
-	@ApiProperty()
 	@IsBoolean()
 	isAccountVerified: boolean;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsString()
-	bio: string;
 
 	@AutoMap()
 	@ApiProperty()
@@ -140,17 +75,17 @@ export class RenterLoginResponseDto {
 	@AutoMap()
 	@ApiProperty()
 	@IsString()
-	_id: string;
+	firebaseId: string;
 
 	@AutoMap()
 	@ApiProperty()
 	@IsString()
-	userUuid: string;
+	organizationUserUuid: string;
 
 	@AutoMap()
 	@ApiProperty()
 	@IsNumber()
-	userId: number;
+	organizationUserId: number;
 
 	@AutoMap()
 	@ApiProperty()

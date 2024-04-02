@@ -80,7 +80,6 @@ export const Firebase_Errors = [
 
 export class FirebaseErrorMessageHelper {
 	parseFirebaseError(error: FirebaseError): string {
-		console.log('Firebase error: ', error);
 		return (
 			Firebase_Errors.find((e) => e.code === error.code)?.message ||
 			'An unexpected error occurred. Please try again.'
