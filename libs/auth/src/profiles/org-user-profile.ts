@@ -9,7 +9,7 @@ import {
 import { AutomapperProfile, InjectMapper } from '@automapper/nestjs';
 import { UserProfile } from '@app/common';
 import { RenterLoginResponseDto } from './../dto/auth-response.dto';
-import { OrganizationUser } from 'apps/klubiq-dashboard/src/users/entities/organization-user.entity';
+import { OrganizationUser } from '../../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
 
 export class OrgUserProfile extends AutomapperProfile {
 	constructor(@InjectMapper() mapper: Mapper) {

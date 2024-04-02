@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionsService, ViewOrgRoleDto } from '@app/common';
-import { Auth } from '@app/auth/decorators';
+import { Auth } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth';
 
 @ApiTags('public')

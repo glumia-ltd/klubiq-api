@@ -16,7 +16,7 @@ import {
 	VerifyEmailDto,
 	SignUpResponseDto,
 } from '@app/auth';
-import { Auth } from '@app/auth/decorators';
+import { Auth } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 
 @ApiTags('auth')

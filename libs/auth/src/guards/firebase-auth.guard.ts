@@ -6,14 +6,14 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
-import { UsersService } from 'apps/klubiq-dashboard/src/users/users.service';
+//import { UsersService } from 'apps/klubiq-dashboard/src/users/users.service';
 import { AuthService } from '../auth.service';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
 	constructor(
 		private authService: AuthService,
-		private usersService: UsersService,
+		//private usersService: UsersService,
 		private configService: ConfigService,
 	) {}
 
@@ -23,13 +23,12 @@ export class FirebaseAuthGuard implements CanActivate {
 		const request: any = context.switchToHttp().getRequest<Request>();
 		try {
 			const fireUser = await this.validate(request.headers.authorization);
-			const user = await this.usersService.getUserByFireBaseId(fireUser.uid);
+			// const user = await this.usersService.getUserByFireBaseId(fireUser.uid);
 
-			request.user = user;
-
+			request.user = fireUser;
 			return true;
-		} catch (validationError) {
-			return false;
+		} catch {
+			throw new UnauthorizedException();
 		}
 	}
 

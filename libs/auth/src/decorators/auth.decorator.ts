@@ -1,6 +1,6 @@
 import { SetMetadata } from '@nestjs/common';
 import { UserRoles } from '@app/common';
-import { AuthType } from './types/firebase.types';
+import { AuthType } from '../types/firebase.types';
 
 export const Permissions = (...permissions: string[]) =>
 	SetMetadata('permissions', permissions);

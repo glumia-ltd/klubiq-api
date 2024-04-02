@@ -5,7 +5,7 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AUTH_TYPE_KEY } from '@app/auth/decorators';
+import { AUTH_TYPE_KEY } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 import { FirebaseAuthGuard } from './firebase-auth.guard';
 

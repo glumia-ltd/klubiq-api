@@ -32,3 +32,9 @@ export enum AuthType {
 	Bearer,
 	None,
 }
+
+export interface ActiveUserData {
+	email: string;
+	systemRole: string;
+	organizationRole?: string;
+}
