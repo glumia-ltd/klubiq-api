@@ -13,7 +13,7 @@ export class MailerSendService {
 	private readonly apiKey: string;
 
 	constructor(private readonly configService: ConfigService) {
-		this.apiKey = this.configService.get('API_KEY');
+		this.apiKey = this.configService.get('EMAIL_API_KEY');
 		this.mailerSend = new MailerSend({ apiKey: this.apiKey }); // Set your API key
 	}
 
