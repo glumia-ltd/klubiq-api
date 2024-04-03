@@ -1,5 +1,4 @@
 import { MailerSendService } from '@app/common/email/email.service';
-import { MailerSendSMTPService } from '@app/common/email/smtp-email.service';
 import {
 	ForbiddenException,
 	Injectable,
@@ -18,20 +17,19 @@ import {
 import { Auth, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { EntityManager } from 'typeorm';
 import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/organization.repository';
-import { UserProfilesRepository, UserRoles } from '@app/common';
-import { OrganizationRole, Role, UserProfile } from '@app/common';
+import {
+	OrganizationRole,
+	Role,
+	UserProfile,
+	CreateUserEventTypes,
+	UserProfilesRepository,
+	UserRoles,
+} from '@app/common';
 import { Organization } from '../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
 import { OrganizationUser } from '../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
-import { JwtService } from '@nestjs/jwt';
-
-//Enums to identify if it's a sign-up event or invite user event
-export enum CreateUserEventTypes {
-	CREATE_ORG_USER,
-	INVITE_ORG_USER,
-}
 
 @Injectable()
 export class AuthService {
@@ -41,11 +39,9 @@ export class AuthService {
 		@Inject('FIREBASE_AUTH') private firebaseClient: any,
 		@InjectMapper() private readonly mapper: Mapper,
 		private emailService: MailerSendService,
-		private emailSmtpService: MailerSendSMTPService,
 		private readonly organizationRepository: OrganizationRepository,
 		private readonly userProfilesRepository: UserProfilesRepository,
 		private readonly errorMessageHelper: FirebaseErrorMessageHelper,
-		private jwtService: JwtService,
 	) {
 		this.firebaseClientAuth = getAuth(this.firebaseClient);
 	}
@@ -376,17 +372,21 @@ export class AuthService {
 	}
 
 	//PRIVATE METHODS FOR GETTING SYSTEM AND ORGANIZATION ROLES
-	private async getLandlordRole(entityManager: EntityManager): Promise<Role> {
+	private async getSystemRole(
+		entityManager: EntityManager,
+		roleName: UserRoles,
+	): Promise<Role> {
 		return await entityManager.findOne(Role, {
-			where: { name: UserRoles.LANDLORD },
+			where: { name: roleName },
 		});
 	}
 
-	private async getOrgOwnerRole(
+	private async getOrgRole(
 		entityManager: EntityManager,
+		roleName: UserRoles,
 	): Promise<OrganizationRole> {
 		return await entityManager.findOne(OrganizationRole, {
-			where: { name: UserRoles.ORG_OWNER },
+			where: { name: roleName },
 		});
 	}
 
@@ -426,9 +426,18 @@ export class AuthService {
 				createEventType,
 			);
 
-			const systemRole = await this.getLandlordRole(transactionalEntityManager);
-			const organizationRole = await this.getOrgOwnerRole(
+			const systemRole = await this.getSystemRole(
 				transactionalEntityManager,
+				UserRoles.LANDLORD,
+			);
+			const organizationRole = await this.getOrgRole(
+				transactionalEntityManager,
+				UserRoles.ORG_OWNER,
+			);
+			const permissions = organizationRole.featurePermissions.map(
+				(featurePermission) => {
+					return featurePermission.alias;
+				},
 			);
 			const user = new OrganizationUser();
 			user.firstName = createUserDto.firstName;
@@ -450,6 +459,7 @@ export class AuthService {
 			await this.setCustomClaims(userProfile.firebaseId, {
 				systemRole: systemRole.name,
 				organizationRole: organizationRole.name,
+				permissions: permissions,
 			});
 			return userProfile;
 		});
