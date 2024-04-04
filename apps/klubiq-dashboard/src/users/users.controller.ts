@@ -3,7 +3,10 @@ import {
 	Get,
 	Param,
 	Delete,
-	// UseGuards
+	NotFoundException,
+	UseGuards,
+	Put,
+	Body,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserResponseDto } from './dto/create-organization-user.dto';
@@ -11,10 +14,14 @@ import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationUser } from './entities/organization-user.entity';
-// import { RolesGuard } from '@app/auth/guards/roles.guard';
+import { RolesGuard } from '@app/auth/guards/roles.guard';
 import { UserRoles } from '@app/common';
 import { AuthType, Auth, Roles } from '@app/auth';
-// import { FirebaseAuthGuard } from '@app/auth/guards/firebase-auth.guard';
+import { FirebaseAuthGuard } from '@app/auth/guards/firebase-auth.guard';
+import {
+	UpdateOrganizationUserDto,
+	UpdateUserProfileDto,
+} from './dto/update-organization-user.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -25,8 +32,6 @@ export class UsersController {
 		private readonly usersService: UsersService,
 		@InjectMapper() private readonly mapper: Mapper,
 	) {}
-
-	//return this.mapper.map(userData, UserProfile, UserResponseDto);
 
 	@Get()
 	@Roles(UserRoles.LANDLORD)
@@ -47,22 +52,37 @@ export class UsersController {
 		return this.mapper.map(userData, OrganizationUser, UserResponseDto);
 	}
 
-	// @Get(':id')
-	// @ApiOkResponse({
-	// 	description: 'gets a user by id',
-	// 	type: OrganizationUser,
-	// })
-	// async findOne(@Param('id') id: string) {
-	// 	return await this.usersService.findOne(+id);
-	// }
+	@Get('landlord/:identifier')
+	@UseGuards(FirebaseAuthGuard, RolesGuard)
+	@Roles(UserRoles.LANDLORD)
+	async getLandlordUser(
+		@Param('identifier') identifier: string,
+	): Promise<OrganizationUser> {
+		const user =
+			await this.usersService.findLandlordByEmailOrFirebaseId(identifier);
+		if (!user) {
+			throw new NotFoundException('Landlord user not found');
+		}
+		return user;
+	}
 
-	// @Patch(':id')
-	// update(
-	// 	@Param('id') id: string,
-	// 	@Body() updateOrgUserDto: UpdateOrganizationUserDto,
-	// ) {
-	// 	return this.usersService.update(+id, updateOrgUserDto);
-	// }
+	@Put(':profileId')
+	async updateUserByProfileId(
+		@Param('profileId') profileId: string,
+		@Body() updateUserProfileDto: UpdateUserProfileDto,
+		@Body() updateOrganizationUserDto: UpdateOrganizationUserDto,
+	): Promise<OrganizationUser> {
+		const updatedUser =
+			await this.usersService.updateUserProfileAndOrganizationUser(
+				profileId,
+				updateUserProfileDto,
+				updateOrganizationUserDto,
+			);
+		if (!updatedUser) {
+			throw new NotFoundException('User not found');
+		}
+		return updatedUser;
+	}
 
 	@Delete(':id')
 	remove(@Param('id') id: string) {
