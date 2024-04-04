@@ -33,9 +33,58 @@ export class Organization {
 	@Column({ length: 100, unique: true })
 	name: string;
 
+	@AutoMap()
+	@Column({ default: false })
+	isVerified?: boolean;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	email?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	govRegistrationNumber?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	countryPhoneCode?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	phoneNumber?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	street?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	addressLine2?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	state?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	city?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	country?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	postalCode?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	companyType?: string;
+
 	@Column({ default: false })
 	isDeleted?: boolean;
 
+	@AutoMap(() => [OrganizationUser])
 	@OneToMany(() => OrganizationUser, (orgUser) => orgUser.organization, {
 		cascade: true,
 	})
@@ -49,4 +98,8 @@ export class Organization {
 
 	@UpdateDateColumn()
 	updatedDate?: Date;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	website?: string;
 }

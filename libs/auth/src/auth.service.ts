@@ -79,7 +79,6 @@ export class AuthService {
 			}
 			return undefined;
 		} catch (error) {
-			console.log('error', error);
 			await this.deleteUser(fbid);
 			throw new FirebaseException(error);
 		}

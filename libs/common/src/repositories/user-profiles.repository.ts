@@ -31,9 +31,8 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 	}
 
 	async checkUerExist(email: string): Promise<boolean> {
-		const data = await this.repository.findOne({
+		return await this.repository.exists({
 			where: { email: email },
 		});
-		return !!data;
 	}
 }

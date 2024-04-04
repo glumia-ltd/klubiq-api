@@ -26,8 +26,6 @@ export class UsersController {
 		@InjectMapper() private readonly mapper: Mapper,
 	) {}
 
-	//return this.mapper.map(userData, UserProfile, UserResponseDto);
-
 	@Get()
 	@Roles(UserRoles.LANDLORD)
 	@ApiOkResponse({
