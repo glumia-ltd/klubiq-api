@@ -13,6 +13,28 @@ import firebaseAdmin from 'firebase-admin';
 import auth from 'firebase/auth';
 
 const moduleMocker = new ModuleMocker(global);
+// const mockUser = {
+// 	uuid: 'XXXXXXXXXXXXXXXX',
+// 	email: 'XXXXXXXXXXXXX@XXX.COM',
+// 	displayName: 'Test User',
+// 	phoneNumber: 'XXXXXXXXXXXXX',
+// 	photoURL: 'XXXXXXXXXXXXX',
+// 	firstName: 'Test User',
+// 	lastName: 'Test User',
+// };
+// const mockOrg = {
+// 	name: 'Test Org',
+// 	uuid: 'XXXXXXXXXXXXXXXX',
+// 	email: 'XXXXXXXXXXXXX@XXX.COM',
+// };
+const mockPayload = {
+	email: 'XXXXXXXXXXXXX',
+	password: 'XXXXXXXXXXXXX',
+	firstName: 'Test User',
+	lastName: 'Test User',
+	companyName: 'XXXXXXXXXXXXX',
+};
+
 jest.mock('firebase/auth');
 jest.mock('firebase/app');
 jest.mock('firebase-admin');
@@ -21,6 +43,8 @@ describe('AuthService', () => {
 	let service: AuthService;
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let mapper: Mapper;
+	// let userRepo: UserProfilesRepository;
+	// let orgRepo: OrganizationRepository;
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -63,10 +87,39 @@ describe('AuthService', () => {
 			})
 			.compile();
 
+		mapper = module.get<Mapper>(getMapperToken());
 		service = module.get<AuthService>(AuthService);
+		// userRepo = module.get<UserProfilesRepository>(UserProfilesRepository);
+		// orgRepo = module.get<OrganizationRepository>(OrganizationRepository);
 	});
 
 	it('should be defined', () => {
 		expect(service).toBeDefined();
+	});
+
+	describe('createOrgUser', () => {
+		it('should create a org user', async () => {
+			// Arrange
+			const result = { jwtToken: 'XXXXXXXXXXXXXXXXXXXXXXXXXVVVVVXXXXXXXXXX' };
+
+			// Act
+			jest
+				.spyOn(service, 'createOrgUser')
+				.mockImplementation(async () => result);
+			const token = await service.createOrgUser(mockPayload);
+
+			// Assert
+			expect(token).toBe(result);
+		});
+
+		it('should create return undefined when firebase user is empty', async () => {
+			// Act
+			jest.spyOn(service, 'createUser').mockImplementation(async () => null);
+			const token = await service.createOrgUser(mockPayload);
+
+			// Assert
+			expect(token).toBe(undefined);
+			expect(token).toBeFalsy();
+		});
 	});
 });
