@@ -13,26 +13,46 @@ import firebaseAdmin from 'firebase-admin';
 import auth from 'firebase/auth';
 
 const moduleMocker = new ModuleMocker(global);
-// const mockUser = {
-// 	uuid: 'XXXXXXXXXXXXXXXX',
-// 	email: 'XXXXXXXXXXXXX@XXX.COM',
-// 	displayName: 'Test User',
-// 	phoneNumber: 'XXXXXXXXXXXXX',
-// 	photoURL: 'XXXXXXXXXXXXX',
-// 	firstName: 'Test User',
-// 	lastName: 'Test User',
-// };
+const mockUser = {
+	firebaseId: 'XXXXXXXXXXXXXXXX',
+	email: 'XXXXXXXXXXXXX@XXX.COM',
+	phoneNumber: 'XXXXXXXXXXXXX',
+	photoURL: 'XXXXXXXXXXXXX',
+};
 // const mockOrg = {
 // 	name: 'Test Org',
 // 	uuid: 'XXXXXXXXXXXXXXXX',
 // 	email: 'XXXXXXXXXXXXX@XXX.COM',
 // };
-const mockPayload = {
+const mockLoginResponse = {
+	profileId: 1,
+	profileUuid: 'XXXXXXXXXXXXXXXX',
+	firstName: 'Test',
+	lastName: 'User',
+	email: 'XXXXXXXXXXXXX@XXX.COM',
+	systemRoleName: 'ADMIN',
+	orgRoleName: 'ADMIN',
+	isPrivacyPolicyAgreed: true,
+	isTermsAndConditionAccepted: true,
+	isActive: true,
+	profilePicUrl: 'XXXXXXXXXXXXX',
+	isAccountVerified: true,
+	firebaseId: 'XXXXXXXXXXXXXXXX',
+	organizationUserUuid: 'XXXXXXXXXXXXXXXX',
+	organizationUserId: 1,
+	organizationId: 1,
+	organizationName: 'Test Org',
+};
+const mockCreateUserPayload = {
 	email: 'XXXXXXXXXXXXX',
 	password: 'XXXXXXXXXXXXX',
 	firstName: 'Test User',
 	lastName: 'Test User',
 	companyName: 'XXXXXXXXXXXXX',
+};
+const mockLoginPayload = {
+	email: 'user@test.com',
+	password: 'TestPassword!',
 };
 
 jest.mock('firebase/auth');
@@ -43,7 +63,7 @@ describe('AuthService', () => {
 	let service: AuthService;
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let mapper: Mapper;
-	// let userRepo: UserProfilesRepository;
+	let userRepo: UserProfilesRepository;
 	// let orgRepo: OrganizationRepository;
 
 	beforeEach(async () => {
@@ -89,7 +109,7 @@ describe('AuthService', () => {
 
 		mapper = module.get<Mapper>(getMapperToken());
 		service = module.get<AuthService>(AuthService);
-		// userRepo = module.get<UserProfilesRepository>(UserProfilesRepository);
+		userRepo = module.get<UserProfilesRepository>(UserProfilesRepository);
 		// orgRepo = module.get<OrganizationRepository>(OrganizationRepository);
 	});
 
@@ -106,7 +126,7 @@ describe('AuthService', () => {
 			jest
 				.spyOn(service, 'createOrgUser')
 				.mockImplementation(async () => result);
-			const token = await service.createOrgUser(mockPayload);
+			const token = await service.createOrgUser(mockCreateUserPayload);
 
 			// Assert
 			expect(token).toBe(result);
@@ -115,11 +135,32 @@ describe('AuthService', () => {
 		it('should create return undefined when firebase user is empty', async () => {
 			// Act
 			jest.spyOn(service, 'createUser').mockImplementation(async () => null);
-			const token = await service.createOrgUser(mockPayload);
+			const token = await service.createOrgUser(mockCreateUserPayload);
 
 			// Assert
 			expect(token).toBe(undefined);
 			expect(token).toBeFalsy();
+		});
+	});
+
+	describe('login', () => {
+		it('should log in a user and return user data with token', async () => {
+			// Arrange
+			const result = {
+				user: mockLoginResponse,
+				token: 'XXXXXXXXXXXXXXXXXXXXXXXXXVVVVVXXXXXXXXXX',
+				refreshToken: 'XXXXXXXXXXXXXXXXXXXXXXXXXVVVVVXXXXXXXXXX',
+			};
+
+			// Act
+			jest
+				.spyOn(userRepo, 'getUserLoginInfo')
+				.mockImplementation(async () => mockUser);
+			jest.spyOn(service, 'login').mockImplementation(async () => result);
+			const mockResult = await service.login(mockLoginPayload);
+
+			// Assert
+			expect(mockResult).toBe(result);
 		});
 	});
 });
