@@ -478,43 +478,6 @@ export class AuthService {
 				userRoles.push(organizationRole);
 			}
 
-			//   if (decodedToken) {
-			// 	// Check for system roles
-			// 	if (decodedToken['systemRole']) {
-			// 	  userRoles.push(decodedToken['systemRole'] as UserRoles);
-			// 	}
-
-			// 	// Check for organization roles
-			// 	if (decodedToken['organizationRole']) {
-			// 	  userRoles.push(decodedToken['organizationRole'] as UserRoles);
-			// 	}
-
-			// 	// Add other roles as needed
-			// 	if (decodedToken['superAdminRole']) {
-			// 	  userRoles.push(decodedToken['superAdminRole'] as UserRoles);
-			// 	}
-
-			// 	if (decodedToken['adminRole']) {
-			// 	  userRoles.push(decodedToken['adminRole'] as UserRoles);
-			// 	}
-
-			// 	if (decodedToken['tenantRole']) {
-			// 	  userRoles.push(decodedToken['tenantRole'] as UserRoles);
-			// 	}
-
-			// 	if (decodedToken['propertyManagerRole']) {
-			// 	  userRoles.push(decodedToken['propertyManagerRole'] as UserRoles);
-			// 	}
-
-			// 	if (decodedToken['propertyOwnerRole']) {
-			// 	  userRoles.push(decodedToken['propertyOwnerRole'] as UserRoles);
-			// 	}
-
-			// 	if (decodedToken['leaseManagerRole']) {
-			// 	  userRoles.push(decodedToken['leaseManagerRole'] as UserRoles);
-			// 	}
-			//   }
-
 			return userRoles;
 		} catch (error) {
 			console.error('Error decoding token:', error);

@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
 import firebaseAdmin from 'firebase-admin';
 import auth from 'firebase/auth';
+import { UnauthorizedException } from '@nestjs/common';
 
 const moduleMocker = new ModuleMocker(global);
 const mockUser = {
@@ -161,6 +162,22 @@ describe('AuthService', () => {
 
 			// Assert
 			expect(mockResult).toBe(result);
+		});
+
+		it('should throw Unauthorized exception', async () => {
+			// Act
+			jest
+				.spyOn(userRepo, 'getUserLoginInfo')
+				.mockImplementation(async () => null);
+			try {
+				await service.login(mockLoginPayload);
+				expect(false).toBeTruthy();
+			} catch (e) {
+				expect(e).toBeInstanceOf(UnauthorizedException);
+				expect(e.message).toEqual(
+					'You do not have an account, kindly register before trying to log in',
+				);
+			}
 		});
 	});
 });
