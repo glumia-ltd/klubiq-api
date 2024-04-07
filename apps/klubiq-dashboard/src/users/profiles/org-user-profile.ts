@@ -3,6 +3,7 @@ import {
 	MappingProfile,
 	createMap,
 	forMember,
+	forSelf,
 	mapFrom,
 } from '@automapper/core';
 import { AutomapperProfile, InjectMapper } from '@automapper/nestjs';
@@ -19,114 +20,26 @@ export class OrgUserMapProfile extends AutomapperProfile {
 		return (mapper) => {
 			createMap(
 				mapper,
-				UserProfile,
+				OrganizationUser,
 				UserResponseDto,
+				forSelf(UserProfile, (s) => s.profile),
 				forMember(
-					(d) => d.firstName,
-					mapFrom((s) => s.organizationUser?.firstName),
+					(d) => d.orgRoleName,
+					mapFrom((s) => s.orgRole?.name),
 				),
 				forMember(
-					(d) => d.lastName,
-					mapFrom((s) => s.organizationUser?.lastName),
-				),
-				forMember(
-					(d) => d.orgRole,
-					mapFrom((s) => s.organizationUser?.orgRole?.name),
-				),
-				forMember(
-					(d) => d.systemRole,
-					mapFrom((s) => s.systemRole?.name),
-				),
-				forMember(
-					(d) => d._id,
-					mapFrom((s) => s.firebaseId),
-				),
-				forMember(
-					(d) => d.isAccountVerified,
-					mapFrom((s) => s.organizationUser?.isAccountVerified),
-				),
-				forMember(
-					(d) => d.userId,
-					mapFrom((s) => s.organizationUser?.organizationUserId),
-				),
-				forMember(
-					(d) => d.userUuid,
-					mapFrom((s) => s.organizationUser?.organizationUserUuid),
+					(d) => d.systemRoleName,
+					mapFrom((s) => s.profile?.systemRole?.name),
 				),
 				forMember(
 					(d) => d.organizationId,
-					mapFrom((s) => s.organizationUser?.organization?.organizationId),
+					mapFrom((s) => s.organization?.organizationId),
 				),
 				forMember(
 					(d) => d.organizationName,
-					mapFrom((s) => s.organizationUser?.organization?.name),
+					mapFrom((s) => s.organization?.name),
 				),
-			),
-				createMap(
-					mapper,
-					OrganizationUser,
-					UserResponseDto,
-					forMember(
-						(d) => d.profilePicUrl,
-						mapFrom((s) => s.profile?.profilePicUrl),
-					),
-					forMember(
-						(d) => d.email,
-						mapFrom((s) => s.profile?.email),
-					),
-					forMember(
-						(d) => d.orgRole,
-						mapFrom((s) => s.orgRole?.name),
-					),
-					forMember(
-						(d) => d.systemRole,
-						mapFrom((s) => s.profile?.systemRole?.name),
-					),
-					forMember(
-						(d) => d._id,
-						mapFrom((s) => s.firebaseId),
-					),
-					forMember(
-						(d) => d.isTermsAndConditionAccepted,
-						mapFrom((s) => s.profile?.isTermsAndConditionAccepted),
-					),
-					forMember(
-						(d) => d.isPrivacyPolicyAgreed,
-						mapFrom((s) => s.profile?.isPrivacyPolicyAgreed),
-					),
-					forMember(
-						(d) => d.phoneNumber,
-						mapFrom((s) => s.profile?.phoneNumber),
-					),
-					forMember(
-						(d) => d.countryPhoneCode,
-						mapFrom((s) => s.profile?.countryPhoneCode),
-					),
-					forMember(
-						(d) => d.bio,
-						mapFrom((s) => s.profile?.bio),
-					),
-					forMember(
-						(d) => d.dateOfBirth,
-						mapFrom((s) => s.profile?.dateOfBirth),
-					),
-					forMember(
-						(d) => d.profileId,
-						mapFrom((s) => s.profile?.profileId),
-					),
-					forMember(
-						(d) => d.profileUuid,
-						mapFrom((s) => s.profile?.profileUuid),
-					),
-					forMember(
-						(d) => d.organizationId,
-						mapFrom((s) => s.organization?.organizationId),
-					),
-					forMember(
-						(d) => d.organizationName,
-						mapFrom((s) => s.organization?.name),
-					),
-				);
+			);
 		};
 	}
 }
