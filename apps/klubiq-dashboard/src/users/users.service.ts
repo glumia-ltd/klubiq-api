@@ -2,9 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { UsersRepository } from './users.repository';
-import { UserProfilesRepository, Role, RolesRepository } from '@app/common';
-import { OrganizationRepository } from '../organization/organization.repository';
-import { Organization } from '../organization/entities/organization.entity';
+import { UserProfilesRepository, RolesRepository } from '@app/common';
 import { OrganizationUser } from './entities/organization-user.entity';
 import {
 	UpdateUserProfileDto,
@@ -17,7 +15,6 @@ export class UsersService {
 	constructor(
 		@InjectEntityManager() private entityManager: EntityManager,
 		private readonly usersRepository: UsersRepository,
-		private readonly organizationRepository: OrganizationRepository,
 		private readonly userProfilesRepository: UserProfilesRepository,
 		private readonly rolesRepository: RolesRepository,
 	) {}
@@ -90,14 +87,5 @@ export class UsersService {
 
 	remove(id: number) {
 		return `This action removes a #${id} user`;
-	}
-
-	private async preloadOrganization(name: string): Promise<Organization> {
-		const org = await this.organizationRepository.findOrgByName(name);
-		return org;
-	}
-	private async preloadSystemRole(name: string): Promise<Role> {
-		const role = await this.rolesRepository.findOneByCondition({ name: name });
-		return role;
 	}
 }

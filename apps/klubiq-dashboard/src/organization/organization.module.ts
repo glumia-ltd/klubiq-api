@@ -5,11 +5,13 @@ import { OrganizationController } from './organization.controller';
 import { Organization } from './entities/organization.entity';
 import { OrganizationRepository } from './organization.repository';
 import { EntityManager } from 'typeorm';
+import { OrganizationProfile } from './profiles/organization-profile';
 
 @Module({
 	controllers: [OrganizationController],
 	providers: [
 		OrganizationService,
+		OrganizationProfile,
 		{
 			provide: OrganizationRepository,
 			useFactory: (em: EntityManager) => new OrganizationRepository(em),
@@ -17,6 +19,6 @@ import { EntityManager } from 'typeorm';
 		},
 	],
 	imports: [TypeOrmModule.forFeature([Organization])],
-	exports: [OrganizationRepository],
+	exports: [OrganizationRepository, OrganizationService],
 })
 export class OrganizationModule {}
