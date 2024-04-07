@@ -5,8 +5,8 @@ import { UsersRepository } from './users.repository';
 import { UserProfilesRepository, RolesRepository } from '@app/common';
 import { OrganizationUser } from './entities/organization-user.entity';
 import {
-	UpdateUserProfileDto,
 	UpdateOrganizationUserDto,
+	UpdateUserProfileDto,
 } from './dto/update-organization-user.dto';
 
 @Injectable()
