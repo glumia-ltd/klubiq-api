@@ -11,16 +11,12 @@ import {
 	Post,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UserResponseDto } from './dto/create-organization-user.dto';
 
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationUser } from './entities/organization-user.entity';
 import { UserRoles } from '@app/common';
 import { AuthType, Auth, Roles, ActiveUser, ActiveUserData } from '@app/auth';
-import {
-	UpdateOrganizationUserDto,
-	UpdateUserProfileDto,
-} from './dto/update-organization-user.dto';
+import { UpdateUserDto } from './dto/update-organization-user.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -37,15 +33,6 @@ export class UsersController {
 	})
 	findAll() {
 		return this.usersService.findAll();
-	}
-
-	@Get(':id')
-	@ApiOkResponse({
-		description: 'gets a user by id',
-		type: UserResponseDto,
-	})
-	async findOne(@Param('id') id: string) {
-		return await this.usersService.findOne(+id);
 	}
 
 	@Get('landlord/:identifier')
@@ -70,14 +57,12 @@ export class UsersController {
 	@Put(':profileId')
 	async updateUserByProfileId(
 		@Param('profileId') profileId: string,
-		@Body() updateUserProfileDto: UpdateUserProfileDto,
-		@Body() updateOrganizationUserDto: UpdateOrganizationUserDto,
+		@Body() updateUserdto: UpdateUserDto,
 	): Promise<OrganizationUser> {
 		const updatedUser =
 			await this.usersService.updateUserProfileAndOrganizationUser(
 				profileId,
-				updateUserProfileDto,
-				updateOrganizationUserDto,
+				updateUserdto,
 			);
 		if (!updatedUser) {
 			throw new NotFoundException('User not found');

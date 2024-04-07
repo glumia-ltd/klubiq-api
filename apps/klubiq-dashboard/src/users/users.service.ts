@@ -10,10 +10,7 @@ import {
 	UserProfile,
 } from '@app/common';
 import { OrganizationUser } from './entities/organization-user.entity';
-import {
-	UpdateOrganizationUserDto,
-	UpdateUserProfileDto,
-} from './dto/update-organization-user.dto';
+import { UpdateUserDto } from './dto/update-organization-user.dto';
 import { RenterLoginResponseDto } from '@app/auth';
 
 @Injectable()
@@ -62,8 +59,7 @@ export class UsersService {
 
 	async updateUserProfileAndOrganizationUser(
 		profileUuid: string,
-		updateUserProfileDto: UpdateUserProfileDto,
-		updateOrganizationUserDto: UpdateOrganizationUserDto,
+		updateUserDto: UpdateUserDto,
 	) {
 		const organizationUser = await this.usersRepository.findOne({
 			where: { profile: { profileUuid: profileUuid } },
@@ -71,12 +67,12 @@ export class UsersService {
 		});
 
 		if (organizationUser) {
-			if (updateUserProfileDto) {
-				Object.assign(organizationUser.profile, updateUserProfileDto);
+			if (updateUserDto.profile) {
+				Object.assign(organizationUser.profile, updateUserDto.profile);
 			}
 
-			if (updateOrganizationUserDto) {
-				Object.assign(organizationUser, updateOrganizationUserDto);
+			if (updateUserDto.organizationUser) {
+				Object.assign(organizationUser, updateUserDto.organizationUser);
 			}
 
 			await this.usersRepository.save(organizationUser);

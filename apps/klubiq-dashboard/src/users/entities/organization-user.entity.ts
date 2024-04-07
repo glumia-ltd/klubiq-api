@@ -53,7 +53,7 @@ export class OrganizationUser {
 	isAccountVerified?: boolean;
 
 	@AutoMap(() => UserProfile)
-	@OneToOne(() => UserProfile)
+	@OneToOne(() => UserProfile, { cascade: ['update'] })
 	@JoinColumn({
 		name: 'profileUuid',
 		referencedColumnName: 'profileUuid',
