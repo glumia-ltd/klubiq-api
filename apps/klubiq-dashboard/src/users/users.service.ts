@@ -1,13 +1,20 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
+import { Mapper } from '@automapper/core';
+import { InjectMapper } from '@automapper/nestjs';
 import { UsersRepository } from './users.repository';
-import { UserProfilesRepository, RolesRepository } from '@app/common';
+import {
+	UserProfilesRepository,
+	RolesRepository,
+	UserProfile,
+} from '@app/common';
 import { OrganizationUser } from './entities/organization-user.entity';
 import {
 	UpdateOrganizationUserDto,
 	UpdateUserProfileDto,
 } from './dto/update-organization-user.dto';
+import { RenterLoginResponseDto } from '@app/auth';
 
 @Injectable()
 export class UsersService {
@@ -17,6 +24,7 @@ export class UsersService {
 		private readonly usersRepository: UsersRepository,
 		private readonly userProfilesRepository: UserProfilesRepository,
 		private readonly rolesRepository: RolesRepository,
+		@InjectMapper() private readonly mapper: Mapper,
 	) {}
 
 	async getUserByFireBaseId(firebaseId: string) {
@@ -86,5 +94,19 @@ export class UsersService {
 
 	remove(id: number) {
 		return `This action removes a #${id} user`;
+	}
+
+	async getLoggedInLandlordUser(
+		email: string,
+	): Promise<RenterLoginResponseDto> {
+		try {
+			const user =
+				await this.userProfilesRepository.getLandLordUserLoginInfoByFirebaseId(
+					email,
+				);
+			return this.mapper.map(user, UserProfile, RenterLoginResponseDto);
+		} catch (err) {
+			throw err;
+		}
 	}
 }

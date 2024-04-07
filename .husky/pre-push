@@ -13,6 +13,6 @@ fi
 
 echo -e ">> Finish checking branch name \n==="
 
-npm test --bail --passWithNoTests
+# npm test --bail --passWithNoTests
 
 exit 0

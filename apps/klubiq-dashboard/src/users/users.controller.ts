@@ -6,15 +6,17 @@ import {
 	NotFoundException,
 	Put,
 	Body,
+	HttpStatus,
+	HttpCode,
+	Post,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserResponseDto } from './dto/create-organization-user.dto';
-import { Mapper } from '@automapper/core';
-import { InjectMapper } from '@automapper/nestjs';
+
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationUser } from './entities/organization-user.entity';
 import { UserRoles } from '@app/common';
-import { AuthType, Auth, Roles } from '@app/auth';
+import { AuthType, Auth, Roles, ActiveUser, ActiveUserData } from '@app/auth';
 import {
 	UpdateOrganizationUserDto,
 	UpdateUserProfileDto,
@@ -26,10 +28,7 @@ import {
 @Auth(AuthType.Bearer)
 @Roles(UserRoles.LANDLORD)
 export class UsersController {
-	constructor(
-		private readonly usersService: UsersService,
-		@InjectMapper() private readonly mapper: Mapper,
-	) {}
+	constructor(private readonly usersService: UsersService) {}
 
 	@Get()
 	@Roles(UserRoles.ORG_OWNER)
@@ -46,11 +45,11 @@ export class UsersController {
 		type: UserResponseDto,
 	})
 	async findOne(@Param('id') id: string) {
-		const userData = await this.usersService.findOne(+id);
-		return this.mapper.map(userData, OrganizationUser, UserResponseDto);
+		return await this.usersService.findOne(+id);
 	}
 
 	@Get('landlord/:identifier')
+	@Roles(UserRoles.LANDLORD)
 	async getLandlordUser(
 		@Param('identifier') identifier: string,
 	): Promise<OrganizationUser> {
@@ -59,6 +58,13 @@ export class UsersController {
 			throw new NotFoundException('Landlord user not found');
 		}
 		return user;
+	}
+
+	@HttpCode(HttpStatus.OK)
+	@Post('session')
+	async getLoggedInLandlord(@ActiveUser() activeUser: ActiveUserData) {
+		const email = activeUser.email;
+		return await this.usersService.getLoggedInLandlordUser(email);
 	}
 
 	@Put(':profileId')

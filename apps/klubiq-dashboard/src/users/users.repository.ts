@@ -10,33 +10,19 @@ export class UsersRepository extends BaseRepository<OrganizationUser> {
 		super(OrganizationUser, manager);
 	}
 
-	async getUserByEmailOrFirebaseId(
-		identifier: string,
-	): Promise<OrganizationUser | null> {
-		try {
-			// Try to find a user by email
-			let user = await this.findOne({
-				relations: ['profile'], // Eager load the profile relationship
-				where: {
-					profile: {
-						email: identifier,
-					},
-				},
-			});
-
-			// If no user is found by email, try to find by firebaseId
-			if (!user) {
-				user = await this.findOne({
-					where: {
-						firebaseId: identifier,
-					},
-				});
-			}
-
-			return user || null;
-		} catch (error) {
-			console.error('Error fetching user:', error);
-			return null;
+	async getUserByFirebaseIdOrEmail(query: string) {
+		const data = await this.repository.findOne({
+			relations: { profile: true },
+			where: [{ firebaseId: query }, { profile: { email: query } }],
+			select: {
+				organizationUserId: true,
+				organizationUserUuid: true,
+				firebaseId: true,
+			},
+		});
+		if (!data) {
+			throw new Error('User not found');
 		}
+		return data;
 	}
 }
