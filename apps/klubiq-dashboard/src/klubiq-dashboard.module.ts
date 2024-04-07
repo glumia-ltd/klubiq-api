@@ -20,6 +20,7 @@ import { HealthModule } from './health/health.module';
 import { PublicController } from './public/public.controller';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@app/common';
+import { PropertiesModule } from './properties/properties.module';
 
 @Module({
 	imports: [
@@ -30,6 +31,7 @@ import { ConfigModule } from '@app/common';
 		HealthModule,
 		PermissionsModule,
 		ConfigModule,
+		PropertiesModule,
 	],
 	controllers: [AuthController, PublicController],
 	providers: [
