@@ -1,5 +1,5 @@
 import { Organization } from './entities/organization.entity';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { BaseRepository } from '@app/common';
 import { EntityManager } from 'typeorm';
 
@@ -40,5 +40,31 @@ export class OrganizationRepository extends BaseRepository<Organization> {
 			organization = await this.createEntity({ name: name });
 		}
 		return organization;
+	}
+
+	async softDeleteEntity(uuid: string): Promise<boolean> {
+		try {
+			const data = await this.softDelete({ organizationUuid: uuid });
+			return data.affected > 0 ? true : false;
+		} catch (err) {
+			this.logger.error('Error deleting organization', err);
+			throw new Error(`Error deleting organization. Error: ${err}`);
+		}
+	}
+
+	async deactivateOrganization(uuid: string): Promise<Organization> {
+		try {
+			const org = await this.findOne({ where: { organizationUuid: uuid } });
+			if (!org) {
+				throw new NotFoundException('Organization not found');
+			}
+			if (org.isActive) {
+				org.isActive = false;
+				return await this.save(org);
+			}
+		} catch (err) {
+			this.logger.error('Error deleting organization', err);
+			throw new Error(`Error deleting organization. Error: ${err}`);
+		}
 	}
 }

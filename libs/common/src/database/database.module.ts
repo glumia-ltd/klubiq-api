@@ -29,9 +29,11 @@ import { FeaturePermission } from './entities/feature-permission.entity';
 				password: configService.get<string>('DATABASE_PASSWORD'),
 				database: configService.get<string>('DATABASE_NAME'),
 				autoLoadEntities: true,
-				ssl: {
-					rejectUnauthorized: false,
-				},
+				ssl: !configService.get<boolean>('SYNCHRONIZE_DB')
+					? {
+							rejectUnauthorized: false,
+						}
+					: false,
 				synchronize: configService.get<boolean>('SYNCHRONIZE_DB'),
 				migrations: ['**/migrations'],
 			}),

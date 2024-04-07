@@ -3,7 +3,6 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { EntityManager } from 'typeorm';
 import { UsersRepository } from './users.repository';
-import { OrganizationRepository } from '../organization/organization.repository';
 import { RolesRepository, UserProfilesRepository } from '@app/common';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { Mapper, createMapper } from '@automapper/core';
@@ -22,7 +21,6 @@ describe('UsersController', () => {
 				UsersService,
 				EntityManager,
 				UsersRepository,
-				OrganizationRepository,
 				RolesRepository,
 				UserProfilesRepository,
 				{

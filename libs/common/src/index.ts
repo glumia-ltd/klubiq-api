@@ -20,3 +20,8 @@ export * from './permissions/permissions.service';
 export * from './dto/feature-permission.dto';
 export * from './dto/org-role.dto';
 export * from './profiles/common-profile';
+export * from './database/entities/abstract-entity';
+export * from './dto/page.dto';
+export * from './dto/page-meta.dto';
+export * from './dto/page-options.dto';
+export * from './types/page-meta-dto-parameters';

@@ -10,7 +10,7 @@ import { UserProfile } from '@app/common';
 import { UserResponseDto } from '../dto/create-organization-user.dto';
 import { OrganizationUser } from '../entities/organization-user.entity';
 
-export class OrgUserProfile extends AutomapperProfile {
+export class OrgUserMapProfile extends AutomapperProfile {
 	constructor(@InjectMapper() mapper: Mapper) {
 		super(mapper);
 	}
