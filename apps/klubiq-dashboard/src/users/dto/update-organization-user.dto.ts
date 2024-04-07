@@ -17,6 +17,4 @@ export class UpdateUserProfileDto {
 	@IsOptional()
 	@IsString()
 	firstName?: string;
-
-	// Add more properties as needed
 }

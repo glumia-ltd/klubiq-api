@@ -9,6 +9,7 @@ import { EntityManager } from 'typeorm';
 import { RepositoriesModule } from '@app/common';
 import { OrgUserMapProfile } from './profiles/org-user-profile';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from '@app/auth';
 
 @Module({
 	imports: [
@@ -16,6 +17,7 @@ import { ConfigModule } from '@nestjs/config';
 		TypeOrmModule.forFeature([OrganizationUser]),
 		RepositoriesModule,
 		ConfigModule,
+		AuthModule,
 	],
 	controllers: [UsersController],
 	providers: [

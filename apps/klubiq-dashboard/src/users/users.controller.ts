@@ -58,8 +58,7 @@ export class UsersController {
 	async getLandlordUser(
 		@Param('identifier') identifier: string,
 	): Promise<OrganizationUser> {
-		const user =
-			await this.usersService.findLandlordByEmailOrFirebaseId(identifier);
+		const user = await this.usersService.getUserByEmailOrFirebaseId(identifier);
 		if (!user) {
 			throw new NotFoundException('Landlord user not found');
 		}

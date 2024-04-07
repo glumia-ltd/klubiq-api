@@ -33,20 +33,19 @@ export class UsersService {
 		});
 	}
 
-	async findLandlordByEmailOrFirebaseId(
+	async getUserByEmailOrFirebaseId(
 		identifier: string,
 	): Promise<OrganizationUser | null> {
-		const user = await this.usersRepository
-			.createQueryBuilder('user')
-			.leftJoinAndSelect('user.orgRole', 'role')
-			.leftJoinAndSelect('user.profile', 'profile')
-			.where('user.email = :identifier OR user.firebaseId = :identifier', {
-				identifier,
-			})
-			.andWhere('role.name = :roleName', { roleName: 'Landlord' })
-			.getOne();
+		console.log('identifier', identifier);
+		try {
+			const user =
+				await this.usersRepository.getUserByEmailOrFirebaseId(identifier);
 
-		return user;
+			return user || null;
+		} catch (error) {
+			console.error('Error fetching user:', error);
+			return null;
+		}
 	}
 
 	findAll() {
