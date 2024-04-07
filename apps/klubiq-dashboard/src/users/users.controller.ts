@@ -4,20 +4,19 @@ import {
 	Param,
 	Delete,
 	NotFoundException,
-	UseGuards,
 	Put,
 	Body,
+	HttpStatus,
+	HttpCode,
+	Post,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserResponseDto } from './dto/create-organization-user.dto';
-import { Mapper } from '@automapper/core';
-import { InjectMapper } from '@automapper/nestjs';
+
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationUser } from './entities/organization-user.entity';
-import { RolesGuard } from '@app/auth/guards/roles.guard';
 import { UserRoles } from '@app/common';
-import { AuthType, Auth, Roles } from '@app/auth';
-import { FirebaseAuthGuard } from '@app/auth/guards/firebase-auth.guard';
+import { AuthType, Auth, Roles, ActiveUser, ActiveUserData } from '@app/auth';
 import {
 	UpdateOrganizationUserDto,
 	UpdateUserProfileDto,
@@ -28,10 +27,7 @@ import {
 @ApiBearerAuth()
 @Auth(AuthType.Bearer)
 export class UsersController {
-	constructor(
-		private readonly usersService: UsersService,
-		@InjectMapper() private readonly mapper: Mapper,
-	) {}
+	constructor(private readonly usersService: UsersService) {}
 
 	@Get()
 	@Roles(UserRoles.LANDLORD)
@@ -48,12 +44,10 @@ export class UsersController {
 		type: UserResponseDto,
 	})
 	async findOne(@Param('id') id: string) {
-		const userData = await this.usersService.findOne(+id);
-		return this.mapper.map(userData, OrganizationUser, UserResponseDto);
+		return await this.usersService.findOne(+id);
 	}
 
 	@Get('landlord/:identifier')
-	@UseGuards(FirebaseAuthGuard, RolesGuard)
 	@Roles(UserRoles.LANDLORD)
 	async getLandlordUser(
 		@Param('identifier') identifier: string,
@@ -64,6 +58,13 @@ export class UsersController {
 			throw new NotFoundException('Landlord user not found');
 		}
 		return user;
+	}
+
+	@HttpCode(HttpStatus.OK)
+	@Post('session')
+	async getLoggedInLandlord(@ActiveUser() activeUser: ActiveUserData) {
+		const email = activeUser.email;
+		return await this.usersService.getLoggedInLandlordUser(email);
 	}
 
 	@Put(':profileId')
