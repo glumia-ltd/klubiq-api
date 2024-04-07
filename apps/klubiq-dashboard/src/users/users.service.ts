@@ -47,7 +47,7 @@ export class UsersService {
 		console.log('identifier', identifier);
 		try {
 			const user =
-				await this.usersRepository.getUserByEmailOrFirebaseId(identifier);
+				await this.usersRepository.getUserByFirebaseIdOrEmail(identifier);
 
 			return user || null;
 		} catch (error) {
