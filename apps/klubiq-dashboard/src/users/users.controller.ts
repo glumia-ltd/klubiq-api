@@ -4,7 +4,6 @@ import {
 	Param,
 	Delete,
 	NotFoundException,
-	UseGuards,
 	Put,
 	Body,
 } from '@nestjs/common';
@@ -14,10 +13,8 @@ import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationUser } from './entities/organization-user.entity';
-import { RolesGuard } from '@app/auth/guards/roles.guard';
 import { UserRoles } from '@app/common';
 import { AuthType, Auth, Roles } from '@app/auth';
-import { FirebaseAuthGuard } from '@app/auth/guards/firebase-auth.guard';
 import {
 	UpdateOrganizationUserDto,
 	UpdateUserProfileDto,
@@ -27,6 +24,7 @@ import {
 @Controller('users')
 @ApiBearerAuth()
 @Auth(AuthType.Bearer)
+@Roles(UserRoles.LANDLORD)
 export class UsersController {
 	constructor(
 		private readonly usersService: UsersService,
@@ -34,7 +32,7 @@ export class UsersController {
 	) {}
 
 	@Get()
-	@Roles(UserRoles.LANDLORD)
+	@Roles(UserRoles.ORG_OWNER)
 	@ApiOkResponse({
 		description: 'Returns all the users available ',
 	})
@@ -53,8 +51,6 @@ export class UsersController {
 	}
 
 	@Get('landlord/:identifier')
-	@UseGuards(FirebaseAuthGuard, RolesGuard)
-	@Roles(UserRoles.LANDLORD)
 	async getLandlordUser(
 		@Param('identifier') identifier: string,
 	): Promise<OrganizationUser> {
