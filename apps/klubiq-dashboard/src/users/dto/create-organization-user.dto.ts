@@ -185,7 +185,7 @@ export class UserResponseDto {
 	@AutoMap()
 	@ApiProperty()
 	@IsString()
-	_id: string;
+	firebaseId: string;
 
 	@AutoMap()
 	@ApiProperty()

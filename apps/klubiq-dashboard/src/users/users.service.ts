@@ -12,6 +12,7 @@ import {
 import { OrganizationUser } from './entities/organization-user.entity';
 import { UpdateUserDto } from './dto/update-organization-user.dto';
 import { RenterLoginResponseDto } from '@app/auth';
+import { UserResponseDto } from './dto/create-organization-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -40,13 +41,12 @@ export class UsersService {
 
 	async getUserByEmailOrFirebaseId(
 		identifier: string,
-	): Promise<OrganizationUser | null> {
-		console.log('identifier', identifier);
+	): Promise<UserResponseDto | null> {
 		try {
 			const user =
 				await this.usersRepository.getUserByFirebaseIdOrEmail(identifier);
 
-			return user || null;
+			return this.mapper.map(user, OrganizationUser, UserResponseDto);
 		} catch (error) {
 			console.error('Error fetching user:', error);
 			return null;
@@ -60,7 +60,7 @@ export class UsersService {
 	async updateUserProfileAndOrganizationUser(
 		profileUuid: string,
 		updateUserDto: UpdateUserDto,
-	) {
+	): Promise<UserResponseDto | null> {
 		const organizationUser = await this.usersRepository.findOne({
 			where: { profile: { profileUuid: profileUuid } },
 			relations: ['profile'],
@@ -76,7 +76,11 @@ export class UsersService {
 			}
 
 			await this.usersRepository.save(organizationUser);
-			return organizationUser;
+			return this.mapper.map(
+				organizationUser,
+				OrganizationUser,
+				UserResponseDto,
+			);
 		} else {
 			throw new NotFoundException('OrganizationUser not found');
 		}
