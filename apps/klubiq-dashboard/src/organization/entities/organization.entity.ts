@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { OrganizationUser } from '../../users/entities/organization-user.entity';
 import { AutoMap } from '@automapper/classes';
+import { Property } from '../../properties/entities/property.entity';
 
 @Entity({ schema: 'poo' })
 export class Organization {
@@ -114,4 +115,7 @@ export class Organization {
 	@AutoMap()
 	@Column({ default: false })
 	isMaintenanceRequestNotificationEnabled?: boolean;
+
+	@OneToMany(() => Property, (property) => property.category)
+	properties?: Property[];
 }

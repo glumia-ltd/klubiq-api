@@ -1,3 +1,4 @@
+import { PropertyCategory, PropertyType } from '@app/common';
 import { AutoMap } from '@automapper/classes';
 import {
 	Column,
@@ -6,11 +7,22 @@ import {
 	Entity,
 	Generated,
 	Index,
+	JoinColumn,
+	ManyToOne,
+	OneToOne,
 	PrimaryGeneratedColumn,
+	Tree,
+	TreeChildren,
+	TreeParent,
 	UpdateDateColumn,
 } from 'typeorm';
+import { PropertyAddress } from './property-address.entity';
+import { Organization } from '../../organization/entities/organization.entity';
 
 @Entity({ schema: 'poo' })
+@Tree('closure-table', {
+	closureTableName: 'property_unit',
+})
 export class Property {
 	@AutoMap()
 	@PrimaryGeneratedColumn('uuid')
@@ -27,23 +39,86 @@ export class Property {
 	name: string;
 
 	@AutoMap()
-	@Column({ length: 100 })
-	category: string;
+	@Column({ type: 'text', nullable: true })
+	descritption?: string;
 
 	@AutoMap()
-	@Column({ length: 100 })
-	type: string;
+	@Column({ type: 'text', nullable: true })
+	note?: string;
 
 	@AutoMap()
 	@Column({ length: 100 })
 	status: string;
 
+	@AutoMap()
+	@Column({ type: 'array' })
+	tags: string[];
+
+	@AutoMap()
+	@Column()
+	isMultiUnit: boolean;
+
+	@AutoMap()
+	@Column({ type: 'decimal', precision: 3, scale: 1 })
+	bedrooms: number;
+
+	@AutoMap()
+	@Column({ type: 'decimal', precision: 3, scale: 1 })
+	bathrooms: number;
+
+	@AutoMap()
+	@Column({ type: 'json' })
+	area: { value: number; unit: string };
+
 	@DeleteDateColumn()
 	deletedDate?: Date;
+
+	@AutoMap()
+	@Column({ default: false })
+	isArchived?: boolean;
+
+	@AutoMap()
+	@Column()
+	aechivedDate?: Date;
 
 	@CreateDateColumn()
 	createdDate?: Date;
 
 	@UpdateDateColumn()
 	updatedDate?: Date;
+
+	@AutoMap(() => PropertyCategory)
+	@ManyToOne(() => PropertyCategory, { eager: true })
+	@JoinColumn({
+		name: 'categoryId',
+		referencedColumnName: 'id',
+	})
+	category: PropertyCategory;
+
+	@AutoMap(() => PropertyType)
+	@ManyToOne(() => PropertyType, { eager: true })
+	@JoinColumn({
+		name: 'typeId',
+		referencedColumnName: 'id',
+	})
+	type: PropertyType;
+
+	@AutoMap(() => PropertyAddress)
+	@OneToOne(() => PropertyAddress, { eager: true, cascade: true })
+	@JoinColumn()
+	address: PropertyAddress;
+
+	@AutoMap(() => Organization)
+	@ManyToOne(() => Organization, { eager: true })
+	@JoinColumn({
+		name: 'organizationUuid',
+		referencedColumnName: 'organizationUuid',
+	})
+	organization: Organization;
+
+	@TreeParent()
+	parentProperty: Property;
+
+	@TreeChildren()
+	units: Property[];
 }

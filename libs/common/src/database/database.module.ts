@@ -8,7 +8,12 @@ import { Permission } from './entities/permission.entity';
 import { OrganizationRole } from './entities/organization-role.entity';
 import { Feature } from './entities/feature.entity';
 import { FeaturePermission } from './entities/feature-permission.entity';
+import { PropertyType } from './entities/property-type.entity';
+import { PropertyCategory } from './entities/property-category.entity';
 
+/// WE HAVE 2 SCHEMA TYPES. => KDO and POO
+/// KDO = Klubiq Data Object
+/// POO = Property Owner Object
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
@@ -18,6 +23,8 @@ import { FeaturePermission } from './entities/feature-permission.entity';
 			OrganizationRole,
 			Feature,
 			FeaturePermission,
+			PropertyType,
+			PropertyCategory,
 		]),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],
