@@ -7,6 +7,7 @@ import { RolesRepository, UserProfilesRepository } from '@app/common';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { Mapper, createMapper } from '@automapper/core';
 import { classes } from '@automapper/classes';
+import { AuthService } from '@app/auth';
 
 describe('UsersController', () => {
 	let controller: UsersController;
@@ -23,6 +24,7 @@ describe('UsersController', () => {
 				UsersRepository,
 				RolesRepository,
 				UserProfilesRepository,
+				AuthService,
 				{
 					provide: getMapperToken(),
 					useValue: createMapper({
@@ -30,7 +32,10 @@ describe('UsersController', () => {
 					}),
 				},
 			],
-		}).compile();
+		})
+			.overrideProvider(AuthService)
+			.useValue('')
+			.compile();
 
 		mapper = module.get<Mapper>(getMapperToken());
 		controller = module.get<UsersController>(UsersController);
