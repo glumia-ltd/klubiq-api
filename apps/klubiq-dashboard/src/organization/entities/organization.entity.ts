@@ -102,4 +102,16 @@ export class Organization {
 	@AutoMap()
 	@Column({ nullable: true })
 	website?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	logoUrl?: string;
+
+	@AutoMap()
+	@Column({ default: false })
+	isRentDueEmailNotificationEnabled?: boolean;
+
+	@AutoMap()
+	@Column({ default: false })
+	isMaintenanceRequestNotificationEnabled?: boolean;
 }
