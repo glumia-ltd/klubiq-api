@@ -85,12 +85,12 @@ export class UserResponseDto {
 	@AutoMap()
 	@ApiProperty()
 	@IsString()
-	systemRole: string;
+	systemRoleName: string;
 
 	@AutoMap()
 	@ApiProperty()
 	@IsString()
-	orgRole: string;
+	orgRoleName: string;
 
 	@AutoMap()
 	@ApiProperty()
@@ -185,7 +185,7 @@ export class UserResponseDto {
 	@AutoMap()
 	@ApiProperty()
 	@IsString()
-	_id: string;
+	firebaseId: string;
 
 	@AutoMap()
 	@ApiProperty()

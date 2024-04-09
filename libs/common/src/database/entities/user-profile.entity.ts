@@ -109,6 +109,7 @@ export class UserProfile {
 		() => OrganizationUser,
 		(organizationUser) => organizationUser.profile,
 		{ eager: true },
+		// {cascade:['update']}
 	)
 	organizationUser?: OrganizationUser;
 

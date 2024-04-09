@@ -35,4 +35,26 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 			where: { email: email },
 		});
 	}
+
+	async getLandLordUserLoginInfoByFirebaseId(
+		email: string,
+	): Promise<UserProfile> {
+		const data = await this.repository.findOne({
+			where: { email: email },
+			select: {
+				profileId: true,
+				profileUuid: true,
+				email: true,
+				profilePicUrl: true,
+				firebaseId: true,
+				isPrivacyPolicyAgreed: true,
+				isTermsAndConditionAccepted: true,
+			},
+		});
+		if (!data) {
+			this.logger.warn(`Landlord User - Email: ${email} not found`);
+			throw new NotFoundException('Landlord User not found');
+		}
+		return data;
+	}
 }
