@@ -21,6 +21,7 @@ export class OrganizationService {
 		@InjectMapper() private readonly mapper: Mapper,
 	) {}
 
+	// This gets the organization by uuid
 	async getOrganizationByUuId(uuid: string) {
 		try {
 			this.logger.verbose(`Getting organization by id: ${uuid}`);
@@ -34,6 +35,7 @@ export class OrganizationService {
 		}
 	}
 
+	// This gets the organization by id
 	async getOrganizationById(id: number) {
 		try {
 			this.logger.verbose(`Getting organization by id: ${id}`);
@@ -47,6 +49,7 @@ export class OrganizationService {
 		}
 	}
 
+	// This creates a new organization
 	async create(createOrganizationDto: CreateOrganizationDto) {
 		try {
 			this.logger.verbose(
@@ -62,6 +65,7 @@ export class OrganizationService {
 		}
 	}
 
+	// This gets all organizations WITH PAGINATION
 	async findAll(pageOptionsDto: PageOptionsDto) {
 		try {
 			this.logger.verbose(
@@ -86,6 +90,7 @@ export class OrganizationService {
 		}
 	}
 
+	// This updates the organization
 	async update(uuid: string, updateOrganizationDto: UpdateOrganizationDto) {
 		try {
 			this.logger.verbose(`Updating organization. Id: ${uuid}`);
@@ -105,7 +110,8 @@ export class OrganizationService {
 		}
 	}
 
-	async deleteOrganization(uuid: string) {
+	// This soft deletes the organization
+	async softDeleteOrganization(uuid: string) {
 		try {
 			this.logger.verbose(`Deleting organization. Uuid: ${uuid}`);
 			return await this.organizationRepository.softDeleteEntity(uuid);
@@ -115,6 +121,18 @@ export class OrganizationService {
 		}
 	}
 
+	// This removes the organization
+	async removeOrganization(uuid: string) {
+		try {
+			this.logger.verbose(`Removing organization. Uuid: ${uuid}`);
+			return await this.organizationRepository.removeOrganization(uuid);
+		} catch (err) {
+			this.logger.error(`Error removing organization - ${uuid}`, err);
+			throw new Error(`Error removing organization. Error: ${err}`);
+		}
+	}
+
+	// This deactivates the organization
 	async deactivateOrganization(uuid: string) {
 		try {
 			this.logger.verbose(`Deactivating organization. Uuid: ${uuid}`);
@@ -122,6 +140,23 @@ export class OrganizationService {
 		} catch (err) {
 			this.logger.error(`Error deactivating organization - ${uuid}`, err);
 			throw new Error(`Error deactivating organization. Error: ${err}`);
+		}
+	}
+
+	// This updates the contact details after org owner email is verified
+	async updateNewCompanyContact(
+		updatedDto: UpdateOrganizationDto,
+		orgUuid: string,
+	) {
+		try {
+			this.logger.verbose(`Updating new organization. Uuid: ${orgUuid}`);
+			return await this.organizationRepository.updateCompanyContactInfo(
+				updatedDto,
+				orgUuid,
+			);
+		} catch (err) {
+			this.logger.error(`Error updating new organization - ${orgUuid}`, err);
+			throw new Error(`Error updating new organization. Error: ${err}`);
 		}
 	}
 }

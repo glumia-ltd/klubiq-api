@@ -8,6 +8,7 @@ import {
 	Delete,
 	Query,
 	ParseUUIDPipe,
+	Put,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationService } from './organization.service';
@@ -72,10 +73,35 @@ export class OrganizationController {
 
 	@Roles(UserRoles.ORG_OWNER, UserRoles.ADMIN)
 	@ApiOkResponse({
-		description: 'Deletes an organization',
+		description: 'soft deletes an organization',
+	})
+	@Post('delete/:uuid')
+	async softDelete(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
+		return await this.organizationService.softDeleteOrganization(uuid);
+	}
+
+	@Roles(UserRoles.SUPER_ADMIN)
+	@ApiOkResponse({
+		description: 'Removes an organization from the database',
 	})
 	@Delete(':uuid')
 	async remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-		return await this.organizationService.deleteOrganization(uuid);
+		return await this.organizationService.removeOrganization(uuid);
+	}
+
+	@Put(':uuid')
+	@Roles(UserRoles.ORG_OWNER)
+	@ApiOkResponse({
+		description: 'Updates an organization',
+		type: OrganizationResponseDto,
+	})
+	async updateNewOrganizationContact(
+		@Param('uuid', new ParseUUIDPipe()) uuid: string,
+		@Body() updateOrganizationDto: UpdateOrganizationDto,
+	) {
+		return await this.organizationService.updateNewCompanyContact(
+			updateOrganizationDto,
+			uuid,
+		);
 	}
 }

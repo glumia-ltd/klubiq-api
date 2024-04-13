@@ -25,3 +25,7 @@ export * from './dto/page.dto';
 export * from './dto/page-meta.dto';
 export * from './dto/page-options.dto';
 export * from './types/page-meta-dto-parameters';
+export * from './database/entities/property-type.entity';
+export * from './database/entities/property-category.entity';
+export * from './database/entities/property-status.entity';
+export * from './database/entities/property-purpose.entity';
