@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
-// import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
-// @ApiTags('properties')
-// @ApiBearerAuth()
+@ApiTags('properties')
+@ApiBearerAuth()
 @Controller('properties')
 export class PropertiesController {}
