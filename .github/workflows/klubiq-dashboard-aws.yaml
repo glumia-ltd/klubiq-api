@@ -28,9 +28,10 @@ name: Deploy Klubiq dasboard to Amazon ECS
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: 
+      - dev
     paths:
-      - '/apps/klubiq-dashboard/src/**'
+      - 'apps/klubiq-dashboard/src/**'
 
 env:                                    # set this to the name of your app
   AWS_REGION: us-east-1                                        # set this to your preferred AWS region, e.g. us-west-1
