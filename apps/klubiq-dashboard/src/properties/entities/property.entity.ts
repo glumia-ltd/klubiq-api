@@ -1,4 +1,9 @@
-import { PropertyCategory, PropertyType } from '@app/common';
+import {
+	PropertyCategory,
+	PropertyPurpose,
+	PropertyStatus,
+	PropertyType,
+} from '@app/common';
 import { AutoMap } from '@automapper/classes';
 import {
 	Column,
@@ -47,11 +52,7 @@ export class Property {
 	note?: string;
 
 	@AutoMap()
-	@Column({ length: 100 })
-	status: string;
-
-	@AutoMap()
-	@Column({ type: 'array' })
+	@Column({ type: 'simple-array' })
 	tags: string[];
 
 	@AutoMap()
@@ -102,6 +103,22 @@ export class Property {
 		referencedColumnName: 'id',
 	})
 	type: PropertyType;
+
+	@AutoMap(() => PropertyPurpose)
+	@ManyToOne(() => PropertyPurpose, { eager: true })
+	@JoinColumn({
+		name: 'purposeId',
+		referencedColumnName: 'id',
+	})
+	purpose: PropertyPurpose;
+
+	@AutoMap(() => PropertyStatus)
+	@ManyToOne(() => PropertyStatus, { eager: true })
+	@JoinColumn({
+		name: 'statusId',
+		referencedColumnName: 'id',
+	})
+	status: PropertyStatus;
 
 	@AutoMap(() => PropertyAddress)
 	@OneToOne(() => PropertyAddress, { eager: true, cascade: true })

@@ -10,6 +10,8 @@ import { Feature } from './entities/feature.entity';
 import { FeaturePermission } from './entities/feature-permission.entity';
 import { PropertyType } from './entities/property-type.entity';
 import { PropertyCategory } from './entities/property-category.entity';
+import { PropertyPurpose } from './entities/property-purpose.entity';
+import { PropertyStatus } from './entities/property-status.entity';
 
 /// WE HAVE 2 SCHEMA TYPES. => KDO and POO
 /// KDO = Klubiq Data Object
@@ -25,6 +27,8 @@ import { PropertyCategory } from './entities/property-category.entity';
 			FeaturePermission,
 			PropertyType,
 			PropertyCategory,
+			PropertyPurpose,
+			PropertyStatus,
 		]),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],
@@ -42,7 +46,6 @@ import { PropertyCategory } from './entities/property-category.entity';
 						}
 					: false,
 				synchronize: configService.get<boolean>('SYNCHRONIZE_DB'),
-				migrations: ['**/migrations'],
 			}),
 			inject: [ConfigService],
 		}),

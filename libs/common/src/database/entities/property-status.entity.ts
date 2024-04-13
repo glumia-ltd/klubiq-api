@@ -4,7 +4,7 @@ import { AbstractEntity } from './abstract-entity';
 import { Property } from 'apps/klubiq-dashboard/src/properties/entities/property.entity';
 
 @Entity({ schema: 'kdo' })
-export class PropertyType extends AbstractEntity {
+export class PropertyStatus extends AbstractEntity {
 	@AutoMap()
 	@Column({ length: 255, unique: true })
 	name: string;
@@ -15,7 +15,4 @@ export class PropertyType extends AbstractEntity {
 
 	@OneToMany(() => Property, (property) => property.category)
 	properties?: Property[];
-
-	@Column({ default: false })
-	isMultiUnitType: boolean;
 }
