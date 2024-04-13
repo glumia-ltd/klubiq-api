@@ -35,7 +35,8 @@ COPY package*.json ./
 
 
 # If you are building your code for production
-RUN npm ci --only=production
+RUN npm set-script prepare '' && npm ci --omit=dev
+#RUN npm ci --only=production
 
 # Bundle app source
 COPY --from=development /usr/src/app/dist ./dist
