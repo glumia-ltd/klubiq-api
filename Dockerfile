@@ -1,6 +1,6 @@
 
 # Use the latest Node.js version
-FROM node:latest
+FROM node:alpine As development
 
 # Create app directory
 WORKDIR /usr/src/app
@@ -16,9 +16,34 @@ RUN npm install
 # Bundle app source
 COPY . .
 
-# NestJS uses port 3000 by default
-EXPOSE 3000
+RUN npm run build ${APP}
+
+
+
+# Use the latest Node.js version
+FROM node:alpine As production
+
+ARG ENV=production
+ENV ENV=${ENV}
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Install app dependencies
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
+COPY package*.json ./
+
+
+# If you are building your code for production
+RUN npm ci --only=production
+
+# Bundle app source
+COPY --from=development /usr/src/app/dist ./dist
+
+
+# Add an env to save ARG
+ENV APP_MAIN_FILE=dist/apps/${APP}/main 
 
 # Define the command to run your app using CMD which defines your runtime
 # Here we will use the nest command to start the server
-CMD [ "npm", "run", "start" ]
+CMD node ${APP_MAIN_FILE}
