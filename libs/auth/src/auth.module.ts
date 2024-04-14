@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { DatabaseModule, ConfigModule } from '@app/common';
 import { ConfigService } from '@nestjs/config';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import * as admin from 'firebase-admin';
 import { RepositoriesModule } from '@app/common';
 import { OrganizationModule } from '../../../apps/klubiq-dashboard/src/organization/organization.module';
@@ -54,19 +54,20 @@ const firebaseAuthProvider = {
 			appId: config.get<string>('FIREBASE_APP_ID'),
 			measurementId: config.get<string>('FIREBASE_MEASUREMENT_ID'),
 		};
-		return initializeApp(firebaseConfig);
+		if (!getApps().length) {
+			return initializeApp(firebaseConfig);
+		}
 	},
 };
 
 const firebaseAdminProvider = {
 	provide: 'FIREBASE_ADMIN',
 	useFactory: () => {
-		if (apps.length) {
-			return apps[0];
+		if (!apps.length) {
+			return admin.initializeApp({
+				credential: admin.credential.cert(firebase_params),
+			});
 		}
-		return admin.initializeApp({
-			credential: admin.credential.cert(firebase_params),
-		});
 	},
 };
 
