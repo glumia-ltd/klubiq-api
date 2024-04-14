@@ -1,9 +1,28 @@
-import { AbstractEntity } from '@app/common';
 import { AutoMap } from '@automapper/classes';
-import { Column, DeleteDateColumn, Entity } from 'typeorm';
+import {
+	Column,
+	CreateDateColumn,
+	DeleteDateColumn,
+	Entity,
+	PrimaryGeneratedColumn,
+	UpdateDateColumn,
+} from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 @Entity({ schema: 'poo' })
-export class PropertyAddress extends AbstractEntity {
+export class PropertyAddress {
+	@AutoMap()
+	@PrimaryGeneratedColumn()
+	public id: number;
+
+	@CreateDateColumn()
+	@Exclude()
+	createdDate?: Date;
+
+	@UpdateDateColumn()
+	@Exclude()
+	updatedDate?: Date;
+
 	@AutoMap()
 	@Column({ length: 100 })
 	addressLine1: string;
