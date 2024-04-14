@@ -1,13 +1,15 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-1:730335628615:task-definition/klubi_api-task:2",
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:730335628615:task-definition/klubiq-dashboard-task:2",
     "containerDefinitions": [
         {
             "name": "klubiq_api-container",
             "image": "730335628615.dkr.ecr.us-east-1.amazonaws.com/klubiq-api:latest",
-            "cpu": 0,
+            "cpu": 1024,
+            "memory": 6144,
+            "memoryReservation": 3072,
             "portMappings": [
                 {
-                    "name": "klubiq_api-container-3000-tcp",
+                    "name": "klubiq-api-container-3000-tcp",
                     "containerPort": 3000,
                     "hostPort": 3000,
                     "protocol": "tcp"
@@ -28,16 +30,26 @@
                 "logDriver": "awslogs",
                 "options": {
                     "awslogs-create-group": "true",
-                    "awslogs-group": "/ecs/klubi_api-task",
+                    "awslogs-group": "/ecs/",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "ecs"
                 },
                 "secretOptions": []
             },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "curl -f http://localhost/ || exit 1"
+                ],
+                "interval": 300,
+                "timeout": 60,
+                "retries": 2
+            },
             "systemControls": []
         }
     ],
-    "family": "klubi_api-task",
+    "family": "klubiq-dashboard-task",
+    "taskRoleArn": "arn:aws:iam::730335628615:role/ecsTaskExecutionRole",
     "executionRoleArn": "arn:aws:iam::730335628615:role/ecsTaskExecutionRole",
     "networkMode": "bridge",
     "revision": 2,
@@ -45,19 +57,19 @@
     "status": "ACTIVE",
     "requiresAttributes": [
         {
-            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-        },
-        {
             "name": "ecs.capability.execution-role-awslogs"
         },
         {
             "name": "com.amazonaws.ecs.capability.ecr-auth"
         },
         {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.21"
         },
         {
-            "name": "ecs.capability.env-files.s3"
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.container-health-check"
         },
         {
             "name": "ecs.capability.execution-role-ecr-pull"
@@ -67,6 +79,18 @@
         },
         {
             "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.24"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "ecs.capability.env-files.s3"
         }
     ],
     "placementConstraints": [],
@@ -77,12 +101,12 @@
         "EC2"
     ],
     "cpu": "1024",
-    "memory": "3072",
+    "memory": "6144",
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-04-12T21:33:03.437Z",
+    "registeredAt": "2024-04-14T11:02:37.023Z",
     "registeredBy": "arn:aws:iam::730335628615:root",
     "tags": []
 }
