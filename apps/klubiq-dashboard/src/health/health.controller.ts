@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import {
 	HealthCheckService,
 	HttpHealthIndicator,
@@ -35,6 +35,8 @@ export class HealthController {
 	check2() {
 		return this.health.check([() => this.db.pingCheck('database')]);
 	}
+
+	@ApiOkResponse()
 	@Get('status')
 	status() {
 		return true;
