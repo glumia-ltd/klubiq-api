@@ -1,9 +1,9 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-1:730335628615:task-definition/klubiq_dashboard-task-definition:1",
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:730335628615:task-definition/klubiq_dashboard-task-definition:6",
     "containerDefinitions": [
         {
             "name": "klubiq-api-container",
-            "image": "730335628615.dkr.ecr.us-east-1.amazonaws.com/klubiqapi:latest",
+            "image": "730335628615.dkr.ecr.us-east-1.amazonaws.com/klubiqapi:bb12946342942881339828b7df9eecb4aadee6b5",
             "cpu": 1024,
             "memory": 2048,
             "memoryReservation": 1024,
@@ -26,7 +26,6 @@
             ],
             "mountPoints": [],
             "volumesFrom": [],
-            "ulimits": [],
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
@@ -37,19 +36,14 @@
                 },
                 "secretOptions": []
             },
-            "systemControls": [],
-            "resourceRequirements": [
-                {
-                    "value": "1",
-                    "type": "GPU"
-                }
-            ]
+            "systemControls": []
         }
     ],
     "family": "klubiq_dashboard-task-definition",
     "taskRoleArn": "arn:aws:iam::730335628615:role/ecsTaskExecutionRole",
     "executionRoleArn": "arn:aws:iam::730335628615:role/ecsTaskExecutionRole",
-    "revision": 1,
+    "networkMode": "bridge",
+    "revision": 6,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -78,9 +72,6 @@
             "name": "ecs.capability.execution-role-ecr-pull"
         },
         {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-        },
-        {
             "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
         }
     ],
@@ -95,7 +86,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-04-15T04:32:20.294Z",
+    "registeredAt": "2024-04-15T17:27:57.248Z",
     "registeredBy": "arn:aws:iam::730335628615:root",
     "tags": [
         {
