@@ -1,13 +1,10 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-1:730335628615:task-definition/klubiqDashBoardApiTaskDefinition:1",
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:730335628615:task-definition/klubiqaAPIDashboardTaskDefinition:1",
     "containerDefinitions": [
         {
-            "name": "klubiq-api-container",
+            "name": "klubiqContainer",
             "image": "730335628615.dkr.ecr.us-east-1.amazonaws.com/klubiqapi",
             "cpu": 0,
-            "links": [
-                "aws-otel-collector"
-            ],
             "portMappings": [
                 {
                     "name": "klubiq-api-port",
@@ -32,55 +29,16 @@
                 "logDriver": "awslogs",
                 "options": {
                     "awslogs-create-group": "true",
-                    "awslogs-group": "/ecs/klubiqDashBoardApiTaskDefinition",
+                    "awslogs-group": "/ecs/klubiqaAPIDashboardTaskDefinition",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "ecs"
                 },
                 "secretOptions": []
             },
             "systemControls": []
-        },
-        {
-            "name": "aws-otel-collector",
-            "image": "public.ecr.aws/aws-observability/aws-otel-collector:v0.38.1",
-            "cpu": 0,
-            "portMappings": [
-                {
-                    "containerPort": 2000,
-                    "hostPort": 2000,
-                    "protocol": "udp"
-                },
-                {
-                    "containerPort": 4317,
-                    "hostPort": 4317,
-                    "protocol": "tcp"
-                },
-                {
-                    "containerPort": 8125,
-                    "hostPort": 8125,
-                    "protocol": "udp"
-                }
-            ],
-            "essential": true,
-            "command": [
-                "--config=/etc/ecs/ecs-cloudwatch-xray.yaml"
-            ],
-            "environment": [],
-            "mountPoints": [],
-            "volumesFrom": [],
-            "logConfiguration": {
-                "logDriver": "awslogs",
-                "options": {
-                    "awslogs-create-group": "true",
-                    "awslogs-group": "/ecs/ecs-aws-otel-sidecar-collector",
-                    "awslogs-region": "us-east-1",
-                    "awslogs-stream-prefix": "ecs"
-                }
-            },
-            "systemControls": []
         }
     ],
-    "family": "klubiqDashBoardApiTaskDefinition",
+    "family": "klubiqaAPIDashboardTaskDefinition",
     "taskRoleArn": "arn:aws:iam::730335628615:role/ecsTaskExecutionRole",
     "executionRoleArn": "arn:aws:iam::730335628615:role/ecsTaskExecutionRole",
     "networkMode": "bridge",
@@ -124,17 +82,21 @@
         "EC2"
     ],
     "cpu": "1024",
-    "memory": "3",
+    "memory": "3072",
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-04-15T20:07:34.700Z",
+    "registeredAt": "2024-04-15T21:51:24.905Z",
     "registeredBy": "arn:aws:iam::730335628615:root",
     "tags": [
         {
             "key": "name",
-            "value": "klubiqDashBoardApiTaskDefinition"
+            "value": "klubiqaAPIDashboardTaskDefinition"
+        },
+        {
+            "key": "created_at",
+            "value": "4-15-24-5:51"
         }
     ]
 }
