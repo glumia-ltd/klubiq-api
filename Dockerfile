@@ -41,6 +41,7 @@ RUN npm pkg delete scripts.prepare && npm ci --omit=dev
 # Bundle app source
 COPY --from=development /usr/src/app/dist ./dist
 
+EXPOSE 3000
 
 # Add an env to save ARG
 ENV APP_MAIN_FILE=dist/apps/${APP}/main 
