@@ -1,12 +1,13 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-1:730335628615:task-definition/klubiq_dashboard-task-definition:6",
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:730335628615:task-definition/klubiqDashBoardApiTaskDefinition:1",
     "containerDefinitions": [
         {
             "name": "klubiq-api-container",
-            "image": "730335628615.dkr.ecr.us-east-1.amazonaws.com/klubiqapi:bb12946342942881339828b7df9eecb4aadee6b5",
-            "cpu": 1024,
-            "memory": 2048,
-            "memoryReservation": 1024,
+            "image": "730335628615.dkr.ecr.us-east-1.amazonaws.com/klubiqapi",
+            "cpu": 0,
+            "links": [
+                "aws-otel-collector"
+            ],
             "portMappings": [
                 {
                     "name": "klubiq-api-port",
@@ -26,24 +27,64 @@
             ],
             "mountPoints": [],
             "volumesFrom": [],
+            "ulimits": [],
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
                     "awslogs-create-group": "true",
-                    "awslogs-group": "/ecs/klubiq_dashboard-task-definition",
+                    "awslogs-group": "/ecs/klubiqDashBoardApiTaskDefinition",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "ecs"
                 },
                 "secretOptions": []
             },
             "systemControls": []
+        },
+        {
+            "name": "aws-otel-collector",
+            "image": "public.ecr.aws/aws-observability/aws-otel-collector:v0.38.1",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "containerPort": 2000,
+                    "hostPort": 2000,
+                    "protocol": "udp"
+                },
+                {
+                    "containerPort": 4317,
+                    "hostPort": 4317,
+                    "protocol": "tcp"
+                },
+                {
+                    "containerPort": 8125,
+                    "hostPort": 8125,
+                    "protocol": "udp"
+                }
+            ],
+            "essential": true,
+            "command": [
+                "--config=/etc/ecs/ecs-cloudwatch-xray.yaml"
+            ],
+            "environment": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-create-group": "true",
+                    "awslogs-group": "/ecs/ecs-aws-otel-sidecar-collector",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "systemControls": []
         }
     ],
-    "family": "klubiq_dashboard-task-definition",
+    "family": "klubiqDashBoardApiTaskDefinition",
     "taskRoleArn": "arn:aws:iam::730335628615:role/ecsTaskExecutionRole",
     "executionRoleArn": "arn:aws:iam::730335628615:role/ecsTaskExecutionRole",
     "networkMode": "bridge",
-    "revision": 6,
+    "revision": 1,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -63,13 +104,13 @@
             "name": "ecs.capability.env-files.s3"
         },
         {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.21"
-        },
-        {
             "name": "com.amazonaws.ecs.capability.task-iam-role"
         },
         {
             "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
         },
         {
             "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
@@ -82,16 +123,18 @@
     "requiresCompatibilities": [
         "EC2"
     ],
+    "cpu": "1024",
+    "memory": "3",
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-04-15T17:27:57.248Z",
+    "registeredAt": "2024-04-15T20:07:34.700Z",
     "registeredBy": "arn:aws:iam::730335628615:root",
     "tags": [
         {
             "key": "name",
-            "value": "klubiq_dashboard-task-definition"
+            "value": "klubiqDashBoardApiTaskDefinition"
         }
     ]
 }
