@@ -80,7 +80,7 @@ export class Property {
 
 	@AutoMap()
 	@Column()
-	aechivedDate?: Date;
+	archivedDate?: Date;
 
 	@CreateDateColumn()
 	createdDate?: Date;
