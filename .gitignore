@@ -1,4 +1,6 @@
 # compiled output
+docker-compose.yaml
+
 /dist
 /node_modules
 /build
