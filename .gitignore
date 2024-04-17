@@ -5,6 +5,8 @@ docker-compose.yaml
 /node_modules
 /build
 
+docker-compose.yaml
+
 config.json
 fbase.config.json
 *.config.json

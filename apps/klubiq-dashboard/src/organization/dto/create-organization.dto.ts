@@ -114,4 +114,14 @@ export class CreateOrganizationDto {
 	})
 	@IsUrl()
 	website?: string;
+
+	@AutoMap()
+	@ApiProperty()
+	@IsBoolean()
+	isRentDueEmailNotificationEnabled?: boolean;
+
+	@AutoMap()
+	@ApiProperty()
+	@IsBoolean()
+	isMaintenanceRequestNotificationEnabled?: boolean;
 }

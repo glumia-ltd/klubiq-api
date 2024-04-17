@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { OrganizationUser } from '../../users/entities/organization-user.entity';
 import { AutoMap } from '@automapper/classes';
+import { Property } from '../../properties/entities/property.entity';
 
 @Entity({ schema: 'poo' })
 export class Organization {
@@ -102,4 +103,19 @@ export class Organization {
 	@AutoMap()
 	@Column({ nullable: true })
 	website?: string;
+
+	@AutoMap()
+	@Column({ nullable: true })
+	logoUrl?: string;
+
+	@AutoMap()
+	@Column({ default: false })
+	isRentDueEmailNotificationEnabled?: boolean;
+
+	@AutoMap()
+	@Column({ default: false })
+	isMaintenanceRequestNotificationEnabled?: boolean;
+
+	@OneToMany(() => Property, (property) => property.category)
+	properties?: Property[];
 }

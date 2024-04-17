@@ -1,7 +1,14 @@
 import { Organization } from './entities/organization.entity';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { BaseRepository } from '@app/common';
+import {
+	Injectable,
+	Logger,
+	NotFoundException,
+	UnauthorizedException,
+} from '@nestjs/common';
+import { BaseRepository, UserRoles } from '@app/common';
 import { EntityManager } from 'typeorm';
+import { UpdateOrganizationDto } from './dto/update-organization.dto';
+import { OrganizationUser } from '../users/entities/organization-user.entity';
 
 @Injectable()
 export class OrganizationRepository extends BaseRepository<Organization> {
@@ -66,5 +73,51 @@ export class OrganizationRepository extends BaseRepository<Organization> {
 			this.logger.error('Error deleting organization', err);
 			throw new Error(`Error deleting organization. Error: ${err}`);
 		}
+	}
+
+	async updateCompanyContactInfo(
+		updateDto: UpdateOrganizationDto,
+		orgUUID: string,
+	): Promise<boolean> {
+		const orgUser = await this.manager.findOneBy(OrganizationUser, {
+			organizationUserUuid: updateDto.ownerId,
+		});
+		if (
+			orgUser.organization.organizationUuid === orgUUID &&
+			orgUser.orgRole.name === UserRoles.ORG_OWNER
+		) {
+			const updated = await this.manager.update(
+				Organization,
+				{ organizationUuid: orgUUID },
+				{
+					phoneNumber: updateDto.phoneNumber,
+					street: updateDto.street,
+					addressLine2: updateDto.addressLine2,
+					state: updateDto.state,
+					city: updateDto.city,
+					postalCode: updateDto.postalCode,
+					country: updateDto.country,
+					isMaintenanceRequestNotificationEnabled:
+						updateDto.isMaintenanceRequestNotificationEnabled,
+					isRentDueEmailNotificationEnabled:
+						updateDto.isRentDueEmailNotificationEnabled,
+				},
+			);
+			return updated.affected > 0;
+		}
+		throw new UnauthorizedException(
+			'Not authorized to update company contact info',
+		);
+	}
+
+	async removeOrganization(uuid: string): Promise<void> {
+		await this.manager.transaction(async (transactionManager) => {
+			await transactionManager.update(
+				OrganizationUser,
+				{ organizationUuid: uuid },
+				{ organization: null },
+			);
+			await transactionManager.delete(Organization, { organizationUuid: uuid });
+		});
 	}
 }

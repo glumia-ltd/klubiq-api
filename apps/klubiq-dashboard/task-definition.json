@@ -1,0 +1,102 @@
+{
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:730335628615:task-definition/klubiqaAPIDashboardTaskDefinition:1",
+    "containerDefinitions": [
+        {
+            "name": "klubiqContainer",
+            "image": "730335628615.dkr.ecr.us-east-1.amazonaws.com/klubiqapi",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "klubiq-api-port",
+                    "containerPort": 3000,
+                    "hostPort": 3000,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [],
+            "environmentFiles": [
+                {
+                    "value": "arn:aws:s3:::klubiq-env/.env",
+                    "type": "s3"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-create-group": "true",
+                    "awslogs-group": "/ecs/klubiqaAPIDashboardTaskDefinition",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        }
+    ],
+    "family": "klubiqaAPIDashboardTaskDefinition",
+    "taskRoleArn": "arn:aws:iam::730335628615:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::730335628615:role/ecsTaskExecutionRole",
+    "networkMode": "bridge",
+    "revision": 1,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "ecs.capability.env-files.s3"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2"
+    ],
+    "requiresCompatibilities": [
+        "EC2"
+    ],
+    "cpu": "1024",
+    "memory": "3072",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    },
+    "registeredAt": "2024-04-15T21:51:24.905Z",
+    "registeredBy": "arn:aws:iam::730335628615:root",
+    "tags": [
+        {
+            "key": "name",
+            "value": "klubiqaAPIDashboardTaskDefinition"
+        },
+        {
+            "key": "created_at",
+            "value": "4-15-24-5:51"
+        }
+    ]
+}
