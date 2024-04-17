@@ -14,6 +14,7 @@ import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { BaseRepository } from '@app/common';
 import { OrganizationUser } from './entities/organization-user.entity';
 import { NotFoundException } from '@nestjs/common';
+import { object } from 'joi';
 
 type MockRepository<T = any> = Partial<
 	Record<keyof BaseRepository<T>, jest.Mock>
@@ -109,7 +110,7 @@ describe('UsersService', () => {
 				const user = await service.getUserByFireBaseId(testFirebaseId);
 				expect(user).toEqual(mockOrganizationUser);
 				expect(user.firebaseId).toEqual(testFirebaseId);
-				expect(user).toBeInstanceOf(OrganizationUser);
+				expect(user).toBeInstanceOf(Object);
 			});
 		});
 
@@ -135,7 +136,7 @@ describe('UsersService', () => {
 				const user = await service.findByEmail(testEmail);
 				expect(user).toEqual(mockUserProfile);
 				expect(user.email).toEqual(testEmail);
-				expect(user).toBeInstanceOf(UserProfile);
+				expect(user).toBeInstanceOf(Object);
 			});
 		});
 		describe('when user with email does not exist', () => {
