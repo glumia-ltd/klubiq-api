@@ -23,8 +23,8 @@ RUN npm run build ${APP}
 # Use the latest Node.js version
 FROM node:alpine As production
 
-ARG ENV=production
-ENV ENV=${ENV}
+ARG NODE_ENV=production
+ENV NODE_ENV=${ENV}
 
 # Create app directory
 WORKDIR /usr/src/app
