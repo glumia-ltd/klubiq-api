@@ -13,8 +13,8 @@ services:
       - 3000:3000
     volumes:
       - .:/usr/src/app
-    networks:
-      - dockernet
-networks:
-  dockernet:
-    external: true
+#     networks:
+#       - dockernet
+# networks:
+#   dockernet:
+#     external: true
