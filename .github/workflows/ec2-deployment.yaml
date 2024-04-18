@@ -58,19 +58,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-
       - name: Build and push docker_compose
         run: docker compose -f docker-compose.prod.yml build --pull && docker compose -f docker-compose.prod.yml push
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
+        
       - name: SSH into EC2 instance and deploy
         uses: appleboy/ssh-action@master
 
-      # import google admin sdk config file data
-      # - name: Load Google Service file
-      #   run: echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
         with:
           host: ${{ secrets.HOSTNAME }}
           username: ${{ secrets.USERNAME }}
@@ -80,3 +73,5 @@ jobs:
             sudo docker compose -f docker-compose.prod.yml stop || true 
             sudo docker compose -f docker-compose.prod.yml rm || true 
             sudo docker compose -f docker-compose.prod.yml up -d --build
+
+  
