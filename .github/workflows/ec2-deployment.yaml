@@ -73,18 +73,15 @@ jobs:
       - name: Build and push docker_compose
         run: docker compose -f docker-compose.prod.yml build --pull && docker compose -f docker-compose.prod.yml push
         
-      - name: SSH into EC2 instance and deploy
-        uses: appleboy/ssh-action@master
-
+      - name: Deploy to EC2
+        uses: easingthemes/ssh-deploy@main
         with:
-          host: ${{ secrets.HOSTNAME }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.CERTIFICATE }}
-          script: |
-            sudo docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
-            sudo docker pull vadeyemi/klubiq-api:klubiq-dashboard
-            sudo docker stop klubiq-dashboard|| true 
-            sudo docker rm klubiq-dashboard|| true 
-            sudo docker run -d -p 3000:3000 --name klubiq-dashboard
+          REMOTE_HOST: ${{ secrets.HOSTNAME }}
+          REMOTE_USER: ${{ secrets.USERNAME }}
+          SSH_PRIVATE_KEY: ${{ secrets.CERTIFICATE }}
+          EXCLUDE: "/dist/, /node_modules/"
+          SCRIPT_AFTER: |
+            sudo docker compose -f docker-compose.prod.yml up -d --build
+            
 
   
