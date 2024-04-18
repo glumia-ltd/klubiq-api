@@ -61,7 +61,6 @@ jobs:
          name: artifacts
          path: |
            dist
-           node_modules
         
   deploy:
     runs-on: ubuntu-latest
@@ -94,7 +93,7 @@ jobs:
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USERNAME }}
           SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
-          SOURCE: "artifacts/dist, artifacts/node_modules"
+          SOURCE: "artifacts/"
           TARGET: ${{ secrets.TARGET_DIR }}
             
       - name: Executing docker compose in EC2 using ssh key
