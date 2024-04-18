@@ -19,7 +19,6 @@ import { classes } from '@automapper/classes';
 				DATABASE_USERNAME: Joi.string().required(),
 				DATABASE_PASSWORD: Joi.string().required(),
 				SYNCHRONIZE_DB: Joi.boolean().required(),
-				ENV: Joi.string().optional(),
 				FIREBASE_API_KEY: Joi.string().required(),
 				FIREBASE_PROJECT_ID: Joi.string().required(),
 				FIREBASE_AUTH_DOMAIN: Joi.string().required(),

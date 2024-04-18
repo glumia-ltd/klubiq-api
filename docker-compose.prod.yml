@@ -3,16 +3,12 @@ services:
     container_name: klubiq-dashboard
     build:
       context: .
-      args:
-        - APP=klubiq-dashboard
       target: production
     ports:
       - 3000:3000
+    command: |
+      node dist/apps/klubiq-dashboard/main.js
     volumes:
       - .:/usr/src/app
     image: vadeyemi/klubiq-api:klubiq-dashboard
-#     networks:
-#       - dockernet
-# networks:
-#   dockernet:
-#     external: true
+    restart: always
