@@ -73,21 +73,21 @@ jobs:
       - name: Build and push docker_compose
         run: docker compose -f docker-compose.prod.yml build --pull && docker compose -f docker-compose.prod.yml push
         
-      - name: Deploy to EC2
+      - name: Deploy to Lightsail
         uses: easingthemes/ssh-deploy@main
         with:
-          REMOTE_HOST: ${{ secrets.HOSTNAME }}
-          REMOTE_USER: ${{ secrets.USERNAME }}
-          SSH_PRIVATE_KEY: ${{ secrets.CERTIFICATE }}
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USERNAME }}
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
           EXCLUDE: "/dist/, /node_modules/"
           TARGET: ${{ secrets.TARGET_DIR }}
             
       - name: Executing docker compose in EC2 using ssh key
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOSTNAME }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.CERTIFICATE }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.LIGHTSAIL_SSH_CERT }}
           script: |
             cd ${{ secrets.TARGET_DIR }}
             sudo docker compose -f docker-compose.prod.yml up -d --build
