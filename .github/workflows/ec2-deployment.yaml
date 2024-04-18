@@ -81,9 +81,9 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.CERTIFICATE }}
           script: |
-            sudo docker compose -f docker-compose.prod.yml pull
-            sudo docker compose -f docker-compose.prod.yml stop || true 
-            sudo docker compose -f docker-compose.prod.yml rm || true 
-            sudo docker compose -f docker-compose.prod.yml up -d --build
+            sudo docker pull ${{ secrets.DOCKER_REPO_URL }}
+            sudo docker stop klubiq-api|| true 
+            sudo docker rm klubiq-api|| true 
+            sudo docker run -d -p 3000:3000 --name klubiq-api ${{ secrets.DOCKER_REPO_URL }}
 
   
