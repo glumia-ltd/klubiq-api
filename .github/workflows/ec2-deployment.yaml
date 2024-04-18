@@ -82,9 +82,9 @@ jobs:
           key: ${{ secrets.CERTIFICATE }}
           script: |
             sudo docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
-            sudo docker pull ${{ secrets.DOCKER_REPO_URL }}
-            sudo docker stop klubiq-api|| true 
-            sudo docker rm klubiq-api|| true 
-            sudo docker run -d -p 3000:3000 --name klubiq-api ${{ secrets.DOCKER_REPO_URL }}
+            sudo docker pull vadeyemi/klubiq-api:klubiq-dashboard
+            sudo docker stop klubiq-dashboard|| true 
+            sudo docker rm klubiq-dashboard|| true 
+            sudo docker run -d -p 3000:3000 --name klubiq-dashboard
 
   
