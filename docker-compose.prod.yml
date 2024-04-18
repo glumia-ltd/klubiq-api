@@ -4,8 +4,6 @@ services:
     container_name: klubiq-dashboard
     build:
       context: .
-      tags:
-        - 'klubiq-dashboard'
       args:
         - APP=klubiq-dashboard
       target: production
@@ -13,7 +11,7 @@ services:
       - 3000:3000
     volumes:
       - .:/usr/src/app
-    image: vadeyemi/klubiq-api:latest
+    image: vadeyemi/klubiq-api:klubiq-dashboard
 #     networks:
 #       - dockernet
 # networks:
