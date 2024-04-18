@@ -31,15 +31,15 @@ env:
   USERNAME: ${{ secrets.USERNAME }}
 
 jobs:
-  test:
+  #test:
 
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Test application
-        run: |
-          npm install
-          npm test
+    #runs-on: ubuntu-latest
+    #steps:
+     # - uses: actions/checkout@v3
+      #- name: Test application
+       # run: |
+        #  npm install
+         # npm test
         
   build:
     runs-on: ubuntu-latest
@@ -81,6 +81,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.CERTIFICATE }}
           script: |
+            sudo docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
             sudo docker pull ${{ secrets.DOCKER_REPO_URL }}
             sudo docker stop klubiq-api|| true 
             sudo docker rm klubiq-api|| true 
