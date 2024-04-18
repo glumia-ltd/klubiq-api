@@ -69,8 +69,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Load Google Service file
-        run: echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
+      - name: Load Google Service file and copy env variables
+        run: |
+          echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
+          env > .env
       
       - name: Login and push to Docker Hub
         uses: docker/login-action@v2
