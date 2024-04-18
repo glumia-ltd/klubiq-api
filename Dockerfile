@@ -16,35 +16,40 @@ RUN npm install
 # Bundle app source
 COPY . .
 
-RUN npm run build ${APP}
 
 
-
-# Use the latest Node.js version
-FROM node:alpine As production
+# BUILD STAGE
+FROM node:alpine As build
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${ENV}
 
-# Create app directory
 WORKDIR /usr/src/app
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-COPY package*.json ./
 
+COPY --chown=node:node package*.json ./
+
+COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
+
+COPY --chown=node:node . .
+
+RUN npm run build
 
 # If you are building your code for production
-RUN npm pkg delete scripts.prepare && npm ci --omit=dev
-#RUN npm ci --only=production
+RUN npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
 
-# Bundle app source
-COPY --from=development /usr/src/app/dist ./dist
+USER node
 
-EXPOSE 3000
+
+# PRODUCTION STAGE
+FROM node:alpine As production
+
+# Copy the bundled code from the build stage to the production image
+COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
+COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 
 # Add an env to save ARG
-ENV APP_MAIN_FILE=dist/apps/${APP}/main 
+ENV APP_MAIN_FILE=dist/apps/${APP}/main.js 
 
 # Define the command to run your app using CMD which defines your runtime
 # Here we will use the nest command to start the server

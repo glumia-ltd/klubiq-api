@@ -44,7 +44,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # import google admin sdk config file data
       - name: Load Google Service file
@@ -60,7 +60,7 @@ jobs:
     needs: build
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Load Google Service file
         run: echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
