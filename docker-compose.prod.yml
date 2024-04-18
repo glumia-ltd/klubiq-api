@@ -13,7 +13,7 @@ services:
       - 3000:3000
     volumes:
       - .:/usr/src/app
-    image: vadeyemi/klubiq-api
+    image: vadeyemi/klubiq-api:latest
 #     networks:
 #       - dockernet
 # networks:
