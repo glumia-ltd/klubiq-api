@@ -11,4 +11,6 @@ services:
     volumes:
       - .:/usr/src/app
     image: vadeyemi/klubiq-api:klubiq-dashboard
+    env_file:
+      - .env
     restart: always
