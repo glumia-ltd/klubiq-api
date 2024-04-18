@@ -8,8 +8,8 @@ on:
     #   - 'apps/klubiq-dashboard/**'
 env: 
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
-  DATABASE_PORT: ${{ secrets.DATABASE_HOST }}
-  DATABASE_USERNAME: ${{ secrets.DATABASE_HOST }}
+  DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+  DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
   DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
   DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
   SYNCHRONIZE_DB: ${{ secrets.SYNCHRONIZE_DB }}
@@ -74,8 +74,8 @@ jobs:
           echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
           cat << EOF >> .env        
               DATABASE_HOST=${{ secrets.DATABASE_HOST }}
-              DATABASE_PORT=${{ secrets.DATABASE_HOST }}
-              DATABASE_USERNAME=${{ secrets.DATABASE_HOST }}
+              DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+              DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
               DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
               DATABASE_NAME=${{ secrets.DATABASE_NAME }}
               SYNCHRONIZE_DB=${{ secrets.SYNCHRONIZE_DB }}
