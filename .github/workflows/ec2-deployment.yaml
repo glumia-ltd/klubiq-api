@@ -13,7 +13,7 @@ env:
   DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
   DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
   SYNCHRONIZE_DB: ${{ secrets.SYNCHRONIZE_DB }}
-  ENV: ${{ secrets.ENV }}
+  NODE_ENV: ${{ secrets.ENV }}
   FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
   FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
   FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
@@ -54,6 +54,14 @@ jobs:
         run: |
           npm install
           npm run build
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+         name: artifacts
+         path: |
+           dist
+           node_modules
         
   deploy:
     runs-on: ubuntu-latest
@@ -73,13 +81,20 @@ jobs:
       - name: Build and push docker_compose
         run: docker compose -f docker-compose.prod.yml build --pull && docker compose -f docker-compose.prod.yml push
         
+      - name: Download prod artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: artifacts/
+
+
       - name: Deploy to Lightsail
         uses: easingthemes/ssh-deploy@main
         with:
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USERNAME }}
           SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
-          EXCLUDE: "/dist/, /node_modules/"
+          SOURCE: "artifacts/dist, artifacts/node_modules"
           TARGET: ${{ secrets.TARGET_DIR }}
             
       - name: Executing docker compose in EC2 using ssh key

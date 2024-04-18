@@ -22,7 +22,9 @@ COPY . .
 FROM node:alpine As build
 
 ARG NODE_ENV=production
-ENV NODE_ENV=${ENV}
+ENV NODE_ENV=${NODE_ENV}
+
+RUN echo $NODE_ENV
 
 WORKDIR /usr/src/app
 
@@ -44,13 +46,7 @@ USER node
 # PRODUCTION STAGE
 FROM node:alpine As production
 
+
 # Copy the bundled code from the build stage to the production image
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
-
-# Add an env to save ARG
-ENV APP_MAIN_FILE=dist/apps/${APP}/main.js 
-
-# Define the command to run your app using CMD which defines your runtime
-# Here we will use the nest command to start the server
-CMD node ${APP_MAIN_FILE}
