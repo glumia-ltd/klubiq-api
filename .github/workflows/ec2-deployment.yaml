@@ -72,7 +72,7 @@ jobs:
       - name: Load Google Service file and copy env variables
         run: |
           echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
-          cat << EOF >> env.txt        
+          cat << EOF >> .env        
               DATABASE_HOST=${{ secrets.DATABASE_HOST }}
               DATABASE_PORT=${{ secrets.DATABASE_HOST }}
               DATABASE_USERNAME=${{ secrets.DATABASE_HOST }}
