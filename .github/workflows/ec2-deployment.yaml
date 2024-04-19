@@ -3,7 +3,8 @@ name: Deploy Klubiq dasboard to Amazon EC2
 on:
   push:
     branches: 
-      - dev
+      #- dev
+      - release.*
     # paths:
     #   - 'apps/klubiq-dashboard/**'
 env: 
