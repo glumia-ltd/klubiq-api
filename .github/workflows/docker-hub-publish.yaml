@@ -1,10 +1,10 @@
 
-name: Deploy Klubiq dasboard to Amazon EC2
+name: Push to Docker Hub
 on:
   push:
     branches: 
-      #- dev
-      - release.*
+      - dev
+    # - release.*
     # paths:
     #   - 'apps/klubiq-dashboard/**'
 env: 
@@ -31,41 +31,31 @@ env:
   HOSTNAME: ${{ secrets.HOSTNAME }}
   USERNAME: ${{ secrets.USERNAME }}
 
-jobs:
-  #test:
+jobs:        
+  # build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-    #runs-on: ubuntu-latest
-    #steps:
-     # - uses: actions/checkout@v3
-      #- name: Test application
-       # run: |
-        #  npm install
-         # npm test
+  #     # import google admin sdk config file data
+  #     - name: Load Google Service file
+  #       run: echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
+
+  #     - name: Build application
+  #       run: |
+  #         npm install
+  #         npm run build
+
+  #     - name: Archive production artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #        name: artifacts
+  #        path: |
+  #          dist
         
-  build:
+  docker:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # import google admin sdk config file data
-      - name: Load Google Service file
-        run: echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
-
-      - name: Build application
-        run: |
-          npm install
-          npm run build
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v4
-        with:
-         name: artifacts
-         path: |
-           dist
-        
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
+    # needs: build
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -101,32 +91,32 @@ jobs:
       - name: Build and push docker_compose
         run: docker compose -f docker-compose.prod.yml build --pull && docker compose -f docker-compose.prod.yml push
         
-      - name: Download prod artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: artifacts
-          path: dist/
+      # - name: Download prod artifacts
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: artifacts
+      #     path: dist/
 
 
-      - name: Deploy to Lightsail
-        uses: easingthemes/ssh-deploy@main
-        with:
-          REMOTE_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_USER: ${{ secrets.SSH_USERNAME }}
-          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
-          #SOURCE: "artifacts"
-          EXCLUDE: "/node_modules/"
-          TARGET: ${{ secrets.TARGET_DIR }}
+      # - name: Deploy to Lightsail
+      #   uses: easingthemes/ssh-deploy@main
+      #   with:
+      #     REMOTE_HOST: ${{ secrets.SSH_HOST }}
+      #     REMOTE_USER: ${{ secrets.SSH_USERNAME }}
+      #     SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
+      #     #SOURCE: "artifacts"
+      #     EXCLUDE: "/node_modules/"
+      #     TARGET: ${{ secrets.TARGET_DIR }}
             
-      - name: Executing docker compose in EC2 using ssh key
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.LIGHTSAIL_SSH_CERT }}
-          script: |
-            cd ${{ secrets.TARGET_DIR }}
-            sudo docker compose -f docker-compose.prod.yml up -d --build
+      # - name: Executing docker compose in EC2 using ssh key
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{ secrets.SSH_HOST }}
+      #     username: ${{ secrets.SSH_USERNAME }}
+      #     key: ${{ secrets.LIGHTSAIL_SSH_CERT }}
+      #     script: |
+      #       cd ${{ secrets.TARGET_DIR }}
+      #       sudo docker compose -f docker-compose.prod.yml up -d --build
             
 
   
