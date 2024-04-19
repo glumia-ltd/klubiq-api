@@ -95,7 +95,7 @@ jobs:
           REMOTE_USER: ${{ secrets.SSH_USERNAME }}
           SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
           SOURCE: "artifacts/"
-          EXCLUDE: "/node_modules/"
+          EXCLUDE: "/node_modules/, node_modules, /node_modules"
           TARGET: ${{ secrets.TARGET_DIR }}
           SCRIPT_BEFORE: |
             sudo chown $USER ${{ secrets.TARGET_DIR }}
