@@ -4,9 +4,10 @@ import { PropertiesController } from './properties.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Property } from './entities/property.entity';
 import { PropertyAddress } from './entities/property-address.entity';
+import { PropertyRepository } from './properties.repository';
 
 @Module({
-	providers: [PropertiesService],
+	providers: [PropertiesService, PropertyRepository],
 	controllers: [PropertiesController],
 	imports: [TypeOrmModule.forFeature([Property, PropertyAddress])],
 })
