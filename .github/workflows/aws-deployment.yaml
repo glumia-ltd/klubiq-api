@@ -42,7 +42,7 @@ jobs:
         #  npm install
          # npm test
         
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,24 +54,12 @@ jobs:
       - name: Build application
         run: |
           npm install
-          npm run build
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v4
-        with:
-         name: artifacts
-         path: |
-           dist
+          npm test
         
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    #needs: build
     steps:
-      - name: Download prod artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: artifacts
-          path: dist/
 
       - name: Deploy to Lightsail
         uses: easingthemes/ssh-deploy@main
@@ -79,8 +67,8 @@ jobs:
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USERNAME }}
           SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
-          SOURCE: "dist"
-          EXCLUDE: "/node_modules/"
+          #SOURCE: "dist"
+          EXCLUDE: "/dist, /node_modules/"
           TARGET: ${{ secrets.TARGET_DIR }}
           SCRIPT_BEFORE: |
             sudo chown $USER ${{ secrets.TARGET_DIR }}
@@ -88,6 +76,7 @@ jobs:
           SCRIPT_AFTER: |
             cd ${{ secrets.TARGET_DIR }}
             npm install
+            npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
             node dist/apps/klubiq-dashboard/main.js
             forever start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js
             
