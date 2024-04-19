@@ -49,7 +49,9 @@ jobs:
 
       # import google admin sdk config file data
       - name: Load Google Service file
-        run: echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
+        run: |
+          echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
+          
 
       - name: Build application
         run: |
@@ -79,8 +81,8 @@ jobs:
             cd ${{ secrets.TARGET_DIR }}
           SCRIPT_AFTER: |
             cd ${{ secrets.TARGET_DIR }}
-            npm install
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
+            npm run build
             node dist/apps/klubiq-dashboard/main.js
             forever start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js
             
