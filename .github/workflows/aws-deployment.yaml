@@ -144,7 +144,7 @@ jobs:
             EOF
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
             node dist/apps/klubiq-dashboard/main.js
-            forever start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js
+          #forever start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js
             
 
   
