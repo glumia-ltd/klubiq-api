@@ -1,0 +1,16 @@
+services:
+  klubiq-dashboard:
+    container_name: klubiq-dashboard
+    build:
+      context: .
+      target: production
+    ports:
+      - 3000:3000
+    command: |
+      node dist/apps/klubiq-dashboard/main.js
+    volumes:
+      - .:/usr/src/app
+    image: vadeyemi/klubiq-api:klubiq-dashboard
+    env_file:
+      - .env
+    restart: always

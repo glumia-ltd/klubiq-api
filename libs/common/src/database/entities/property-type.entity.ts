@@ -15,7 +15,4 @@ export class PropertyType extends AbstractEntity {
 
 	@OneToMany(() => Property, (property) => property.category)
 	properties?: Property[];
-
-	@Column({ default: false })
-	isMultiUnitType: boolean;
 }

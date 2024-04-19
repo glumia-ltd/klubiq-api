@@ -60,12 +60,16 @@ export class Property {
 	isMultiUnit: boolean;
 
 	@AutoMap()
-	@Column({ type: 'decimal', precision: 3, scale: 1 })
-	bedrooms: number;
+	@Column({ type: 'decimal' })
+	bedroom: number;
 
 	@AutoMap()
-	@Column({ type: 'decimal', precision: 3, scale: 1 })
-	bathrooms: number;
+	@Column({ type: 'decimal' })
+	bathroom: number;
+
+	@AutoMap()
+	@Column({ type: 'decimal' })
+	toilet: number;
 
 	@AutoMap()
 	@Column({ type: 'json' })
