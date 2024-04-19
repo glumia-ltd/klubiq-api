@@ -87,7 +87,9 @@ jobs:
             cd ${{ secrets.TARGET_DIR }}
           SCRIPT_AFTER: |
             cd ${{ secrets.TARGET_DIR }}
+            npm install
             node dist/apps/klubiq-dashboard/main.js
+            forever start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js
             
 
   
