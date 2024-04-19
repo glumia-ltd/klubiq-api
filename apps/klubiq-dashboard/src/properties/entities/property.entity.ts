@@ -45,7 +45,7 @@ export class Property {
 
 	@AutoMap()
 	@Column({ type: 'text', nullable: true })
-	descritption?: string;
+	description?: string;
 
 	@AutoMap()
 	@Column({ type: 'text', nullable: true })
