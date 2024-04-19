@@ -67,7 +67,24 @@ jobs:
       - name: Load Google Service file
         run: |
           echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
-          cat << EOF >> .env        
+          npm install
+          npm run build
+        
+      - name: Deploy to Lightsail
+        uses: easingthemes/ssh-deploy@main
+        with:
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USERNAME }}
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
+          SOURCE: "dist"
+          EXCLUDE: "/node_modules/"
+          TARGET: ${{ secrets.TARGET_DIR }}
+          SCRIPT_BEFORE: |
+            sudo chown $USER ${{ secrets.TARGET_DIR }}
+            cd ${{ secrets.TARGET_DIR }}
+          SCRIPT_AFTER: |
+            cd ${{ secrets.TARGET_DIR }}
+            cat << EOF >> .env        
               DATABASE_HOST=${{ secrets.DATABASE_HOST }}
               DATABASE_PORT=${{ secrets.DATABASE_PORT }}
               DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
@@ -85,24 +102,7 @@ jobs:
               EMAIL_API_KEY=${{ secrets.EMAIL_API_KEY }}
               EMAIL_VERIFICATION_BASE_URL=${{ vars.EMAIL_VERIFICATION_BASE_URL }}
               CONTINUE_URL_PATH=${{ vars.CONTINUE_URL_PATH }}
-          EOF
-          npm install
-          npm run build
-        
-      - name: Deploy to Lightsail
-        uses: easingthemes/ssh-deploy@main
-        with:
-          REMOTE_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_USER: ${{ secrets.SSH_USERNAME }}
-          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
-          SOURCE: "dist, .env"
-          EXCLUDE: "/node_modules/"
-          TARGET: ${{ secrets.TARGET_DIR }}
-          SCRIPT_BEFORE: |
-            sudo chown $USER ${{ secrets.TARGET_DIR }}
-            cd ${{ secrets.TARGET_DIR }}
-          SCRIPT_AFTER: |
-            cd ${{ secrets.TARGET_DIR }}
+            EOF
             node dist/apps/klubiq-dashboard/main.js
             forever start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js
             
