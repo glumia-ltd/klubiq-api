@@ -4,8 +4,8 @@ import { Mapper, createMapper } from '@automapper/core';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { classes } from '@automapper/classes';
 import { EntityManager } from 'typeorm';
-import { PropertyRepository } from './properties.repository';
-import { PropertiesService } from './properties.service';
+import { PropertyRepository } from '../repositories/properties.repository';
+import { PropertiesService } from '../services/properties.service';
 
 describe('OrganizationController', () => {
 	let controller: PropertiesController;

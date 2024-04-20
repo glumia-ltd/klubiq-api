@@ -9,11 +9,11 @@ import {
 	Delete,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { PropertiesService } from './properties.service';
-import { Property } from './entities/property.entity';
+import { PropertiesService } from '../services/properties.service';
+import { Property } from '../entities/property.entity';
 import { PageOptionsDto } from '@app/common';
-import { CreatePropertyDto } from './dto/create-property.dto';
-import { PropertyDto } from './dto/property-response.dto';
+import { CreatePropertyDto } from '../dto/create-property.dto';
+import { PropertyDto } from '../dto/property-response.dto';
 
 @ApiTags('properties')
 @ApiBearerAuth()

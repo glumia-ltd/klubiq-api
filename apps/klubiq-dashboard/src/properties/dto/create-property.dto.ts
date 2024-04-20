@@ -1,7 +1,6 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	IsNotEmpty,
 	IsOptional,
 	IsArray,
 	IsBoolean,
@@ -12,50 +11,74 @@ import {
 
 export class CreatePropertyDto {
 	@AutoMap()
-	@ApiProperty()
-	@IsNotEmpty()
+	@ApiPropertyOptional()
+	@IsOptional()
 	@IsString()
 	name: string;
 
 	@AutoMap()
-	@ApiProperty()
+	@ApiPropertyOptional()
 	@IsOptional()
 	@IsString()
 	description?: string;
 
 	@AutoMap()
-	@ApiProperty()
+	@ApiPropertyOptional()
 	@IsOptional()
 	@IsString()
 	note?: string;
 
 	@AutoMap()
-	@ApiProperty()
+	@ApiPropertyOptional()
 	@IsOptional()
 	@IsArray()
 	tags?: string[];
 
 	@AutoMap()
-	@ApiProperty()
-	@IsNotEmpty()
+	@ApiPropertyOptional()
+	@IsOptional()
 	@IsBoolean()
-	isMultiUnit: boolean;
+	isMultiUnit?: boolean;
 
 	@AutoMap()
-	@ApiProperty()
-	@IsNotEmpty()
+	@ApiPropertyOptional()
+	@IsOptional()
 	@IsNumber()
-	bedrooms: number;
+	bedrooms?: number;
 
 	@AutoMap()
-	@ApiProperty()
-	@IsNotEmpty()
+	@ApiPropertyOptional()
+	@IsOptional()
 	@IsNumber()
-	bathrooms: number;
+	bathrooms?: number;
 
 	@AutoMap()
-	@ApiProperty()
-	@IsNotEmpty()
+	@ApiPropertyOptional()
+	@IsOptional()
 	@IsJSON()
-	area: { value: number; unit: string };
+	area?: { value?: number; unit?: string };
+
+	@AutoMap()
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsNumber()
+	categoryId?: number;
+
+	@AutoMap()
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsNumber()
+	typeId?: number;
+
+	@AutoMap()
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsNumber()
+	purposeId?: number;
+
+	@AutoMap()
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsNumber()
+	statusId?: number;
 }
