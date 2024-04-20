@@ -7,6 +7,10 @@ on:
       - release.*
     paths:
       - 'apps/**'
+  workflow_run:
+    workflows: ['Run Tests']
+    types:
+      - completed
 env: 
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
