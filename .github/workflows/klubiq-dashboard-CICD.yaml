@@ -5,8 +5,12 @@ on:
   push:
     branches: 
       - dev
-    #paths:
-       #- 'apps/klubiq-dashboard/**'
+    paths:
+       - 'apps/klubiq-dashboard/**'
+  workflow_run:
+    workflows: ['Run Tests']
+    types:
+      - completed
 env: 
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
@@ -26,29 +30,12 @@ env:
   EMAIL_VERIFICATION_BASE_URL: ${{ vars.EMAIL_VERIFICATION_BASE_URL }}
   CONTINUE_URL_PATH: ${{ vars.CONTINUE_URL_PATH }}
   GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-  APP: klubiq-dashboard
+  APP: klubiq-dashboard-api
   PRIVATE_KEY: ${{ secrets.CERTIFICATE }}
   HOSTNAME: ${{ secrets.HOSTNAME }}
   USERNAME: ${{ secrets.USERNAME }}
 
-jobs:    
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # import google admin sdk config file data
-      - name: Load Google Service file
-        run: |
-          echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
-          
-
-      - name: Build application
-        run: |
-          npm install
-          npm test
-  
-        
+jobs: 
   build:
     runs-on: ubuntu-latest
     steps:
@@ -91,7 +78,6 @@ jobs:
             sudo chown $USER ${{ secrets.TARGET_DIR }}
             cd ${{ secrets.TARGET_DIR }}
           SCRIPT_AFTER: |
-            echo 'App name is ' ${{ env.APP }}
             cd ${{ secrets.TARGET_DIR }}
             cat << EOF >> .env        
               DATABASE_HOST=${{ secrets.DATABASE_HOST }}
@@ -113,39 +99,7 @@ jobs:
               CONTINUE_URL_PATH=${{ vars.CONTINUE_URL_PATH }}
             EOF
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
-            pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name="klubiq-dashboard-api"
-
-      # - name: Run Node App on Lightsail
-      #   uses: appleboy/ssh-action@master
-      #   with:
-      #     host: ${{ secrets.SSH_HOST }}
-      #     username: ${{ secrets.SSH_USERNAME }}
-      #     key: ${{ secrets.LIGHTSAIL_SSH_CERT }}
-      #     script: |
-      #       sudo chown $USER ${{ secrets.TARGET_DIR }}
-      #       cd ${{ secrets.TARGET_DIR }}
-      #       cat << EOF >> .env        
-      #         DATABASE_HOST=${{ secrets.DATABASE_HOST }}
-      #         DATABASE_PORT=${{ secrets.DATABASE_PORT }}
-      #         DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
-      #         DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-      #         DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-      #         SYNCHRONIZE_DB=${{ secrets.SYNCHRONIZE_DB }}
-      #         NODE_ENV=${{ secrets.ENV }}
-      #         FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
-      #         FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
-      #         FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
-      #         FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
-      #         FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
-      #         FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}
-      #         FIREBASE_MEASUREMENT_ID=${{ secrets.FIREBASE_MEASUREMENT_ID }}
-      #         EMAIL_API_KEY=${{ secrets.EMAIL_API_KEY }}
-      #         EMAIL_VERIFICATION_BASE_URL=${{ vars.EMAIL_VERIFICATION_BASE_URL }}
-      #         CONTINUE_URL_PATH=${{ vars.CONTINUE_URL_PATH }}
-      #       EOF
-      #       npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
-            
-          # node dist/apps/klubiq-dashboard/main.js
+            pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name=${{ env.APP }}
             
             
 
