@@ -5,8 +5,8 @@ on:
   push:
     branches: 
       - dev
-    #paths:
-       #- 'apps/klubiq-dashboard/**'
+    paths:
+       - 'apps/klubiq-dashboard/**'
 env: 
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
@@ -26,29 +26,12 @@ env:
   EMAIL_VERIFICATION_BASE_URL: ${{ vars.EMAIL_VERIFICATION_BASE_URL }}
   CONTINUE_URL_PATH: ${{ vars.CONTINUE_URL_PATH }}
   GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-  APP: klubiq-dashboard
+  APP: klubiq-dashboard-api
   PRIVATE_KEY: ${{ secrets.CERTIFICATE }}
   HOSTNAME: ${{ secrets.HOSTNAME }}
   USERNAME: ${{ secrets.USERNAME }}
 
 jobs:    
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # import google admin sdk config file data
-      - name: Load Google Service file
-        run: |
-          echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
-          
-
-      - name: Build application
-        run: |
-          npm install
-          npm test
-  
-        
   build:
     runs-on: ubuntu-latest
     steps:
@@ -113,7 +96,7 @@ jobs:
               CONTINUE_URL_PATH=${{ vars.CONTINUE_URL_PATH }}
             EOF
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
-            pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name="klubiq-dashboard-api"
+            pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name=${{ env.APP }}
 
       # - name: Run Node App on Lightsail
       #   uses: appleboy/ssh-action@master

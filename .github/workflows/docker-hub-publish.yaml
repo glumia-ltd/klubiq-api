@@ -4,9 +4,9 @@ on:
   push:
     branches: 
       - dev
-    # - release.*
-    # paths:
-    #   - 'apps/klubiq-dashboard/**'
+      - release.*
+    paths:
+      - 'apps/**'
 env: 
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
