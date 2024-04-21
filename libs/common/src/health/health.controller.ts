@@ -1,6 +1,7 @@
+import { Auth, AuthType } from '@app/auth';
 import { Controller, Get } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import {
 	HealthCheckService,
 	HttpHealthIndicator,
@@ -8,7 +9,8 @@ import {
 	TypeOrmHealthIndicator,
 } from '@nestjs/terminus';
 
-@ApiTags('healthcheck')
+@Auth(AuthType.None)
+@ApiTags('health')
 @Controller('health')
 export class HealthController {
 	constructor(
@@ -18,27 +20,16 @@ export class HealthController {
 		private db: TypeOrmHealthIndicator,
 	) {}
 
-	@Get('liveness')
+	@Get()
 	@HealthCheck()
 	check() {
 		return this.health.check([
 			() =>
 				this.http.pingCheck(
-					'klubiq-api',
-					`${this.configService.get('HEALTH_CHECK_URL')}/status`,
+					`KLUBIQ-API`,
+					`${this.configService.get('HEALTH_CHECK_URL')}`,
 				),
+			() => this.db.pingCheck('database'),
 		]);
-	}
-
-	@Get('readiness')
-	@HealthCheck()
-	check2() {
-		return this.health.check([() => this.db.pingCheck('database')]);
-	}
-
-	@ApiOkResponse()
-	@Get('status')
-	status() {
-		return true;
 	}
 }

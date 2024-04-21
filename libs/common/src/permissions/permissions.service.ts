@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { CACHE_MANAGER, CacheStore } from '@nestjs/cache-manager';
 // import { EntityManager } from 'typeorm';
 import { PermissionsRepository } from '../repositories/permissions.repository';
 import { OrganizationRolesRepository } from '../repositories/organization-roles.repository';
@@ -15,16 +16,23 @@ export class PermissionsService {
 		private readonly permissionsRepository: PermissionsRepository,
 		private readonly organizationRoleRepository: OrganizationRolesRepository,
 		private readonly featuresRepository: FeaturesRepository,
+		@Inject(CACHE_MANAGER) private cacheManager: CacheStore,
 	) {}
 
 	async getOrgRoles(): Promise<ViewOrgRoleDto[]> {
 		try {
+			const cachedRoles =
+				await this.cacheManager.get<ViewOrgRoleDto[]>('roles');
+			if (cachedRoles) {
+				return cachedRoles;
+			}
 			const roles = await this.organizationRoleRepository.findAll();
 			const data = this.mapper.mapArrayAsync(
 				roles,
 				OrganizationRole,
 				ViewOrgRoleDto,
 			);
+			await this.cacheManager.set('roles', data);
 			return data;
 		} catch (err) {
 			throw err;

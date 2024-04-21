@@ -29,3 +29,4 @@ export * from './database/entities/property-type.entity';
 export * from './database/entities/property-category.entity';
 export * from './database/entities/property-status.entity';
 export * from './database/entities/property-purpose.entity';
+export * from './health/health.module';

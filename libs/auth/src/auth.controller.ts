@@ -9,15 +9,15 @@ import {
 	HttpCode,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Auth } from './decorators/auth.decorator';
+import { AuthService } from './auth.service';
 import {
-	AuthService,
-	userLoginDto,
 	OrgUserSignUpDto,
+	userLoginDto,
 	VerifyEmailDto,
-	SignUpResponseDto,
-} from '@app/auth';
-import { Auth } from '@app/auth/decorators/auth.decorator';
-import { AuthType } from '@app/auth/types/firebase.types';
+} from './dto/user-login.dto';
+import { SignUpResponseDto } from './dto/auth-response.dto';
+import { AuthType } from './types/firebase.types';
 
 @ApiTags('auth')
 @Auth(AuthType.None)

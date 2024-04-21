@@ -8,7 +8,10 @@ import { MailerSendService } from '../email/email.service';
 import { MailerSendSMTPService } from '../email/smtp-email.service';
 import { AutomapperModule } from '@automapper/nestjs';
 import { classes } from '@automapper/classes';
-
+import { ClsModule } from 'nestjs-cls';
+import { v4 as uuidv4 } from 'uuid';
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-yet';
 @Module({
 	imports: [
 		NestConfigModule.forRoot({
@@ -27,10 +30,31 @@ import { classes } from '@automapper/classes';
 				FIREBASE_MESSAGING_SENDER_ID: Joi.string().required(),
 				FIREBASE_MEASUREMENT_ID: Joi.string().required(),
 				EMAIL_API_KEY: Joi.string().required(),
+				HEALTH_CHECK_URL: Joi.string().required(),
 			}),
 		}),
 		AutomapperModule.forRoot({
 			strategyInitializer: classes(),
+		}),
+		ClsModule.forRoot({
+			global: true,
+			middleware: {
+				mount: true,
+				generateId: true,
+				idGenerator: (request: any) =>
+					request.headers['X-Correlation-Id'] ?? uuidv4(),
+			},
+		}),
+		CacheModule.registerAsync({
+			isGlobal: true,
+			useFactory: async () => ({
+				store: await redisStore({
+					socket: {
+						host: 'localhost',
+						port: 6379,
+					},
+				}),
+			}),
 		}),
 	],
 	providers: [ConfigService, MailerSendService, MailerSendSMTPService],
