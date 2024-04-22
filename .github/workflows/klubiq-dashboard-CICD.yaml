@@ -34,6 +34,9 @@ env:
   PRIVATE_KEY: ${{ secrets.CERTIFICATE }}
   HOSTNAME: ${{ secrets.HOSTNAME }}
   USERNAME: ${{ secrets.USERNAME }}
+  HEALTH_CHECK_URL: ${{ vars.HEALTH_CHECK_URL }}
+  APP_NAME: ${{ vars.APP_NAME }}
+  APP_VERSION: ${{ vars.APP_VERSION }}
 
 jobs: 
   build:
@@ -97,6 +100,9 @@ jobs:
               EMAIL_API_KEY=${{ secrets.EMAIL_API_KEY }}
               EMAIL_VERIFICATION_BASE_URL=${{ vars.EMAIL_VERIFICATION_BASE_URL }}
               CONTINUE_URL_PATH=${{ vars.CONTINUE_URL_PATH }}
+              HEALTH_CHECK_URL=${{ vars.HEALTH_CHECK_URL }}
+              APP_NAME=${{ vars.APP_NAME }}
+              APP_VERSION=${{ vars.APP_VERSION }}
             EOF
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
             pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name=${{ env.APP }}
