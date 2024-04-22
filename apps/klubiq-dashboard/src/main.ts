@@ -5,7 +5,6 @@ import {
 	DocumentBuilder,
 	SwaggerDocumentOptions,
 } from '@nestjs/swagger';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { KlubiqDashboardModule } from './klubiq-dashboard.module';
 import { HttpExceptionFilter } from '@app/common';
 import { HttpResponseInterceptor } from '@app/common';
@@ -14,14 +13,6 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 
 declare const module: any;
 
-const microserviceOptions: MicroserviceOptions = {
-	transport: Transport.REDIS,
-	options: {
-		host: 'localhost:6379',
-		port: 6379,
-	},
-};
-
 async function bootstrap() {
 	///CUSTOM LOGGER SERVICE
 	const customLogger = new CustomLogging();
@@ -29,9 +20,6 @@ async function bootstrap() {
 	const app = await NestFactory.create(KlubiqDashboardModule, {
 		logger: WinstonModule.createLogger(customLogger.createLoggerConfig),
 	});
-
-	/// MICROSERVICE CONFIGURATION FOR REDIS
-	app.connectMicroservice(microserviceOptions);
 
 	/// SWAGGER CONFIGURATION
 	const options: SwaggerDocumentOptions = {
@@ -71,7 +59,6 @@ async function bootstrap() {
 	);
 	app.useGlobalFilters(new HttpExceptionFilter());
 	app.useGlobalInterceptors(new HttpResponseInterceptor());
-	await app.startAllMicroservices();
 	await app.listen(3000);
 
 	if (module.hot) {

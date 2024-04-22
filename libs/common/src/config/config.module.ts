@@ -11,7 +11,8 @@ import { classes } from '@automapper/classes';
 import { ClsModule } from 'nestjs-cls';
 import { v4 as uuidv4 } from 'uuid';
 import { CacheModule } from '@nestjs/cache-manager';
-import { redisStore } from 'cache-manager-redis-yet';
+import * as redis from 'cache-manager-redis-store';
+
 @Module({
 	imports: [
 		NestConfigModule.forRoot({
@@ -48,12 +49,15 @@ import { redisStore } from 'cache-manager-redis-yet';
 		CacheModule.registerAsync({
 			isGlobal: true,
 			useFactory: async () => ({
-				store: await redisStore({
-					socket: {
-						host: 'localhost',
-						port: 6379,
-					},
-				}),
+				store: redis,
+				host: 'localhost',
+				port: 6379,
+				// store: await redis.redisStore({
+				// 	socket: {
+				// 		host: 'localhost',
+				// 		port: 6379,
+				// 	},
+				// }),
 			}),
 		}),
 	],
