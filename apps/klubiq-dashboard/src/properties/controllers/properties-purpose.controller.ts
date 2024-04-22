@@ -14,7 +14,7 @@ import {
 	UpdatePropertyCategoryDto,
 } from '../dto/property-category.dto';
 import { PropertyPeripheralDto } from '../dto/properties-peripheral.dto';
-import { PropertiesPurposeService } from '../services/properties-purpose.service';
+import { PropertiesPurposeService } from '../../../../../libs/common/src/services/properties-purpose.service';
 
 @ApiBearerAuth()
 @ApiTags('properties-purpose')

@@ -6,9 +6,9 @@ import { Mapper } from '@automapper/core';
 import {
 	CreatePropertyCategoryDto,
 	UpdatePropertyCategoryDto,
-} from '../dto/property-category.dto';
+} from '../../../../apps/klubiq-dashboard/src/properties/dto/property-category.dto';
 import { PropertyTypeRepository } from '../repositories/properties-type.repository';
-import { PropertyPeripheralDto } from '../dto/properties-peripheral.dto';
+import { PropertyPeripheralDto } from '../../../../apps/klubiq-dashboard/src/properties/dto/properties-peripheral.dto';
 
 @Injectable()
 export class PropertiesTypeService {

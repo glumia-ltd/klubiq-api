@@ -13,7 +13,7 @@ import {
 	CreatePropertyCategoryDto,
 	UpdatePropertyCategoryDto,
 } from '../dto/property-category.dto';
-import { PropertiesCategoryService } from '../services/properties-category.service';
+import { PropertiesCategoryService } from '../../../../../libs/common/src/services/properties-category.service';
 import { PropertyPeripheralDto } from '../dto/properties-peripheral.dto';
 
 @ApiBearerAuth()

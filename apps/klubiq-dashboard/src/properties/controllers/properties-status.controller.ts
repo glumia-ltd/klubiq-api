@@ -14,7 +14,7 @@ import {
 	UpdatePropertyCategoryDto,
 } from '../dto/property-category.dto';
 import { PropertyPeripheralDto } from '../dto/properties-peripheral.dto';
-import { PropertiesStatusService } from '../services/properties-status.service';
+import { PropertiesStatusService } from '../../../../../libs/common/src/services/properties-status.service';
 
 @ApiBearerAuth()
 @ApiTags('properties-status')

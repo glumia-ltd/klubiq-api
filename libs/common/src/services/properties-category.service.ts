@@ -7,8 +7,8 @@ import { PropertyCategoryRepository } from '../repositories/properties-category.
 import {
 	CreatePropertyCategoryDto,
 	UpdatePropertyCategoryDto,
-} from '../dto/property-category.dto';
-import { PropertyPeripheralDto } from '../dto/properties-peripheral.dto';
+} from '../../../../apps/klubiq-dashboard/src/properties/dto/property-category.dto';
+import { PropertyPeripheralDto } from '../../../../apps/klubiq-dashboard/src/properties/dto/properties-peripheral.dto';
 
 @Injectable()
 export class PropertiesCategoryService {
