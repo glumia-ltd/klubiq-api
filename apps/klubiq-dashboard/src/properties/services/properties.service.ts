@@ -19,7 +19,7 @@ export class PropertiesService {
 	) {}
 
 	async getPropertyById(id: number): Promise<Property> {
-		const property = await this.propertyRepository.findOneWithId({ id: id });
+		const property = await this.propertyRepository.findOneBy({ id: id });
 		if (!property) {
 			throw new NotFoundException('Property not found');
 		}
@@ -35,7 +35,7 @@ export class PropertiesService {
 			return this.mapper.map(updatedProp, Property, PropertyDto);
 		} catch (error) {
 			this.logger.error('Error updating Property Data', error);
-			throw new Error(`Error updating Property Data. Error: ${error}`);
+			return new Error(`Error updating Property Data. Error: ${error}`);
 		}
 	}
 
@@ -50,7 +50,7 @@ export class PropertiesService {
 		}
 	}
 
-	async archiveProperty(id: number): Promise<void> {
+	async archiveProperty(id: number) {
 		try {
 			this.logger.verbose(`Archiving Property by id: ${id}`);
 			const property = await this.getPropertyById(id);
@@ -60,7 +60,7 @@ export class PropertiesService {
 			// return this.mapper.map(archivedProperty, Property, PropertyDto);
 		} catch (error) {
 			this.logger.error('Error archiving Property Data', error);
-			throw new Error(`Error archiving Property Data. Error: ${error}`);
+			return new Error(`Error archiving Property Data. Error: ${error}`);
 		}
 	}
 
@@ -72,7 +72,7 @@ export class PropertiesService {
 			return this.mapper.map(createdProperty, Property, PropertyDto);
 		} catch (error) {
 			this.logger.error('Error creating Property Data', error);
-			throw new Error(`Error creating Property Data. Error: ${error}`);
+			return new Error(`Error creating Property Data. Error: ${error}`);
 		}
 	}
 

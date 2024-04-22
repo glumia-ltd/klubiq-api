@@ -83,7 +83,7 @@ export class Property {
 	isArchived?: boolean;
 
 	@AutoMap()
-	@Column()
+	@Column({ nullable: true })
 	archivedDate?: Date;
 
 	@CreateDateColumn()

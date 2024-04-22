@@ -6,7 +6,6 @@ import {
 	IsBoolean,
 	IsNumber,
 	IsString,
-	IsJSON,
 } from 'class-validator';
 
 export class CreatePropertyDto {
@@ -44,18 +43,23 @@ export class CreatePropertyDto {
 	@ApiPropertyOptional()
 	@IsOptional()
 	@IsNumber()
-	bedrooms?: number;
+	bedroom?: number;
 
 	@AutoMap()
 	@ApiPropertyOptional()
 	@IsOptional()
 	@IsNumber()
-	bathrooms?: number;
+	bathroom?: number;
 
 	@AutoMap()
 	@ApiPropertyOptional()
 	@IsOptional()
-	@IsJSON()
+	@IsNumber()
+	toilet?: number;
+
+	@AutoMap()
+	@ApiPropertyOptional()
+	@IsOptional()
 	area?: { value?: number; unit?: string };
 
 	@AutoMap()

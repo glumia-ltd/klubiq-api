@@ -17,9 +17,11 @@ import { PropertyCategoryController } from './controllers/properties-category.co
 import { PropertyPurposeController } from './controllers/properties-purpose.controller';
 import { PropertyStatusController } from './controllers/properties-status.controller';
 import { PropertyTypeController } from './controllers/properties-type.controller';
+import { PropertyProfile } from './profiles/property.profile';
 
 @Module({
 	providers: [
+		PropertyProfile,
 		PropertiesService,
 		PropertyRepository,
 		PropertiesCategoryService,

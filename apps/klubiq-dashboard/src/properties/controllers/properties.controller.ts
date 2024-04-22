@@ -14,6 +14,7 @@ import { Property } from '../entities/property.entity';
 import { PageOptionsDto } from '@app/common';
 import { CreatePropertyDto } from '../dto/create-property.dto';
 import { PropertyDto } from '../dto/property-response.dto';
+import { UpdatePropertyDto } from '../dto/update-property.dto';
 
 @ApiTags('properties')
 @ApiBearerAuth()
@@ -76,7 +77,7 @@ export class PropertiesController {
 	})
 	updateProperty(
 		@Param('propertyId') propertyId: number,
-		@Body() updateData: Partial<Property>,
+		@Body() updateData: UpdatePropertyDto,
 	) {
 		return this.propertyService.updateProperty(propertyId, updateData);
 	}
@@ -93,7 +94,7 @@ export class PropertiesController {
 	@ApiOkResponse({
 		description: "Archive a property found by it's property id",
 	})
-	archiveProperty(@Param('propertyId') propertyId: number): Promise<void> {
+	archiveProperty(@Param('propertyId') propertyId: number) {
 		return this.propertyService.archiveProperty(propertyId);
 	}
 
