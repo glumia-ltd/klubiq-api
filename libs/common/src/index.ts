@@ -37,3 +37,5 @@ export * from './services/properties-category.service';
 export * from './services/properties-purpose.service';
 export * from './services/properties-status.service';
 export * from './services/properties-type.service';
+export * from './health/health.module';
+export * from './public/public.module';

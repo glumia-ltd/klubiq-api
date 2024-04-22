@@ -33,6 +33,9 @@ env:
   PRIVATE_KEY: ${{ secrets.CERTIFICATE }}
   HOSTNAME: ${{ secrets.HOSTNAME }}
   USERNAME: ${{ secrets.USERNAME }}
+  HEALTH_CHECK_URL: ${{ vars.HEALTH_CHECK_URL }}
+  APP_NAME: ${{ vars.APP_NAME }}
+  APP_VERSION: ${{ vars.APP_VERSION }}
 
 jobs:        
   test:

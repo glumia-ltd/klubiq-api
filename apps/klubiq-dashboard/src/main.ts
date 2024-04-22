@@ -33,13 +33,17 @@ async function bootstrap() {
 		.setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
 		.setLicense('MIT', 'https://mit-license.org/')
 		.addBearerAuth()
-		// .addServer('XXXXXXXXXXXXXXXXXXXXX')
+		.addServer('http://localhost:3000')
+		.addServer('https://devapi.klubiq.com')
 		.build();
 	const document = SwaggerModule.createDocument(app, config, options);
-	SwaggerModule.setup('api', app, document);
+	SwaggerModule.setup('swagger', app, document);
 	/// END SWAGGER CONFIGURATION
 
 	/// APP SETTINGS
+	app.enableCors({
+		origin: ['http://localhost:3000', '/.klubiq.com$/'],
+	});
 	app.enableVersioning({
 		type: VersioningType.URI,
 	});

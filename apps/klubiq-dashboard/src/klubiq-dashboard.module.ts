@@ -4,6 +4,9 @@ import {
 	RolesRepository,
 	UserProfilesRepository,
 	PermissionsModule,
+	HealthModule,
+	ConfigModule,
+	PublicModule,
 } from '@app/common';
 import {
 	AuthenticationGuard,
@@ -15,11 +18,7 @@ import { UsersModule } from './users/users.module';
 import { OrganizationModule } from './organization/organization.module';
 import { UsersService } from './users/users.service';
 import { UsersRepository } from './users/users.repository';
-import { AuthController } from './auth/auth.controller';
-import { HealthModule } from './health/health.module';
-import { PublicController } from './public/public.controller';
 import { APP_GUARD } from '@nestjs/core';
-import { ConfigModule } from '@app/common';
 import { PropertiesModule } from './properties/properties.module';
 
 @Module({
@@ -32,8 +31,8 @@ import { PropertiesModule } from './properties/properties.module';
 		PermissionsModule,
 		ConfigModule,
 		PropertiesModule,
+		PublicModule,
 	],
-	controllers: [AuthController, PublicController],
 	providers: [
 		UsersService,
 		UsersRepository,
