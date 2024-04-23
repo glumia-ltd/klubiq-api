@@ -73,8 +73,8 @@ export class AuthService {
 					createUserDto,
 					CreateUserEventTypes.CREATE_ORG_USER,
 				);
-				fbid = null;
 				await this.sendVerificationEmail(createUserDto.email, displayName);
+				fbid = null;
 				return await this.createCustomToken(userProfile.firebaseId);
 			}
 			return undefined;
@@ -433,11 +433,11 @@ export class AuthService {
 				transactionalEntityManager,
 				UserRoles.ORG_OWNER,
 			);
-			const permissions = organizationRole.featurePermissions.map(
-				(featurePermission) => {
-					return featurePermission.alias;
-				},
-			);
+			// const permissions = organizationRole.featurePermissions.map(
+			// 	(featurePermission) => {
+			// 		return featurePermission.alias;
+			// 	},
+			// );
 			const user = new OrganizationUser();
 			user.firstName = createUserDto.firstName;
 			user.lastName = createUserDto.lastName;
@@ -458,7 +458,7 @@ export class AuthService {
 			await this.setCustomClaims(userProfile.firebaseId, {
 				systemRole: systemRole.name,
 				organizationRole: organizationRole.name,
-				permissions: permissions,
+				organizationId: organization.organizationUuid,
 			});
 			return userProfile;
 		});

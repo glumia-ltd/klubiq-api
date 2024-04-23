@@ -33,8 +33,8 @@ async function bootstrap() {
 		.setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
 		.setLicense('MIT', 'https://mit-license.org/')
 		.addBearerAuth()
-		.addServer('http://localhost:3000')
-		.addServer('https://devapi.klubiq.com')
+		.addServer('http://localhost:3000/api')
+		.addServer('https://devapi.klubiq.com/api')
 		.build();
 	const document = SwaggerModule.createDocument(app, config, options);
 	SwaggerModule.setup('swagger', app, document);
@@ -42,8 +42,9 @@ async function bootstrap() {
 
 	/// APP SETTINGS
 	app.enableCors({
-		origin: ['http://localhost:3000', '/.klubiq.com$/'],
+		origin: ['http://localhost', '/.klubiq.com$/'],
 	});
+
 	app.enableVersioning({
 		type: VersioningType.URI,
 	});
@@ -57,6 +58,7 @@ async function bootstrap() {
 			},
 		}),
 	);
+	app.setGlobalPrefix('/api');
 	app.useGlobalFilters(new HttpExceptionFilter());
 	app.useGlobalInterceptors(new HttpResponseInterceptor());
 	await app.listen(3000);
