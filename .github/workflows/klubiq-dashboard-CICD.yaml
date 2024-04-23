@@ -105,7 +105,7 @@ jobs:
               APP_VERSION=${{ vars.APP_VERSION }}
             EOF
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
-            pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name=${{ env.APP }}
+          #pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name=${{ env.APP }}
             
             
 
