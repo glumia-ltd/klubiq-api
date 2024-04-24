@@ -26,7 +26,6 @@ export class CustomLogging {
 			},
 		};
 		winston.addColors(customLevels.colors);
-		console.log('correlationId: ', this.cls.getId());
 		/**
 		 * Custom log format tailored to our application's requirements
 		 */

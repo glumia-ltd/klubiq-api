@@ -2,9 +2,11 @@ import { MailerSendService } from '@app/common/email/email.service';
 import {
 	ForbiddenException,
 	Injectable,
+	Logger,
 	NotFoundException,
 	UnauthorizedException,
 } from '@nestjs/common';
+import { ClsService, ClsServiceManager } from 'nestjs-cls';
 import { Inject } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import * as auth from 'firebase-admin/auth';
@@ -34,6 +36,8 @@ import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
 @Injectable()
 export class AuthService {
 	private firebaseClientAuth: Auth;
+	private readonly cls: ClsService;
+	private readonly logger = new Logger(AuthService.name);
 	constructor(
 		@Inject('FIREBASE_ADMIN') private firebaseAdminApp: admin.app.App,
 		@Inject('FIREBASE_AUTH') private firebaseClient: any,
@@ -44,6 +48,7 @@ export class AuthService {
 		private readonly errorMessageHelper: FirebaseErrorMessageHelper,
 	) {
 		this.firebaseClientAuth = getAuth(this.firebaseClient);
+		this.cls = ClsServiceManager.getClsService();
 	}
 
 	get auth(): auth.Auth {
@@ -73,12 +78,17 @@ export class AuthService {
 					createUserDto,
 					CreateUserEventTypes.CREATE_ORG_USER,
 				);
+
+				if (this.cls.get('requestOrigin') === 'klubiq-ui-dev') {
+					fbid = null;
+					return await this.createCustomToken(userProfile.firebaseId);
+				}
 				await this.sendVerificationEmail(createUserDto.email, displayName);
-				fbid = null;
 				return await this.createCustomToken(userProfile.firebaseId);
 			}
 			return undefined;
 		} catch (error) {
+			console.log('Error here: ', error);
 			await this.deleteUser(fbid);
 			throw new FirebaseException(error);
 		}
@@ -110,6 +120,9 @@ export class AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
+			this.logger.error(
+				`Firebase Error creating user: ${newUser.email} - ${firebaseErrorMessage}`,
+			);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
 			);

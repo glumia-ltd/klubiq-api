@@ -43,7 +43,10 @@ import * as redis from 'cache-manager-redis-store';
 				mount: true,
 				generateId: true,
 				idGenerator: (request: any) =>
-					request.headers['X-Correlation-Id'] ?? uuidv4(),
+					request.headers['x-correlation-id'] ?? uuidv4(),
+				setup: (cls, req) => {
+					cls.set('requestOrigin', req.headers['origin']);
+				},
 			},
 		}),
 		CacheModule.registerAsync({
@@ -52,12 +55,6 @@ import * as redis from 'cache-manager-redis-store';
 				store: redis,
 				host: 'localhost',
 				port: 6379,
-				// store: await redis.redisStore({
-				// 	socket: {
-				// 		host: 'localhost',
-				// 		port: 6379,
-				// 	},
-				// }),
 			}),
 		}),
 	],
