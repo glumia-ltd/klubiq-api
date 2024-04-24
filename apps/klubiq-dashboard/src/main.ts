@@ -33,8 +33,7 @@ async function bootstrap() {
 		.setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
 		.setLicense('MIT', 'https://mit-license.org/')
 		.addBearerAuth()
-		.addServer('http://localhost:3000/api')
-		.addServer('https://devapi.klubiq.com/api')
+		.addServer('/api')
 		.build();
 	const document = SwaggerModule.createDocument(app, config, options);
 	SwaggerModule.setup('swagger', app, document);

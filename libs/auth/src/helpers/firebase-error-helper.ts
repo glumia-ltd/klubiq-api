@@ -82,7 +82,7 @@ export class FirebaseErrorMessageHelper {
 	parseFirebaseError(error: FirebaseError): string {
 		return (
 			Firebase_Errors.find((e) => e.code === error.code)?.message ||
-			'An unexpected error occurred. Please try again.'
+			error.message
 		);
 	}
 }
