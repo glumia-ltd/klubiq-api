@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsOptional, IsInt, Min, Max } from 'class-validator';
-import { Order } from '../types/page-meta-dto-parameters';
+import { Order } from '../../types/page-meta-dto-parameters';
 
 export class PageOptionsDto {
 	@ApiPropertyOptional({ enum: Order, default: Order.ASC })

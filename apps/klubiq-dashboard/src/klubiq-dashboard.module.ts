@@ -9,6 +9,7 @@ import {
 	PublicModule,
 } from '@app/common';
 import {
+	ApikeyGuard,
 	AuthenticationGuard,
 	AuthModule,
 	FirebaseAuthGuard,
@@ -39,6 +40,7 @@ import { PropertiesModule } from './properties/properties.module';
 		UserProfilesRepository,
 		RolesRepository,
 		FirebaseAuthGuard,
+		ApikeyGuard,
 		{
 			provide: APP_GUARD,
 			useClass: AuthenticationGuard,

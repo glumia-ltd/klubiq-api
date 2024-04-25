@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { initializeApp, getApps } from 'firebase/app';
 import * as admin from 'firebase-admin';
 import { RepositoriesModule } from '@app/common';
-import { OrganizationModule } from '../../../apps/klubiq-dashboard/src/organization/organization.module';
+import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/organization.repository';
 import { OrgUserProfile } from './profiles/org-user-profile';
 import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
 import { JwtService } from '@nestjs/jwt';
@@ -81,14 +81,10 @@ const firebaseAdminProvider = {
 		OrgUserProfile,
 		FirebaseErrorMessageHelper,
 		JwtService,
+		OrganizationRepository,
 	],
 	exports: [AuthService],
-	imports: [
-		DatabaseModule,
-		ConfigModule,
-		OrganizationModule,
-		RepositoriesModule,
-	],
+	imports: [DatabaseModule, ConfigModule, RepositoriesModule],
 	controllers: [AuthController],
 })
 export class AuthModule {}

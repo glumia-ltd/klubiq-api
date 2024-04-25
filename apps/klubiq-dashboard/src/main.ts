@@ -33,6 +33,12 @@ async function bootstrap() {
 		.setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
 		.setLicense('MIT', 'https://mit-license.org/')
 		.addBearerAuth()
+		.addSecurity('ApiKey', {
+			type: 'apiKey',
+			in: 'header',
+			name: 'Authorization',
+			scheme: 'ApiKeyAuth',
+		})
 		.addServer('/api')
 		.build();
 	const document = SwaggerModule.createDocument(app, config, options);
