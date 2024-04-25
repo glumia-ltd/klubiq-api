@@ -13,8 +13,10 @@ import { AutomapperProfile, InjectMapper } from '@automapper/nestjs';
 // import { FeaturePermission } from '../database/entities/feature-permission.entity';
 // import { ViewFeaturePermissionDto } from '../dto/feature-permission.dto';
 import { OrganizationRole } from '../database/entities/organization-role.entity';
-import { ViewOrgRoleDto } from '../dto/org-role.dto';
+import { ViewOrgRoleDto } from '../dto/responses/org-role.dto';
 import { classes } from '@automapper/classes';
+import { Feature } from '../database/entities/feature.entity';
+import { ViewFeatureDto } from '../dto/responses/feature-response.dto';
 
 export class CommonProfile extends AutomapperProfile {
 	@InjectMapper() customMapper: Mapper;
@@ -28,9 +30,6 @@ export class CommonProfile extends AutomapperProfile {
 
 	override get profile(): MappingProfile {
 		return (customMapper) => {
-			// createMap(mapper, Feature, forMember(d => d.name, mapFrom(s => s.name))),
-			// createMap(mapper, Permission, forMember(d => d.name, mapFrom(s => s.name))),
-			// createMap(customMapper, FeaturePermission, ViewFeaturePermissionDto),
 			createMap(
 				customMapper,
 				OrganizationRole,
@@ -40,6 +39,9 @@ export class CommonProfile extends AutomapperProfile {
 					mapFrom((s) => s.featurePermissions.map((x) => x.alias)),
 				),
 			);
+			createMap(customMapper, Feature, ViewFeatureDto);
+			// createMap(mapper, Permission, forMember(d => d.name, mapFrom(s => s.name))),
+			// createMap(customMapper, FeaturePermission, ViewFeaturePermissionDto),
 		};
 	}
 }

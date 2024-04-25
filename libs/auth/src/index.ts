@@ -8,3 +8,4 @@ export * from './decorators/active-user.decorator';
 export * from './guards/firebase-auth.guard';
 export * from './guards/authentication.guard';
 export * from './guards/roles.guard';
+export * from './guards/apikey.guard';

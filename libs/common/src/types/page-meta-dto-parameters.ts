@@ -1,4 +1,4 @@
-import { PageOptionsDto } from '../dto/page-options.dto';
+import { PageOptionsDto } from '../dto/pagination/page-options.dto';
 
 export enum Order {
 	ASC = 'ASC',

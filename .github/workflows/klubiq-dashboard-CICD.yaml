@@ -37,6 +37,7 @@ env:
   HEALTH_CHECK_URL: ${{ vars.HEALTH_CHECK_URL }}
   APP_NAME: ${{ vars.APP_NAME }}
   APP_VERSION: ${{ vars.APP_VERSION }}
+  ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
 
 jobs: 
   build:
@@ -103,6 +104,7 @@ jobs:
               HEALTH_CHECK_URL=${{ vars.HEALTH_CHECK_URL }}
               APP_NAME=${{ vars.APP_NAME }}
               APP_VERSION=${{ vars.APP_VERSION }}
+              ADMIN_API_KEY= ${{ secrets.ADMIN_API_KEY }}
             EOF
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
             pm2 start ${{ env.APP }} --watch

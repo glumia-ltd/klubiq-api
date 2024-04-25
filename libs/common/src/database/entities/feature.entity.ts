@@ -31,7 +31,7 @@ export class Feature {
 		() => FeaturePermission,
 		(featurePermission) => featurePermission.feature,
 	)
-	featurePermissions: FeaturePermission[];
+	featurePermissions?: FeaturePermission[];
 
 	@CreateDateColumn()
 	createdDate?: Date;

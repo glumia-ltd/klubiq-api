@@ -36,6 +36,7 @@ env:
   HEALTH_CHECK_URL: ${{ vars.HEALTH_CHECK_URL }}
   APP_NAME: ${{ vars.APP_NAME }}
   APP_VERSION: ${{ vars.APP_VERSION }}
+  ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
 
 jobs:        
   test:

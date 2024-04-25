@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { AUTH_TYPE_KEY } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 import { FirebaseAuthGuard } from './firebase-auth.guard';
+import { ApikeyGuard } from './apikey.guard';
 
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
@@ -18,10 +19,12 @@ export class AuthenticationGuard implements CanActivate {
 	> = {
 		[AuthType.Bearer]: this.firebaseAuthGuard,
 		[AuthType.None]: { canActivate: () => true },
+		[AuthType.ApiKey]: this.apiKeyGuard,
 	};
 	constructor(
 		private readonly reflector: Reflector,
 		private readonly firebaseAuthGuard: FirebaseAuthGuard,
+		private readonly apiKeyGuard: ApikeyGuard,
 	) {}
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const authTypes = this.reflector.getAllAndOverride<AuthType[]>(
