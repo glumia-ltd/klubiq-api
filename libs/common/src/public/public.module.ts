@@ -4,6 +4,7 @@ import { PermissionsService } from '../permissions/permissions.service';
 import { PermissionsRepository } from '../repositories/permissions.repository';
 import { OrganizationRolesRepository } from '../repositories/organization-roles.repository';
 import { FeaturesRepository } from '../repositories/features.repository';
+import { FeaturesService } from '../services/features.service';
 
 @Module({
 	controllers: [PublicController],
@@ -12,6 +13,7 @@ import { FeaturesRepository } from '../repositories/features.repository';
 		PermissionsRepository,
 		OrganizationRolesRepository,
 		FeaturesRepository,
+		FeaturesService,
 	],
 })
 export class PublicModule {}

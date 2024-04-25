@@ -6,7 +6,7 @@ import { FeaturesRepository } from '../repositories/features.repository';
 import { OrganizationRole } from '../database/entities/organization-role.entity';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { ViewOrgRoleDto } from '../dto/org-role.dto';
+import { ViewOrgRoleDto } from '../dto/responses/org-role.dto';
 
 @Injectable()
 export class PermissionsService {

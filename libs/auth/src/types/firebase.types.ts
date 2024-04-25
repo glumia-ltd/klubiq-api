@@ -31,6 +31,7 @@ export type FirebaseError = {
 export enum AuthType {
 	Bearer,
 	None,
+	ApiKey,
 }
 
 export interface ActiveUserData {
