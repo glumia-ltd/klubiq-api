@@ -2,7 +2,7 @@ import { AutoMap } from '@automapper/classes';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class CreatePropertyCategoryDto {
+export class CreatePropertyMetadataDto {
 	@AutoMap()
 	@ApiProperty()
 	@IsNotEmpty()
@@ -16,6 +16,6 @@ export class CreatePropertyCategoryDto {
 	displayText: string;
 }
 
-export class UpdatePropertyCategoryDto extends PartialType(
-	CreatePropertyCategoryDto,
+export class UpdatePropertyMetadataDto extends PartialType(
+	CreatePropertyMetadataDto,
 ) {}

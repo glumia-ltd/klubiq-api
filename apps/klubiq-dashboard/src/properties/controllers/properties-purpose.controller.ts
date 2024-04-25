@@ -10,10 +10,10 @@ import {
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertyPurpose } from '@app/common';
 import {
-	CreatePropertyCategoryDto,
-	UpdatePropertyCategoryDto,
-} from '../dto/property-category.dto';
-import { PropertyPeripheralDto } from '../dto/properties-peripheral.dto';
+	CreatePropertyMetadataDto,
+	UpdatePropertyMetadataDto,
+} from '../../../../../libs/common/src/dto/create-property-metadata.dto';
+import { PropertyMetadataDto } from '../../../../../libs/common/src/dto/properties-metadata.dto';
 import { PropertiesPurposeService } from '../../../../../libs/common/src/services/properties-purpose.service';
 
 @ApiBearerAuth()
@@ -27,10 +27,10 @@ export class PropertyPurposeController {
 	@Post()
 	@ApiOkResponse({
 		description: 'Creates a new property Purpose',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async createPropertyPurpose(
-		@Body() createPropertyPurposeDto: CreatePropertyCategoryDto,
+		@Body() createPropertyPurposeDto: CreatePropertyMetadataDto,
 	): Promise<PropertyPurpose> {
 		return this.propertyPurposeService.createPropertyPurpose(
 			createPropertyPurposeDto,
@@ -40,7 +40,7 @@ export class PropertyPurposeController {
 	@Get(':name')
 	@ApiOkResponse({
 		description: 'Returns a new property Purpose that matches the Purpose name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async getPropertyPurposeByName(
 		@Param('name') name: string,
@@ -51,9 +51,9 @@ export class PropertyPurposeController {
 	@Get()
 	@ApiOkResponse({
 		description: 'Returns all  property purpose',
-		type: [PropertyPeripheralDto],
+		type: [PropertyMetadataDto],
 	})
-	async getAllPropertypurpose(): Promise<PropertyPeripheralDto[]> {
+	async getAllPropertypurpose(): Promise<PropertyMetadataDto[]> {
 		const propertypurpose =
 			await this.propertyPurposeService.getAllPropertyPurpose();
 		return propertypurpose;
@@ -62,11 +62,11 @@ export class PropertyPurposeController {
 	@Put(':name')
 	@ApiOkResponse({
 		description: 'Updates a new property Purpose that matches the Purpose name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async updatePropertyPurpose(
 		@Param('name') name: string,
-		@Body() updatePropertyPurposeDto: UpdatePropertyCategoryDto,
+		@Body() updatePropertyPurposeDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyPurpose> {
 		return this.propertyPurposeService.updatePropertyPurpose(
 			name,
@@ -77,7 +77,7 @@ export class PropertyPurposeController {
 	@Delete(':name')
 	@ApiOkResponse({
 		description: 'Deletes a property Purpose that matches the Purpose name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async deletePropertyPurpose(@Param('name') name: string): Promise<void> {
 		return this.propertyPurposeService.deletePropertyPurpose(name);

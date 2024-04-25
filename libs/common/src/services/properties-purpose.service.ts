@@ -4,11 +4,11 @@ import { PropertyPurpose } from '@app/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import {
-	CreatePropertyCategoryDto,
-	UpdatePropertyCategoryDto,
-} from '../../../../apps/klubiq-dashboard/src/properties/dto/property-category.dto';
+	CreatePropertyMetadataDto,
+	UpdatePropertyMetadataDto,
+} from '../dto/create-property-metadata.dto';
 import { PropertyPurposeRepository } from '../repositories/properties-purpose.repository';
-import { PropertyPeripheralDto } from '../../../../apps/klubiq-dashboard/src/properties/dto/properties-peripheral.dto';
+import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
 
 @Injectable()
 export class PropertiesPurposeService {
@@ -20,7 +20,7 @@ export class PropertiesPurposeService {
 	) {}
 
 	async createPropertyPurpose(
-		createPropertyPurposeDto: CreatePropertyCategoryDto,
+		createPropertyPurposeDto: CreatePropertyMetadataDto,
 	): Promise<PropertyPurpose> {
 		const { name, displayText } = createPropertyPurposeDto;
 		const propertyPurpose = this.propertyPurposeRepository.create({
@@ -43,13 +43,13 @@ export class PropertiesPurposeService {
 	async getAllPropertyPurpose() {
 		const allPurposes = await this.propertyPurposeRepository.find();
 		return allPurposes.map((purpose) =>
-			this.mapper.map(purpose, PropertyPurpose, PropertyPeripheralDto),
+			this.mapper.map(purpose, PropertyPurpose, PropertyMetadataDto),
 		);
 	}
 
 	async updatePropertyPurpose(
 		name: string,
-		updatePropertyPurposeDto: UpdatePropertyCategoryDto,
+		updatePropertyPurposeDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyPurpose> {
 		const propertyPurpose = await this.getPropertyPurposeByName(name);
 		return await this.propertyPurposeRepository.save({

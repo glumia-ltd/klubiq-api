@@ -13,6 +13,12 @@ import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { PermissionsService } from '../permissions/permissions.service';
 import { ViewOrgRoleDto } from '../dto/org-role.dto';
 import { Auth, AuthType } from '@app/auth';
+import {
+	PropertiesCategoryService,
+	PropertiesPurposeService,
+	PropertiesStatusService,
+	PropertiesTypeService,
+} from '..';
 
 @ApiTags('public')
 @Auth(AuthType.None)
@@ -20,7 +26,13 @@ import { Auth, AuthType } from '@app/auth';
 @UseInterceptors(CacheInterceptor)
 @CacheTTL(60 * 60 * 24)
 export class PublicController {
-	constructor(private readonly permissionService: PermissionsService) {}
+	constructor(
+		private readonly permissionService: PermissionsService,
+		private readonly propertyCategoryService: PropertiesCategoryService,
+		private readonly propertyStatusService: PropertiesStatusService,
+		private readonly propertyTypeService: PropertiesTypeService,
+		private readonly propertyPurposeService: PropertiesPurposeService,
+	) {}
 
 	@CacheKey('roles')
 	@Get('roles')
@@ -35,5 +47,21 @@ export class PublicController {
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
 		}
+	}
+
+	@Get('property-metadata')
+	async getPropertyInfo() {
+		const categories =
+			await this.propertyCategoryService.getAllPropertyCategories();
+		const statuses = await this.propertyStatusService.getAllPropertyStatus();
+		const types = await this.propertyTypeService.getAllPropertyTypes();
+		const purposes = await this.propertyPurposeService.getAllPropertyPurpose();
+
+		return {
+			categories,
+			statuses,
+			types,
+			purposes,
+		};
 	}
 }

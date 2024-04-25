@@ -10,10 +10,10 @@ import {
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertyType } from '@app/common';
 import {
-	CreatePropertyCategoryDto,
-	UpdatePropertyCategoryDto,
-} from '../dto/property-category.dto';
-import { PropertyPeripheralDto } from '../dto/properties-peripheral.dto';
+	CreatePropertyMetadataDto,
+	UpdatePropertyMetadataDto,
+} from '../../../../../libs/common/src/dto/create-property-metadata.dto';
+import { PropertyMetadataDto } from '../../../../../libs/common/src/dto/properties-metadata.dto';
 import { PropertiesTypeService } from '../../../../../libs/common/src/services/properties-type.service';
 
 @ApiBearerAuth()
@@ -25,10 +25,10 @@ export class PropertyTypeController {
 	@Post()
 	@ApiOkResponse({
 		description: 'Creates a new property Type',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async createPropertyType(
-		@Body() createPropertyTypeDto: CreatePropertyCategoryDto,
+		@Body() createPropertyTypeDto: CreatePropertyMetadataDto,
 	): Promise<PropertyType> {
 		return this.propertyTypeService.createPropertyType(createPropertyTypeDto);
 	}
@@ -36,7 +36,7 @@ export class PropertyTypeController {
 	@Get(':name')
 	@ApiOkResponse({
 		description: 'Returns a new property Type that matches the Type name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async getPropertyTypeByName(
 		@Param('name') name: string,
@@ -47,9 +47,9 @@ export class PropertyTypeController {
 	@Get()
 	@ApiOkResponse({
 		description: 'Returns all  property types',
-		type: [PropertyPeripheralDto],
+		type: [PropertyMetadataDto],
 	})
-	async getAllPropertytypes(): Promise<PropertyPeripheralDto[]> {
+	async getAllPropertytypes(): Promise<PropertyMetadataDto[]> {
 		const propertytypes = await this.propertyTypeService.getAllPropertyTypes();
 		return propertytypes;
 	}
@@ -57,11 +57,11 @@ export class PropertyTypeController {
 	@Put(':name')
 	@ApiOkResponse({
 		description: 'Updates a new property Type that matches the Type name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async updatePropertyType(
 		@Param('name') name: string,
-		@Body() updatePropertyTypeDto: UpdatePropertyCategoryDto,
+		@Body() updatePropertyTypeDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyType> {
 		return this.propertyTypeService.updatePropertyType(
 			name,
@@ -72,7 +72,7 @@ export class PropertyTypeController {
 	@Delete(':name')
 	@ApiOkResponse({
 		description: 'Deletes a property Type that matches the Type name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async deletePropertyType(@Param('name') name: string): Promise<void> {
 		return this.propertyTypeService.deletePropertyType(name);

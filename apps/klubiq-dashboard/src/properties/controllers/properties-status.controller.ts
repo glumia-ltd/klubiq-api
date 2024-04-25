@@ -10,10 +10,10 @@ import {
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertyStatus } from '@app/common';
 import {
-	CreatePropertyCategoryDto,
-	UpdatePropertyCategoryDto,
-} from '../dto/property-category.dto';
-import { PropertyPeripheralDto } from '../dto/properties-peripheral.dto';
+	CreatePropertyMetadataDto,
+	UpdatePropertyMetadataDto,
+} from '../../../../../libs/common/src/dto/create-property-metadata.dto';
+import { PropertyMetadataDto } from '../../../../../libs/common/src/dto/properties-metadata.dto';
 import { PropertiesStatusService } from '../../../../../libs/common/src/services/properties-status.service';
 
 @ApiBearerAuth()
@@ -27,10 +27,10 @@ export class PropertyStatusController {
 	@Post()
 	@ApiOkResponse({
 		description: 'Creates a new property Status',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async createPropertyStatus(
-		@Body() createPropertyStatusDto: CreatePropertyCategoryDto,
+		@Body() createPropertyStatusDto: CreatePropertyMetadataDto,
 	): Promise<PropertyStatus> {
 		return this.propertyStatusService.createPropertyStatus(
 			createPropertyStatusDto,
@@ -40,7 +40,7 @@ export class PropertyStatusController {
 	@Get(':name')
 	@ApiOkResponse({
 		description: 'Returns a new property Status that matches the Status name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async getPropertyStatusByName(
 		@Param('name') name: string,
@@ -51,9 +51,9 @@ export class PropertyStatusController {
 	@Get()
 	@ApiOkResponse({
 		description: 'Returns all  property Statuss',
-		type: [PropertyPeripheralDto],
+		type: [PropertyMetadataDto],
 	})
-	async getAllPropertyStatuss(): Promise<PropertyPeripheralDto[]> {
+	async getAllPropertyStatuss(): Promise<PropertyMetadataDto[]> {
 		const propertyStatuss =
 			await this.propertyStatusService.getAllPropertyStatus();
 		return propertyStatuss;
@@ -62,11 +62,11 @@ export class PropertyStatusController {
 	@Put(':name')
 	@ApiOkResponse({
 		description: 'Updates a new property Status that matches the Status name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async updatePropertyStatus(
 		@Param('name') name: string,
-		@Body() updatePropertyStatusDto: UpdatePropertyCategoryDto,
+		@Body() updatePropertyStatusDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyStatus> {
 		return this.propertyStatusService.updatePropertyStatus(
 			name,
@@ -77,7 +77,7 @@ export class PropertyStatusController {
 	@Delete(':name')
 	@ApiOkResponse({
 		description: 'Deletes a property Status that matches the Status name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async deletePropertyStatus(@Param('name') name: string): Promise<void> {
 		return this.propertyStatusService.deletePropertyStatus(name);

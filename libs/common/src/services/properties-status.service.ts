@@ -4,11 +4,11 @@ import { PropertyStatus } from '@app/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import {
-	CreatePropertyCategoryDto,
-	UpdatePropertyCategoryDto,
-} from '../../../../apps/klubiq-dashboard/src/properties/dto/property-category.dto';
+	CreatePropertyMetadataDto,
+	UpdatePropertyMetadataDto,
+} from '../dto/create-property-metadata.dto';
 import { PropertyStatusRepository } from '../repositories/properties-status.repository';
-import { PropertyPeripheralDto } from '../../../../apps/klubiq-dashboard/src/properties/dto/properties-peripheral.dto';
+import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
 
 @Injectable()
 export class PropertiesStatusService {
@@ -20,7 +20,7 @@ export class PropertiesStatusService {
 	) {}
 
 	async createPropertyStatus(
-		createPropertyStatusDto: CreatePropertyCategoryDto,
+		createPropertyStatusDto: CreatePropertyMetadataDto,
 	): Promise<PropertyStatus> {
 		const { name, displayText } = createPropertyStatusDto;
 		const propertyStatus = this.propertyStatusRepository.create({
@@ -43,13 +43,13 @@ export class PropertiesStatusService {
 	async getAllPropertyStatus() {
 		const allStatus = await this.propertyStatusRepository.find();
 		return allStatus.map((status) =>
-			this.mapper.map(status, PropertyStatus, PropertyPeripheralDto),
+			this.mapper.map(status, PropertyStatus, PropertyMetadataDto),
 		);
 	}
 
 	async updatePropertyStatus(
 		name: string,
-		updatePropertyStatusDto: UpdatePropertyCategoryDto,
+		updatePropertyStatusDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyStatus> {
 		const propertyStatus = await this.getPropertyStatusByName(name);
 		return await this.propertyStatusRepository.save({

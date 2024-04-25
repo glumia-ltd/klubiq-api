@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Property } from '../entities/property.entity';
 import { AutoMap } from '@automapper/classes';
 
-export class PropertyPeripheralDto {
+export class PropertyMetadataDto {
 	@AutoMap()
 	@ApiProperty()
 	name: string;
@@ -10,8 +9,4 @@ export class PropertyPeripheralDto {
 	@AutoMap()
 	@ApiProperty()
 	displayText: string;
-
-	@AutoMap()
-	@ApiProperty({ type: () => [Property] })
-	properties: Property[];
 }

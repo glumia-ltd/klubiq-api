@@ -10,11 +10,11 @@ import {
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertyCategory } from '@app/common';
 import {
-	CreatePropertyCategoryDto,
-	UpdatePropertyCategoryDto,
-} from '../dto/property-category.dto';
+	CreatePropertyMetadataDto,
+	UpdatePropertyMetadataDto,
+} from '../../../../../libs/common/src/dto/create-property-metadata.dto';
 import { PropertiesCategoryService } from '../../../../../libs/common/src/services/properties-category.service';
-import { PropertyPeripheralDto } from '../dto/properties-peripheral.dto';
+import { PropertyMetadataDto } from '../../../../../libs/common/src/dto/properties-metadata.dto';
 
 @ApiBearerAuth()
 @ApiTags('properties-categories')
@@ -27,10 +27,10 @@ export class PropertyCategoryController {
 	@Post()
 	@ApiOkResponse({
 		description: 'Creates a new property category',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async createPropertyCategory(
-		@Body() createPropertyCategoryDto: CreatePropertyCategoryDto,
+		@Body() createPropertyCategoryDto: CreatePropertyMetadataDto,
 	): Promise<PropertyCategory> {
 		return this.propertyCategoryService.createPropertyCategory(
 			createPropertyCategoryDto,
@@ -41,7 +41,7 @@ export class PropertyCategoryController {
 	@ApiOkResponse({
 		description:
 			'Returns a new property category that matches the category name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async getPropertyCategoryByName(
 		@Param('name') name: string,
@@ -52,9 +52,9 @@ export class PropertyCategoryController {
 	@Get()
 	@ApiOkResponse({
 		description: 'Returns all  property categories',
-		type: [PropertyPeripheralDto],
+		type: [PropertyMetadataDto],
 	})
-	async getAllPropertyCategories(): Promise<PropertyPeripheralDto[]> {
+	async getAllPropertyCategories(): Promise<PropertyMetadataDto[]> {
 		const propertyCategories =
 			await this.propertyCategoryService.getAllPropertyCategories();
 		return propertyCategories;
@@ -64,11 +64,11 @@ export class PropertyCategoryController {
 	@ApiOkResponse({
 		description:
 			'Updates a new property category that matches the category name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async updatePropertyCategory(
 		@Param('name') name: string,
-		@Body() updatePropertyCategoryDto: UpdatePropertyCategoryDto,
+		@Body() updatePropertyCategoryDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyCategory> {
 		return this.propertyCategoryService.updatePropertyCategory(
 			name,
@@ -79,7 +79,7 @@ export class PropertyCategoryController {
 	@Delete(':name')
 	@ApiOkResponse({
 		description: 'Deletes a property category that matches the category name',
-		type: PropertyPeripheralDto,
+		type: PropertyMetadataDto,
 	})
 	async deletePropertyCategory(@Param('name') name: string): Promise<void> {
 		return this.propertyCategoryService.deletePropertyCategory(name);

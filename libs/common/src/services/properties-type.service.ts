@@ -4,11 +4,11 @@ import { PropertyType } from '@app/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import {
-	CreatePropertyCategoryDto,
-	UpdatePropertyCategoryDto,
-} from '../../../../apps/klubiq-dashboard/src/properties/dto/property-category.dto';
+	CreatePropertyMetadataDto,
+	UpdatePropertyMetadataDto,
+} from '../dto/create-property-metadata.dto';
 import { PropertyTypeRepository } from '../repositories/properties-type.repository';
-import { PropertyPeripheralDto } from '../../../../apps/klubiq-dashboard/src/properties/dto/properties-peripheral.dto';
+import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
 
 @Injectable()
 export class PropertiesTypeService {
@@ -20,7 +20,7 @@ export class PropertiesTypeService {
 	) {}
 
 	async createPropertyType(
-		createPropertyTypeDto: CreatePropertyCategoryDto,
+		createPropertyTypeDto: CreatePropertyMetadataDto,
 	): Promise<PropertyType> {
 		const { name, displayText } = createPropertyTypeDto;
 		const propertyType = this.propertyTypeRepository.create({
@@ -43,13 +43,13 @@ export class PropertiesTypeService {
 	async getAllPropertyTypes() {
 		const allTypes = await this.propertyTypeRepository.find();
 		return allTypes.map((type) =>
-			this.mapper.map(type, PropertyType, PropertyPeripheralDto),
+			this.mapper.map(type, PropertyType, PropertyMetadataDto),
 		);
 	}
 
 	async updatePropertyType(
 		name: string,
-		updatePropertyTypeDto: UpdatePropertyCategoryDto,
+		updatePropertyTypeDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyType> {
 		const propertyType = await this.getPropertyTypeByName(name);
 		return await this.propertyTypeRepository.save({
