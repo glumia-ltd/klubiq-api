@@ -88,7 +88,7 @@ jobs:
             cd ${{ secrets.TARGET_DIR }}
           SCRIPT_AFTER: |
             cd ${{ secrets.TARGET_DIR }}
-            cat << EOF >> .env        
+            cat << EOF > .env        
               DATABASE_HOST=${{ secrets.DATABASE_HOST }}
               DATABASE_PORT=${{ secrets.DATABASE_PORT }}
               DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
@@ -112,7 +112,7 @@ jobs:
               ADMIN_API_KEY= ${{ secrets.ADMIN_API_KEY }}
               SUPPORT_EMAIL=${{ vars.EMAIL_VERIFICATION_BASE_URL }}
               EMAIL_VERIFICATION_TEMPLATE=${{ vars.EMAIL_VERIFICATION_TEMPLATE }}
-              TRANSACTIONAL_EMAIL_SENDER-${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
+              TRANSACTIONAL_EMAIL_SENDER=${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
               TRANSACTIONAL_EMAIL_SENDER_NAME=${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
             EOF
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
@@ -120,4 +120,4 @@ jobs:
             
             
 
-  
+  #pm2 start /opt/bitnami/projects/klubiq-api/dist/apps/klubiq-dashboard/main.js --name=klubiq-dashboard-api --watch
