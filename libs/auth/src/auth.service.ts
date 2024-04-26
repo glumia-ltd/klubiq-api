@@ -32,6 +32,8 @@ import { OrganizationUser } from '../../../apps/klubiq-dashboard/src/users/entit
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
+import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class AuthService {
@@ -46,6 +48,8 @@ export class AuthService {
 		private readonly organizationRepository: OrganizationRepository,
 		private readonly userProfilesRepository: UserProfilesRepository,
 		private readonly errorMessageHelper: FirebaseErrorMessageHelper,
+		private readonly configService: ConfigService,
+		private readonly httpService: HttpService,
 	) {
 		this.firebaseClientAuth = getAuth(this.firebaseClient);
 		this.cls = ClsServiceManager.getClsService();
@@ -79,16 +83,16 @@ export class AuthService {
 					CreateUserEventTypes.CREATE_ORG_USER,
 				);
 
-				if (this.cls.get('requestOrigin') === 'klubiq-ui-dev') {
-					fbid = null;
-					return await this.createCustomToken(userProfile.firebaseId);
-				}
-				await this.sendVerificationEmail(createUserDto.email, displayName);
+				await this.sendVerificationEmail(
+					createUserDto.email,
+					createUserDto.firstName,
+					createUserDto.lastName,
+				);
+				fbid = null;
 				return await this.createCustomToken(userProfile.firebaseId);
 			}
 			return undefined;
 		} catch (error) {
-			console.log('Error here: ', error);
 			await this.deleteUser(fbid);
 			throw new FirebaseException(error);
 		}
@@ -190,6 +194,7 @@ export class AuthService {
 			if (!user) {
 				throw new Error('User not found');
 			}
+
 			await this.auth.generateEmailVerificationLink(user.email);
 		} catch (err) {
 			const firebaseErrorMessage =
@@ -245,15 +250,22 @@ export class AuthService {
 		}
 	}
 
-	async verifyEmail(oobCode: string): Promise<void> {
+	async verifyEmail(oobCode: string): Promise<any> {
 		try {
-			const decodedToken = await admin.auth().verifyIdToken(oobCode);
-			const uid = decodedToken.uid;
-
-			console.log('User successfully verified!');
-
-			// Update user's verification status in your database
-			await admin.auth().updateUser(uid, { emailVerified: true });
+			const body = { oobCode };
+			this.httpService
+				.post(
+					`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${this.configService.get('FIREBASE_API_KEY')}`,
+					body,
+				)
+				.subscribe({
+					next: (res) => {
+						return res.data;
+					},
+					error: (err) => {
+						throw new FirebaseException(err.message);
+					},
+				});
 		} catch (err) {
 			console.error('Error verifying code:', err);
 			const firebaseErrorMessage =
@@ -264,22 +276,23 @@ export class AuthService {
 		}
 	}
 
-	async sendVerificationEmail(email: string, name: string): Promise<void> {
+	async sendVerificationEmail(
+		email: string,
+		firstName: string,
+		lastName: string,
+	): Promise<void> {
 		// TODO : WHEN APP IS INTEGRATED AND UI  SCREENS ARE READY
-		// const serverVerifyEmailEndpoint = 'https://your-app.com/verify-email';
-
-		// const actionCodeSettings = {
-		// 	url: serverVerifyEmailEndpoint,
-		// 	handleCodeInApp: false,
-		// 	continueUrl: serverVerifyEmailEndpoint,
-		// };
-
+		const actionCodeSettings = {
+			url: `${this.configService.get('EMAIL_VERIFICATION_BASE_URL')}${this.configService.get('CONTINUE_URL_PATH')}`,
+		};
 		try {
 			const verificationLink = await admin
 				.auth()
-				.generateEmailVerificationLink(email);
-
-			await this.emailService.sendVerifyEmail(email, name, verificationLink);
+				.generateEmailVerificationLink(email, actionCodeSettings);
+			await this.emailService.sendVerifyEmail(
+				{ email, firstName, lastName },
+				verificationLink,
+			);
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
@@ -333,7 +346,8 @@ export class AuthService {
 				// check if user is verified
 				if (!user.emailVerified) {
 					// send verification email to user
-					await this.sendVerificationEmail(user.email, user.displayName);
+					const names = user.displayName.split(' ');
+					await this.sendVerificationEmail(user.email, names[0], names[1]);
 					// send error response to user asking to verify email
 					throw new UnauthorizedException(
 						'Kindly verify your email, check your email for verification link',

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend'; // Assuming you have installed the 'mailersend' package
 import {
 	EmailInterfaceParams,
-	FromEmails,
+	EmailRecipient,
 } from './types/email-params.interface';
 import { verifyEmailTemplate } from './templates/verify-email.template';
 
@@ -20,7 +20,10 @@ export class MailerSendService {
 	async sendEmail(params: EmailInterfaceParams) {
 		const sentFrom = new Sender(`${params.from}`, `${params.from_name}`);
 		const myRecipients = params.to.map((oneRecipient) => {
-			new Recipient(`${oneRecipient.email}`, `${oneRecipient.name}`);
+			new Recipient(
+				`${oneRecipient.email}`,
+				`${oneRecipient.firstName} ${oneRecipient.lastName}`,
+			);
 			return oneRecipient;
 		});
 
@@ -45,33 +48,63 @@ export class MailerSendService {
 	}
 
 	async sendVerifyEmail(
-		userEmail: string,
-		userName: string,
+		emailRecipient: EmailRecipient,
 		verificationLink: string,
 	) {
 		const verifyEmailBody = verifyEmailTemplate(verificationLink);
-		const recipient = { email: userEmail, name: userName };
-		return this.sendEmail({
-			to: [recipient],
+		const personalization = [
+			{
+				email: emailRecipient.email,
+				data: {
+					username: emailRecipient.firstName,
+					support_email: this.configService.get('SUPPORT_EMAIL'),
+					verification_link: verificationLink,
+				},
+			},
+		];
+		const emailParams = {
+			to: [emailRecipient],
 			body: verifyEmailBody,
 			subject: 'Verify Email',
-			from: FromEmails.support,
-			from_name: FromEmails.name,
-		});
+			from: this.configService.get('TRANSACTIONAL_EMAIL_SENDER'),
+			from_name: this.configService.get('TRANSACTIONAL_EMAIL_SENDER_NAME'),
+		} as EmailInterfaceParams;
+		return this.sendWithTemplate(
+			emailParams,
+			this.configService.get('EMAIL_VERIFICATION_TEMPLATE'),
+			personalization,
+		);
 	}
 
-	async sendDummmyEmail() {
-		const userEmail = '';
-		const userName = '';
-		const verificationLink = 'here is the dummyLink';
-		const verifyEmailBody = verifyEmailTemplate(verificationLink);
-		const recipient = { email: userEmail, name: userName };
-		return this.sendEmail({
-			to: [recipient],
-			body: verifyEmailBody,
-			subject: 'Verify Email',
-			from: FromEmails.support,
-			from_name: FromEmails.name,
+	async sendWithTemplate(
+		params: EmailInterfaceParams,
+		templaateId: string,
+		personalization: any,
+	) {
+		const sentFrom = new Sender(`${params.from}`, `${params.from_name}`);
+		const myRecipients = params.to.map((oneRecipient) => {
+			new Recipient(
+				`${oneRecipient.email}`,
+				`${oneRecipient.firstName} ${oneRecipient.lastName}`,
+			);
+			return oneRecipient;
 		});
+		const templatedEmailParams = new EmailParams()
+			.setFrom(sentFrom)
+			.setTo(myRecipients)
+			.setReplyTo(sentFrom)
+			.setSubject(params.subject)
+			.setTemplateId(templaateId)
+			.setPersonalization(personalization);
+		try {
+			const response = await this.mailerSend.email.send(templatedEmailParams);
+			if (response.statusCode == 201) {
+				throw new Error(`MailerSend API error: ${response.body}`);
+			}
+			return 'Email sent successfully';
+		} catch (error) {
+			console.error('Failed to send email with MailerSend:', error);
+			return 'Failed to send email';
+		}
 	}
 }
