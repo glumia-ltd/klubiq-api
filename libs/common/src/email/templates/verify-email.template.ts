@@ -2,12 +2,11 @@ export const verifyEmailTemplate = () => ({
 	text: ` 
   Verify your Email
             
-              To complete the registration process, we need to verify your email
-              address. Kindly click the button below to verify your email address.
+            Thanks for joining Klubiq. To finish you registration, please clicking the button below to verify your account.
            
             If you did not initiate this request, kindly ignore this email.
 
-            Warm regards,
+            Thank you,
 
             The Klubiq team
     `,
