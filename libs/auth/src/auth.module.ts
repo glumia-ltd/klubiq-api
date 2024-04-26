@@ -11,6 +11,7 @@ import { OrgUserProfile } from './profiles/org-user-profile';
 import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
 import { JwtService } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
+import { HttpModule } from '@nestjs/axios';
 
 const _firebaseConfig = require('../../../config.json');
 const apps = admin.apps;
@@ -84,7 +85,7 @@ const firebaseAdminProvider = {
 		OrganizationRepository,
 	],
 	exports: [AuthService],
-	imports: [DatabaseModule, ConfigModule, RepositoriesModule],
+	imports: [DatabaseModule, ConfigModule, RepositoriesModule, HttpModule],
 	controllers: [AuthController],
 })
 export class AuthModule {}

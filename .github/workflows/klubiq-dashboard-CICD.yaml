@@ -7,10 +7,11 @@ on:
       - dev
     paths:
        - 'apps/klubiq-dashboard/**'
-  workflow_run:
-    workflows: ['Run Tests']
-    types:
-      - completed
+       - 'libs/**'
+  # workflow_run:
+  #   workflows: ['Run Tests']
+  #   types:
+  #     - completed
 env: 
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
@@ -38,6 +39,10 @@ env:
   APP_NAME: ${{ vars.APP_NAME }}
   APP_VERSION: ${{ vars.APP_VERSION }}
   ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+  SUPPORT_EMAIL: ${{ vars.EMAIL_VERIFICATION_BASE_URL }}
+  EMAIL_VERIFICATION_TEMPLATE: ${{ vars.EMAIL_VERIFICATION_TEMPLATE }}
+  TRANSACTIONAL_EMAIL_SENDER: ${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
+  TRANSACTIONAL_EMAIL_SENDER_NAME: ${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
 
 jobs: 
   build:
@@ -105,6 +110,10 @@ jobs:
               APP_NAME=${{ vars.APP_NAME }}
               APP_VERSION=${{ vars.APP_VERSION }}
               ADMIN_API_KEY= ${{ secrets.ADMIN_API_KEY }}
+              SUPPORT_EMAIL=${{ vars.EMAIL_VERIFICATION_BASE_URL }}
+              EMAIL_VERIFICATION_TEMPLATE=${{ vars.EMAIL_VERIFICATION_TEMPLATE }}
+              TRANSACTIONAL_EMAIL_SENDER-${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
+              TRANSACTIONAL_EMAIL_SENDER_NAME=${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
             EOF
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
             pm2 start ${{ env.APP }} --watch
