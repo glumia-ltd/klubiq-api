@@ -22,7 +22,7 @@ import { PropertiesTypeService } from '../../../../../libs/common/src/services/p
 export class PropertyTypeController {
 	constructor(private readonly propertyTypeService: PropertiesTypeService) {}
 
-	@Post()
+	@Post('create')
 	@ApiOkResponse({
 		description: 'Creates a new property Type',
 		type: PropertyMetadataDto,
@@ -33,15 +33,13 @@ export class PropertyTypeController {
 		return this.propertyTypeService.createPropertyType(createPropertyTypeDto);
 	}
 
-	@Get(':name')
+	@Get(':id')
 	@ApiOkResponse({
-		description: 'Returns a new property Type that matches the Type name',
+		description: 'Returns a new property Type that matches the Type id',
 		type: PropertyMetadataDto,
 	})
-	async getPropertyTypeByName(
-		@Param('name') name: string,
-	): Promise<PropertyType> {
-		return this.propertyTypeService.getPropertyTypeByName(name);
+	async getPropertyTypeById(@Param('id') id: number): Promise<PropertyType> {
+		return this.propertyTypeService.getPropertyTypeById(id);
 	}
 
 	@Get()
@@ -54,27 +52,27 @@ export class PropertyTypeController {
 		return propertytypes;
 	}
 
-	@Put(':name')
+	@Put(':id/update')
 	@ApiOkResponse({
-		description: 'Updates a new property Type that matches the Type name',
+		description: 'Updates a new property Type that matches the Type id',
 		type: PropertyMetadataDto,
 	})
 	async updatePropertyType(
-		@Param('name') name: string,
+		@Param('id') id: number,
 		@Body() updatePropertyTypeDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyType> {
 		return this.propertyTypeService.updatePropertyType(
-			name,
+			id,
 			updatePropertyTypeDto,
 		);
 	}
 
-	@Delete(':name')
+	@Delete(':id/delete')
 	@ApiOkResponse({
-		description: 'Deletes a property Type that matches the Type name',
+		description: 'Deletes a property Type that matches the Type id',
 		type: PropertyMetadataDto,
 	})
-	async deletePropertyType(@Param('name') name: string): Promise<void> {
-		return this.propertyTypeService.deletePropertyType(name);
+	async deletePropertyType(@Param('id') id: number): Promise<void> {
+		return this.propertyTypeService.deletePropertyType(id);
 	}
 }

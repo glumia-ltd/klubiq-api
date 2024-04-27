@@ -1,5 +1,4 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyCategory } from '@app/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
@@ -14,7 +13,6 @@ import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
 export class PropertiesCategoryService {
 	private readonly logger = new Logger(PropertiesCategoryService.name);
 	constructor(
-		@InjectRepository(PropertyCategoryRepository)
 		private readonly propertyCategoryRepository: PropertyCategoryRepository,
 		@InjectMapper() private readonly mapper: Mapper,
 	) {}
@@ -30,9 +28,9 @@ export class PropertiesCategoryService {
 		return await this.propertyCategoryRepository.save(propertyCategory);
 	}
 
-	async getPropertyCategoryByName(name: string): Promise<PropertyCategory> {
+	async getPropertyCategoryById(id: number): Promise<PropertyCategory> {
 		const propertyCategory = await this.propertyCategoryRepository.findOneBy({
-			name: name,
+			id: id,
 		});
 		if (!propertyCategory) {
 			throw new NotFoundException('Property category not found');
@@ -48,18 +46,18 @@ export class PropertiesCategoryService {
 	}
 
 	async updatePropertyCategory(
-		name: string,
+		id: number,
 		updatePropertyCategoryDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyCategory> {
-		const propertyCategory = await this.getPropertyCategoryByName(name);
+		const propertyCategory = await this.getPropertyCategoryById(id);
 		return await this.propertyCategoryRepository.save({
 			...propertyCategory,
 			...updatePropertyCategoryDto,
 		});
 	}
 
-	async deletePropertyCategory(name: string): Promise<void> {
-		const propertyCategory = await this.getPropertyCategoryByName(name);
+	async deletePropertyCategory(id: number): Promise<void> {
+		const propertyCategory = await this.getPropertyCategoryById(id);
 		await this.propertyCategoryRepository.remove(propertyCategory);
 	}
 }

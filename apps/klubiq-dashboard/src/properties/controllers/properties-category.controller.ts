@@ -24,7 +24,7 @@ export class PropertyCategoryController {
 		private readonly propertyCategoryService: PropertiesCategoryService,
 	) {}
 
-	@Post()
+	@Post('create')
 	@ApiOkResponse({
 		description: 'Creates a new property category',
 		type: PropertyMetadataDto,
@@ -37,16 +37,15 @@ export class PropertyCategoryController {
 		);
 	}
 
-	@Get(':name')
+	@Get(':id')
 	@ApiOkResponse({
-		description:
-			'Returns a new property category that matches the category name',
+		description: 'Returns a new property category that matches the category id',
 		type: PropertyMetadataDto,
 	})
-	async getPropertyCategoryByName(
-		@Param('name') name: string,
+	async getPropertyCategoryById(
+		@Param('id') id: number,
 	): Promise<PropertyCategory> {
-		return this.propertyCategoryService.getPropertyCategoryByName(name);
+		return this.propertyCategoryService.getPropertyCategoryById(id);
 	}
 
 	@Get()
@@ -60,28 +59,27 @@ export class PropertyCategoryController {
 		return propertyCategories;
 	}
 
-	@Put(':name')
+	@Put(':id/update')
 	@ApiOkResponse({
-		description:
-			'Updates a new property category that matches the category name',
+		description: 'Updates a new property category that matches the category id',
 		type: PropertyMetadataDto,
 	})
 	async updatePropertyCategory(
-		@Param('name') name: string,
+		@Param('id') id: number,
 		@Body() updatePropertyCategoryDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyCategory> {
 		return this.propertyCategoryService.updatePropertyCategory(
-			name,
+			id,
 			updatePropertyCategoryDto,
 		);
 	}
 
-	@Delete(':name')
+	@Delete(':id/delete')
 	@ApiOkResponse({
-		description: 'Deletes a property category that matches the category name',
+		description: 'Deletes a property category that matches the category id',
 		type: PropertyMetadataDto,
 	})
-	async deletePropertyCategory(@Param('name') name: string): Promise<void> {
-		return this.propertyCategoryService.deletePropertyCategory(name);
+	async deletePropertyCategory(@Param('id') id: number): Promise<void> {
+		return this.propertyCategoryService.deletePropertyCategory(id);
 	}
 }

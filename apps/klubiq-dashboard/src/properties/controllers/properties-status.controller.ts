@@ -24,7 +24,7 @@ export class PropertyStatusController {
 		private readonly propertyStatusService: PropertiesStatusService,
 	) {}
 
-	@Post()
+	@Post('create')
 	@ApiOkResponse({
 		description: 'Creates a new property Status',
 		type: PropertyMetadataDto,
@@ -37,15 +37,15 @@ export class PropertyStatusController {
 		);
 	}
 
-	@Get(':name')
+	@Get(':id')
 	@ApiOkResponse({
-		description: 'Returns a new property Status that matches the Status name',
+		description: 'Returns a new property Status that matches the Status id',
 		type: PropertyMetadataDto,
 	})
-	async getPropertyStatusByName(
-		@Param('name') name: string,
+	async getPropertyStatusById(
+		@Param('id') id: number,
 	): Promise<PropertyStatus> {
-		return this.propertyStatusService.getPropertyStatusByName(name);
+		return this.propertyStatusService.getPropertyStatusById(id);
 	}
 
 	@Get()
@@ -59,27 +59,27 @@ export class PropertyStatusController {
 		return propertyStatuss;
 	}
 
-	@Put(':name')
+	@Put(':id/update')
 	@ApiOkResponse({
-		description: 'Updates a new property Status that matches the Status name',
+		description: 'Updates a new property Status that matches the Status id',
 		type: PropertyMetadataDto,
 	})
 	async updatePropertyStatus(
-		@Param('name') name: string,
+		@Param('id') id: number,
 		@Body() updatePropertyStatusDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyStatus> {
 		return this.propertyStatusService.updatePropertyStatus(
-			name,
+			id,
 			updatePropertyStatusDto,
 		);
 	}
 
-	@Delete(':name')
+	@Delete(':id/delete')
 	@ApiOkResponse({
-		description: 'Deletes a property Status that matches the Status name',
+		description: 'Deletes a property Status that matches the Status id',
 		type: PropertyMetadataDto,
 	})
-	async deletePropertyStatus(@Param('name') name: string): Promise<void> {
-		return this.propertyStatusService.deletePropertyStatus(name);
+	async deletePropertyStatus(@Param('id') id: number): Promise<void> {
+		return this.propertyStatusService.deletePropertyStatus(id);
 	}
 }

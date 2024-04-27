@@ -1,5 +1,4 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyStatus } from '@app/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
@@ -14,7 +13,6 @@ import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
 export class PropertiesStatusService {
 	private readonly logger = new Logger(PropertiesStatusService.name);
 	constructor(
-		@InjectRepository(PropertyStatusRepository)
 		private readonly propertyStatusRepository: PropertyStatusRepository,
 		@InjectMapper() private readonly mapper: Mapper,
 	) {}
@@ -30,9 +28,9 @@ export class PropertiesStatusService {
 		return await this.propertyStatusRepository.save(propertyStatus);
 	}
 
-	async getPropertyStatusByName(name: string): Promise<PropertyStatus> {
+	async getPropertyStatusById(id: number): Promise<PropertyStatus> {
 		const propertyStatus = await this.propertyStatusRepository.findOneBy({
-			name: name,
+			id: id,
 		});
 		if (!propertyStatus) {
 			throw new NotFoundException('Property Status not found');
@@ -48,18 +46,18 @@ export class PropertiesStatusService {
 	}
 
 	async updatePropertyStatus(
-		name: string,
+		id: number,
 		updatePropertyStatusDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyStatus> {
-		const propertyStatus = await this.getPropertyStatusByName(name);
+		const propertyStatus = await this.getPropertyStatusById(id);
 		return await this.propertyStatusRepository.save({
 			...propertyStatus,
 			...updatePropertyStatusDto,
 		});
 	}
 
-	async deletePropertyStatus(name: string): Promise<void> {
-		const propertyStatus = await this.getPropertyStatusByName(name);
+	async deletePropertyStatus(id: number): Promise<void> {
+		const propertyStatus = await this.getPropertyStatusById(id);
 		await this.propertyStatusRepository.remove(propertyStatus);
 	}
 }

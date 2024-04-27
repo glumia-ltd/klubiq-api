@@ -1,5 +1,4 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyPurpose } from '@app/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
@@ -14,7 +13,6 @@ import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
 export class PropertiesPurposeService {
 	private readonly logger = new Logger(PropertiesPurposeService.name);
 	constructor(
-		@InjectRepository(PropertyPurposeRepository)
 		private readonly propertyPurposeRepository: PropertyPurposeRepository,
 		@InjectMapper() private readonly mapper: Mapper,
 	) {}
@@ -30,9 +28,9 @@ export class PropertiesPurposeService {
 		return await this.propertyPurposeRepository.save(propertyPurpose);
 	}
 
-	async getPropertyPurposeByName(name: string): Promise<PropertyPurpose> {
+	async getPropertyPurposeById(id: number): Promise<PropertyPurpose> {
 		const propertyPurpose = await this.propertyPurposeRepository.findOneBy({
-			name: name,
+			id: id,
 		});
 		if (!propertyPurpose) {
 			throw new NotFoundException('Property Purpose not found');
@@ -48,18 +46,18 @@ export class PropertiesPurposeService {
 	}
 
 	async updatePropertyPurpose(
-		name: string,
+		id: number,
 		updatePropertyPurposeDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyPurpose> {
-		const propertyPurpose = await this.getPropertyPurposeByName(name);
+		const propertyPurpose = await this.getPropertyPurposeById(id);
 		return await this.propertyPurposeRepository.save({
 			...propertyPurpose,
 			...updatePropertyPurposeDto,
 		});
 	}
 
-	async deletePropertyPurpose(name: string): Promise<void> {
-		const propertyPurpose = await this.getPropertyPurposeByName(name);
+	async deletePropertyPurpose(id: number): Promise<void> {
+		const propertyPurpose = await this.getPropertyPurposeById(id);
 		await this.propertyPurposeRepository.remove(propertyPurpose);
 	}
 }

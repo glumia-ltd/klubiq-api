@@ -1,5 +1,4 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyType } from '@app/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
@@ -14,7 +13,6 @@ import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
 export class PropertiesTypeService {
 	private readonly logger = new Logger(PropertiesTypeService.name);
 	constructor(
-		@InjectRepository(PropertyTypeRepository)
 		private readonly propertyTypeRepository: PropertyTypeRepository,
 		@InjectMapper() private readonly mapper: Mapper,
 	) {}
@@ -30,9 +28,9 @@ export class PropertiesTypeService {
 		return await this.propertyTypeRepository.save(propertyType);
 	}
 
-	async getPropertyTypeByName(name: string): Promise<PropertyType> {
+	async getPropertyTypeById(id: number): Promise<PropertyType> {
 		const propertyType = await this.propertyTypeRepository.findOneBy({
-			name: name,
+			id: id,
 		});
 		if (!propertyType) {
 			throw new NotFoundException('Property Type not found');
@@ -48,18 +46,18 @@ export class PropertiesTypeService {
 	}
 
 	async updatePropertyType(
-		name: string,
+		id: number,
 		updatePropertyTypeDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyType> {
-		const propertyType = await this.getPropertyTypeByName(name);
+		const propertyType = await this.getPropertyTypeById(id);
 		return await this.propertyTypeRepository.save({
 			...propertyType,
 			...updatePropertyTypeDto,
 		});
 	}
 
-	async deletePropertyType(name: string): Promise<void> {
-		const propertyType = await this.getPropertyTypeByName(name);
+	async deletePropertyType(id: number): Promise<void> {
+		const propertyType = await this.getPropertyTypeById(id);
 		await this.propertyTypeRepository.remove(propertyType);
 	}
 }

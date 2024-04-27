@@ -24,7 +24,7 @@ export class PropertyPurposeController {
 		private readonly propertyPurposeService: PropertiesPurposeService,
 	) {}
 
-	@Post()
+	@Post('create')
 	@ApiOkResponse({
 		description: 'Creates a new property Purpose',
 		type: PropertyMetadataDto,
@@ -37,15 +37,15 @@ export class PropertyPurposeController {
 		);
 	}
 
-	@Get(':name')
+	@Get(':id')
 	@ApiOkResponse({
-		description: 'Returns a new property Purpose that matches the Purpose name',
+		description: 'Returns a new property Purpose that matches the Purpose id',
 		type: PropertyMetadataDto,
 	})
-	async getPropertyPurposeByName(
-		@Param('name') name: string,
+	async getPropertyPurposeById(
+		@Param('id') id: number,
 	): Promise<PropertyPurpose> {
-		return this.propertyPurposeService.getPropertyPurposeByName(name);
+		return this.propertyPurposeService.getPropertyPurposeById(id);
 	}
 
 	@Get()
@@ -59,27 +59,27 @@ export class PropertyPurposeController {
 		return propertypurpose;
 	}
 
-	@Put(':name')
+	@Put(':id/update')
 	@ApiOkResponse({
-		description: 'Updates a new property Purpose that matches the Purpose name',
+		description: 'Updates a new property Purpose that matches the Purpose id',
 		type: PropertyMetadataDto,
 	})
 	async updatePropertyPurpose(
-		@Param('name') name: string,
+		@Param('id') id: number,
 		@Body() updatePropertyPurposeDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyPurpose> {
 		return this.propertyPurposeService.updatePropertyPurpose(
-			name,
+			id,
 			updatePropertyPurposeDto,
 		);
 	}
 
-	@Delete(':name')
+	@Delete(':id/delete')
 	@ApiOkResponse({
-		description: 'Deletes a property Purpose that matches the Purpose name',
+		description: 'Deletes a property Purpose that matches the Purpose id',
 		type: PropertyMetadataDto,
 	})
-	async deletePropertyPurpose(@Param('name') name: string): Promise<void> {
-		return this.propertyPurposeService.deletePropertyPurpose(name);
+	async deletePropertyPurpose(@Param('id') id: number): Promise<void> {
+		return this.propertyPurposeService.deletePropertyPurpose(id);
 	}
 }
