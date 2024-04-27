@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
 
@@ -27,3 +27,5 @@ export class CreateFeatureDto {
 	@IsString()
 	description?: string;
 }
+
+export class UpdateFeatureDto extends PartialType(CreateFeatureDto) {}

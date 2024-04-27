@@ -5,7 +5,10 @@ import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { ViewFeatureDto } from '../dto/responses/feature-response.dto';
 import { Feature } from '../database/entities/feature.entity';
-import { CreateFeatureDto } from '../dto/requests/feature-requests.dto';
+import {
+	CreateFeatureDto,
+	UpdateFeatureDto,
+} from '../dto/requests/feature-requests.dto';
 
 @Injectable()
 export class FeaturesService {
@@ -52,12 +55,12 @@ export class FeaturesService {
 	}
 
 	// This creates a new feature
-	async update(id: number, updateFeature: CreateFeatureDto) {
+	async update(id: number, updateFeature: UpdateFeatureDto) {
 		try {
-			const updatedFeature = await this.featuresRepository.updateEntity(
-				{ id },
-				updateFeature,
-			);
+			await this.featuresRepository.update({ id }, updateFeature);
+			const updatedFeature = await this.featuresRepository.findOneWithId({
+				id,
+			});
 			return this.mapper.map(updatedFeature, Feature, ViewFeatureDto);
 		} catch (err) {
 			this.logger.error('Error updating feature', err);
