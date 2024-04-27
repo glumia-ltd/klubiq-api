@@ -43,7 +43,7 @@ export class FeaturesService {
 	}
 
 	// This creates a new feature
-	async create(createFeatureDto: CreateFeatureDto) {
+	async create(createFeatureDto: CreateFeatureDto): Promise<ViewFeatureDto> {
 		try {
 			const feature =
 				await this.featuresRepository.createEntity(createFeatureDto);
@@ -55,7 +55,10 @@ export class FeaturesService {
 	}
 
 	// This creates a new feature
-	async update(id: number, updateFeature: UpdateFeatureDto) {
+	async update(
+		id: number,
+		updateFeature: UpdateFeatureDto,
+	): Promise<ViewFeatureDto> {
 		try {
 			await this.featuresRepository.update({ id }, updateFeature);
 			const updatedFeature = await this.featuresRepository.findOneWithId({
@@ -69,10 +72,10 @@ export class FeaturesService {
 	}
 
 	// This creates a new feature
-	async delete(id: number) {
+	async delete(id: number): Promise<boolean> {
 		try {
-			const deleted = await this.featuresRepository.deleteEntity({ id });
-			return this.mapper.map(deleted, Feature, ViewFeatureDto);
+			const deleted = await this.featuresRepository.delete({ id });
+			return deleted.affected == 1;
 		} catch (err) {
 			this.logger.error('Error deleting feature', err);
 			throw new Error(`Error deleting feature. Error: ${err}`);

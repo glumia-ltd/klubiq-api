@@ -3,8 +3,6 @@ import {
 	Controller,
 	Delete,
 	Get,
-	//Body,
-	//UseGuards,
 	HttpException,
 	HttpStatus,
 	Inject,
@@ -141,8 +139,8 @@ export class PublicController {
 	})
 	async deleteFeature(@Param('id') id: number) {
 		try {
-			const feature = await this.featuresService.delete(id);
-			return feature;
+			const isDeleted = await this.featuresService.delete(id);
+			return isDeleted;
 		} catch (error) {
 			throw new HttpException(
 				'Failed to create new feature',
