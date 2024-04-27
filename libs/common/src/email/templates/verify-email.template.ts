@@ -1,13 +1,12 @@
-export const verifyEmailTemplate = (verificationLink: string) => ({
+export const verifyEmailTemplate = () => ({
 	text: ` 
   Verify your Email
             
-              To complete the registration process, we need to verify your email
-              address. Kindly click the button below to verify your email address.
+            Thanks for joining Klubiq. To finish you registration, please clicking the button below to verify your account.
            
             If you did not initiate this request, kindly ignore this email.
 
-            Warm regards,
+            Thank you,
 
             The Klubiq team
     `,
@@ -23,11 +22,11 @@ export const verifyEmailTemplate = (verificationLink: string) => ({
             href="https://fonts.googleapis.com/css2?family=Inter&family=Ubuntu:wght@300;400&display=swap"
             rel="stylesheet"
           />
-          <title>Klubiq</title>
+          <title>Klubiq Email Verification</title>
           <style>
             .container {
               width: 95%;
-              max-width: 500px;
+              max-width: 700px;
               margin: 0 auto;
             }
             p,
@@ -40,7 +39,7 @@ export const verifyEmailTemplate = (verificationLink: string) => ({
             }
           </style>
         </head>
-        <body style="padding-inline: 3em; color: #222; font-family: Inter">
+        <body style="padding-inline: 3em; color: #000; font-family: 'Google Sans'">
           <div class="container">
             <div
               style="
@@ -52,30 +51,22 @@ export const verifyEmailTemplate = (verificationLink: string) => ({
                 margin-block: 50px;
               "
             >
-              <img src="" alt="klubiq logo" />
+              <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be52a3c-7c0d-46fe-8485-7fd6305053bb.png" width="50" height="50" alt="klubiq logo" />
             </div>
             <h2 style="font-size: 24px; font-weight: 700; padding-bottom: 10px">
-              Verify your Email
+              Verify Your Email Address
             </h2>
+            <p>Hello <strong>{{ username }}!</strong></p>
             <p>
-              To complete the registration process, we need to verify your email
-              address. Kindly click the button below to verify your email address.
+              Thanks for joining Klubiq. To finish you registration, please clicking the button below to verify your account.
             </p>
             <p>If you did not initiate this request, kindly ignore this email.</p>
             <div
-              style="
-                display: flex;
-                flex-direction: column;
-                gap: 3px;
-                margin-bottom: 30px;
-              "
-            >
-              <span style="">Warm Regards,</span>
-              <br />
-              <span>The Klubiq Team.</span>
-            </div>
+            style="
+                margin-top: 15px;
+              ">
             <a
-              href="${verificationLink}"
+              href="{{verification_link}}"
               style="
                 text-decoration: none;
                 color: white;
@@ -83,7 +74,7 @@ export const verifyEmailTemplate = (verificationLink: string) => ({
             >
               <button
                 style="
-                  background-color: #2f8132;
+                  background-color: #005CFF;
                   color: white;
                   border-radius: 8px;
                   padding: 10px 15px;
@@ -93,9 +84,31 @@ export const verifyEmailTemplate = (verificationLink: string) => ({
                   font-weight: 500;
                 "
               >
-                Verify Email
+                Verify email address
               </button>
             </a>
+            </div>
+            <div
+              style="
+                margin-bottom: 30px;
+              "
+            >
+              <p><strong>Thank you,</strong></p>
+              <p>The Klubiq Team.</p>
+            </div>
+            <div 
+            style="
+                padding-top: 20px;
+                border-top: 1px solid #eaeaea;
+              "></div>
+            <div
+            style="
+                padding-bottom: 20px;
+              "> 
+              <p><strong>Need help?</strong></p>
+              <p>If you have any questions, please contact us by email at {{support_email}}.</p>
+              </div>
+            
           </div>
         </body>
       </html>
