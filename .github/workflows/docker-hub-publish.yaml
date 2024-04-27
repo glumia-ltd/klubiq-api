@@ -7,10 +7,10 @@ on:
       - release.*
     paths:
       - 'apps/**'
-  workflow_run:
-    workflows: ['Run Tests']
-    types:
-      - completed
+  # workflow_run:
+  #   workflows: ['Run Tests']
+  #   types:
+  #     - completed
 env: 
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
@@ -38,6 +38,12 @@ env:
   APP_NAME: ${{ vars.APP_NAME }}
   APP_VERSION: ${{ vars.APP_VERSION }}
   ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+  SUPPORT_EMAIL: ${{ vars.EMAIL_VERIFICATION_BASE_URL }}
+  EMAIL_VERIFICATION_TEMPLATE: ${{ vars.EMAIL_VERIFICATION_TEMPLATE }}
+  TRANSACTIONAL_EMAIL_SENDER: ${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
+  TRANSACTIONAL_EMAIL_SENDER_NAME: ${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
+
+
 
 jobs:        
   # build:
@@ -71,7 +77,7 @@ jobs:
       - name: Load Google Service file and copy env variables
         run: |
           echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
-          cat << EOF >> .env        
+          cat << EOF > .env        
               DATABASE_HOST=${{ secrets.DATABASE_HOST }}
               DATABASE_PORT=${{ secrets.DATABASE_PORT }}
               DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
@@ -93,6 +99,10 @@ jobs:
               APP_NAME=${{ vars.APP_NAME }}
               APP_VERSION=${{ vars.APP_VERSION }}
               ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}
+              SUPPORT_EMAIL=${{ vars.EMAIL_VERIFICATION_BASE_URL }}
+              EMAIL_VERIFICATION_TEMPLATE=${{ vars.EMAIL_VERIFICATION_TEMPLATE }}
+              TRANSACTIONAL_EMAIL_SENDER=${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
+              TRANSACTIONAL_EMAIL_SENDER_NAME=${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
           EOF
       
       - name: Login and push to Docker Hub

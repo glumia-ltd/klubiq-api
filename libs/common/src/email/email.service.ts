@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend'; // Assuming you have installed the 'mailersend' package
 import {
 	EmailInterfaceParams,
-	FromEmails,
+	EmailRecipient,
 } from './types/email-params.interface';
 import { verifyEmailTemplate } from './templates/verify-email.template';
 
@@ -17,23 +17,50 @@ export class MailerSendService {
 		this.mailerSend = new MailerSend({ apiKey: this.apiKey }); // Set your API key
 	}
 
-	async sendEmail(params: EmailInterfaceParams) {
+	async sendVerifyEmail(
+		emailRecipient: EmailRecipient,
+		verificationLink: string,
+	) {
+		const verifyEmailBody = verifyEmailTemplate();
+		const personalization = [
+			{
+				email: emailRecipient.email,
+				data: {
+					username: emailRecipient.firstName,
+					support_email: this.configService.get('SUPPORT_EMAIL'),
+					verification_link: verificationLink,
+				},
+			},
+		];
+		const emailParams = {
+			to: [emailRecipient],
+			body: verifyEmailBody,
+			subject: 'Verify Email',
+			from: this.configService.get('TRANSACTIONAL_EMAIL_SENDER'),
+			from_name: this.configService.get('TRANSACTIONAL_EMAIL_SENDER_NAME'),
+		} as EmailInterfaceParams;
+		return this.sendEmail(emailParams, personalization);
+	}
+
+	async sendEmail(params: EmailInterfaceParams, personalization: any) {
 		const sentFrom = new Sender(`${params.from}`, `${params.from_name}`);
 		const myRecipients = params.to.map((oneRecipient) => {
-			new Recipient(`${oneRecipient.email}`, `${oneRecipient.name}`);
+			new Recipient(
+				`${oneRecipient.email}`,
+				`${oneRecipient.firstName} ${oneRecipient.lastName}`,
+			);
 			return oneRecipient;
 		});
-
-		const emailParams = new EmailParams()
+		const templatedEmailParams = new EmailParams()
 			.setFrom(sentFrom)
 			.setTo(myRecipients)
 			.setReplyTo(sentFrom)
 			.setSubject(params.subject)
 			.setHtml(params.body.html)
-			.setText(params.body.text);
-
+			.setText(params.body.text)
+			.setPersonalization(personalization);
 		try {
-			const response = await this.mailerSend.email.send(emailParams);
+			const response = await this.mailerSend.email.send(templatedEmailParams);
 			if (response.statusCode == 201) {
 				throw new Error(`MailerSend API error: ${response.body}`);
 			}
@@ -42,36 +69,5 @@ export class MailerSendService {
 			console.error('Failed to send email with MailerSend:', error);
 			return 'Failed to send email';
 		}
-	}
-
-	async sendVerifyEmail(
-		userEmail: string,
-		userName: string,
-		verificationLink: string,
-	) {
-		const verifyEmailBody = verifyEmailTemplate(verificationLink);
-		const recipient = { email: userEmail, name: userName };
-		return this.sendEmail({
-			to: [recipient],
-			body: verifyEmailBody,
-			subject: 'Verify Email',
-			from: FromEmails.support,
-			from_name: FromEmails.name,
-		});
-	}
-
-	async sendDummmyEmail() {
-		const userEmail = '';
-		const userName = '';
-		const verificationLink = 'here is the dummyLink';
-		const verifyEmailBody = verifyEmailTemplate(verificationLink);
-		const recipient = { email: userEmail, name: userName };
-		return this.sendEmail({
-			to: [recipient],
-			body: verifyEmailBody,
-			subject: 'Verify Email',
-			from: FromEmails.support,
-			from_name: FromEmails.name,
-		});
 	}
 }

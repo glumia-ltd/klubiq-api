@@ -1,15 +1,22 @@
 import {
+	Body,
 	Controller,
+	Delete,
 	Get,
-	//Body,
-	//UseGuards,
 	HttpException,
 	HttpStatus,
 	Inject,
 	Param,
+	Patch,
+	Post,
 	UseInterceptors,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+	ApiCreatedResponse,
+	ApiOkResponse,
+	ApiSecurity,
+	ApiTags,
+} from '@nestjs/swagger';
 import {
 	CACHE_MANAGER,
 	CacheInterceptor,
@@ -29,6 +36,10 @@ import {
 import { ViewFeatureDto } from '../dto/responses/feature-response.dto';
 import { FeaturesService } from '../services/features.service';
 import { Cache } from 'cache-manager';
+import {
+	CreateFeatureDto,
+	UpdateFeatureDto,
+} from '../dto/requests/feature-requests.dto';
 @ApiTags('public')
 @ApiSecurity('ApiKey')
 @Auth(AuthType.ApiKey)
@@ -108,6 +119,58 @@ export class PublicController {
 		} catch (error) {
 			throw new HttpException(
 				'Failed to get feature by id',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	@Post('features')
+	@ApiCreatedResponse({ description: 'Creates a new feature for the app' })
+	async createFeature(
+		@Body() createFeatureDto: CreateFeatureDto,
+	): Promise<ViewFeatureDto> {
+		try {
+			const feature = await this.featuresService.create(createFeatureDto);
+			return feature;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to create new feature',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	@Patch('features/:id')
+	@ApiOkResponse({
+		description: 'Updates a feature',
+		type: ViewFeatureDto,
+	})
+	async updateFeature(
+		@Param('id') id: number,
+		@Body() updateFeatureDto: UpdateFeatureDto,
+	) {
+		try {
+			const feature = await this.featuresService.update(id, updateFeatureDto);
+			return feature;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to create new feature',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	@Delete('features/:id')
+	@ApiOkResponse({
+		description: 'Deletes a feature',
+	})
+	async deleteFeature(@Param('id') id: number) {
+		try {
+			const isDeleted = await this.featuresService.delete(id);
+			return isDeleted;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to create new feature',
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
 		}

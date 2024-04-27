@@ -1,12 +1,12 @@
 export interface EmailInterfaceParams {
 	from?: string;
 	from_name?: string;
-	to: Recipient[];
+	to: EmailRecipient[];
 	subject: string;
 	body: { text: string; html: string };
 	reply_to?: ReplyTo;
-	cc?: Recipient[];
-	bcc?: Recipient[];
+	cc?: EmailRecipient[];
+	bcc?: EmailRecipient[];
 	headers?: { [key: string]: string };
 	track_opens?: boolean;
 	track_clicks?: boolean;
@@ -15,9 +15,10 @@ export interface EmailInterfaceParams {
 	attachment?: Attachment;
 }
 
-export type Recipient = {
+export type EmailRecipient = {
 	email: string;
-	name: string;
+	firstName: string;
+	lastName: string;
 };
 
 interface ReplyTo {
@@ -30,8 +31,3 @@ interface Attachment {
 	filename: string;
 	type: string;
 }
-
-export const FromEmails = {
-	support: 'folarin.kamar@glumia.ng',
-	name: 'Klubiq',
-};
