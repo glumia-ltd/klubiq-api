@@ -16,8 +16,8 @@ import { CacheService } from './cache.service';
 @Injectable()
 export class FeaturesService {
 	private readonly logger = new Logger(FeaturesService.name);
+	private readonly cacheKey = 'features';
 	private readonly cacheService = new CacheService(
-		'features',
 		60 * 60 * 24,
 		this.cacheManager,
 	);
@@ -31,7 +31,7 @@ export class FeaturesService {
 	async getAppFeatures(): Promise<ViewFeatureDto[]> {
 		try {
 			const cachedFeatureList =
-				await this.cacheService.getCache<ViewFeatureDto>();
+				await this.cacheService.getCache<ViewFeatureDto>(this.cacheKey);
 			if (!cachedFeatureList) {
 				const features = await this.featuresRepository.findAll();
 				const data = await this.mapper.mapArrayAsync(
@@ -39,7 +39,7 @@ export class FeaturesService {
 					Feature,
 					ViewFeatureDto,
 				);
-				await this.cacheService.setCache<ViewFeatureDto[]>(data);
+				await this.cacheService.setCache<ViewFeatureDto[]>(data, this.cacheKey);
 				return data;
 			}
 			return cachedFeatureList;
@@ -53,7 +53,11 @@ export class FeaturesService {
 	async getFeatureById(id: number): Promise<ViewFeatureDto> {
 		try {
 			const cachedFeature =
-				await this.cacheService.getCacheByIdentifier<ViewFeatureDto>('id', id);
+				await this.cacheService.getCacheByIdentifier<ViewFeatureDto>(
+					this.cacheKey,
+					'id',
+					id,
+				);
 			if (!cachedFeature) {
 				const feature = await this.featuresRepository.findOneWithId({ id });
 				const viewData = this.mapper.map(feature, Feature, ViewFeatureDto);
@@ -72,7 +76,10 @@ export class FeaturesService {
 			const feature =
 				await this.featuresRepository.createEntity(createFeatureDto);
 			const viewData = this.mapper.map(feature, Feature, ViewFeatureDto);
-			await this.cacheService.updateCacheAfterCreate<ViewFeatureDto>(viewData);
+			await this.cacheService.updateCacheAfterCreate<ViewFeatureDto>(
+				this.cacheKey,
+				viewData,
+			);
 			return viewData;
 		} catch (err) {
 			this.logger.error('Error creating feature', err);
@@ -89,6 +96,7 @@ export class FeaturesService {
 			await this.featuresRepository.update({ id }, updateFeature);
 			const updated =
 				await this.cacheService.updateCacheAfterUpsert<ViewFeatureDto>(
+					this.cacheKey,
 					'id',
 					id,
 					updateFeature,
@@ -109,7 +117,11 @@ export class FeaturesService {
 	// This deletes a feature
 	async delete(id: number): Promise<boolean> {
 		try {
-			await this.cacheService.updateCacheAfterdelete<ViewFeatureDto>('id', id);
+			await this.cacheService.updateCacheAfterdelete<ViewFeatureDto>(
+				this.cacheKey,
+				'id',
+				id,
+			);
 			const deleted = await this.featuresRepository.delete({ id });
 			return deleted.affected == 1;
 		} catch (err) {

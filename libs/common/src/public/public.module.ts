@@ -17,7 +17,7 @@ import { CacheService } from '../services/cache.service';
 		FeaturesService,
 		{
 			provide: CacheService,
-			useFactory: () => new CacheService('', 60 * 60 * 24, null),
+			useFactory: () => new CacheService(60 * 60 * 24, null),
 		},
 	],
 })

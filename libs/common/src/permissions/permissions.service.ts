@@ -20,8 +20,9 @@ import {
 @Injectable()
 export class PermissionsService {
 	private readonly logger = new Logger(PermissionsService.name);
+	private readonly rolesCacheKey = 'roles';
+	private readonly permissionsCacheKey = 'permissions';
 	private readonly cacheService = new CacheService(
-		'roles',
 		60 * 60 * 24,
 		this.cacheManager,
 	);
@@ -35,7 +36,9 @@ export class PermissionsService {
 
 	async getOrgRoles(): Promise<ViewOrgRoleDto[]> {
 		try {
-			const cachedData = await this.cacheService.getCache<ViewOrgRoleDto>();
+			const cachedData = await this.cacheService.getCache<ViewOrgRoleDto>(
+				this.rolesCacheKey,
+			);
 			if (cachedData) return cachedData;
 			const roles = await this.organizationRoleRepository.findAll();
 			const data = await this.mapper.mapArrayAsync(
@@ -43,7 +46,7 @@ export class PermissionsService {
 				OrganizationRole,
 				ViewOrgRoleDto,
 			);
-			await this.cacheService.setCache(data);
+			await this.cacheService.setCache(data, this.rolesCacheKey);
 			return data;
 		} catch (err) {
 			throw err;
@@ -53,7 +56,9 @@ export class PermissionsService {
 	async getPermissions(): Promise<ViewPermissionDto[]> {
 		try {
 			const cachedPermissionList =
-				await this.cacheService.getCache<ViewPermissionDto>();
+				await this.cacheService.getCache<ViewPermissionDto>(
+					this.permissionsCacheKey,
+				);
 			if (!cachedPermissionList) {
 				const permissions = await this.permissionsRepository.findAll();
 				const data = await this.mapper.mapArrayAsync(
@@ -61,7 +66,10 @@ export class PermissionsService {
 					Permission,
 					ViewPermissionDto,
 				);
-				await this.cacheService.setCache<ViewPermissionDto[]>(data);
+				await this.cacheService.setCache<ViewPermissionDto[]>(
+					data,
+					this.permissionsCacheKey,
+				);
 				return data;
 			}
 			return cachedPermissionList;
@@ -76,6 +84,7 @@ export class PermissionsService {
 		try {
 			const cachedPermission =
 				await this.cacheService.getCacheByIdentifier<ViewPermissionDto>(
+					this.permissionsCacheKey,
 					'id',
 					id,
 				);
@@ -110,6 +119,7 @@ export class PermissionsService {
 				ViewPermissionDto,
 			);
 			await this.cacheService.updateCacheAfterCreate<ViewPermissionDto>(
+				this.permissionsCacheKey,
 				viewData,
 			);
 			return viewData;
@@ -128,6 +138,7 @@ export class PermissionsService {
 			await this.permissionsRepository.update({ id }, updateDto);
 			const updated =
 				await this.cacheService.updateCacheAfterUpsert<ViewPermissionDto>(
+					this.permissionsCacheKey,
 					'id',
 					id,
 					updateDto,
@@ -152,6 +163,7 @@ export class PermissionsService {
 	async delete(id: number): Promise<boolean> {
 		try {
 			await this.cacheService.updateCacheAfterdelete<ViewPermissionDto>(
+				this.permissionsCacheKey,
 				'id',
 				id,
 			);
