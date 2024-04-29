@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PublicController } from './public.controller';
+import { PublicController } from './controllers/public.controller';
 import { PermissionsService } from '../permissions/permissions.service';
 import { PermissionsRepository } from '../repositories/permissions.repository';
 import { OrganizationRolesRepository } from '../repositories/organization-roles.repository';
@@ -13,9 +13,10 @@ import { PropertiesCategoryService } from '../services/properties-category.servi
 import { PropertiesPurposeService } from '../services/properties-purpose.service';
 import { PropertiesStatusService } from '../services/properties-status.service';
 import { PropertiesTypeService } from '../services/properties-type.service';
+import { PropertyMetadataController } from './controllers/properties-metadata.controller';
 
 @Module({
-	controllers: [PublicController],
+	controllers: [PublicController, PropertyMetadataController],
 	providers: [
 		PermissionsService,
 		PermissionsRepository,

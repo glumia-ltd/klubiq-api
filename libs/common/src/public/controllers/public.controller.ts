@@ -23,23 +23,23 @@ import {
 	CacheKey,
 	CacheTTL,
 } from '@nestjs/cache-manager';
-import { PermissionsService } from '../permissions/permissions.service';
-import { ViewOrgRoleDto } from '../dto/responses/org-role.dto';
+import { PermissionsService } from '../../permissions/permissions.service';
+import { ViewOrgRoleDto } from '../../dto/responses/org-role.dto';
 import { Auth, AuthType } from '@app/auth';
 import {
 	PropertiesCategoryService,
 	PropertiesPurposeService,
 	PropertiesStatusService,
 	PropertiesTypeService,
-} from '..';
+} from '../..';
 
-import { ViewFeatureDto } from '../dto/responses/feature-response.dto';
-import { FeaturesService } from '../services/features.service';
+import { ViewFeatureDto } from '../../dto/responses/feature-response.dto';
+import { FeaturesService } from '../../services/features.service';
 import { Cache } from 'cache-manager';
 import {
 	CreateFeatureDto,
 	UpdateFeatureDto,
-} from '../dto/requests/feature-requests.dto';
+} from '../../dto/requests/feature-requests.dto';
 @ApiTags('public')
 @ApiSecurity('ApiKey')
 @Auth(AuthType.ApiKey)
@@ -73,7 +73,7 @@ export class PublicController {
 	}
 
 	@Get('property-metadata')
-	async getPropertyInfo() {
+	async getPropertyFormViewData() {
 		const categories =
 			await this.propertyCategoryService.getAllPropertyCategories();
 		const statuses = await this.propertyStatusService.getAllPropertyStatus();
