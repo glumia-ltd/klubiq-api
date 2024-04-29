@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 // import { EntityManager } from 'typeorm';
 import { FeaturesRepository } from '../repositories/features.repository';
 import { Mapper } from '@automapper/core';
@@ -9,21 +9,40 @@ import {
 	CreateFeatureDto,
 	UpdateFeatureDto,
 } from '../dto/requests/feature-requests.dto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { CacheService } from './cache.service';
 
 @Injectable()
 export class FeaturesService {
 	private readonly logger = new Logger(FeaturesService.name);
+	private readonly cacheService = new CacheService(
+		'features',
+		60 * 60 * 24,
+		this.cacheManager,
+	);
 	constructor(
 		@InjectMapper() private readonly mapper: Mapper,
 		private readonly featuresRepository: FeaturesRepository,
+		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 
 	// gets all app features
 	async getAppFeatures(): Promise<ViewFeatureDto[]> {
 		try {
-			const features = await this.featuresRepository.findAll();
-			const data = this.mapper.mapArrayAsync(features, Feature, ViewFeatureDto);
-			return data;
+			const cachedFeatureList =
+				await this.cacheService.getCache<ViewFeatureDto>();
+			if (!cachedFeatureList) {
+				const features = await this.featuresRepository.findAll();
+				const data = await this.mapper.mapArrayAsync(
+					features,
+					Feature,
+					ViewFeatureDto,
+				);
+				await this.cacheService.setCache<ViewFeatureDto[]>(data);
+				return data;
+			}
+			return cachedFeatureList;
 		} catch (err) {
 			this.logger.error('Error getting features list', err);
 			throw err;
@@ -33,9 +52,14 @@ export class FeaturesService {
 	// gets a feature by Id
 	async getFeatureById(id: number): Promise<ViewFeatureDto> {
 		try {
-			const feature = await this.featuresRepository.findOneWithId({ id });
-			const viewData = this.mapper.map(feature, Feature, ViewFeatureDto);
-			return viewData;
+			const cachedFeature =
+				await this.cacheService.getCacheByIdentifier<ViewFeatureDto>('id', id);
+			if (!cachedFeature) {
+				const feature = await this.featuresRepository.findOneWithId({ id });
+				const viewData = this.mapper.map(feature, Feature, ViewFeatureDto);
+				return viewData;
+			}
+			return cachedFeature;
 		} catch (err) {
 			this.logger.error(`Error getting feature by Id: ${id}`, err);
 			throw err;
@@ -47,33 +71,45 @@ export class FeaturesService {
 		try {
 			const feature =
 				await this.featuresRepository.createEntity(createFeatureDto);
-			return this.mapper.map(feature, Feature, ViewFeatureDto);
+			const viewData = this.mapper.map(feature, Feature, ViewFeatureDto);
+			await this.cacheService.updateCacheAfterCreate<ViewFeatureDto>(viewData);
+			return viewData;
 		} catch (err) {
 			this.logger.error('Error creating feature', err);
 			throw new Error(`Error creating feature. Error: ${err}`);
 		}
 	}
 
-	// This creates a new feature
+	// This updates a feature
 	async update(
 		id: number,
 		updateFeature: UpdateFeatureDto,
 	): Promise<ViewFeatureDto> {
 		try {
 			await this.featuresRepository.update({ id }, updateFeature);
-			const updatedFeature = await this.featuresRepository.findOneWithId({
-				id,
-			});
-			return this.mapper.map(updatedFeature, Feature, ViewFeatureDto);
+			const updated =
+				await this.cacheService.updateCacheAfterUpsert<ViewFeatureDto>(
+					'id',
+					id,
+					updateFeature,
+				);
+			if (!updated) {
+				const updatedFeature = await this.featuresRepository.findOneWithId({
+					id,
+				});
+				return this.mapper.map(updatedFeature, Feature, ViewFeatureDto);
+			}
+			return updated;
 		} catch (err) {
 			this.logger.error('Error updating feature', err);
 			throw new Error(`Error updating feature. Error: ${err}`);
 		}
 	}
 
-	// This creates a new feature
+	// This deletes a feature
 	async delete(id: number): Promise<boolean> {
 		try {
+			await this.cacheService.updateCacheAfterdelete<ViewFeatureDto>('id', id);
 			const deleted = await this.featuresRepository.delete({ id });
 			return deleted.affected == 1;
 		} catch (err) {

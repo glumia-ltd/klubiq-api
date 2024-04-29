@@ -34,5 +34,5 @@ export class Permission {
 		() => FeaturePermission,
 		(featurePermission) => featurePermission.permission,
 	)
-	featurePermissions: FeaturePermission[];
+	featurePermissions?: FeaturePermission[];
 }

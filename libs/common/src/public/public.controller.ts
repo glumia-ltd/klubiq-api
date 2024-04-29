@@ -5,11 +5,9 @@ import {
 	Get,
 	HttpException,
 	HttpStatus,
-	Inject,
 	Param,
 	Patch,
 	Post,
-	UseInterceptors,
 } from '@nestjs/common';
 import {
 	ApiCreatedResponse,
@@ -17,18 +15,11 @@ import {
 	ApiSecurity,
 	ApiTags,
 } from '@nestjs/swagger';
-import {
-	CACHE_MANAGER,
-	CacheInterceptor,
-	CacheKey,
-	CacheTTL,
-} from '@nestjs/cache-manager';
 import { PermissionsService } from '../permissions/permissions.service';
 import { ViewOrgRoleDto } from '../dto/responses/org-role.dto';
 import { Auth, AuthType } from '@app/auth';
 import { ViewFeatureDto } from '../dto/responses/feature-response.dto';
 import { FeaturesService } from '../services/features.service';
-import { Cache } from 'cache-manager';
 import {
 	CreateFeatureDto,
 	UpdateFeatureDto,
@@ -37,16 +28,12 @@ import {
 @ApiSecurity('ApiKey')
 @Auth(AuthType.ApiKey)
 @Controller('public')
-@UseInterceptors(CacheInterceptor)
-@CacheTTL(60 * 60 * 24)
 export class PublicController {
 	constructor(
 		private readonly permissionService: PermissionsService,
 		private readonly featuresService: FeaturesService,
-		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 
-	@CacheKey('roles')
 	@Get('roles')
 	@ApiOkResponse({ description: 'Get all roles' })
 	async getRoles(): Promise<ViewOrgRoleDto[]> {
@@ -61,7 +48,6 @@ export class PublicController {
 		}
 	}
 
-	@CacheKey('features')
 	@Get('features')
 	@ApiOkResponse({ description: 'Get all features' })
 	async getAppFeatures(): Promise<ViewFeatureDto[]> {
@@ -80,15 +66,8 @@ export class PublicController {
 	@ApiOkResponse({ description: 'Get feature by id' })
 	async getFeature(@Param('id') id: number): Promise<ViewFeatureDto> {
 		try {
-			const cachedFeature = await this.cacheManager.get<ViewFeatureDto>(
-				`feature:${id}`,
-			);
-			if (!cachedFeature) {
-				const feature = await this.featuresService.getFeatureById(id);
-				await this.cacheManager.set(`feature:${id}`, feature);
-				return feature;
-			}
-			return cachedFeature;
+			const featureData = await this.featuresService.getFeatureById(id);
+			return featureData;
 		} catch (error) {
 			throw new HttpException(
 				'Failed to get feature by id',

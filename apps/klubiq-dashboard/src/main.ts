@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { WinstonModule } from 'nest-winston';
+import helmet from 'helmet';
 import {
 	SwaggerModule,
 	DocumentBuilder,
@@ -20,7 +21,8 @@ async function bootstrap() {
 	const app = await NestFactory.create(KlubiqDashboardModule, {
 		logger: WinstonModule.createLogger(customLogger.createLoggerConfig),
 	});
-
+	app.setGlobalPrefix('/api');
+	app.use(helmet());
 	/// SWAGGER CONFIGURATION
 	const options: SwaggerDocumentOptions = {
 		operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
@@ -63,7 +65,7 @@ async function bootstrap() {
 			},
 		}),
 	);
-	app.setGlobalPrefix('/api');
+
 	app.useGlobalFilters(new HttpExceptionFilter());
 	app.useGlobalInterceptors(new HttpResponseInterceptor());
 	await app.listen(3000);

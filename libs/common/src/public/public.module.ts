@@ -5,6 +5,7 @@ import { PermissionsRepository } from '../repositories/permissions.repository';
 import { OrganizationRolesRepository } from '../repositories/organization-roles.repository';
 import { FeaturesRepository } from '../repositories/features.repository';
 import { FeaturesService } from '../services/features.service';
+import { CacheService } from '../services/cache.service';
 
 @Module({
 	controllers: [PublicController],
@@ -14,6 +15,10 @@ import { FeaturesService } from '../services/features.service';
 		OrganizationRolesRepository,
 		FeaturesRepository,
 		FeaturesService,
+		{
+			provide: CacheService,
+			useFactory: () => new CacheService('', 60 * 60 * 24, null),
+		},
 	],
 })
 export class PublicModule {}

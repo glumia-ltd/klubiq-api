@@ -63,6 +63,8 @@ import * as redis from 'cache-manager-redis-store';
 				store: redis,
 				host: 'localhost',
 				port: 6379,
+				max: 20,
+				ttl: 10000,
 			}),
 		}),
 	],

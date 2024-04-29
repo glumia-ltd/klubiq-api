@@ -24,4 +24,8 @@ export class ViewFeaturePermissionDto {
 	// feature?: Feature;
 }
 
-export class ViewPermissionDto extends MapperPickType(Permission, ['name']) {}
+export class ViewPermissionDto extends MapperPickType(Permission, [
+	'id',
+	'name',
+	'description',
+]) {}
