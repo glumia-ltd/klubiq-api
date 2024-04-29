@@ -23,16 +23,23 @@ import {
 	CacheKey,
 	CacheTTL,
 } from '@nestjs/cache-manager';
-import { PermissionsService } from '../permissions/permissions.service';
-import { ViewOrgRoleDto } from '../dto/responses/org-role.dto';
+import { PermissionsService } from '../../permissions/permissions.service';
+import { ViewOrgRoleDto } from '../../dto/responses/org-role.dto';
 import { Auth, AuthType } from '@app/auth';
-import { ViewFeatureDto } from '../dto/responses/feature-response.dto';
-import { FeaturesService } from '../services/features.service';
+import {
+	PropertiesCategoryService,
+	PropertiesPurposeService,
+	PropertiesStatusService,
+	PropertiesTypeService,
+} from '../..';
+
+import { ViewFeatureDto } from '../../dto/responses/feature-response.dto';
+import { FeaturesService } from '../../services/features.service';
 import { Cache } from 'cache-manager';
 import {
 	CreateFeatureDto,
 	UpdateFeatureDto,
-} from '../dto/requests/feature-requests.dto';
+} from '../../dto/requests/feature-requests.dto';
 @ApiTags('public')
 @ApiSecurity('ApiKey')
 @Auth(AuthType.ApiKey)
@@ -42,6 +49,10 @@ import {
 export class PublicController {
 	constructor(
 		private readonly permissionService: PermissionsService,
+		private readonly propertyCategoryService: PropertiesCategoryService,
+		private readonly propertyStatusService: PropertiesStatusService,
+		private readonly propertyTypeService: PropertiesTypeService,
+		private readonly propertyPurposeService: PropertiesPurposeService,
 		private readonly featuresService: FeaturesService,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
@@ -59,6 +70,22 @@ export class PublicController {
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
 		}
+	}
+
+	@Get('property-metadata')
+	async getPropertyFormViewData() {
+		const categories =
+			await this.propertyCategoryService.getAllPropertyCategories();
+		const statuses = await this.propertyStatusService.getAllPropertyStatus();
+		const types = await this.propertyTypeService.getAllPropertyTypes();
+		const purposes = await this.propertyPurposeService.getAllPropertyPurpose();
+
+		return {
+			categories,
+			statuses,
+			types,
+			purposes,
+		};
 	}
 
 	@CacheKey('features')

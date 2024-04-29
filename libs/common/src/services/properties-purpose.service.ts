@@ -1,26 +1,24 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyPurpose } from '@app/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import {
-	CreatePropertyCategoryDto,
-	UpdatePropertyCategoryDto,
-} from '../../../../apps/klubiq-dashboard/src/properties/dto/property-category.dto';
+	CreatePropertyMetadataDto,
+	UpdatePropertyMetadataDto,
+} from '../dto/create-property-metadata.dto';
 import { PropertyPurposeRepository } from '../repositories/properties-purpose.repository';
-import { PropertyPeripheralDto } from '../../../../apps/klubiq-dashboard/src/properties/dto/properties-peripheral.dto';
+import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
 
 @Injectable()
 export class PropertiesPurposeService {
 	private readonly logger = new Logger(PropertiesPurposeService.name);
 	constructor(
-		@InjectRepository(PropertyPurposeRepository)
 		private readonly propertyPurposeRepository: PropertyPurposeRepository,
 		@InjectMapper() private readonly mapper: Mapper,
 	) {}
 
 	async createPropertyPurpose(
-		createPropertyPurposeDto: CreatePropertyCategoryDto,
+		createPropertyPurposeDto: CreatePropertyMetadataDto,
 	): Promise<PropertyPurpose> {
 		const { name, displayText } = createPropertyPurposeDto;
 		const propertyPurpose = this.propertyPurposeRepository.create({
@@ -30,9 +28,9 @@ export class PropertiesPurposeService {
 		return await this.propertyPurposeRepository.save(propertyPurpose);
 	}
 
-	async getPropertyPurposeByName(name: string): Promise<PropertyPurpose> {
+	async getPropertyPurposeById(id: number): Promise<PropertyPurpose> {
 		const propertyPurpose = await this.propertyPurposeRepository.findOneBy({
-			name: name,
+			id: id,
 		});
 		if (!propertyPurpose) {
 			throw new NotFoundException('Property Purpose not found');
@@ -43,23 +41,23 @@ export class PropertiesPurposeService {
 	async getAllPropertyPurpose() {
 		const allPurposes = await this.propertyPurposeRepository.find();
 		return allPurposes.map((purpose) =>
-			this.mapper.map(purpose, PropertyPurpose, PropertyPeripheralDto),
+			this.mapper.map(purpose, PropertyPurpose, PropertyMetadataDto),
 		);
 	}
 
 	async updatePropertyPurpose(
-		name: string,
-		updatePropertyPurposeDto: UpdatePropertyCategoryDto,
+		id: number,
+		updatePropertyPurposeDto: UpdatePropertyMetadataDto,
 	): Promise<PropertyPurpose> {
-		const propertyPurpose = await this.getPropertyPurposeByName(name);
+		const propertyPurpose = await this.getPropertyPurposeById(id);
 		return await this.propertyPurposeRepository.save({
 			...propertyPurpose,
 			...updatePropertyPurposeDto,
 		});
 	}
 
-	async deletePropertyPurpose(name: string): Promise<void> {
-		const propertyPurpose = await this.getPropertyPurposeByName(name);
+	async deletePropertyPurpose(id: number): Promise<void> {
+		const propertyPurpose = await this.getPropertyPurposeById(id);
 		await this.propertyPurposeRepository.remove(propertyPurpose);
 	}
 }
