@@ -41,7 +41,7 @@ async function bootstrap() {
 			name: 'Authorization',
 			scheme: 'ApiKeyAuth',
 		})
-		.addServer('/api')
+		//.addServer('/api')
 		.build();
 	const document = SwaggerModule.createDocument(app, config, options);
 	SwaggerModule.setup('swagger', app, document);

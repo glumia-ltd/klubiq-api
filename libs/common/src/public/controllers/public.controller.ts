@@ -23,6 +23,7 @@ import {
 	PropertiesPurposeService,
 	PropertiesStatusService,
 	PropertiesTypeService,
+	ViewFeaturePermissionDto,
 } from '../..';
 
 import { ViewFeatureDto } from '../../dto/responses/feature-response.dto';
@@ -31,6 +32,7 @@ import {
 	CreateFeatureDto,
 	UpdateFeatureDto,
 } from '../../dto/requests/feature-requests.dto';
+import { FeaturePermissionService } from '../../permissions/feature-permission.service';
 @ApiTags('public')
 @ApiSecurity('ApiKey')
 @Auth(AuthType.ApiKey)
@@ -43,6 +45,7 @@ export class PublicController {
 		private readonly propertyTypeService: PropertiesTypeService,
 		private readonly propertyPurposeService: PropertiesPurposeService,
 		private readonly featuresService: FeaturesService,
+		private readonly featurePermissionService: FeaturePermissionService,
 	) {}
 
 	@Get('roles')
@@ -75,6 +78,7 @@ export class PublicController {
 		};
 	}
 
+	//#region FEATURES
 	@Get('features')
 	@ApiOkResponse({ description: 'Get all features' })
 	async getAppFeatures(): Promise<ViewFeatureDto[]> {
@@ -150,6 +154,22 @@ export class PublicController {
 		} catch (error) {
 			throw new HttpException(
 				'Failed to create new feature',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+	//#endregion
+
+	//#region  REGION ----- FEATURE-PERMISSION
+	@Get('features-permissions')
+	@ApiOkResponse({ description: 'Get all features permissions' })
+	async getFeaturesPermissions(): Promise<ViewFeaturePermissionDto[]> {
+		try {
+			const resp = await this.featurePermissionService.getFeaturePermissions();
+			return resp;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to get features permissions',
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
 		}

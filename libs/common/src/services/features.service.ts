@@ -17,10 +17,7 @@ import { CacheService } from './cache.service';
 export class FeaturesService {
 	private readonly logger = new Logger(FeaturesService.name);
 	private readonly cacheKey = 'features';
-	private readonly cacheService = new CacheService(
-		60 * 60 * 24,
-		this.cacheManager,
-	);
+	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		@InjectMapper() private readonly mapper: Mapper,
 		private readonly featuresRepository: FeaturesRepository,

@@ -5,8 +5,8 @@ import { Cache } from 'cache-manager';
 @Injectable()
 export class CacheService {
 	constructor(
-		private readonly cacheTTL: number,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
+		private readonly cacheTTL?: number,
 	) {}
 
 	// gets all data by cache key

@@ -15,6 +15,8 @@ import { PropertiesStatusService } from '../services/properties-status.service';
 import { PropertiesTypeService } from '../services/properties-type.service';
 import { PropertyMetadataController } from './controllers/properties-metadata.controller';
 import { CacheService } from '../services/cache.service';
+import { FeaturePermissionService } from '../permissions/feature-permission.service';
+import { FeaturesPermissionRepository } from '../repositories/features-permission.repository';
 
 @Module({
 	controllers: [PublicController, PropertyMetadataController],
@@ -32,9 +34,11 @@ import { CacheService } from '../services/cache.service';
 		PropertyTypeRepository,
 		PropertiesStatusService,
 		PropertyStatusRepository,
+		FeaturePermissionService,
+		FeaturesPermissionRepository,
 		{
 			provide: CacheService,
-			useFactory: () => new CacheService(60 * 60 * 24, null),
+			useFactory: () => new CacheService(null, 60 * 60 * 24),
 		},
 	],
 })

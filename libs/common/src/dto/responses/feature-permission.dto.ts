@@ -3,29 +3,30 @@ import { MapperPickType } from '@automapper/classes/mapped-types';
 
 import { ApiProperty } from '@nestjs/swagger';
 import { Permission } from '../../database/entities/permission.entity';
-
-export class ViewFeaturePermissionDto {
-	@AutoMap()
-	@ApiProperty()
-	featureName: string;
-
-	@AutoMap()
-	@ApiProperty()
-	permissionName: string;
-
-	@AutoMap()
-	@ApiProperty()
-	alias!: string;
-
-	// @AutoMap(() => Permission)
-	// permission?: Permission;
-
-	// @AutoMap(() => Feature)
-	// feature?: Feature;
-}
+import { ViewFeatureDto } from './feature-response.dto';
 
 export class ViewPermissionDto extends MapperPickType(Permission, [
 	'id',
 	'name',
 	'description',
 ]) {}
+
+export class ViewFeaturePermissionDto {
+	@AutoMap()
+	@ApiProperty()
+	featurePermissionId!: number;
+
+	@AutoMap()
+	@ApiProperty()
+	alias!: string;
+
+	@AutoMap()
+	@ApiProperty()
+	description: string;
+
+	@AutoMap(() => ViewPermissionDto)
+	permission?: ViewPermissionDto;
+
+	@AutoMap(() => ViewFeatureDto)
+	feature?: ViewFeatureDto;
+}

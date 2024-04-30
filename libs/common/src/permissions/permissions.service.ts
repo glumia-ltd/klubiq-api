@@ -22,10 +22,7 @@ export class PermissionsService {
 	private readonly logger = new Logger(PermissionsService.name);
 	private readonly rolesCacheKey = 'roles';
 	private readonly permissionsCacheKey = 'permissions';
-	private readonly cacheService = new CacheService(
-		60 * 60 * 24,
-		this.cacheManager,
-	);
+	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		@InjectMapper() private readonly mapper: Mapper,
 		private readonly permissionsRepository: PermissionsRepository,
