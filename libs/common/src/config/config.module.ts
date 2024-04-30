@@ -32,7 +32,6 @@ import * as redis from 'cache-manager-redis-store';
 				FIREBASE_MEASUREMENT_ID: Joi.string().required(),
 				EMAIL_API_KEY: Joi.string().required(),
 				HEALTH_CHECK_URL: Joi.string().required(),
-				EMAIL_VERIFICATION_TEMPLATE: Joi.string().required(),
 				SUPPORT_EMAIL: Joi.string().required(),
 				EMAIL_VERIFICATION_BASE_URL: Joi.string().required(),
 				CONTINUE_URL_PATH: Joi.string().required(),
