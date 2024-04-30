@@ -72,3 +72,26 @@ export class LookUpUserDto {
 	@IsEmail()
 	email: string;
 }
+
+export class SendVerifyEmailDto {
+	@ApiProperty({
+		description: 'user email',
+	})
+	@IsString()
+	@IsEmail()
+	email: string;
+
+	@ApiProperty({
+		description: `user's first name`,
+	})
+	@IsString()
+	@IsEmail()
+	firstName: string;
+
+	@ApiProperty({
+		description: `user's last name`,
+	})
+	@IsString()
+	@IsEmail()
+	lastName: string;
+}

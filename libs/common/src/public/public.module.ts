@@ -14,6 +14,9 @@ import { PropertiesPurposeService } from '../services/properties-purpose.service
 import { PropertiesStatusService } from '../services/properties-status.service';
 import { PropertiesTypeService } from '../services/properties-type.service';
 import { PropertyMetadataController } from './controllers/properties-metadata.controller';
+import { CacheService } from '../services/cache.service';
+import { FeaturePermissionService } from '../permissions/feature-permission.service';
+import { FeaturesPermissionRepository } from '../repositories/features-permission.repository';
 
 @Module({
 	controllers: [PublicController, PropertyMetadataController],
@@ -31,6 +34,12 @@ import { PropertyMetadataController } from './controllers/properties-metadata.co
 		PropertyTypeRepository,
 		PropertiesStatusService,
 		PropertyStatusRepository,
+		FeaturePermissionService,
+		FeaturesPermissionRepository,
+		{
+			provide: CacheService,
+			useFactory: () => new CacheService(null, 60 * 60 * 24),
+		},
 	],
 })
 export class PublicModule {}

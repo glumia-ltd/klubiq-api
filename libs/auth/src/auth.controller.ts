@@ -13,6 +13,7 @@ import { Auth } from './decorators/auth.decorator';
 import { AuthService } from './auth.service';
 import {
 	OrgUserSignUpDto,
+	SendVerifyEmailDto,
 	userLoginDto,
 	VerifyEmailDto,
 } from './dto/user-login.dto';
@@ -69,7 +70,7 @@ export class AuthController {
 		}
 	}
 
-	@Post('renter-signup')
+	@Post('landlord-signup')
 	@ApiOkResponse({
 		description: 'Creates a new Org user and returns the data an auth token',
 		type: SignUpResponseDto,
@@ -77,5 +78,18 @@ export class AuthController {
 	async createUser(@Body() createUser: OrgUserSignUpDto) {
 		const userData = await this.authService.createOrgUser(createUser);
 		return userData;
+	}
+
+	@Post('verification/email')
+	@ApiOkResponse({
+		description: 'Send email verification link to user',
+		type: SignUpResponseDto,
+	})
+	async sendEmailVerification(@Body() reqBody: SendVerifyEmailDto) {
+		await this.authService.sendVerificationEmail(
+			reqBody.email,
+			reqBody.firstName,
+			reqBody.lastName,
+		);
 	}
 }
