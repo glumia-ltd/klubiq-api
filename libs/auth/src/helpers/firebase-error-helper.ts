@@ -79,10 +79,7 @@ export const Firebase_Errors = [
 ] as FirebaseError[];
 
 export class FirebaseErrorMessageHelper {
-	parseFirebaseError(error: FirebaseError): string {
-		return (
-			Firebase_Errors.find((e) => e.code === error.code)?.message ||
-			error.message
-		);
+	parseFirebaseError(error: FirebaseError | any): string {
+		return Firebase_Errors.find((e) => e.code === error.code)?.message || error;
 	}
 }
