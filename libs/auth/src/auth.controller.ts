@@ -92,4 +92,13 @@ export class AuthController {
 			reqBody.lastName,
 		);
 	}
+
+	@Post('password-reset-link/:email')
+	@ApiOkResponse({
+		description: 'Send email password reset link to user',
+		type: SignUpResponseDto,
+	})
+	async sendPasswordResetLinkEmail(@Param('email') email: string) {
+		await this.authService.generatePasswordResetEmail(email);
+	}
 }
