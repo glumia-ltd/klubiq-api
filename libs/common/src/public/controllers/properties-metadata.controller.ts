@@ -37,7 +37,8 @@ export class PropertyMetadataController {
 		private readonly propertyTypeService: PropertiesTypeService,
 	) {}
 
-	@Post('property-category/create')
+	//#region PROPERTY-CATEGORIES
+	@Post('property-categories')
 	@ApiOkResponse({
 		description: 'Creates a new property category',
 		type: PropertyMetadataDto,
@@ -50,7 +51,7 @@ export class PropertyMetadataController {
 		);
 	}
 
-	@Get('property-category/:id')
+	@Get('property-categories/:id')
 	@ApiOkResponse({
 		description: 'Returns a new property category that matches the category id',
 		type: PropertyMetadataDto,
@@ -72,7 +73,7 @@ export class PropertyMetadataController {
 		return propertyCategories;
 	}
 
-	@Put('property-category/:id/update')
+	@Put('property-categories/:id')
 	@ApiOkResponse({
 		description: 'Updates a new property category that matches the category id',
 		type: PropertyMetadataDto,
@@ -87,7 +88,7 @@ export class PropertyMetadataController {
 		);
 	}
 
-	@Delete('property-category/:id/delete')
+	@Delete('property-categories/:id')
 	@ApiOkResponse({
 		description: 'Deletes a property category that matches the category id',
 		type: PropertyMetadataDto,
@@ -95,8 +96,10 @@ export class PropertyMetadataController {
 	async deletePropertyCategory(@Param('id') id: number): Promise<void> {
 		return this.propertyCategoryService.deletePropertyCategory(id);
 	}
+	//#endregion
 
-	@Post('property-purpose/create')
+	//#region  PROPERTY PURPOSES
+	@Post('property-purposes')
 	@ApiOkResponse({
 		description: 'Creates a new property Purpose',
 		type: PropertyMetadataDto,
@@ -109,7 +112,7 @@ export class PropertyMetadataController {
 		);
 	}
 
-	@Get('property-purpose/:id')
+	@Get('property-purposes/:id')
 	@ApiOkResponse({
 		description: 'Returns a new property Purpose that matches the Purpose id',
 		type: PropertyMetadataDto,
@@ -131,7 +134,7 @@ export class PropertyMetadataController {
 		return propertypurpose;
 	}
 
-	@Put('property-purpose/:id/update')
+	@Put('property-purposes/:id')
 	@ApiOkResponse({
 		description: 'Updates a new property Purpose that matches the Purpose id',
 		type: PropertyMetadataDto,
@@ -146,7 +149,7 @@ export class PropertyMetadataController {
 		);
 	}
 
-	@Delete('property-purpose/:id/delete')
+	@Delete('property-purposes/:id')
 	@ApiOkResponse({
 		description: 'Deletes a property Purpose that matches the Purpose id',
 		type: PropertyMetadataDto,
@@ -154,8 +157,10 @@ export class PropertyMetadataController {
 	async deletePropertyPurpose(@Param('id') id: number): Promise<void> {
 		return this.propertyPurposeService.deletePropertyPurpose(id);
 	}
+	//#endregion
 
-	@Post('property-status/create')
+	//#region  PROPERTY STATUSES
+	@Post('property-statuses')
 	@ApiOkResponse({
 		description: 'Creates a new property Status',
 		type: PropertyMetadataDto,
@@ -168,7 +173,7 @@ export class PropertyMetadataController {
 		);
 	}
 
-	@Get('property-status/:id')
+	@Get('property-statuses/:id')
 	@ApiOkResponse({
 		description: 'Returns a new property Status that matches the Status id',
 		type: PropertyMetadataDto,
@@ -190,7 +195,7 @@ export class PropertyMetadataController {
 		return propertyStatuss;
 	}
 
-	@Put('property-status/:id/update')
+	@Put('property-statuses/:id')
 	@ApiOkResponse({
 		description: 'Updates a new property Status that matches the Status id',
 		type: PropertyMetadataDto,
@@ -205,7 +210,7 @@ export class PropertyMetadataController {
 		);
 	}
 
-	@Delete('property-status/:id/delete')
+	@Delete('property-statuses/:id')
 	@ApiOkResponse({
 		description: 'Deletes a property Status that matches the Status id',
 		type: PropertyMetadataDto,
@@ -213,8 +218,10 @@ export class PropertyMetadataController {
 	async deletePropertyStatus(@Param('id') id: number): Promise<void> {
 		return this.propertyStatusService.deletePropertyStatus(id);
 	}
+	//#endregion
 
-	@Post('property-type/create')
+	//#region PROPERTY TYPES
+	@Post('property-types')
 	@ApiOkResponse({
 		description: 'Creates a new property Type',
 		type: PropertyMetadataDto,
@@ -225,7 +232,7 @@ export class PropertyMetadataController {
 		return this.propertyTypeService.createPropertyType(createPropertyTypeDto);
 	}
 
-	@Get('property-type/:id')
+	@Get('property-types/:id')
 	@ApiOkResponse({
 		description: 'Returns a new property Type that matches the Type id',
 		type: PropertyMetadataDto,
@@ -244,7 +251,7 @@ export class PropertyMetadataController {
 		return propertytypes;
 	}
 
-	@Put('property-type/:id/update')
+	@Put('property-types/:id')
 	@ApiOkResponse({
 		description: 'Updates a new property Type that matches the Type id',
 		type: PropertyMetadataDto,
@@ -259,7 +266,7 @@ export class PropertyMetadataController {
 		);
 	}
 
-	@Delete('property-type/:id/delete')
+	@Delete('property-types/:id')
 	@ApiOkResponse({
 		description: 'Deletes a property Type that matches the Type id',
 		type: PropertyMetadataDto,
@@ -267,4 +274,5 @@ export class PropertyMetadataController {
 	async deletePropertyType(@Param('id') id: number): Promise<void> {
 		return this.propertyTypeService.deletePropertyType(id);
 	}
+	//#endregion
 }
