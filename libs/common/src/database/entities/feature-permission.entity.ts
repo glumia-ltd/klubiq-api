@@ -45,17 +45,17 @@ export class FeaturePermission {
 	@ManyToOne(() => Permission, (permission) => permission.featurePermissions, {
 		eager: true,
 	})
-	permission!: Permission;
+	permission?: Permission;
 
 	@AutoMap(() => Feature)
 	@ManyToOne(() => Feature, (feature) => feature.featurePermissions, {
 		eager: true,
 	})
-	feature!: Feature;
+	feature?: Feature;
 
 	@ManyToMany(
 		() => OrganizationRole,
 		(organizationRole) => organizationRole.featurePermissions,
 	)
-	organizationRoles: OrganizationRole[];
+	organizationRoles?: OrganizationRole[];
 }

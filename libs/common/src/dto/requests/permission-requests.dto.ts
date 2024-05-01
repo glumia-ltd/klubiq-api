@@ -20,4 +20,35 @@ export class CreatePermissionDto {
 	description?: string;
 }
 
+export class CreateFeaturePermissionDto {
+	@AutoMap()
+	@ApiProperty({
+		description: 'Feature Permission Alias',
+		example: 'permission_feature_access',
+	})
+	@IsString()
+	alias: string;
+
+	@AutoMap()
+	@ApiProperty({
+		description: 'Feature Permission description',
+	})
+	@IsString()
+	description?: string;
+
+	@AutoMap()
+	@ApiProperty({
+		description: 'Permission id',
+	})
+	@IsString()
+	permissionId: number;
+
+	@AutoMap()
+	@ApiProperty({
+		description: 'Permission id',
+	})
+	@IsString()
+	featureId: number;
+}
+
 export class UpdatePermissionDto extends PartialType(CreatePermissionDto) {}

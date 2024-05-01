@@ -7,6 +7,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { FeaturePermission } from '../database/entities/feature-permission.entity';
 import { FeaturesPermissionRepository } from '../repositories/features-permission.repository';
 import { ViewFeaturePermissionDto } from '..';
+import { CreateFeaturePermissionDto } from '../dto/requests/permission-requests.dto';
 
 @Injectable()
 export class FeaturePermissionService {
@@ -36,7 +37,59 @@ export class FeaturePermissionService {
 			await this.cacheService.setCache(data, this.cacheKey);
 			return data;
 		} catch (err) {
-			throw err;
+			this.logger.error('Error getting FeaturePermissions', err);
+			throw new Error(`Error getting FeaturePermissions. Error: ${err}`);
+		}
+	}
+
+	async getFeaturePermissionsById(
+		id: number,
+	): Promise<ViewFeaturePermissionDto> {
+		try {
+			const cachedData =
+				await this.cacheService.getCacheByIdentifier<ViewFeaturePermissionDto>(
+					this.cacheKey,
+					'id',
+					id,
+				);
+			if (!cachedData) {
+				const featurePermission =
+					await this.featuresPermissionRepository.findOneBy({
+						featurePermissionId: id,
+					});
+				const data = await this.mapper.mapAsync(
+					featurePermission,
+					FeaturePermission,
+					ViewFeaturePermissionDto,
+				);
+				await this.cacheService.setCache(data, this.cacheKey);
+				return data;
+			}
+		} catch (err) {
+			this.logger.error('Error getting FeaturePermission by id', err);
+			throw new Error(`Error getting FeaturePermission by id.. Error: ${err}`);
+		}
+	}
+
+	async createFeaturePermission(
+		createDto: CreateFeaturePermissionDto,
+	): Promise<ViewFeaturePermissionDto> {
+		try {
+			const featurePermission =
+				await this.featuresPermissionRepository.createEntity(createDto);
+			const data = await this.mapper.mapAsync(
+				featurePermission,
+				FeaturePermission,
+				ViewFeaturePermissionDto,
+			);
+			await this.cacheService.updateCacheAfterCreate<ViewFeaturePermissionDto>(
+				this.cacheKey,
+				data,
+			);
+			return data;
+		} catch (err) {
+			this.logger.error('Error creating FeaturePermissions', err);
+			throw new Error(`Error creating FeaturePermissions. Error: ${err}`);
 		}
 	}
 }
