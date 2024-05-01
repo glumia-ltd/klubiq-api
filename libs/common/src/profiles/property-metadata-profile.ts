@@ -17,24 +17,21 @@ export class PropertyMetaDataProfile extends AutomapperProfile {
 
 	override get profile(): MappingProfile {
 		return (mapper) => {
-			const mappings: Array<[new () => any, new () => any]> = [
-				[CreatePropertyMetadataDto, PropertyCategory],
-				[UpdatePropertyMetadataDto, PropertyCategory],
-				[PropertyMetadataDto, PropertyCategory],
-				[CreatePropertyMetadataDto, PropertyType],
-				[UpdatePropertyMetadataDto, PropertyType],
-				[PropertyMetadataDto, PropertyType],
-				[CreatePropertyMetadataDto, PropertyStatus],
-				[UpdatePropertyMetadataDto, PropertyStatus],
-				[PropertyMetadataDto, PropertyStatus],
-				[CreatePropertyMetadataDto, PropertyPurpose],
-				[UpdatePropertyMetadataDto, PropertyPurpose],
-				[PropertyMetadataDto, PropertyPurpose],
-			];
+			createMap(mapper, PropertyCategory, CreatePropertyMetadataDto);
+			createMap(mapper, PropertyCategory, UpdatePropertyMetadataDto);
+			createMap(mapper, PropertyCategory, PropertyMetadataDto);
 
-			mappings.forEach(([dto, entity]) => {
-				createMap(mapper, dto, entity);
-			});
+			createMap(mapper, PropertyType, CreatePropertyMetadataDto);
+			createMap(mapper, PropertyType, UpdatePropertyMetadataDto);
+			createMap(mapper, PropertyType, PropertyMetadataDto);
+
+			createMap(mapper, PropertyStatus, CreatePropertyMetadataDto);
+			createMap(mapper, PropertyStatus, UpdatePropertyMetadataDto);
+			createMap(mapper, PropertyStatus, PropertyMetadataDto);
+
+			createMap(mapper, PropertyPurpose, CreatePropertyMetadataDto);
+			createMap(mapper, PropertyPurpose, UpdatePropertyMetadataDto);
+			createMap(mapper, PropertyPurpose, PropertyMetadataDto);
 		};
 	}
 }

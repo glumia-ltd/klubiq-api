@@ -211,9 +211,13 @@ export class AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			const errorMessage = firebaseErrorMessage
+				? firebaseErrorMessage
+				: err.message;
+
+			this.logger.error('Error generating password reset email:', err);
+
+			throw new FirebaseException(errorMessage);
 		}
 	}
 

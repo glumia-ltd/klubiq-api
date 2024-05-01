@@ -52,26 +52,17 @@ export class PropertiesStatusService {
 
 	async getPropertyStatusById(id: number): Promise<PropertyStatus> {
 		try {
-			const cachedPropertyStatus =
-				await this.cacheService.getCacheByIdentifier<PropertyMetadataDto>(
-					this.cacheKey,
-					'id',
-					id,
-				);
-			if (!cachedPropertyStatus) {
-				const propertyStatus = await this.propertyStatusRepository.findOneBy({
-					id: id,
-				});
-				if (!propertyStatus) {
-					throw new NotFoundException('Property status not found');
-				}
-				return this.mapper.map(
-					propertyStatus,
-					PropertyStatus,
-					PropertyMetadataDto,
-				);
+			const propertyStatus = await this.propertyStatusRepository.findOneBy({
+				id: id,
+			});
+			if (!propertyStatus) {
+				throw new NotFoundException('Property status not found');
 			}
-			return cachedPropertyStatus;
+			return this.mapper.map(
+				propertyStatus,
+				PropertyStatus,
+				PropertyMetadataDto,
+			);
 		} catch (err) {
 			this.logger.error('Error getting property status', err);
 			throw err;

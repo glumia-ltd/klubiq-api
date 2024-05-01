@@ -52,27 +52,17 @@ export class PropertiesCategoryService {
 
 	async getPropertyCategoryById(id: number): Promise<PropertyCategory> {
 		try {
-			const cachedPropertyCategory =
-				await this.cacheService.getCacheByIdentifier<PropertyMetadataDto>(
-					this.cacheKey,
-					'id',
-					id,
-				);
-			if (!cachedPropertyCategory) {
-				const propertyCategory =
-					await this.propertyCategoryRepository.findOneBy({
-						id: id,
-					});
-				if (!propertyCategory) {
-					throw new NotFoundException('Property category not found');
-				}
-				return this.mapper.map(
-					propertyCategory,
-					PropertyCategory,
-					PropertyMetadataDto,
-				);
+			const propertyCategory = await this.propertyCategoryRepository.findOneBy({
+				id: id,
+			});
+			if (!propertyCategory) {
+				throw new NotFoundException('Property category not found');
 			}
-			return cachedPropertyCategory;
+			return this.mapper.map(
+				propertyCategory,
+				PropertyCategory,
+				PropertyMetadataDto,
+			);
 		} catch (err) {
 			this.logger.error('Error getting property category', err);
 			throw err;

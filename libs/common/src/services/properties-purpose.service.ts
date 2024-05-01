@@ -52,26 +52,17 @@ export class PropertiesPurposeService {
 
 	async getPropertyPurposeById(id: number): Promise<PropertyPurpose> {
 		try {
-			const cachedPropertyPurpose =
-				await this.cacheService.getCacheByIdentifier<PropertyMetadataDto>(
-					this.cacheKey,
-					'id',
-					id,
-				);
-			if (!cachedPropertyPurpose) {
-				const propertyPurpose = await this.propertyPurposeRepository.findOneBy({
-					id: id,
-				});
-				if (!propertyPurpose) {
-					throw new NotFoundException('Property Purpose not found');
-				}
-				return this.mapper.map(
-					propertyPurpose,
-					PropertyPurpose,
-					PropertyMetadataDto,
-				);
+			const propertyPurpose = await this.propertyPurposeRepository.findOneBy({
+				id: id,
+			});
+			if (!propertyPurpose) {
+				throw new NotFoundException('Property Purpose not found');
 			}
-			return cachedPropertyPurpose;
+			return this.mapper.map(
+				propertyPurpose,
+				PropertyPurpose,
+				PropertyMetadataDto,
+			);
 		} catch (err) {
 			this.logger.error('Error getting property Purpose', err);
 			throw err;

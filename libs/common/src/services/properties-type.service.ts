@@ -51,21 +51,20 @@ export class PropertiesTypeService {
 
 	async getPropertyTypeById(id: number): Promise<PropertyType> {
 		try {
-			const cachedPropertyType =
-				await this.cacheService.getCacheByIdentifier<PropertyMetadataDto>(
-					this.cacheKey,
-					'id',
-					id,
-				);
-			if (!cachedPropertyType) {
-				const propertyType = await this.propertyTypeRepository.findOneBy({
-					id: id,
-				});
-				if (!propertyType) {
-					throw new NotFoundException('Property type not found');
-				}
-				return this.mapper.map(propertyType, PropertyType, PropertyMetadataDto);
+			const propertyType = await this.propertyTypeRepository.findOneBy({
+				id: id,
+			});
+
+			if (!propertyType) {
+				throw new NotFoundException('Property type not found');
 			}
+
+			const cachedPropertyType = await this.mapper.mapAsync(
+				propertyType,
+				PropertyType,
+				PropertyMetadataDto,
+			);
+
 			return cachedPropertyType;
 		} catch (err) {
 			this.logger.error('Error getting property type', err);
