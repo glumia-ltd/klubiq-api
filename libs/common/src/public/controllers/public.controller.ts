@@ -33,6 +33,10 @@ import {
 	UpdateFeatureDto,
 } from '../../dto/requests/feature-requests.dto';
 import { FeaturePermissionService } from '../../permissions/feature-permission.service';
+import {
+	CreateFeaturePermissionDto,
+	UpdateFeaturePermissionDto,
+} from '@app/common/dto/requests/permission-requests.dto';
 @ApiTags('public')
 @ApiSecurity('ApiKey')
 @Auth(AuthType.ApiKey)
@@ -137,7 +141,7 @@ export class PublicController {
 			return feature;
 		} catch (error) {
 			throw new HttpException(
-				'Failed to create new feature',
+				'Failed to update feature',
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
 		}
@@ -153,7 +157,7 @@ export class PublicController {
 			return isDeleted;
 		} catch (error) {
 			throw new HttpException(
-				'Failed to create new feature',
+				'Failed to delete feature',
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
 		}
@@ -170,6 +174,85 @@ export class PublicController {
 		} catch (error) {
 			throw new HttpException(
 				'Failed to get features permissions',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	@Get('features-permissions/:id')
+	@ApiOkResponse({ description: 'Get a feature-permission' })
+	async getFeaturesPermission(
+		@Param('id') id: number,
+	): Promise<ViewFeaturePermissionDto> {
+		try {
+			const resp =
+				await this.featurePermissionService.getFeaturePermissionsById(id);
+			return resp;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to get feature-permission',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	@Post('features-permissions')
+	@ApiCreatedResponse({
+		description: 'Creates a new feature-permission for the app',
+	})
+	async createFeaturePermission(
+		@Body() createFeaturePermissionDto: CreateFeaturePermissionDto,
+	): Promise<ViewFeaturePermissionDto> {
+		try {
+			const response =
+				await this.featurePermissionService.createFeaturePermission(
+					createFeaturePermissionDto,
+				);
+			return response;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to create new feature-permission',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	@Patch('features-permissions/:id')
+	@ApiOkResponse({
+		description: 'Updates a feature permission',
+		type: ViewFeaturePermissionDto,
+	})
+	async updateFeaturePermission(
+		@Param('id') id: number,
+		@Body() updateDto: UpdateFeaturePermissionDto,
+	): Promise<ViewFeaturePermissionDto> {
+		try {
+			const response =
+				await this.featurePermissionService.updateFeaturePermission(
+					id,
+					updateDto,
+				);
+			return response;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to update feature permission',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	@Delete('features-permissions/:id')
+	@ApiOkResponse({
+		description: 'Deletes a feature permission',
+	})
+	async deleteFeaturePermission(@Param('id') id: number) {
+		try {
+			const isDeleted =
+				await this.featurePermissionService.deleteFeaturePermission(id);
+			return isDeleted;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to delete feature permission',
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
 		}
