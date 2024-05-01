@@ -52,3 +52,6 @@ export class CreateFeaturePermissionDto {
 }
 
 export class UpdatePermissionDto extends PartialType(CreatePermissionDto) {}
+export class UpdateFeaturePermissionDto extends PartialType(
+	CreateFeaturePermissionDto,
+) {}

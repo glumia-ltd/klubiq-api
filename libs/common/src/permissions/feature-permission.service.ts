@@ -7,7 +7,10 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { FeaturePermission } from '../database/entities/feature-permission.entity';
 import { FeaturesPermissionRepository } from '../repositories/features-permission.repository';
 import { ViewFeaturePermissionDto } from '..';
-import { CreateFeaturePermissionDto } from '../dto/requests/permission-requests.dto';
+import {
+	CreateFeaturePermissionDto,
+	UpdateFeaturePermissionDto,
+} from '../dto/requests/permission-requests.dto';
 
 @Injectable()
 export class FeaturePermissionService {
@@ -54,7 +57,7 @@ export class FeaturePermissionService {
 				);
 			if (!cachedData) {
 				const featurePermission =
-					await this.featuresPermissionRepository.findOneBy({
+					await this.featuresPermissionRepository.findOneWithId({
 						featurePermissionId: id,
 					});
 				const data = await this.mapper.mapAsync(
@@ -87,6 +90,57 @@ export class FeaturePermissionService {
 				data,
 			);
 			return data;
+		} catch (err) {
+			this.logger.error('Error creating FeaturePermissions', err);
+			throw new Error(`Error creating FeaturePermissions. Error: ${err}`);
+		}
+	}
+
+	async updateFeaturePermission(
+		id: number,
+		updateDto: UpdateFeaturePermissionDto,
+	): Promise<ViewFeaturePermissionDto> {
+		try {
+			await this.featuresPermissionRepository.update(
+				{ featurePermissionId: id },
+				updateDto,
+			);
+			const updated =
+				await this.cacheService.updateCacheAfterUpsert<ViewFeaturePermissionDto>(
+					this.cacheKey,
+					'featurePermissionId',
+					id,
+					updateDto,
+				);
+			if (!updated) {
+				const updatedFeaturePermission =
+					await this.featuresPermissionRepository.findOneWithId({
+						featurePermissionId: id,
+					});
+				return this.mapper.map(
+					updatedFeaturePermission,
+					FeaturePermission,
+					ViewFeaturePermissionDto,
+				);
+			}
+			return updated;
+		} catch (err) {
+			this.logger.error('Error creating FeaturePermissions', err);
+			throw new Error(`Error creating FeaturePermissions. Error: ${err}`);
+		}
+	}
+
+	async deleteFeaturePermission(id: number): Promise<boolean> {
+		try {
+			await this.cacheService.updateCacheAfterdelete<ViewFeaturePermissionDto>(
+				this.cacheKey,
+				'featurePermissionId',
+				id,
+			);
+			const deleted = await this.featuresPermissionRepository.delete({
+				featurePermissionId: id,
+			});
+			return deleted.affected == 1;
 		} catch (err) {
 			this.logger.error('Error creating FeaturePermissions', err);
 			throw new Error(`Error creating FeaturePermissions. Error: ${err}`);
