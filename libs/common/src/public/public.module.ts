@@ -17,10 +17,12 @@ import { PropertyMetadataController } from './controllers/properties-metadata.co
 import { CacheService } from '../services/cache.service';
 import { FeaturePermissionService } from '../permissions/feature-permission.service';
 import { FeaturesPermissionRepository } from '../repositories/features-permission.repository';
+import { PropertyMetaDataProfile } from '../profiles/property-metadata-profile';
 
 @Module({
 	controllers: [PublicController, PropertyMetadataController],
 	providers: [
+		PropertyMetaDataProfile,
 		PermissionsService,
 		PermissionsRepository,
 		OrganizationRolesRepository,
