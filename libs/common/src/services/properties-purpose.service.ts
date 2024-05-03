@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PropertyPurpose } from '@app/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import {
@@ -11,11 +10,13 @@ import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheService } from './cache.service';
 import { Cache } from 'cache-manager';
+import { CacheKeys } from '../config/config.constants';
+import { PropertyPurpose } from '../database/entities/property-purpose.entity';
 
 @Injectable()
 export class PropertiesPurposeService {
 	private readonly logger = new Logger(PropertiesPurposeService.name);
-	private readonly cacheKey = 'property-purpose';
+	private readonly cacheKey = CacheKeys.PROPERTY_PURPOSES;
 	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		private readonly propertyPurposeRepository: PropertyPurposeRepository,

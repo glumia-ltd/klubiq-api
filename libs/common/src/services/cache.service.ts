@@ -26,7 +26,8 @@ export class CacheService {
 		identifier: any,
 	): Promise<T> {
 		const cachedList = await this.cacheManager.get<T[]>(cacheKey);
-		return cachedList.find((f) => f[key] == identifier);
+		if (cachedList && cachedList.length > 0)
+			return cachedList.find((f) => f[key] == identifier);
 	}
 
 	// This updates cache after create
@@ -50,7 +51,7 @@ export class CacheService {
 	): Promise<T> {
 		const cachedList = await this.cacheManager.get<T[]>(cacheKey);
 		let updatedCache: T;
-		if (cachedList) {
+		if (cachedList && cachedList.length > 0) {
 			const data = cachedList.map((cache) => {
 				if (cache[key] == identifier) {
 					updatedCache = { ...cache, ...updateDto } as T;
@@ -70,7 +71,7 @@ export class CacheService {
 		identifier: any,
 	): Promise<void> {
 		const cachedList = await this.cacheManager.get<T[]>(cacheKey);
-		if (cachedList) {
+		if (cachedList && cachedList.length > 0) {
 			this.cacheManager.set(
 				cacheKey,
 				cachedList.filter((f) => f[key] != identifier),
