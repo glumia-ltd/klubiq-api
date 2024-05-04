@@ -18,6 +18,11 @@ export class CreatePermissionDto {
 	})
 	@IsString()
 	description?: string;
+
+	@AutoMap()
+	@ApiProperty()
+	@IsString()
+	alias?: string;
 }
 
 export class CreateFeaturePermissionDto {
@@ -27,7 +32,7 @@ export class CreateFeaturePermissionDto {
 		example: 'permission_feature_access',
 	})
 	@IsString()
-	alias: string;
+	alias?: string;
 
 	@AutoMap()
 	@ApiProperty({

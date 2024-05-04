@@ -24,6 +24,10 @@ export class OrganizationRole {
 	name: string;
 
 	@AutoMap()
+	@Column()
+	alias?: string;
+
+	@AutoMap()
 	@Column({ type: 'text', nullable: true })
 	description?: string;
 
@@ -53,5 +57,5 @@ export class OrganizationRole {
 			referencedColumnName: 'featurePermissionId',
 		},
 	})
-	featurePermissions: FeaturePermission[];
+	featurePermissions?: FeaturePermission[];
 }

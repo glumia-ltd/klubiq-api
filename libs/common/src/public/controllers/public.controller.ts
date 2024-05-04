@@ -16,7 +16,10 @@ import {
 	ApiTags,
 } from '@nestjs/swagger';
 import { PermissionsService } from '../../permissions/permissions.service';
-import { ViewOrgRoleDto } from '../../dto/responses/org-role.dto';
+import {
+	OrgRoleResponseDto,
+	ViewSystemRoleDto,
+} from '../../dto/responses/org-role.dto';
 import { Auth, AuthType } from '@app/auth';
 import {
 	PropertiesCategoryService,
@@ -37,6 +40,9 @@ import {
 	CreateFeaturePermissionDto,
 	UpdateFeaturePermissionDto,
 } from '@app/common/dto/requests/permission-requests.dto';
+import { RolesService } from '../../permissions/roles.service';
+import { CreateRoleDto, UpdateRoleDto } from '../../dto/requests/role.dto';
+
 @ApiTags('public')
 @ApiSecurity('ApiKey')
 @Auth(AuthType.ApiKey)
@@ -50,21 +56,8 @@ export class PublicController {
 		private readonly propertyPurposeService: PropertiesPurposeService,
 		private readonly featuresService: FeaturesService,
 		private readonly featurePermissionService: FeaturePermissionService,
+		private readonly roleService: RolesService,
 	) {}
-
-	@Get('roles')
-	@ApiOkResponse({ description: 'Get all roles' })
-	async getRoles(): Promise<ViewOrgRoleDto[]> {
-		try {
-			const roles = await this.permissionService.getOrgRoles();
-			return roles;
-		} catch (error) {
-			throw new HttpException(
-				'Failed to get roles',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
-		}
-	}
 
 	@Get('property-metadata')
 	async getPropertyFormViewData() {
@@ -257,4 +250,167 @@ export class PublicController {
 			);
 		}
 	}
+	//#endregion
+
+	//#region  REGION ----- SYSTEM-ROLE
+	@Get('system-roles')
+	@ApiOkResponse({ description: 'Get all system roles' })
+	async getSystemRoles(): Promise<ViewSystemRoleDto[]> {
+		try {
+			const resp = await this.roleService.getSystemRoles();
+			return resp;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to get system roles',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+	@Get('system-roles/:id')
+	@ApiOkResponse({ description: 'Get a system role' })
+	async getSystemRole(@Param('id') id: number): Promise<ViewSystemRoleDto> {
+		try {
+			const resp = await this.roleService.getSystemRoleById(id);
+			return resp;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to get system role',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+	@Post('system-roles')
+	@ApiCreatedResponse({
+		description: 'Creates a new system role for the app',
+	})
+	async createSystemRole(
+		@Body() createSystemRoleDto: CreateRoleDto,
+	): Promise<ViewSystemRoleDto> {
+		try {
+			const response =
+				await this.roleService.createSystemRole(createSystemRoleDto);
+			return response;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to create new system role',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	@Patch('system-roles/:id')
+	@ApiOkResponse({
+		description: 'Updates a system role',
+		type: ViewSystemRoleDto,
+	})
+	async updateSystemRole(
+		@Param('id') id: number,
+		@Body() updateDto: UpdateRoleDto,
+	): Promise<ViewSystemRoleDto> {
+		try {
+			const response = await this.roleService.updateSystemRole(id, updateDto);
+			return response;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to update system role',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+	@Delete('system-roles/:id')
+	@ApiOkResponse({
+		description: 'Deletes a system role',
+	})
+	async deleteSystemRole(@Param('id') id: number) {
+		try {
+			const isDeleted = await this.roleService.deleteSystemRole(id);
+			return isDeleted;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to delete system role',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+	//#endregion
+
+	//#region   REGION ----- ORGANIZATION-ROLE
+	@Get('organization-roles')
+	@ApiOkResponse({ description: 'Get all organization roles' })
+	async getOrgRoles(): Promise<OrgRoleResponseDto[]> {
+		try {
+			const resp = await this.roleService.getOrgRoles();
+			return resp;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to get org roles',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	@Get('organization-roles/:id')
+	@ApiOkResponse({ description: 'Get an organization role' })
+	async getOrgRole(@Param('id') id: number): Promise<OrgRoleResponseDto> {
+		try {
+			const resp = await this.roleService.getOrgRoleById(id);
+			return resp;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to get org role',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+	@Post('organization-roles')
+	@ApiCreatedResponse({
+		description: 'Creates a new organization role for the app',
+	})
+	async createOrgRole(
+		@Body() createOrgRoleDto: CreateRoleDto,
+	): Promise<OrgRoleResponseDto> {
+		try {
+			return await this.roleService.createOrgRole(createOrgRoleDto);
+		} catch (error) {
+			throw new HttpException(
+				'Failed to create new org role',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	@Patch('organization-roles/:id')
+	@ApiOkResponse({
+		description: 'Updates an organization role',
+		type: OrgRoleResponseDto,
+	})
+	async updateOrgRole(
+		@Param('id') id: number,
+		@Body() updateDto: UpdateRoleDto,
+	): Promise<OrgRoleResponseDto> {
+		try {
+			const response = await this.roleService.updateOrgRole(id, updateDto);
+			return response;
+		} catch (error) {
+			throw new HttpException(
+				'Failed to update org role',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+	@Delete('organization-roles/:id')
+	@ApiOkResponse({
+		description: 'Deletes an organization role',
+	})
+	async deleteOrgRole(@Param('id') id: number) {
+		try {
+			await this.roleService.deleteOrgRole(id);
+		} catch (error) {
+			throw new HttpException(
+				'Failed to delete org role',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+	//#endregion
 }

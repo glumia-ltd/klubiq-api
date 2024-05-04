@@ -14,6 +14,10 @@ export class CacheService {
 		return await this.cacheManager.get<T[]>(cacheKey);
 	}
 
+	async removeCacheData(cacheKey: string): Promise<void> {
+		await this.cacheManager.del(cacheKey);
+	}
+
 	// sets all cache data
 	async setCache<T>(data: T, cacheKey: string): Promise<void> {
 		await this.cacheManager.set(cacheKey, data);

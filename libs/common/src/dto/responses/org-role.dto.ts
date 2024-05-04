@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 // import { ViewFeaturePermissionDto, ViewRoleFeaturePermissionDto } from './feature-permission.dto';
 import { Role } from '../../database/entities/role.entity';
 import { MapperPickType } from '@automapper/classes/mapped-types';
+import { ViewFeaturePermissionDto } from './feature-permission.dto';
 
 export class ViewOrgRoleDto {
 	@AutoMap()
@@ -30,4 +31,8 @@ export class OrgRoleResponseDto {
 	@AutoMap()
 	@ApiProperty()
 	description?: string;
+
+	@AutoMap(() => [ViewFeaturePermissionDto])
+	@ApiProperty()
+	featurePermissions: ViewFeaturePermissionDto[];
 }

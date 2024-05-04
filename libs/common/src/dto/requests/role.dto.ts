@@ -12,18 +12,27 @@ export class CreateRoleDto {
 	@ApiProperty()
 	@IsString()
 	description?: string;
+
+	@AutoMap()
+	@ApiProperty()
+	@IsString()
+	alias?: string;
 }
 
 export class UpdateRoleDto extends PartialType(CreateRoleDto) {}
 
-export class CreateOrgRoleDto {
+export class CreateRoleFeaturePermission extends CreateRoleDto {
 	@AutoMap()
 	@ApiProperty()
-	name: string;
-
-	@AutoMap()
-	@ApiProperty()
-	description?: string;
+	featurePermissionIds?: number[];
 }
 
-export class UpdateOrgRoleDto extends PartialType(CreateOrgRoleDto) {}
+export class UpdateRoleFeaturePermissionDto extends PartialType(CreateRoleDto) {
+	@AutoMap()
+	@ApiProperty()
+	oldFeaturePermissionIds?: number[];
+
+	@AutoMap()
+	@ApiProperty()
+	newFeaturePermissionIds?: number[];
+}
