@@ -53,7 +53,7 @@ export class RolesService {
 			return data;
 		} catch (error) {
 			this.logger.error('Error getting system roles', error);
-			throw new Error(`Error getting system roles. Error: ${error}`);
+			throw error;
 		}
 	}
 
@@ -78,9 +78,7 @@ export class RolesService {
 			return cachedData;
 		} catch (error) {
 			this.logger.error('Error getting system role by id', error);
-			throw new Error(
-				`Error getting system role by id: : ${id}. Error: ${error}`,
-			);
+			throw error;
 		}
 	}
 
@@ -101,9 +99,7 @@ export class RolesService {
 			return data;
 		} catch (error) {
 			this.logger.error('Error creating system role', error);
-			throw new Error(
-				`Error creating system role: ${createRoleDto.name}. Error: ${error}`,
-			);
+			throw error;
 		}
 	}
 
@@ -127,7 +123,7 @@ export class RolesService {
 			return updated;
 		} catch (error) {
 			this.logger.error('Error updating system role', error);
-			throw new Error(`Error updating system role: ${id}. Error: ${error}`);
+			throw error;
 		}
 	}
 
@@ -142,7 +138,7 @@ export class RolesService {
 			return deleted.affected == 1;
 		} catch (error) {
 			this.logger.error('Error deleting system role', error);
-			throw new Error(`Error deleting system role: ${id}. Error: ${error}`);
+			throw error;
 		}
 	}
 	//#endregion
@@ -163,9 +159,8 @@ export class RolesService {
 			await this.cacheService.setCache(data, this.orgRoleCacheKey);
 			return data;
 		} catch (error) {
-			console.log('ERROR HERE: ', error);
 			this.logger.error('Error getting org roles', error);
-			throw new Error(`Error getting org roles. Error: ${error}`);
+			throw error;
 		}
 	}
 
@@ -189,9 +184,8 @@ export class RolesService {
 			}
 			return cachedData;
 		} catch (error) {
-			console.log('ERROR HERE: ', error);
 			this.logger.error('Error getting org role by id', error);
-			throw new Error(`Error getting org role by id: ${id}. Error: ${error}`);
+			throw error;
 		}
 	}
 
@@ -214,11 +208,8 @@ export class RolesService {
 			);
 			return data;
 		} catch (error) {
-			console.log('ERROR HERE: ', error);
 			this.logger.error('Error creating org role', error);
-			throw new Error(
-				`Error creating org role: ${createRoleDto.name}. Error: ${error}`,
-			);
+			throw error;
 		}
 	}
 
@@ -242,10 +233,8 @@ export class RolesService {
 			);
 			return data;
 		} catch (error) {
-			console.error('UPDATE ERROR: ', error);
-
 			this.logger.error(`Error updating org role: ${id}`, error);
-			throw new Error(`Error updating org role: ${id}. Error: ${error}`);
+			throw error;
 		}
 	}
 
@@ -259,7 +248,7 @@ export class RolesService {
 			);
 		} catch (error) {
 			this.logger.error('Error deleting org role', error);
-			throw new Error(`Error deleting org role: ${id}. Error: ${error}`);
+			throw error;
 		}
 	}
 	//#endregion

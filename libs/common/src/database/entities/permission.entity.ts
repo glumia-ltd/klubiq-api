@@ -21,7 +21,7 @@ export class Permission {
 	name: string;
 
 	@AutoMap()
-	@Column()
+	@Column({ length: 50, nullable: true })
 	alias?: string;
 
 	@AutoMap()

@@ -3,8 +3,6 @@ import {
 	Controller,
 	Delete,
 	Get,
-	HttpException,
-	HttpStatus,
 	Param,
 	Patch,
 	Post,
@@ -83,10 +81,7 @@ export class PublicController {
 			const features = await this.featuresService.getAppFeatures();
 			return features;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get features',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -97,10 +92,7 @@ export class PublicController {
 			const featureData = await this.featuresService.getFeatureById(id);
 			return featureData;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get feature by id',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -113,10 +105,7 @@ export class PublicController {
 			const feature = await this.featuresService.create(createFeatureDto);
 			return feature;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to create new feature',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -133,10 +122,7 @@ export class PublicController {
 			const feature = await this.featuresService.update(id, updateFeatureDto);
 			return feature;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to update feature',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -149,10 +135,7 @@ export class PublicController {
 			const isDeleted = await this.featuresService.delete(id);
 			return isDeleted;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to delete feature',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 	//#endregion
@@ -165,10 +148,7 @@ export class PublicController {
 			const resp = await this.featurePermissionService.getFeaturePermissions();
 			return resp;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get features permissions',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -182,10 +162,7 @@ export class PublicController {
 				await this.featurePermissionService.getFeaturePermissionsById(id);
 			return resp;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get feature-permission',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -203,10 +180,7 @@ export class PublicController {
 				);
 			return response;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to create new feature-permission',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -227,10 +201,7 @@ export class PublicController {
 				);
 			return response;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to update feature permission',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -244,10 +215,7 @@ export class PublicController {
 				await this.featurePermissionService.deleteFeaturePermission(id);
 			return isDeleted;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to delete feature permission',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 	//#endregion
@@ -260,10 +228,7 @@ export class PublicController {
 			const resp = await this.roleService.getSystemRoles();
 			return resp;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get system roles',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 	@Get('system-roles/:id')
@@ -273,10 +238,7 @@ export class PublicController {
 			const resp = await this.roleService.getSystemRoleById(id);
 			return resp;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get system role',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 	@Post('system-roles')
@@ -291,10 +253,7 @@ export class PublicController {
 				await this.roleService.createSystemRole(createSystemRoleDto);
 			return response;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to create new system role',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -311,10 +270,7 @@ export class PublicController {
 			const response = await this.roleService.updateSystemRole(id, updateDto);
 			return response;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to update system role',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 	@Delete('system-roles/:id')
@@ -326,10 +282,7 @@ export class PublicController {
 			const isDeleted = await this.roleService.deleteSystemRole(id);
 			return isDeleted;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to delete system role',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 	//#endregion
@@ -342,10 +295,7 @@ export class PublicController {
 			const resp = await this.roleService.getOrgRoles();
 			return resp;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get org roles',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -356,12 +306,10 @@ export class PublicController {
 			const resp = await this.roleService.getOrgRoleById(id);
 			return resp;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get org role',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
+
 	@Post('organization-roles')
 	@ApiCreatedResponse({
 		description: 'Creates a new organization role for the app',
@@ -372,10 +320,7 @@ export class PublicController {
 		try {
 			return await this.roleService.createOrgRole(createOrgRoleDto);
 		} catch (error) {
-			throw new HttpException(
-				'Failed to create new org role',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -392,10 +337,7 @@ export class PublicController {
 			const response = await this.roleService.updateOrgRole(id, updateDto);
 			return response;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to update org role',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 	@Delete('organization-roles/:id')
@@ -406,10 +348,7 @@ export class PublicController {
 		try {
 			await this.roleService.deleteOrgRole(id);
 		} catch (error) {
-			throw new HttpException(
-				'Failed to delete org role',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 	//#endregion
