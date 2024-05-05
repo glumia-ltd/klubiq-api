@@ -6,6 +6,7 @@ import {
 	Param,
 	Patch,
 	Post,
+	Put,
 } from '@nestjs/common';
 import {
 	ApiCreatedResponse,
@@ -39,7 +40,11 @@ import {
 	UpdateFeaturePermissionDto,
 } from '@app/common/dto/requests/permission-requests.dto';
 import { RolesService } from '../../permissions/roles.service';
-import { CreateRoleDto, UpdateRoleDto } from '../../dto/requests/role.dto';
+import {
+	CreateRoleDto,
+	UpdateRoleDto,
+	UpdateRoleFeaturePermissionDto,
+} from '../../dto/requests/role.dto';
 
 @ApiTags('public')
 @ApiSecurity('ApiKey')
@@ -324,14 +329,14 @@ export class PublicController {
 		}
 	}
 
-	@Patch('organization-roles/:id')
+	@Put('organization-roles/:id')
 	@ApiOkResponse({
 		description: 'Updates an organization role',
 		type: OrgRoleResponseDto,
 	})
 	async updateOrgRole(
 		@Param('id') id: number,
-		@Body() updateDto: UpdateRoleDto,
+		@Body() updateDto: UpdateRoleFeaturePermissionDto,
 	): Promise<OrgRoleResponseDto> {
 		try {
 			const response = await this.roleService.updateOrgRole(id, updateDto);
@@ -340,6 +345,7 @@ export class PublicController {
 			throw error;
 		}
 	}
+
 	@Delete('organization-roles/:id')
 	@ApiOkResponse({
 		description: 'Deletes an organization role',
