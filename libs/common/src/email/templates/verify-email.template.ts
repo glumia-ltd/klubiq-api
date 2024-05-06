@@ -19,7 +19,7 @@ export const verifyEmailTemplate = () => ({
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
           <link
-            href="https://fonts.googleapis.com/css2?family=Inter&family=Ubuntu:wght@300;400&display=swap"
+            href="https://fonts.googleapis.com/css2?family=roboto&family=Open%20Sans:wght@300;400&display=swap"
             rel="stylesheet"
           />
           <title>Klubiq Email Verification</title>
@@ -39,7 +39,7 @@ export const verifyEmailTemplate = () => ({
             }
           </style>
         </head>
-        <body style="padding-inline: 3em; color: #000; font-family: 'Google Sans'">
+        <body style="padding-inline: 3em; color: #000; font-family: 'roboto'">
           <div class="container">
             <div
               style="

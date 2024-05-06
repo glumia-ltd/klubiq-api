@@ -18,9 +18,13 @@ import { CacheService } from '../services/cache.service';
 import { FeaturePermissionService } from '../permissions/feature-permission.service';
 import { FeaturesPermissionRepository } from '../repositories/features-permission.repository';
 import { PropertyMetaDataProfile } from '../profiles/property-metadata-profile';
+import { PermissionsModule } from '../permissions/permissions.module';
+import { RolesService } from '../permissions/roles.service';
+import { RolesRepository } from '../repositories/roles.repository';
 
 @Module({
 	controllers: [PublicController, PropertyMetadataController],
+	imports: [PermissionsModule],
 	providers: [
 		PropertyMetaDataProfile,
 		PermissionsService,
@@ -38,6 +42,8 @@ import { PropertyMetaDataProfile } from '../profiles/property-metadata-profile';
 		PropertyStatusRepository,
 		FeaturePermissionService,
 		FeaturesPermissionRepository,
+		RolesService,
+		RolesRepository,
 		{
 			provide: CacheService,
 			useFactory: () => new CacheService(null, 60 * 60 * 24),

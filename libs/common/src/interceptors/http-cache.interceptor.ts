@@ -6,7 +6,6 @@ export class HttpCacheInterceptor extends CacheInterceptor {
 	trackBy(context: ExecutionContext): string | undefined {
 		const request = context.switchToHttp().getRequest();
 		const { method, url } = request;
-		console.log('Request: ', request.url);
 		return `${method}:${url}`;
 	}
 }

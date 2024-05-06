@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PropertyCategory } from '@app/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { PropertyCategoryRepository } from '../repositories/properties-category.repository';
@@ -11,11 +10,13 @@ import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
 import { CacheService } from './cache.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { CacheKeys } from '../config/config.constants';
+import { PropertyCategory } from '../database/entities/property-category.entity';
 
 @Injectable()
 export class PropertiesCategoryService {
 	private readonly logger = new Logger(PropertiesCategoryService.name);
-	private readonly cacheKey = 'property-categories';
+	private readonly cacheKey = CacheKeys.PROPERTY_CATEGORIES;
 	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		private readonly propertyCategoryRepository: PropertyCategoryRepository,

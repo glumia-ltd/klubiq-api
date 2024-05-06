@@ -3,10 +3,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PermissionsRepository } from '../repositories/permissions.repository';
 import { OrganizationRolesRepository } from '../repositories/organization-roles.repository';
 import { FeaturesRepository } from '../repositories/features.repository';
-import { OrganizationRole } from '../database/entities/organization-role.entity';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { ViewOrgRoleDto } from '../dto/responses/org-role.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CacheService } from '../services/cache.service';
@@ -16,12 +14,13 @@ import {
 	CreatePermissionDto,
 	UpdatePermissionDto,
 } from '../dto/requests/permission-requests.dto';
+import { CacheKeys } from '..';
 
 @Injectable()
 export class PermissionsService {
 	private readonly logger = new Logger(PermissionsService.name);
-	private readonly rolesCacheKey = 'roles';
-	private readonly permissionsCacheKey = 'permissions';
+	private readonly rolesPermissionCacheKey = CacheKeys.ROLES_PERMISSIONS;
+	private readonly permissionsCacheKey = CacheKeys.PERMISSIONS;
 	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		@InjectMapper() private readonly mapper: Mapper,
@@ -31,24 +30,6 @@ export class PermissionsService {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 
-	async getOrgRoles(): Promise<ViewOrgRoleDto[]> {
-		try {
-			const cachedData = await this.cacheService.getCache<ViewOrgRoleDto>(
-				this.rolesCacheKey,
-			);
-			if (cachedData) return cachedData;
-			const roles = await this.organizationRoleRepository.findAll();
-			const data = await this.mapper.mapArrayAsync(
-				roles,
-				OrganizationRole,
-				ViewOrgRoleDto,
-			);
-			await this.cacheService.setCache(data, this.rolesCacheKey);
-			return data;
-		} catch (err) {
-			throw err;
-		}
-	}
 	// gets all app permissions
 	async getPermissions(): Promise<ViewPermissionDto[]> {
 		try {

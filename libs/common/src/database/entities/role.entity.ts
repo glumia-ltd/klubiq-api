@@ -11,6 +11,7 @@ import { AutoMap } from '@automapper/classes';
 
 @Entity({ schema: 'kdo' })
 export class Role {
+	@AutoMap()
 	@PrimaryGeneratedColumn()
 	id?: number;
 
@@ -18,6 +19,7 @@ export class Role {
 	@Column({ length: 255, unique: true })
 	name: string;
 
+	@AutoMap()
 	@Column({ type: 'text', nullable: true })
 	description?: string;
 

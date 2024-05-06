@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PropertyStatus } from '@app/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import {
@@ -11,11 +10,13 @@ import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheService } from './cache.service';
 import { Cache } from 'cache-manager';
+import { CacheKeys } from '../config/config.constants';
+import { PropertyStatus } from '../database/entities/property-status.entity';
 
 @Injectable()
 export class PropertiesStatusService {
 	private readonly logger = new Logger(PropertiesStatusService.name);
-	private readonly cacheKey = 'property-status';
+	private readonly cacheKey = CacheKeys.PROPERTY_STATUSES;
 	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		private readonly propertyStatusRepository: PropertyStatusRepository,

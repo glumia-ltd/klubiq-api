@@ -12,11 +12,12 @@ import {
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CacheService } from './cache.service';
+import { CacheKeys } from '..';
 
 @Injectable()
 export class FeaturesService {
 	private readonly logger = new Logger(FeaturesService.name);
-	private readonly cacheKey = 'features';
+	private readonly cacheKey = CacheKeys.FEATURES;
 	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		@InjectMapper() private readonly mapper: Mapper,

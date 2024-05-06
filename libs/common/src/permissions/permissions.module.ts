@@ -4,6 +4,9 @@ import { PermissionsService } from './permissions.service';
 import { CommonProfile } from '../profiles/common-profile';
 import { FeaturePermissionService } from './feature-permission.service';
 import { FeaturesPermissionRepository } from '../repositories/features-permission.repository';
+import { RolesService } from './roles.service';
+import { RolesRepository } from '../repositories/roles.repository';
+import { OrganizationRolesRepository } from '../repositories/organization-roles.repository';
 
 @Module({
 	imports: [RepositoriesModule],
@@ -12,6 +15,9 @@ import { FeaturesPermissionRepository } from '../repositories/features-permissio
 		CommonProfile,
 		FeaturePermissionService,
 		FeaturesPermissionRepository,
+		RolesService,
+		RolesRepository,
+		OrganizationRolesRepository,
 	],
 	exports: [PermissionsService],
 })

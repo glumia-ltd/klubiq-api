@@ -3,11 +3,10 @@ import {
 	Controller,
 	Delete,
 	Get,
-	HttpException,
-	HttpStatus,
 	Param,
 	Patch,
 	Post,
+	Put,
 } from '@nestjs/common';
 import {
 	ApiCreatedResponse,
@@ -16,7 +15,10 @@ import {
 	ApiTags,
 } from '@nestjs/swagger';
 import { PermissionsService } from '../../permissions/permissions.service';
-import { ViewOrgRoleDto } from '../../dto/responses/org-role.dto';
+import {
+	OrgRoleResponseDto,
+	ViewSystemRoleDto,
+} from '../../dto/responses/org-role.dto';
 import { Auth, AuthType } from '@app/auth';
 import {
 	PropertiesCategoryService,
@@ -37,6 +39,13 @@ import {
 	CreateFeaturePermissionDto,
 	UpdateFeaturePermissionDto,
 } from '@app/common/dto/requests/permission-requests.dto';
+import { RolesService } from '../../permissions/roles.service';
+import {
+	CreateRoleDto,
+	UpdateRoleDto,
+	UpdateRoleFeaturePermissionDto,
+} from '../../dto/requests/role.dto';
+
 @ApiTags('public')
 @ApiSecurity('ApiKey')
 @Auth(AuthType.ApiKey)
@@ -50,21 +59,8 @@ export class PublicController {
 		private readonly propertyPurposeService: PropertiesPurposeService,
 		private readonly featuresService: FeaturesService,
 		private readonly featurePermissionService: FeaturePermissionService,
+		private readonly roleService: RolesService,
 	) {}
-
-	@Get('roles')
-	@ApiOkResponse({ description: 'Get all roles' })
-	async getRoles(): Promise<ViewOrgRoleDto[]> {
-		try {
-			const roles = await this.permissionService.getOrgRoles();
-			return roles;
-		} catch (error) {
-			throw new HttpException(
-				'Failed to get roles',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
-		}
-	}
 
 	@Get('property-metadata')
 	async getPropertyFormViewData() {
@@ -90,10 +86,7 @@ export class PublicController {
 			const features = await this.featuresService.getAppFeatures();
 			return features;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get features',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -104,10 +97,7 @@ export class PublicController {
 			const featureData = await this.featuresService.getFeatureById(id);
 			return featureData;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get feature by id',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -120,10 +110,7 @@ export class PublicController {
 			const feature = await this.featuresService.create(createFeatureDto);
 			return feature;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to create new feature',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -140,10 +127,7 @@ export class PublicController {
 			const feature = await this.featuresService.update(id, updateFeatureDto);
 			return feature;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to update feature',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -156,10 +140,7 @@ export class PublicController {
 			const isDeleted = await this.featuresService.delete(id);
 			return isDeleted;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to delete feature',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 	//#endregion
@@ -172,10 +153,7 @@ export class PublicController {
 			const resp = await this.featurePermissionService.getFeaturePermissions();
 			return resp;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get features permissions',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -189,10 +167,7 @@ export class PublicController {
 				await this.featurePermissionService.getFeaturePermissionsById(id);
 			return resp;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to get feature-permission',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -210,10 +185,7 @@ export class PublicController {
 				);
 			return response;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to create new feature-permission',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -234,10 +206,7 @@ export class PublicController {
 				);
 			return response;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to update feature permission',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
 
@@ -251,10 +220,142 @@ export class PublicController {
 				await this.featurePermissionService.deleteFeaturePermission(id);
 			return isDeleted;
 		} catch (error) {
-			throw new HttpException(
-				'Failed to delete feature permission',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			throw error;
 		}
 	}
+	//#endregion
+
+	//#region  REGION ----- SYSTEM-ROLE
+	@Get('system-roles')
+	@ApiOkResponse({ description: 'Get all system roles' })
+	async getSystemRoles(): Promise<ViewSystemRoleDto[]> {
+		try {
+			const resp = await this.roleService.getSystemRoles();
+			return resp;
+		} catch (error) {
+			throw error;
+		}
+	}
+	@Get('system-roles/:id')
+	@ApiOkResponse({ description: 'Get a system role' })
+	async getSystemRole(@Param('id') id: number): Promise<ViewSystemRoleDto> {
+		try {
+			const resp = await this.roleService.getSystemRoleById(id);
+			return resp;
+		} catch (error) {
+			throw error;
+		}
+	}
+	@Post('system-roles')
+	@ApiCreatedResponse({
+		description: 'Creates a new system role for the app',
+	})
+	async createSystemRole(
+		@Body() createSystemRoleDto: CreateRoleDto,
+	): Promise<ViewSystemRoleDto> {
+		try {
+			const response =
+				await this.roleService.createSystemRole(createSystemRoleDto);
+			return response;
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	@Patch('system-roles/:id')
+	@ApiOkResponse({
+		description: 'Updates a system role',
+		type: ViewSystemRoleDto,
+	})
+	async updateSystemRole(
+		@Param('id') id: number,
+		@Body() updateDto: UpdateRoleDto,
+	): Promise<ViewSystemRoleDto> {
+		try {
+			const response = await this.roleService.updateSystemRole(id, updateDto);
+			return response;
+		} catch (error) {
+			throw error;
+		}
+	}
+	@Delete('system-roles/:id')
+	@ApiOkResponse({
+		description: 'Deletes a system role',
+	})
+	async deleteSystemRole(@Param('id') id: number) {
+		try {
+			const isDeleted = await this.roleService.deleteSystemRole(id);
+			return isDeleted;
+		} catch (error) {
+			throw error;
+		}
+	}
+	//#endregion
+
+	//#region   REGION ----- ORGANIZATION-ROLE
+	@Get('organization-roles')
+	@ApiOkResponse({ description: 'Get all organization roles' })
+	async getOrgRoles(): Promise<OrgRoleResponseDto[]> {
+		try {
+			const resp = await this.roleService.getOrgRoles();
+			return resp;
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	@Get('organization-roles/:id')
+	@ApiOkResponse({ description: 'Get an organization role' })
+	async getOrgRole(@Param('id') id: number): Promise<OrgRoleResponseDto> {
+		try {
+			const resp = await this.roleService.getOrgRoleById(id);
+			return resp;
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	@Post('organization-roles')
+	@ApiCreatedResponse({
+		description: 'Creates a new organization role for the app',
+	})
+	async createOrgRole(
+		@Body() createOrgRoleDto: CreateRoleDto,
+	): Promise<OrgRoleResponseDto> {
+		try {
+			return await this.roleService.createOrgRole(createOrgRoleDto);
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	@Put('organization-roles/:id')
+	@ApiOkResponse({
+		description: 'Updates an organization role',
+		type: OrgRoleResponseDto,
+	})
+	async updateOrgRole(
+		@Param('id') id: number,
+		@Body() updateDto: UpdateRoleFeaturePermissionDto,
+	): Promise<OrgRoleResponseDto> {
+		try {
+			const response = await this.roleService.updateOrgRole(id, updateDto);
+			return response;
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	@Delete('organization-roles/:id')
+	@ApiOkResponse({
+		description: 'Deletes an organization role',
+	})
+	async deleteOrgRole(@Param('id') id: number) {
+		try {
+			await this.roleService.deleteOrgRole(id);
+		} catch (error) {
+			throw error;
+		}
+	}
+	//#endregion
 }

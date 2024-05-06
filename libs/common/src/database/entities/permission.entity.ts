@@ -21,6 +21,10 @@ export class Permission {
 	name: string;
 
 	@AutoMap()
+	@Column({ length: 50, nullable: true })
+	alias?: string;
+
+	@AutoMap()
 	@Column({ type: 'text', nullable: true })
 	description?: string;
 

@@ -6,7 +6,7 @@ import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { FeaturePermission } from '../database/entities/feature-permission.entity';
 import { FeaturesPermissionRepository } from '../repositories/features-permission.repository';
-import { ViewFeaturePermissionDto } from '..';
+import { CacheKeys, ViewFeaturePermissionDto } from '..';
 import {
 	CreateFeaturePermissionDto,
 	UpdateFeaturePermissionDto,
@@ -15,7 +15,7 @@ import {
 @Injectable()
 export class FeaturePermissionService {
 	private readonly logger = new Logger(FeaturePermissionService.name);
-	private readonly cacheKey = 'feature-permissions';
+	private readonly cacheKey = CacheKeys.FEATURE_PERMISSIONS;
 	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		private readonly featuresPermissionRepository: FeaturesPermissionRepository,
@@ -68,6 +68,7 @@ export class FeaturePermissionService {
 				await this.cacheService.setCache(data, this.cacheKey);
 				return data;
 			}
+			return cachedData;
 		} catch (err) {
 			this.logger.error('Error getting FeaturePermission by id', err);
 			throw new Error(`Error getting FeaturePermission by id.. Error: ${err}`);

@@ -47,6 +47,20 @@ export enum CreateUserEventTypes {
 	INVITE_ORG_USER,
 }
 
+export enum CacheKeys {
+	ORG_ROLES = 'org-roles',
+	SYSTEM_ROLES = 'system-roles',
+	ROLES_PERMISSIONS = 'roles-permission',
+	PERMISSIONS = 'permissions',
+	FEATURE_PERMISSIONS = 'feature-permissions',
+	FEATURES = 'features',
+	FEATURE_PERMISSIONS_BY_FEATURE = 'feature-permissions-by-feature',
+	PROPERTY_CATEGORIES = 'property-categories',
+	PROPERTY_TYPES = 'property-types',
+	PROPERTY_STATUSES = 'property-status',
+	PROPERTY_PURPOSES = 'property-purposes',
+}
+
 ('no_property_access');
 
 ('no_lease_access');

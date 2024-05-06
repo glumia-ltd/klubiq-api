@@ -8,6 +8,7 @@ import { ViewFeatureDto } from './feature-response.dto';
 export class ViewPermissionDto extends MapperPickType(Permission, [
 	'id',
 	'name',
+	'alias',
 	'description',
 ]) {}
 
