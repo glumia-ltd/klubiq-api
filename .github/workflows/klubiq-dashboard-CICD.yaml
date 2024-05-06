@@ -114,7 +114,7 @@ jobs:
             export TRANSACTIONAL_EMAIL_SENDER=${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
             export TRANSACTIONAL_EMAIL_SENDER_NAME=${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
-            pm2 restart ${{ env.APP }} --watch
+            pm2 restart ${{ env.APP }} --update-env --watch
             
             
 
