@@ -1,8 +1,7 @@
-
 name: Push to Docker Hub
 on:
   push:
-    branches: 
+    branches:
       - dev
       - release.*
     paths:
@@ -11,7 +10,7 @@ on:
   #   workflows: ['Run Tests']
   #   types:
   #     - completed
-env: 
+env:
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
   DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
@@ -41,10 +40,9 @@ env:
   SUPPORT_EMAIL: ${{ vars.EMAIL_VERIFICATION_BASE_URL }}
   TRANSACTIONAL_EMAIL_SENDER: ${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
   TRANSACTIONAL_EMAIL_SENDER_NAME: ${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
+  GOOGLE_IDENTITY_ENDPOINT: ${{ vars.GOOGLE_IDENTITY_ENDPOINT }}
 
-
-
-jobs:        
+jobs:
   # build:
   #   runs-on: ubuntu-latest
   #   steps:
@@ -65,7 +63,7 @@ jobs:
   #        name: artifacts
   #        path: |
   #          dist
-        
+
   docker:
     runs-on: ubuntu-latest
     # needs: build
@@ -101,8 +99,9 @@ jobs:
               SUPPORT_EMAIL=${{ vars.EMAIL_VERIFICATION_BASE_URL }}
               TRANSACTIONAL_EMAIL_SENDER=${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
               TRANSACTIONAL_EMAIL_SENDER_NAME=${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
+              GOOGLE_IDENTITY_ENDPOINT=${{ vars.GOOGLE_IDENTITY_ENDPOINT }}
           EOF
-      
+
       - name: Login and push to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -110,13 +109,12 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       - name: Build and push docker_compose
         run: docker compose -f docker-compose.prod.yml build --pull && docker compose -f docker-compose.prod.yml push
-        
+
       # - name: Download prod artifacts
       #   uses: actions/download-artifact@v4
       #   with:
       #     name: artifacts
       #     path: dist/
-
 
       # - name: Deploy to Lightsail
       #   uses: easingthemes/ssh-deploy@main
@@ -127,7 +125,7 @@ jobs:
       #     #SOURCE: "artifacts"
       #     EXCLUDE: "/node_modules/"
       #     TARGET: ${{ secrets.TARGET_DIR }}
-            
+
       # - name: Executing docker compose in EC2 using ssh key
       #   uses: appleboy/ssh-action@master
       #   with:
@@ -137,6 +135,3 @@ jobs:
       #     script: |
       #       cd ${{ secrets.TARGET_DIR }}
       #       sudo docker compose -f docker-compose.prod.yml up -d --build
-            
-
-  

@@ -259,7 +259,7 @@ export class AuthService {
 			const body = { oobCode };
 			this.httpService
 				.post(
-					`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${this.configService.get('FIREBASE_API_KEY')}`,
+					`${this.configService.get('GOOGLE_IDENTITY_ENDPOINT')}:update?key=${this.configService.get('FIREBASE_API_KEY')}`,
 					body,
 				)
 				.subscribe({

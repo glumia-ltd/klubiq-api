@@ -1,18 +1,16 @@
-
-
 name: Deploy Klubiq dasboard API
 on:
   push:
-    branches: 
+    branches:
       - dev
     #paths:
-       #- 'apps/klubiq-dashboard/**'
-       #- 'libs/**'
+    #- 'apps/klubiq-dashboard/**'
+    #- 'libs/**'
   # workflow_run:
   #   workflows: ['Run Tests']
   #   types:
   #     - completed
-env: 
+env:
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
   DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
@@ -42,8 +40,9 @@ env:
   SUPPORT_EMAIL: ${{ vars.SUPPORT_EMAIL }}
   TRANSACTIONAL_EMAIL_SENDER: ${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
   TRANSACTIONAL_EMAIL_SENDER_NAME: ${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
+  GOOGLE_IDENTITY_ENDPOINT: ${{ vars.GOOGLE_IDENTITY_ENDPOINT }}
 
-jobs: 
+jobs:
   build:
     runs-on: ubuntu-latest
     steps:
@@ -56,14 +55,14 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
-         name: artifacts
-         path: |
-             dist
-             env-export.sh
-             config.json
-             package.json
-             package-lock.json
-    
+          name: artifacts
+          path: |
+            dist
+            env-export.sh
+            config.json
+            package.json
+            package-lock.json
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -80,15 +79,15 @@ jobs:
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USERNAME }}
           SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
-          SOURCE: "artifacts/"
-          EXCLUDE: "/node_modules/, node_modules, /node_modules"
+          SOURCE: 'artifacts/'
+          EXCLUDE: '/node_modules/, node_modules, /node_modules'
           TARGET: ${{ secrets.TARGET_DIR }}
           SCRIPT_BEFORE: |
             sudo chown $USER ${{ secrets.TARGET_DIR }}
             cd ${{ secrets.TARGET_DIR }}
           SCRIPT_AFTER: |
             cd ${{ secrets.TARGET_DIR }}
-            
+
             export DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             export DATABASE_PORT=${{ secrets.DATABASE_PORT }}
             export DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
@@ -113,36 +112,35 @@ jobs:
             export SUPPORT_EMAIL=${{ vars.SUPPORT_EMAIL }}
             export TRANSACTIONAL_EMAIL_SENDER=${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
             export TRANSACTIONAL_EMAIL_SENDER_NAME=${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
+            export GOOGLE_IDENTITY_ENDPOINT=${{ vars.GOOGLE_IDENTITY_ENDPOINT }}
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
             pm2 restart ${{ env.APP }} --update-env --watch
-            
-            
 
 #bash env-export.sh
-# cat << EOF > .env        
-            #   DATABASE_HOST=${{ secrets.DATABASE_HOST }}
-            #   DATABASE_PORT=${{ secrets.DATABASE_PORT }}
-            #   DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
-            #   DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-            #   DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-            #   SYNCHRONIZE_DB=${{ secrets.SYNCHRONIZE_DB }}
-            #   NODE_ENV=${{ secrets.ENV }}
-            #   FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
-            #   FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
-            #   FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
-            #   FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
-            #   FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
-            #   FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}
-            #   FIREBASE_MEASUREMENT_ID=${{ secrets.FIREBASE_MEASUREMENT_ID }}
-            #   EMAIL_API_KEY=${{ secrets.EMAIL_API_KEY }}
-            #   EMAIL_VERIFICATION_BASE_URL=${{ vars.EMAIL_VERIFICATION_BASE_URL }}
-            #   CONTINUE_URL_PATH=${{ vars.CONTINUE_URL_PATH }}
-            #   HEALTH_CHECK_URL=${{ vars.HEALTH_CHECK_URL }}
-            #   APP_NAME=${{ vars.APP_NAME }}
-            #   APP_VERSION=${{ vars.APP_VERSION }}
-            #   ADMIN_API_KEY= ${{ secrets.ADMIN_API_KEY }}
-            #   SUPPORT_EMAIL=${{ vars.SUPPORT_EMAIL }}
-            #   TRANSACTIONAL_EMAIL_SENDER=${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
-            #   TRANSACTIONAL_EMAIL_SENDER_NAME=${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
-            # EOF
-  #pm2 start /opt/bitnami/projects/klubiq-api/dist/apps/klubiq-dashboard/main.js --name=klubiq-dashboard-api --watch
+# cat << EOF > .env
+#   DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+#   DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+#   DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+#   DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+#   DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+#   SYNCHRONIZE_DB=${{ secrets.SYNCHRONIZE_DB }}
+#   NODE_ENV=${{ secrets.ENV }}
+#   FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
+#   FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+#   FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
+#   FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
+#   FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+#   FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}
+#   FIREBASE_MEASUREMENT_ID=${{ secrets.FIREBASE_MEASUREMENT_ID }}
+#   EMAIL_API_KEY=${{ secrets.EMAIL_API_KEY }}
+#   EMAIL_VERIFICATION_BASE_URL=${{ vars.EMAIL_VERIFICATION_BASE_URL }}
+#   CONTINUE_URL_PATH=${{ vars.CONTINUE_URL_PATH }}
+#   HEALTH_CHECK_URL=${{ vars.HEALTH_CHECK_URL }}
+#   APP_NAME=${{ vars.APP_NAME }}
+#   APP_VERSION=${{ vars.APP_VERSION }}
+#   ADMIN_API_KEY= ${{ secrets.ADMIN_API_KEY }}
+#   SUPPORT_EMAIL=${{ vars.SUPPORT_EMAIL }}
+#   TRANSACTIONAL_EMAIL_SENDER=${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
+#   TRANSACTIONAL_EMAIL_SENDER_NAME=${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
+# EOF
+#pm2 start /opt/bitnami/projects/klubiq-api/dist/apps/klubiq-dashboard/main.js --name=klubiq-dashboard-api --watch
