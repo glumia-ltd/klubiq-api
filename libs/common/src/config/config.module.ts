@@ -39,6 +39,7 @@ import * as redis from 'cache-manager-redis-store';
 				APP_VERSION: Joi.string().required(),
 				TRANSACTIONAL_EMAIL_SENDER: Joi.string().required(),
 				TRANSACTIONAL_EMAIL_SENDER_NAME: Joi.string().required(),
+				GOOGLE_IDENTITY_ENDPOINT: Joi.string().required(),
 			}),
 		}),
 		AutomapperModule.forRoot({

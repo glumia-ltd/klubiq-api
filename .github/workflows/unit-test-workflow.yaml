@@ -1,16 +1,14 @@
-
-
 name: Run Tests
 on:
   pull_request:
     types: [opened, reopened]
-    branches: 
+    branches:
       - dev
       - main
       - release/**
     #paths:
-      # - '**.spec.ts'
-env: 
+    # - '**.spec.ts'
+env:
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
   DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
@@ -40,8 +38,9 @@ env:
   SUPPORT_EMAIL: ${{ vars.EMAIL_VERIFICATION_BASE_URL }}
   TRANSACTIONAL_EMAIL_SENDER: ${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
   TRANSACTIONAL_EMAIL_SENDER_NAME: ${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
+  GOOGLE_IDENTITY_ENDPOINT: ${{ vars.GOOGLE_IDENTITY_ENDPOINT }}
 
-jobs:        
+jobs:
   test:
     runs-on: ubuntu-latest
     steps:
@@ -51,9 +50,8 @@ jobs:
       - name: Load Google Service file
         run: |
           echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
-          
+
       - name: Build and test application
         run: |
           npm install
           npm test
-  
