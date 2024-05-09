@@ -10,21 +10,12 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 		super(UserProfile, manager);
 	}
 
-	async getUserLoginInfo(email: string): Promise<UserProfile> {
+	async getUserLoginInfo(id: string): Promise<UserProfile> {
 		const data = await this.repository.findOne({
-			where: { email: email },
-			select: {
-				profileId: true,
-				profileUuid: true,
-				email: true,
-				profilePicUrl: true,
-				firebaseId: true,
-				isPrivacyPolicyAgreed: true,
-				isTermsAndConditionAccepted: true,
-			},
+			where: { firebaseId: id },
 		});
 		if (!data) {
-			this.logger.warn('No data found by condition ', email);
+			this.logger.warn('No data found by condition ', id);
 			throw new NotFoundException('No data found');
 		}
 		return data;

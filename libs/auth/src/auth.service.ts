@@ -13,8 +13,9 @@ import * as auth from 'firebase-admin/auth';
 import { FirebaseException } from './exception/firebase.exception';
 import { userLoginDto, OrgUserSignUpDto } from './dto/user-login.dto';
 import {
-	RenterLoginResponseDto,
+	AuthUserResponseDto,
 	SignUpResponseDto,
+	TokenResponseDto,
 } from './dto/auth-response.dto';
 import { Auth, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { EntityManager } from 'typeorm';
@@ -34,6 +35,8 @@ import { InjectMapper } from '@automapper/nestjs';
 import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
+import { catchError, firstValueFrom } from 'rxjs';
+import { AxiosError } from 'axios';
 
 @Injectable()
 export class AuthService {
@@ -237,15 +240,28 @@ export class AuthService {
 		}
 	}
 
-	async markUserEmailVerified(uid: string): Promise<void> {
+	async exchangeRefreshToken(refresh_token: string): Promise<any> {
 		try {
-			const user = await this.auth.updateUser(uid, {
-				emailVerified: true,
-			});
-			if (!user) {
-				throw new Error('User not found');
-			}
+			const body = { grant_type: 'refresh_token', refresh_token };
+			const { data } = await firstValueFrom(
+				this.httpService
+					.post<TokenResponseDto>(
+						`https://securetoken.googleapis.com/v1/token?key=${this.configService.get('FIREBASE_API_KEY')}`,
+						body,
+					)
+					.pipe(
+						catchError((error: AxiosError) => {
+							this.logger.error(
+								'Error exchanging refresh token:',
+								error.response.data,
+							);
+							throw new FirebaseException('Error exchanging refresh token');
+						}),
+					),
+			);
+			return data;
 		} catch (err) {
+			console.log('ERROR HERRE: ', err);
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
@@ -257,19 +273,20 @@ export class AuthService {
 	async verifyEmail(oobCode: string): Promise<any> {
 		try {
 			const body = { oobCode };
-			this.httpService
-				.post(
-					`${this.configService.get('GOOGLE_IDENTITY_ENDPOINT')}:update?key=${this.configService.get('FIREBASE_API_KEY')}`,
-					body,
-				)
-				.subscribe({
-					next: (res) => {
-						return res.data;
-					},
-					error: (err) => {
-						throw new FirebaseException(err.message);
-					},
-				});
+			const { data } = await firstValueFrom(
+				this.httpService
+					.post(
+						`${this.configService.get('GOOGLE_IDENTITY_ENDPOINT')}:update?key=${this.configService.get('FIREBASE_API_KEY')}`,
+						body,
+					)
+					.pipe(
+						catchError((error: AxiosError) => {
+							this.logger.error('Error verifying email:', error.response.data);
+							throw new FirebaseException('Error verifying email');
+						}),
+					),
+			);
+			return data;
 		} catch (err) {
 			console.error('Error verifying code:', err);
 			const firebaseErrorMessage =
@@ -362,7 +379,7 @@ export class AuthService {
 				const userData = this.mapper.map(
 					existingUser,
 					UserProfile,
-					RenterLoginResponseDto,
+					AuthUserResponseDto,
 				);
 				return {
 					user: userData,
@@ -514,5 +531,11 @@ export class AuthService {
 			console.error('Error decoding token:', error);
 			return [];
 		}
+	}
+
+	async getUserInfo(firebaseId: string): Promise<AuthUserResponseDto> {
+		const user = await this.userProfilesRepository.getUserLoginInfo(firebaseId);
+		const userData = this.mapper.map(user, UserProfile, AuthUserResponseDto);
+		return userData;
 	}
 }

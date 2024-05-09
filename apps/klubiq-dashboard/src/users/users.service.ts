@@ -11,7 +11,7 @@ import {
 } from '@app/common';
 import { OrganizationUser } from './entities/organization-user.entity';
 import { UpdateUserDto } from './dto/update-organization-user.dto';
-import { RenterLoginResponseDto } from '@app/auth';
+import { AuthUserResponseDto } from '@app/auth';
 import { UserResponseDto } from './dto/create-organization-user.dto';
 
 @Injectable()
@@ -96,15 +96,13 @@ export class UsersService {
 		return `This action removes a #${id} user`;
 	}
 
-	async getLoggedInLandlordUser(
-		email: string,
-	): Promise<RenterLoginResponseDto> {
+	async getLoggedInLandlordUser(email: string): Promise<AuthUserResponseDto> {
 		try {
 			const user =
 				await this.userProfilesRepository.getLandLordUserLoginInfoByFirebaseId(
 					email,
 				);
-			return this.mapper.map(user, UserProfile, RenterLoginResponseDto);
+			return this.mapper.map(user, UserProfile, AuthUserResponseDto);
 		} catch (err) {
 			throw err;
 		}

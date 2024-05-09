@@ -114,6 +114,7 @@ jobs:
             export TRANSACTIONAL_EMAIL_SENDER_NAME=${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
             export GOOGLE_IDENTITY_ENDPOINT=${{ vars.GOOGLE_IDENTITY_ENDPOINT }}
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
+            pm2 stop ${{ env.APP }}
             pm2 restart ${{ env.APP }} --update-env --watch
 
 #bash env-export.sh

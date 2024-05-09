@@ -51,7 +51,7 @@ async function bootstrap() {
 	app.enableCors({
 		// origin: ['http://localhost', '/.klubiq.com$/'],
 		origin: true,
-		optionsSuccessStatus: 204
+		optionsSuccessStatus: 204,
 	});
 
 	app.enableVersioning({
