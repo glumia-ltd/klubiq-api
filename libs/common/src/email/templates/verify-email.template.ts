@@ -16,17 +16,16 @@ export const verifyEmailTemplate = () => ({
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+          <meta http-equiv="ScreenOrientation" content="autoRotate:disabled">
+          <meta name="theme-color" content="#002147" />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-          <link
-            href="https://fonts.googleapis.com/css2?family=roboto&family=Open%20Sans:wght@300;400&display=swap"
-            rel="stylesheet"
-          />
+          <link href="https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400..600&display=swap" rel="stylesheet"/>
           <title>Klubiq Email Verification</title>
           <style>
             .container {
-              width: 95%;
-              max-width: 700px;
+              width: 90%;
               margin: 0 auto;
             }
             p,

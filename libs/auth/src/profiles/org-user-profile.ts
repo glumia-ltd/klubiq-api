@@ -1,16 +1,31 @@
 import {
 	Mapper,
 	MappingProfile,
+	Resolver,
 	createMap,
 	forMember,
-	forSelf,
 	mapFrom,
 } from '@automapper/core';
 import { AutomapperProfile, InjectMapper } from '@automapper/nestjs';
 import { UserProfile } from '@app/common';
-import { RenterLoginResponseDto } from './../dto/auth-response.dto';
-import { OrganizationUser } from '../../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
+import { AuthUserResponseDto } from './../dto/auth-response.dto';
 
+export const featurePermissionResolver: Resolver<
+	UserProfile,
+	AuthUserResponseDto,
+	Record<string, string>
+> = {
+	resolve: (data): Record<string, string> => {
+		const resolved = data.organizationUser?.orgRole?.featurePermissions?.map(
+			(fp) => {
+				return {
+					[fp.feature.name]: fp.permission.name,
+				};
+			},
+		);
+		return resolved ? Object.assign({}, ...resolved) : {};
+	},
+};
 export class OrgUserProfile extends AutomapperProfile {
 	constructor(@InjectMapper() mapper: Mapper) {
 		super(mapper);
@@ -21,43 +36,45 @@ export class OrgUserProfile extends AutomapperProfile {
 			createMap(
 				mapper,
 				UserProfile,
-				RenterLoginResponseDto,
-				forSelf(OrganizationUser, (s) => s.organizationUser),
+				AuthUserResponseDto,
 				forMember(
-					(d) => d.orgRoleName,
+					(d) => d.fbId,
+					mapFrom((s) => s.firebaseId),
+				),
+				forMember(
+					(d) => d.firstName,
+					mapFrom((s) => s.organizationUser?.firstName),
+				),
+				forMember(
+					(d) => d.lastName,
+					mapFrom((s) => s.organizationUser?.lastName),
+				),
+				forMember(
+					(d) => d.organizationUserUuid,
+					mapFrom((s) => s.organizationUser?.organizationUserUuid),
+				),
+				forMember(
+					(d) => d.organizationUserId,
+					mapFrom((s) => s.organizationUser?.organizationUserId),
+				),
+				forMember(
+					(d) => d.isAccountVerified,
+					mapFrom((s) => s.organizationUser?.isAccountVerified),
+				),
+				forMember(
+					(d) => d.companyRole,
 					mapFrom((s) => s.organizationUser?.orgRole?.name),
 				),
 				forMember(
-					(d) => d.systemRoleName,
+					(d) => d.systemRole,
 					mapFrom((s) => s.systemRole?.name),
 				),
 				forMember(
-					(d) => d.organizationName,
+					(d) => d.company,
 					mapFrom((s) => s.organizationUser?.organization?.name),
 				),
-			),
-				createMap(
-					mapper,
-					OrganizationUser,
-					RenterLoginResponseDto,
-					forSelf(UserProfile, (s) => s.profile),
-					forMember(
-						(d) => d.orgRoleName,
-						mapFrom((s) => s.orgRole?.name),
-					),
-					forMember(
-						(d) => d.systemRoleName,
-						mapFrom((s) => s.profile?.systemRole?.name),
-					),
-					forMember(
-						(d) => d.organizationId,
-						mapFrom((s) => s.organization?.organizationId),
-					),
-					forMember(
-						(d) => d.organizationName,
-						mapFrom((s) => s.organization?.name),
-					),
-				);
+				forMember((d) => d.entitlements, mapFrom(featurePermissionResolver)),
+			);
 		};
 	}
 }

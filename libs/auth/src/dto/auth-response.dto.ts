@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsJWT, IsNumber, IsString } from 'class-validator';
+import { IsJWT } from 'class-validator';
 
 export class SignUpResponseDto {
 	@ApiProperty({
@@ -11,89 +11,132 @@ export class SignUpResponseDto {
 	jwtToken: string;
 }
 
-export class RenterLoginResponseDto {
+export class AuthUserResponseDto {
 	@AutoMap()
 	@ApiProperty()
-	@IsNumber()
-	profileId: number;
+	addressLine2: string;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsString()
-	profileUuid: string;
+	bio: string;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsString()
-	firstName: string;
+	city: string;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsString()
-	lastName: string;
+	company?: string;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsString()
+	companyId?: number;
+
+	@AutoMap()
+	@ApiProperty()
+	companyRole?: string;
+
+	@AutoMap()
+	@ApiProperty()
+	companyuuid?: number;
+
+	@AutoMap()
+	@ApiProperty()
+	countryPhoneCode: string;
+
+	@AutoMap()
+	@ApiProperty()
+	country: string;
+
+	@AutoMap()
+	@ApiProperty()
+	dateOfBirth: string;
+
+	@AutoMap()
+	@ApiProperty()
 	email: string;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsString()
-	systemRoleName: string;
+	fbId: string;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsString()
-	orgRoleName: string;
+	entitlements?: Record<string, string>;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsBoolean()
-	isActive: boolean;
+	firstName: string;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsString()
-	profilePicUrl: string;
+	formOfIdentity: string;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsBoolean()
+	gender: string;
+
+	@AutoMap()
+	@ApiProperty()
 	isAccountVerified: boolean;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsBoolean()
-	isTermsAndConditionAccepted?: boolean;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsBoolean()
 	isPrivacyPolicyAgreed?: boolean;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsString()
-	firebaseId: string;
+	isTermsAndConditionAccepted?: boolean;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsString()
-	organizationUserUuid: string;
+	lastName: string;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsNumber()
-	organizationUserId: number;
+	organizationUserUuid?: string;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsNumber()
-	organizationId: number;
+	organizationUserId?: number;
 
 	@AutoMap()
 	@ApiProperty()
-	@IsString()
-	organizationName: string;
+	phoneNumber: string;
+
+	@AutoMap()
+	@ApiProperty()
+	postalCode: string;
+
+	@AutoMap()
+	@ApiProperty()
+	profileId: number;
+
+	@AutoMap()
+	@ApiProperty()
+	profilePicUrl: string;
+
+	@AutoMap()
+	@ApiProperty()
+	profileUuid: string;
+
+	@AutoMap()
+	@ApiProperty()
+	state: string;
+
+	@AutoMap()
+	@ApiProperty()
+	street: string;
+
+	@AutoMap()
+	@ApiProperty()
+	systemRole: string;
+
+	@AutoMap()
+	@ApiProperty()
+	tenantId?: number;
+
+	@AutoMap()
+	@ApiProperty()
+	tenantUuid?: string;
 }

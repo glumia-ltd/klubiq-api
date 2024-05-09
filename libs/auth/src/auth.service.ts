@@ -13,7 +13,7 @@ import * as auth from 'firebase-admin/auth';
 import { FirebaseException } from './exception/firebase.exception';
 import { userLoginDto, OrgUserSignUpDto } from './dto/user-login.dto';
 import {
-	RenterLoginResponseDto,
+	AuthUserResponseDto,
 	SignUpResponseDto,
 } from './dto/auth-response.dto';
 import { Auth, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
@@ -362,7 +362,7 @@ export class AuthService {
 				const userData = this.mapper.map(
 					existingUser,
 					UserProfile,
-					RenterLoginResponseDto,
+					AuthUserResponseDto,
 				);
 				return {
 					user: userData,
@@ -514,5 +514,11 @@ export class AuthService {
 			console.error('Error decoding token:', error);
 			return [];
 		}
+	}
+
+	async getUserInfo(firebaseId: string): Promise<AuthUserResponseDto> {
+		const user = await this.userProfilesRepository.getUserLoginInfo(firebaseId);
+		const userData = this.mapper.map(user, UserProfile, AuthUserResponseDto);
+		return userData;
 	}
 }

@@ -6,16 +6,13 @@ import {
 	NotFoundException,
 	Put,
 	Body,
-	HttpStatus,
-	HttpCode,
-	Post,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationUser } from './entities/organization-user.entity';
 import { UserRoles } from '@app/common';
-import { AuthType, Auth, Roles, ActiveUser, ActiveUserData } from '@app/auth';
+import { AuthType, Auth, Roles } from '@app/auth';
 import { UpdateUserDto } from './dto/update-organization-user.dto';
 
 @ApiTags('users')
@@ -45,13 +42,6 @@ export class UsersController {
 			throw new NotFoundException('Landlord user not found');
 		}
 		return user;
-	}
-
-	@HttpCode(HttpStatus.OK)
-	@Post('session')
-	async getLoggedInLandlord(@ActiveUser() activeUser: ActiveUserData) {
-		const email = activeUser.email;
-		return await this.usersService.getLoggedInLandlordUser(email);
 	}
 
 	@Put(':profileId')

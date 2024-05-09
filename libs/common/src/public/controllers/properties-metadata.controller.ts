@@ -7,7 +7,12 @@ import {
 	Param,
 	Body,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiOkResponse,
+	ApiSecurity,
+	ApiTags,
+} from '@nestjs/swagger';
 import {
 	PropertiesPurposeService,
 	PropertiesStatusService,
@@ -26,7 +31,8 @@ import { PropertyMetadataDto } from '../../dto/properties-metadata.dto';
 import { Auth, AuthType } from '@app/auth';
 
 @ApiSecurity('ApiKey')
-@Auth(AuthType.ApiKey)
+@ApiBearerAuth()
+@Auth(AuthType.ApiKey, AuthType.Bearer)
 @ApiTags('properties-metadata')
 @Controller('property-metadata')
 export class PropertyMetadataController {

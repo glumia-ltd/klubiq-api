@@ -2,14 +2,13 @@ import {
 	Controller,
 	Post,
 	Body,
-	//UseGuards,
-	HttpException,
 	HttpStatus,
 	Param,
 	HttpCode,
+	Get,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { Auth } from './decorators/auth.decorator';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Auth, Roles } from './decorators/auth.decorator';
 import { AuthService } from './auth.service';
 import {
 	OrgUserSignUpDto,
@@ -19,9 +18,11 @@ import {
 } from './dto/user-login.dto';
 import { SignUpResponseDto } from './dto/auth-response.dto';
 import { AuthType } from './types/firebase.types';
+import { UserRoles } from '@app/common';
 
 @ApiTags('auth')
-@Auth(AuthType.None)
+@ApiBearerAuth()
+@Auth(AuthType.None, AuthType.Bearer)
 @Controller('auth')
 export class AuthController {
 	constructor(private readonly authService: AuthService) {}
@@ -37,7 +38,7 @@ export class AuthController {
 			return { message: 'Email verification successful!' };
 		} catch (err) {
 			console.error('Error verifying email:', err);
-			throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+			throw err;
 		}
 	}
 
@@ -50,7 +51,26 @@ export class AuthController {
 		try {
 			return this.authService.login(data);
 		} catch (err) {
-			throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+			throw err;
+		}
+	}
+
+	@Roles(
+		UserRoles.ADMIN,
+		UserRoles.STAFF,
+		UserRoles.SUPER_ADMIN,
+		UserRoles.TENANT,
+		UserRoles.LANDLORD,
+	)
+	@Get('user/:fbid')
+	@ApiOkResponse({
+		description: 'Gets user data',
+	})
+	async user(@Param('fbid') id: string): Promise<any> {
+		try {
+			return this.authService.getUserInfo(id);
+		} catch (err) {
+			throw err;
 		}
 	}
 
@@ -66,7 +86,7 @@ export class AuthController {
 			return this.authService.exchangeGoogleToken(authorizationCode);
 		} catch (err) {
 			console.error('Error verifying email:', err);
-			throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+			throw err;
 		}
 	}
 
