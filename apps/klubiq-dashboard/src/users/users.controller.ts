@@ -29,7 +29,11 @@ export class UsersController {
 		description: 'Returns all the users available ',
 	})
 	findAll() {
-		return this.usersService.findAll();
+		try {
+			return this.usersService.findAll();
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	@Get('landlord/:identifier')

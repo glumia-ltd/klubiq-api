@@ -19,6 +19,9 @@ export enum FirebaseErrors {
 	STORAGE_UNSUPPORTED_OPERATION = 'storage/unsupported-operation',
 	STORAGE_CANCELLED = 'storage/cancelled',
 	INVALID_CREDENTIAL = 'auth/invalid-credential',
+	TOKEN_REVOKED = 'auth/token-revoked',
+	TOKEN_EXPIRED = 'auth/token-expired',
+	INVALID_APP_CREDENTIAL = 'auth/invalid-app-credential',
 }
 export const Firebase_Errors = [
 	{

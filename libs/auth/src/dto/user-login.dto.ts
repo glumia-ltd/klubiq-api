@@ -93,3 +93,11 @@ export class SendVerifyEmailDto {
 	@IsString()
 	lastName: string;
 }
+
+export class RefreshTokenExchangeDto {
+	@ApiProperty({
+		description: 'refresh token',
+	})
+	@IsString()
+	refreshToken: string;
+}

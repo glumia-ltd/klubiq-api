@@ -6,14 +6,13 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
-//import { UsersService } from 'apps/klubiq-dashboard/src/users/users.service';
 import { AuthService } from '../auth.service';
+import { FirebaseErrors } from '../helpers/firebase-error-helper';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
 	constructor(
 		private authService: AuthService,
-		//private usersService: UsersService,
 		private configService: ConfigService,
 	) {}
 
@@ -23,7 +22,7 @@ export class FirebaseAuthGuard implements CanActivate {
 		const request: any = context.switchToHttp().getRequest<Request>();
 		try {
 			const fireUser = await this.validate(request.headers.authorization);
-			// const user = await this.usersService.getUserByFireBaseId(fireUser.uid);
+			if (!fireUser) throw new UnauthorizedException();
 
 			request.user = fireUser;
 			return true;
@@ -37,17 +36,17 @@ export class FirebaseAuthGuard implements CanActivate {
 		if (this.configService.get('LOCAL_USER') === 'true') return firebaseUser;
 		const jwtToken = token.split('Bearer ')[1];
 		if (!jwtToken) {
-			throw new UnauthorizedException(
-				'Invalid / expired token. Please login again',
-			);
+			throw new UnauthorizedException('Unauthorized access');
 		}
 		try {
-			firebaseUser = await this.authService.auth.verifyIdToken(jwtToken);
+			firebaseUser = await this.authService.auth.verifyIdToken(jwtToken, true);
 			return firebaseUser;
 		} catch (err) {
-			throw new UnauthorizedException(
-				'Invalid / expired token. Please login again',
-			);
+			if (err.code == FirebaseErrors.TOKEN_REVOKED)
+				throw new UnauthorizedException(
+					'Token has been revoked. Please login again',
+				);
+			else throw new UnauthorizedException('Invalid / expired token.');
 		}
 	}
 }

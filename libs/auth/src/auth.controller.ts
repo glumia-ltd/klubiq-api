@@ -12,11 +12,12 @@ import { Auth, Roles } from './decorators/auth.decorator';
 import { AuthService } from './auth.service';
 import {
 	OrgUserSignUpDto,
+	RefreshTokenExchangeDto,
 	SendVerifyEmailDto,
 	userLoginDto,
 	VerifyEmailDto,
 } from './dto/user-login.dto';
-import { SignUpResponseDto } from './dto/auth-response.dto';
+import { SignUpResponseDto, TokenResponseDto } from './dto/auth-response.dto';
 import { AuthType } from './types/firebase.types';
 import { UserRoles } from '@app/common';
 
@@ -120,5 +121,13 @@ export class AuthController {
 	})
 	async sendPasswordResetLinkEmail(@Param('email') email: string) {
 		await this.authService.generatePasswordResetEmail(email);
+	}
+
+	@Post('exchange/refresh-token')
+	@ApiOkResponse({
+		type: TokenResponseDto,
+	})
+	async exchangeRefreshToken(@Body() request: RefreshTokenExchangeDto) {
+		return await this.authService.exchangeRefreshToken(request.refreshToken);
 	}
 }
