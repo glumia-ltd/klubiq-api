@@ -114,8 +114,17 @@ jobs:
             export TRANSACTIONAL_EMAIL_SENDER_NAME=${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
             export GOOGLE_IDENTITY_ENDPOINT=${{ vars.GOOGLE_IDENTITY_ENDPOINT }}
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
-            pm2 stop ${{ env.APP }}
-            pm2 restart ${{ env.APP }} --update-env --watch
+
+            # Check if the process is running
+            if pm2 status ${{ env.APP }} | grep -q "online"; then
+                echo "Process '${{ env.APP }}' is already running."
+            else
+                echo "Process '${{ env.APP }}' is not running. Starting a new process..."
+                pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name ${{ env.APP }} --watch
+            fi
+
+      #pm2 stop ${{ env.APP }}
+      #pm2 restart ${{ env.APP }} --update-env --watch
 
 #bash env-export.sh
 # cat << EOF > .env
