@@ -4,53 +4,64 @@ import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend'; // Assu
 import {
 	EmailInterfaceParams,
 	EmailRecipient,
+	EmailTemplate,
 } from './types/email-params.interface';
-import { verifyEmailTemplate } from './templates/verify-email.template';
 
 @Injectable()
 export class MailerSendService {
 	private readonly mailerSend: MailerSend;
 	private readonly apiKey: string;
+	private readonly supportEmail: string;
+	private readonly transactionalEmailSender: string;
+	private readonly transactionalEmailSenderName: string;
 
 	constructor(private readonly configService: ConfigService) {
 		this.apiKey = this.configService.get('EMAIL_API_KEY');
+		this.supportEmail = this.configService.get<string>('SUPPORT_EMAIL');
+		this.transactionalEmailSender = this.configService.get<string>(
+			'TRANSACTIONAL_EMAIL_SENDER',
+		);
+		this.transactionalEmailSenderName = this.configService.get<string>(
+			'TRANSACTIONAL_EMAIL_SENDER_NAME',
+		);
 		this.mailerSend = new MailerSend({ apiKey: this.apiKey }); // Set your API key
 	}
 
-	async sendVerifyEmail(
+	async sendTransactionalEmail(
 		emailRecipient: EmailRecipient,
-		verificationLink: string,
+		actionLink: string,
+		emailTemplate: EmailTemplate,
 	) {
-		const verifyEmailBody = verifyEmailTemplate();
+		const verifyEmailBody = emailTemplate;
 		const personalization = [
 			{
 				email: emailRecipient.email,
 				data: {
 					username: emailRecipient.firstName,
 					support_email: this.configService.get('SUPPORT_EMAIL'),
-					verification_link: verificationLink,
+					action_link: actionLink,
 				},
 			},
 		];
 		const emailParams = {
 			to: [emailRecipient],
 			body: verifyEmailBody,
-			subject: 'Verify Email',
-			from: this.configService.get('TRANSACTIONAL_EMAIL_SENDER'),
-			from_name: this.configService.get('TRANSACTIONAL_EMAIL_SENDER_NAME'),
+			subject: verifyEmailBody.subject,
+			from: this.transactionalEmailSender,
+			from_name: this.transactionalEmailSenderName,
 		} as EmailInterfaceParams;
 		return this.sendEmail(emailParams, personalization);
 	}
 
 	async sendEmail(params: EmailInterfaceParams, personalization: any) {
 		const sentFrom = new Sender(`${params.from}`, `${params.from_name}`);
-		const myRecipients = params.to.map((oneRecipient) => {
-			new Recipient(
-				`${oneRecipient.email}`,
-				`${oneRecipient.firstName} ${oneRecipient.lastName}`,
-			);
-			return oneRecipient;
-		});
+		const myRecipients = params.to.map(
+			(oneRecipient) =>
+				new Recipient(
+					oneRecipient.email,
+					`${oneRecipient.firstName} ${oneRecipient.lastName}`,
+				),
+		);
 		const templatedEmailParams = new EmailParams()
 			.setFrom(sentFrom)
 			.setTo(myRecipients)
@@ -61,13 +72,12 @@ export class MailerSendService {
 			.setPersonalization(personalization);
 		try {
 			const response = await this.mailerSend.email.send(templatedEmailParams);
-			if (response.statusCode == 201) {
+			if (response.statusCode === 201) {
 				throw new Error(`MailerSend API error: ${response.body}`);
 			}
 			return 'Email sent successfully';
 		} catch (error) {
-			console.error('Failed to send email with MailerSend:', error);
-			return 'Failed to send email';
+			throw new Error(`Failed to send email. MailerSend API error: ${error}`);
 		}
 	}
 }

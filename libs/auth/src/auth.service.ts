@@ -6,6 +6,7 @@ import {
 	NotFoundException,
 	UnauthorizedException,
 } from '@nestjs/common';
+import { split } from 'lodash';
 import { ClsService, ClsServiceManager } from 'nestjs-cls';
 import { Inject } from '@nestjs/common';
 import * as admin from 'firebase-admin';
@@ -27,6 +28,7 @@ import {
 	CreateUserEventTypes,
 	UserProfilesRepository,
 	UserRoles,
+	EmailTemplates,
 } from '@app/common';
 import { Organization } from '../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
 import { OrganizationUser } from '../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
@@ -42,6 +44,8 @@ import { AxiosError } from 'axios';
 export class AuthService {
 	private firebaseClientAuth: Auth;
 	private readonly cls: ClsService;
+	private readonly emailVerificationBaseUrl: string;
+	private readonly emailAuthContinueUrl: string;
 	private readonly logger = new Logger(AuthService.name);
 	constructor(
 		@Inject('FIREBASE_ADMIN') private firebaseAdminApp: admin.app.App,
@@ -56,6 +60,11 @@ export class AuthService {
 	) {
 		this.firebaseClientAuth = getAuth(this.firebaseClient);
 		this.cls = ClsServiceManager.getClsService();
+		this.emailVerificationBaseUrl = this.configService.get<string>(
+			'EMAIL_VERIFICATION_BASE_URL',
+		);
+		this.emailAuthContinueUrl =
+			this.configService.get<string>('CONTINUE_URL_PATH');
 	}
 
 	get auth(): auth.Auth {
@@ -191,26 +200,27 @@ export class AuthService {
 		}
 	}
 
-	async generateVerificationEmail(uid: string): Promise<void> {
-		try {
-			const user = await this.auth.getUser(uid);
-			if (!user) {
-				throw new Error('User not found');
-			}
-
-			await this.auth.generateEmailVerificationLink(user.email);
-		} catch (err) {
-			const firebaseErrorMessage =
-				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
-		}
-	}
-
 	async generatePasswordResetEmail(email: string): Promise<void> {
 		try {
-			await this.auth.generatePasswordResetLink(email);
+			const user = await this.auth.getUserByEmail(email);
+			const name = split(user.displayName, ' ');
+			if (!user) {
+				throw new NotFoundException('User not found');
+			}
+			const resetPasswordLink = await this.auth.generatePasswordResetLink(
+				email,
+				this.getActionCodeSettings(),
+			);
+			const emailTemplate = EmailTemplates['password-reset'];
+			await this.emailService.sendTransactionalEmail(
+				{
+					email,
+					firstName: name.length > 0 ? name[0] : '',
+					lastName: name.length > 1 ? name[1] : '',
+				},
+				resetPasswordLink,
+				emailTemplate,
+			);
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
@@ -302,17 +312,15 @@ export class AuthService {
 		firstName: string,
 		lastName: string,
 	): Promise<void> {
-		// TODO : WHEN APP IS INTEGRATED AND UI  SCREENS ARE READY
-		const actionCodeSettings = {
-			url: `${this.configService.get('EMAIL_VERIFICATION_BASE_URL')}${this.configService.get('CONTINUE_URL_PATH')}`,
-		};
 		try {
 			const verificationLink = await admin
 				.auth()
-				.generateEmailVerificationLink(email, actionCodeSettings);
-			await this.emailService.sendVerifyEmail(
+				.generateEmailVerificationLink(email, this.getActionCodeSettings());
+			const emailTemplate = EmailTemplates['email-verification'];
+			await this.emailService.sendTransactionalEmail(
 				{ email, firstName, lastName },
 				verificationLink,
+				emailTemplate,
 			);
 		} catch (err) {
 			const firebaseErrorMessage =
@@ -537,5 +545,11 @@ export class AuthService {
 		const user = await this.userProfilesRepository.getUserLoginInfo(firebaseId);
 		const userData = this.mapper.map(user, UserProfile, AuthUserResponseDto);
 		return userData;
+	}
+
+	getActionCodeSettings() {
+		return {
+			url: `${this.emailVerificationBaseUrl}${this.emailAuthContinueUrl}`,
+		};
 	}
 }

@@ -101,3 +101,12 @@ export class RefreshTokenExchangeDto {
 	@IsString()
 	refreshToken: string;
 }
+
+export class ResetPasswordDto {
+	@ApiProperty({
+		description: 'user email',
+	})
+	@IsString()
+	@IsEmail()
+	email: string;
+}

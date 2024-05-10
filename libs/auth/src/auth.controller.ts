@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 import {
 	OrgUserSignUpDto,
 	RefreshTokenExchangeDto,
+	ResetPasswordDto,
 	SendVerifyEmailDto,
 	userLoginDto,
 	VerifyEmailDto,
@@ -114,16 +115,15 @@ export class AuthController {
 		);
 	}
 
-	@Post('password-reset-link/:email')
+	@Post('reset-password-link')
 	@ApiOkResponse({
 		description: 'Send email password reset link to user',
-		type: SignUpResponseDto,
 	})
-	async sendPasswordResetLinkEmail(@Param('email') email: string) {
-		await this.authService.generatePasswordResetEmail(email);
+	async sendPasswordResetLinkEmail(@Body() request: ResetPasswordDto) {
+		await this.authService.generatePasswordResetEmail(request.email);
 	}
 
-	@Post('exchange/refresh-token')
+	@Post('exchange-refresh-token')
 	@ApiOkResponse({
 		type: TokenResponseDto,
 	})
