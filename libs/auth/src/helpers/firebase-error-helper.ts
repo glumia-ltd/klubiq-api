@@ -3,6 +3,7 @@ import { FirebaseError } from '../types/firebase.types';
 export enum FirebaseErrors {
 	EMAIL_EXISTS = 'auth/email-already-in-use',
 	INVALID_EMAIL = 'auth/invalid-email',
+	INVALID_UID = 'auth/invalid-uid',
 	USER_DISABLED = 'auth/user-disabled',
 	USER_NOT_FOUND = 'auth/user-not-found',
 	WRONG_PASSWORD = 'auth/wrong-password',
