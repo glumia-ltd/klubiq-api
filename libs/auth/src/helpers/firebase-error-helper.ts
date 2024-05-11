@@ -60,6 +60,11 @@ export const Firebase_Errors = [
 			'User already has a previous account. Please sign in with your username and password.',
 	},
 	{
+		code: FirebaseErrors.INVALID_UID,
+		message:
+			'User already has a previous account. Please sign in with your username and password.',
+	},
+	{
 		code: FirebaseErrors.TOO_MANY_ATTEMPTS,
 		message: 'Too many attempts. Please try again later.',
 	},
