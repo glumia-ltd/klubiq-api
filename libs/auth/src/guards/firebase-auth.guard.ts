@@ -1,6 +1,8 @@
 import {
 	CanActivate,
 	ExecutionContext,
+	HttpException,
+	HttpStatus,
 	Injectable,
 	UnauthorizedException,
 } from '@nestjs/common';
@@ -43,10 +45,27 @@ export class FirebaseAuthGuard implements CanActivate {
 			return firebaseUser;
 		} catch (err) {
 			if (err.code == FirebaseErrors.TOKEN_REVOKED)
-				throw new UnauthorizedException(
-					'Token has been revoked. Please login again',
+				throw new HttpException(
+					{
+						status: HttpStatus.UNAUTHORIZED,
+						error: 'Token has been revoked. Please login again',
+					},
+					HttpStatus.UNAUTHORIZED,
+					{
+						cause: new Error('Token has been revoked. Please login again'),
+					},
 				);
-			else throw new UnauthorizedException('Invalid / expired token.');
+			else
+				throw new HttpException(
+					{
+						status: HttpStatus.UNAUTHORIZED,
+						error: 'Invalid / expired token.',
+					},
+					HttpStatus.UNAUTHORIZED,
+					{
+						cause: new Error('Invalid / expired token'),
+					},
+				);
 		}
 	}
 }

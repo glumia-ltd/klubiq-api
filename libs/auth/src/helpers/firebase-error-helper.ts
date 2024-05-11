@@ -3,6 +3,7 @@ import { FirebaseError } from '../types/firebase.types';
 export enum FirebaseErrors {
 	EMAIL_EXISTS = 'auth/email-already-in-use',
 	INVALID_EMAIL = 'auth/invalid-email',
+	INVALID_UID = 'auth/invalid-uid',
 	USER_DISABLED = 'auth/user-disabled',
 	USER_NOT_FOUND = 'auth/user-not-found',
 	WRONG_PASSWORD = 'auth/wrong-password',
@@ -55,6 +56,11 @@ export const Firebase_Errors = [
 	},
 	{
 		code: FirebaseErrors.USER_EXISTS,
+		message:
+			'User already has a previous account. Please sign in with your username and password.',
+	},
+	{
+		code: FirebaseErrors.INVALID_UID,
 		message:
 			'User already has a previous account. Please sign in with your username and password.',
 	},
