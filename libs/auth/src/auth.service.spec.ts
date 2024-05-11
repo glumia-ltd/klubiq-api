@@ -157,7 +157,9 @@ describe('AuthService', () => {
 			jest
 				.spyOn(userRepo, 'getUserLoginInfo')
 				.mockImplementation(async () => mockUser);
-			jest.spyOn(service, 'login').mockImplementation(async () => result);
+			jest
+				.spyOn(service, 'login')
+				.mockImplementation(async () => result as any); // Update the return type here
 			const mockResult = await service.login(mockLoginPayload);
 
 			// Assert

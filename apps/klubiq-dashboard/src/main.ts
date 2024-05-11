@@ -31,7 +31,7 @@ async function bootstrap() {
 		.setTitle('Klubiq PMS')
 		.setDescription('Klubiq PMS API')
 		.setVersion('1.0')
-		.addTag('klubiq')
+		.addTag('Klubiq')
 		.setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
 		.setLicense('MIT', 'https://mit-license.org/')
 		.addBearerAuth()
