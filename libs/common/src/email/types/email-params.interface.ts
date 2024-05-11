@@ -1,3 +1,12 @@
+import {
+	resetPasswordEmailTemplate,
+	verifyEmailTemplate,
+} from '../templates/transaction-emails.template';
+
+export enum EmailTypes {
+	EMAIL_VERIFICATION = 'email-verification',
+	PASSWORD_RESET = 'password-reset',
+}
 export interface EmailInterfaceParams {
 	from?: string;
 	from_name?: string;
@@ -31,3 +40,14 @@ interface Attachment {
 	filename: string;
 	type: string;
 }
+
+export interface EmailTemplate {
+	text: string;
+	html: string;
+	subject: string;
+}
+
+export const EmailTemplates: Record<EmailTypes, EmailTemplate> = {
+	[EmailTypes.EMAIL_VERIFICATION]: verifyEmailTemplate(),
+	[EmailTypes.PASSWORD_RESET]: resetPasswordEmailTemplate(),
+};

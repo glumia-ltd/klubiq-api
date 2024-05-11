@@ -53,7 +53,7 @@ import * as redis from 'cache-manager-redis-store';
 				idGenerator: (request: any) =>
 					request.headers['x-correlation-id'] ?? uuidv4(),
 				setup: (cls, req) => {
-					cls.set('requestOrigin', req.headers['x-app-handler']);
+					cls.set('clientName', req.headers['x-client-name']);
 				},
 			},
 		}),

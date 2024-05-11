@@ -60,15 +60,3 @@ export enum CacheKeys {
 	PROPERTY_STATUSES = 'property-status',
 	PROPERTY_PURPOSES = 'property-purposes',
 }
-
-('no_property_access');
-
-('no_lease_access');
-
-('no_report_access');
-
-('no_tenant_access');
-
-('no_user_access');
-
-('no_setting_access');

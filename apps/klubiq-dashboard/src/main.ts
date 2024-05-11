@@ -11,16 +11,17 @@ import { HttpExceptionFilter } from '@app/common';
 import { HttpResponseInterceptor } from '@app/common';
 import { CustomLogging } from '@app/common';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 declare const module: any;
 
 async function bootstrap() {
-	///CUSTOM LOGGER SERVICE
-	const customLogger = new CustomLogging();
+	const customLogger = new CustomLogging(new ConfigService()); // Create an instance of ConfigService
 
 	const app = await NestFactory.create(KlubiqDashboardModule, {
 		logger: WinstonModule.createLogger(customLogger.createLoggerConfig),
 	});
+
 	app.setGlobalPrefix('/api');
 	app.use(helmet());
 	/// SWAGGER CONFIGURATION
@@ -31,7 +32,7 @@ async function bootstrap() {
 		.setTitle('Klubiq PMS')
 		.setDescription('Klubiq PMS API')
 		.setVersion('1.0')
-		.addTag('klubiq')
+		.addTag('Klubiq')
 		.setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
 		.setLicense('MIT', 'https://mit-license.org/')
 		.addBearerAuth()
