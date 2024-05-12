@@ -41,6 +41,9 @@ env:
   TRANSACTIONAL_EMAIL_SENDER: ${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
   TRANSACTIONAL_EMAIL_SENDER_NAME: ${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
   GOOGLE_IDENTITY_ENDPOINT: ${{ vars.GOOGLE_IDENTITY_ENDPOINT }}
+  CLOUDWATCH_ACCESS_KEY_ID: ${{ secrets.CLOUDWATCH_ACCESS_KEY_ID }}
+  CLOUDWATCH_SECRET_ACCESS_KEY: ${{ secrets.CLOUDWATCH_SECRET_ACCESS_KEY }}
+  CLOUDWATCH_REGION: ${{ vars.CLOUDWATCH_REGION }}
 
 jobs:
   build:
@@ -113,14 +116,19 @@ jobs:
             export TRANSACTIONAL_EMAIL_SENDER=${{ vars.TRANSACTIONAL_EMAIL_SENDER }}
             export TRANSACTIONAL_EMAIL_SENDER_NAME=${{ vars.TRANSACTIONAL_EMAIL_SENDER_NAME }}
             export GOOGLE_IDENTITY_ENDPOINT=${{ vars.GOOGLE_IDENTITY_ENDPOINT }}
+            export CLOUDWATCH_ACCESS_KEY_ID=${{ secrets.CLOUDWATCH_ACCESS_KEY_ID }}
+            export CLOUDWATCH_SECRET_ACCESS_KEY=${{ secrets.CLOUDWATCH_SECRET_ACCESS_KEY }}
+            export CLOUDWATCH_REGION=${{ vars.CLOUDWATCH_REGION }}
+
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
 
             # Check if the process is running
             if pm2 status ${{ env.APP }} | grep -q "online"; then
                 echo "Process '${{ env.APP }}' is already running."
+                pm2 restart ${{ env.APP }} --update-env --watch
             else
                 echo "Process '${{ env.APP }}' is not running. Starting a new process..."
-                pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name ${{ env.APP }} --watch
+                pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name ${{ env.APP }} --update-env --watch
             fi
 
       #pm2 stop ${{ env.APP }}
