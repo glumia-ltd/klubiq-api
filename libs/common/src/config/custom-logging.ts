@@ -1,7 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import DailyRotateFile = require('winston-daily-rotate-file');
 import * as winston from 'winston';
-import { ClsService, ClsServiceManager } from 'nestjs-cls';
 import WinstonCloudWatch from 'winston-cloudwatch';
 import { includes } from 'lodash';
 
@@ -10,15 +9,12 @@ export class CustomLogging {
 	dailyRotateFileTransport: any = null;
 	myFormat = {} as winston.Logform.Format; // Assign an empty object instead of null
 	createLoggerConfig: winston.LoggerOptions = {};
-
+	cloudWatchTransport: WinstonCloudWatch = null;
 	private readonly env: string;
-	private readonly cls: ClsService;
 	constructor(private readonly configService: ConfigService) {
 		this.env = this.configService.get<string>('NODE_ENV');
 		const isNotDevEnvironment =
 			!!this.env && !includes(devEnvironments, this.env);
-
-		this.cls = ClsServiceManager.getClsService();
 		/** A transport for winston which logs to a rotating file based on date**/
 		this.dailyRotateFileTransport = new DailyRotateFile({
 			filename: 'logs/app_log-%DATE%.log',
@@ -27,7 +23,24 @@ export class CustomLogging {
 			maxSize: '20m',
 			maxFiles: '1d',
 		} as DailyRotateFile.DailyRotateFileTransportOptions);
-
+		this.cloudWatchTransport = new WinstonCloudWatch({
+			awsOptions: {
+				credentials: {
+					accessKeyId: this.configService.get<string>(
+						'CLOUDWATCH_ACCESS_KEY_ID',
+					),
+					secretAccessKey: this.configService.get<string>(
+						'CLOUDWATCH_SECRET_ACCESS_KEY',
+					),
+				},
+				region: this.configService.get<string>('CLOUDWATCH_REGION'),
+			},
+			level: 'error',
+			awsRegion: this.configService.get<string>('CLOUDWATCH_REGION'),
+			logGroupName: 'Klubiq-API',
+			logStreamName: `Klubiq-API-${this.env}-error`,
+			jsonMessage: true,
+		});
 		const customLevels = {
 			colors: {
 				info: 'green',
@@ -36,7 +49,6 @@ export class CustomLogging {
 				verbose: 'blue',
 			},
 		};
-		winston.addColors(customLevels.colors);
 		/**
 		 * Custom log format tailored to our application's requirements
 		 */
@@ -50,7 +62,6 @@ export class CustomLogging {
 					timestamp,
 					level,
 					...metadata,
-					correlationId: this.cls.getId(),
 					message,
 					error: {},
 				};
@@ -65,7 +76,6 @@ export class CustomLogging {
 		this.createLoggerConfig = {
 			level: 'warn',
 			defaultMeta: {
-				correlationId: this.cls.getId(),
 				service: 'Klubiq-API',
 			},
 			format: winston.format.combine(
@@ -76,28 +86,19 @@ export class CustomLogging {
 				winston.format.splat(),
 				winston.format.json(),
 				winston.format.colorize({
-					all: true,
+					all: !isNotDevEnvironment,
+					colors: customLevels.colors,
 				}),
 				this.myFormat,
 			),
 			transports: [
-				new winston.transports.Console({ level: 'info' }),
+				new winston.transports.Console({ level: 'warn' }),
 				new winston.transports.Http({ level: 'error' }),
 				isNotDevEnvironment
-					? new WinstonCloudWatch({
-							level: 'error',
-							awsAccessKeyId: this.configService.get<string>(
-								'CLOUDWATCH_ACCESS_KEY_ID',
-							),
-							awsSecretKey: this.configService.get<string>(
-								'CLOUDWATCH_SECRET_ACCESS_KEY',
-							),
-							awsRegion: this.configService.get<string>('CLOUDWATCH_REGION'),
-							logGroupName: 'Klubiq-API',
-							logStreamName: `Klubiq-API-${this.env}-error`,
-						})
+					? this.cloudWatchTransport
 					: this.dailyRotateFileTransport,
 			],
+			handleExceptions: true,
 		};
 	}
 }

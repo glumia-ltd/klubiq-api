@@ -1,5 +1,11 @@
-import { UserRoles } from '@app/common';
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { ErrorMessages } from '@app/common/config/error.constant';
+import { UserRoles } from '@app/common/config/config.constants';
+import {
+	Injectable,
+	CanActivate,
+	ExecutionContext,
+	ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '../auth.service';
 
@@ -23,7 +29,7 @@ export class RolesGuard implements CanActivate {
 		const request = context.switchToHttp().getRequest();
 		const token = request.headers.authorization?.split(' ')[1];
 		if (!token) {
-			return false; // No token provided, deny access
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN); // No token provided, deny access
 		}
 
 		const userRoles = await this.authService.getUserRolesFromToken(token);
