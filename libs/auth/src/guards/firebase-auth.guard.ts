@@ -1,15 +1,12 @@
-import {
-	CanActivate,
-	ExecutionContext,
-	HttpException,
-	HttpStatus,
-	Injectable,
-	UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth.service';
-import { FirebaseErrors } from '../helpers/firebase-error-helper';
+import {
+	FirebaseAdminErrors,
+	FirebaseAdminErrorMessages,
+} from '../helpers/firebase-error-helper';
+import { ErrorMessages } from '@app/common/config/error.constant';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
@@ -22,15 +19,15 @@ export class FirebaseAuthGuard implements CanActivate {
 		context: ExecutionContext,
 	): Promise<boolean | Promise<boolean> | Observable<boolean> | any> {
 		const request: any = context.switchToHttp().getRequest<Request>();
-		try {
-			const fireUser = await this.validate(request.headers.authorization);
-			if (!fireUser) throw new UnauthorizedException();
-
-			request.user = fireUser;
-			return true;
-		} catch {
-			throw new UnauthorizedException();
+		if (!request.headers.authorization) {
+			throw new Error(ErrorMessages.UNAUTHORIZED);
 		}
+		const fireUser = await this.validate(request.headers.authorization);
+		if (!fireUser) {
+			throw new Error(ErrorMessages.UNAUTHORIZED);
+		}
+		request.user = fireUser;
+		return true;
 	}
 
 	public async validate(token: string) {
@@ -38,34 +35,24 @@ export class FirebaseAuthGuard implements CanActivate {
 		if (this.configService.get('LOCAL_USER') === 'true') return firebaseUser;
 		const jwtToken = token.split('Bearer ')[1];
 		if (!jwtToken) {
-			throw new UnauthorizedException('Unauthorized access');
+			throw new Error(ErrorMessages.UNAUTHORIZED);
 		}
 		try {
 			firebaseUser = await this.authService.auth.verifyIdToken(jwtToken, true);
 			return firebaseUser;
 		} catch (err) {
-			if (err.code == FirebaseErrors.TOKEN_REVOKED)
-				throw new HttpException(
-					{
-						status: HttpStatus.UNAUTHORIZED,
-						error: 'Token has been revoked. Please login again',
-					},
-					HttpStatus.UNAUTHORIZED,
-					{
-						cause: new Error('Token has been revoked. Please login again'),
-					},
+			if (err.code == FirebaseAdminErrors.AUTH_REVOKED_TOKEN)
+				throw new Error(
+					FirebaseAdminErrorMessages[FirebaseAdminErrors.AUTH_REVOKED_TOKEN],
 				);
-			else
-				throw new HttpException(
-					{
-						status: HttpStatus.UNAUTHORIZED,
-						error: 'Invalid / expired token.',
-					},
-					HttpStatus.UNAUTHORIZED,
-					{
-						cause: new Error('Invalid / expired token'),
-					},
+			else if (err.code == FirebaseAdminErrors.AUTH_EXPIRED_TOKEN)
+				throw new Error(
+					FirebaseAdminErrorMessages[FirebaseAdminErrors.AUTH_EXPIRED_TOKEN],
 				);
+			else {
+				const message = FirebaseAdminErrorMessages[err.code];
+				throw new Error(message ?? err.message);
+			}
 		}
 	}
 }

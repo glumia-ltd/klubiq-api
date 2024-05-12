@@ -1,9 +1,4 @@
-import {
-	CanActivate,
-	ExecutionContext,
-	Injectable,
-	UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
@@ -16,12 +11,12 @@ export class ApikeyGuard implements CanActivate {
 	): boolean | Promise<boolean> | Observable<boolean> {
 		const request = context.switchToHttp().getRequest();
 		const apiKey = this.extractKeyFromHeader(request);
-		if (!apiKey) throw new UnauthorizedException('API Key not found.');
+		if (!apiKey) throw new Error('API Key not found.');
 		try {
 			const adminApiKey = this.configService.getOrThrow('ADMIN_API_KEY'); //use temporarily for admin access
 			return adminApiKey === apiKey;
 		} catch {
-			throw new UnauthorizedException('Invalid API Key');
+			throw new Error('Invalid API Key');
 		}
 	}
 

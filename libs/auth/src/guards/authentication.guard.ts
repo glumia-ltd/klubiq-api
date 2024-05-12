@@ -1,8 +1,9 @@
 import {
 	CanActivate,
 	ExecutionContext,
+	HttpException,
+	HttpStatus,
 	Injectable,
-	UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AUTH_TYPE_KEY } from '@app/auth/decorators/auth.decorator';
@@ -32,16 +33,17 @@ export class AuthenticationGuard implements CanActivate {
 			[context.getHandler(), context.getClass()],
 		) ?? [AuthenticationGuard.defaultAuthType];
 		const guards = authTypes.map((type) => this.authTypeGuardMap[type]).flat();
-		let error = new UnauthorizedException();
-
-		for (const instance of guards) {
-			const canActivate = await Promise.resolve(
-				instance.canActivate(context),
-			).catch((err) => {
-				error = err;
+		try {
+			for (const instance of guards) {
+				const canActivate = await Promise.resolve(
+					instance.canActivate(context),
+				);
+				return !!canActivate;
+			}
+		} catch (error) {
+			throw new HttpException(error.message, HttpStatus.UNAUTHORIZED, {
+				cause: error.stack,
 			});
-			return !!canActivate;
 		}
-		throw error;
 	}
 }
