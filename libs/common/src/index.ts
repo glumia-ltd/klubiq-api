@@ -42,3 +42,5 @@ export * from './public/public.module';
 export * from './dto/responses/feature-response.dto';
 export * from './email/types/email.types';
 export * from './config/error.constant';
+export * from './database/entities/property-amenity.entity';
+export * from './database/entities/property-image.entity';

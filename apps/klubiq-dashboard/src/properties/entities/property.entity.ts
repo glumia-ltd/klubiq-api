@@ -1,9 +1,9 @@
-import {
-	PropertyCategory,
-	PropertyPurpose,
-	PropertyStatus,
-	PropertyType,
-} from '@app/common';
+import { PropertyType } from '@app/common/database/entities/property-type.entity';
+import { PropertyStatus } from '@app/common/database/entities/property-status.entity';
+import { PropertyPurpose } from '@app/common/database/entities/property-purpose.entity';
+import { PropertyCategory } from '@app/common/database/entities/property-category.entity';
+import { PropertyImage } from '@app/common/database/entities/property-image.entity';
+import { PropertyAmenity } from '@app/common/database/entities/property-amenity.entity';
 import { AutoMap } from '@automapper/classes';
 import {
 	Column,
@@ -14,15 +14,19 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
+	OneToMany,
 	OneToOne,
+	ManyToMany,
 	PrimaryGeneratedColumn,
 	Tree,
 	TreeChildren,
 	TreeParent,
 	UpdateDateColumn,
+	JoinTable,
 } from 'typeorm';
 import { PropertyAddress } from './property-address.entity';
 import { Organization } from '../../organization/entities/organization.entity';
+import { OrganizationUser } from '../../users/entities/organization-user.entity';
 
 @Entity({ schema: 'poo' })
 @Tree('closure-table', {
@@ -52,28 +56,28 @@ export class Property {
 	note?: string;
 
 	@AutoMap()
-	@Column({ type: 'simple-array' })
-	tags: string[];
+	@Column({ type: 'simple-array', nullable: true })
+	tags?: string[];
 
 	@AutoMap()
 	@Column()
 	isMultiUnit: boolean;
 
 	@AutoMap()
-	@Column({ type: 'decimal' })
-	bedroom: number;
+	@Column({ type: 'decimal', nullable: true })
+	bedroom?: number;
 
 	@AutoMap()
-	@Column({ type: 'decimal' })
-	bathroom: number;
+	@Column({ type: 'decimal', nullable: true })
+	bathroom?: number;
 
 	@AutoMap()
-	@Column({ type: 'decimal' })
-	toilet: number;
+	@Column({ type: 'decimal', nullable: true })
+	toilet?: number;
 
 	@AutoMap()
-	@Column({ type: 'json' })
-	area: { value: number; unit: string };
+	@Column({ type: 'json', nullable: true })
+	area?: { value: number; unit: string };
 
 	@DeleteDateColumn()
 	deletedDate?: Date;
@@ -114,7 +118,7 @@ export class Property {
 		name: 'purposeId',
 		referencedColumnName: 'id',
 	})
-	purpose: PropertyPurpose;
+	purpose?: PropertyPurpose;
 
 	@AutoMap(() => PropertyStatus)
 	@ManyToOne(() => PropertyStatus, { eager: true })
@@ -122,7 +126,7 @@ export class Property {
 		name: 'statusId',
 		referencedColumnName: 'id',
 	})
-	status: PropertyStatus;
+	status?: PropertyStatus;
 
 	@AutoMap(() => PropertyAddress)
 	@OneToOne(() => PropertyAddress, { eager: true, cascade: true })
@@ -138,8 +142,33 @@ export class Property {
 	organization: Organization;
 
 	@TreeParent()
-	parentProperty: Property;
+	parentProperty?: Property;
 
 	@TreeChildren()
-	units: Property[];
+	units?: Property[];
+
+	@AutoMap(() => [PropertyAmenity])
+	@ManyToMany(() => PropertyAmenity, (amenity) => amenity.properties, {
+		cascade: ['insert'],
+	})
+	@JoinTable()
+	amenities?: PropertyAmenity[];
+
+	@AutoMap()
+	@Column()
+	isDraft: boolean;
+
+	@AutoMap(() => [PropertyImage])
+	@OneToMany(() => PropertyImage, (image) => image.property, {
+		cascade: ['insert'],
+	})
+	images?: PropertyImage[];
+
+	@AutoMap(() => OrganizationUser)
+	@ManyToOne(() => OrganizationUser, (orgUser) => orgUser.propertiesOwned)
+	owner?: OrganizationUser;
+
+	@AutoMap(() => OrganizationUser)
+	@ManyToOne(() => OrganizationUser, (orgUser) => orgUser.propertiesManaged)
+	manager?: OrganizationUser;
 }
