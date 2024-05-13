@@ -1,4 +1,4 @@
-import { EmailTemplate } from '../types/email-params.interface';
+import { EmailTemplate } from '../types/email.types';
 
 export const verifyEmailTemplate = (): EmailTemplate => ({
 	text: ` 

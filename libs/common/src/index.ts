@@ -40,5 +40,5 @@ export * from './services/properties-type.service';
 export * from './health/health.module';
 export * from './public/public.module';
 export * from './dto/responses/feature-response.dto';
-export * from './email/types/email-params.interface';
+export * from './email/types/email.types';
 export * from './config/error.constant';
