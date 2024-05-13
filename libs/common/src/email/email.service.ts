@@ -5,7 +5,7 @@ import {
 	EmailInterfaceParams,
 	EmailRecipient,
 	EmailTemplate,
-} from './types/email-params.interface';
+} from './types/email.types';
 
 @Injectable()
 export class MailerSendService {

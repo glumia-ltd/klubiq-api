@@ -7,4 +7,5 @@ export enum ErrorMessages {
 	TOKEN_EXPIRED = 'Invalid / expired token.',
 	TOKEN_REVOKED = 'Token has been revoked. Please login again',
 	FORBIDDEN = 'You do not have the necessary permissions to perform this action.',
+	USER_NOT_CREATED = 'User not created',
 }

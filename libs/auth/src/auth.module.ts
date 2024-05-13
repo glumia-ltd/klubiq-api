@@ -12,6 +12,7 @@ import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
 import { JwtService } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { HttpModule } from '@nestjs/axios';
+import { CacheService } from '@app/common/services/cache.service';
 
 const _firebaseConfig = require('../../../config.json');
 const apps = admin.apps;
@@ -83,6 +84,10 @@ const firebaseAdminProvider = {
 		FirebaseErrorMessageHelper,
 		JwtService,
 		OrganizationRepository,
+		{
+			provide: CacheService,
+			useFactory: () => new CacheService(null, 60 * 60 * 24),
+		},
 	],
 	exports: [AuthService],
 	imports: [DatabaseModule, ConfigModule, RepositoriesModule, HttpModule],

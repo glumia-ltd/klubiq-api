@@ -15,7 +15,6 @@ import {
 	RefreshTokenExchangeDto,
 	ResetPasswordDto,
 	SendVerifyEmailDto,
-	userLoginDto,
 	VerifyEmailDto,
 } from './dto/user-login.dto';
 import { SignUpResponseDto, TokenResponseDto } from './dto/auth-response.dto';
@@ -44,19 +43,6 @@ export class AuthController {
 		}
 	}
 
-	@HttpCode(HttpStatus.OK)
-	@Post('login')
-	@ApiOkResponse({
-		description: 'User logs in and returns user data and access token',
-	})
-	async userLogin(@Body() data: userLoginDto): Promise<any> {
-		try {
-			return this.authService.login(data);
-		} catch (err) {
-			throw err;
-		}
-	}
-
 	@Roles(
 		UserRoles.ADMIN,
 		UserRoles.STAFF,
@@ -64,11 +50,11 @@ export class AuthController {
 		UserRoles.TENANT,
 		UserRoles.LANDLORD,
 	)
-	@Get('user/:fbid')
+	@Get('user/:uid')
 	@ApiOkResponse({
 		description: 'Gets user data',
 	})
-	async user(@Param('fbid') id: string): Promise<any> {
+	async user(@Param('uid') id: string): Promise<any> {
 		try {
 			return this.authService.getUserInfo(id);
 		} catch (err) {
@@ -102,7 +88,7 @@ export class AuthController {
 		return userData;
 	}
 
-	@Post('verification/email')
+	@Post('email-verification-link')
 	@ApiOkResponse({
 		description: 'Send email verification link to user',
 		type: SignUpResponseDto,
