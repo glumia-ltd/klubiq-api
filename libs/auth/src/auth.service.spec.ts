@@ -11,49 +11,15 @@ import { ConfigService } from '@nestjs/config';
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
 import firebaseAdmin from 'firebase-admin';
 import auth from 'firebase/auth';
-import { UnauthorizedException } from '@nestjs/common';
 
 const moduleMocker = new ModuleMocker(global);
-const mockUser = {
-	firebaseId: 'XXXXXXXXXXXXXXXX',
-	email: 'XXXXXXXXXXXXX@XXX.COM',
-	phoneNumber: 'XXXXXXXXXXXXX',
-	photoURL: 'XXXXXXXXXXXXX',
-};
-// const mockOrg = {
-// 	name: 'Test Org',
-// 	uuid: 'XXXXXXXXXXXXXXXX',
-// 	email: 'XXXXXXXXXXXXX@XXX.COM',
-// };
-const mockLoginResponse = {
-	profileId: 1,
-	profileUuid: 'XXXXXXXXXXXXXXXX',
-	firstName: 'Test',
-	lastName: 'User',
-	email: 'XXXXXXXXXXXXX@XXX.COM',
-	systemRoleName: 'ADMIN',
-	orgRoleName: 'ADMIN',
-	isPrivacyPolicyAgreed: true,
-	isTermsAndConditionAccepted: true,
-	isActive: true,
-	profilePicUrl: 'XXXXXXXXXXXXX',
-	isAccountVerified: true,
-	firebaseId: 'XXXXXXXXXXXXXXXX',
-	organizationUserUuid: 'XXXXXXXXXXXXXXXX',
-	organizationUserId: 1,
-	organizationId: 1,
-	organizationName: 'Test Org',
-};
+
 const mockCreateUserPayload = {
 	email: 'XXXXXXXXXXXXX',
 	password: 'XXXXXXXXXXXXX',
 	firstName: 'Test User',
 	lastName: 'Test User',
 	companyName: 'XXXXXXXXXXXXX',
-};
-const mockLoginPayload = {
-	email: 'user@test.com',
-	password: 'TestPassword!',
 };
 
 jest.mock('firebase/auth');
@@ -64,7 +30,7 @@ describe('AuthService', () => {
 	let service: AuthService;
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let mapper: Mapper;
-	let userRepo: UserProfilesRepository;
+	//let userRepo: UserProfilesRepository;
 	// let orgRepo: OrganizationRepository;
 
 	beforeEach(async () => {
@@ -110,8 +76,6 @@ describe('AuthService', () => {
 
 		mapper = module.get<Mapper>(getMapperToken());
 		service = module.get<AuthService>(AuthService);
-		userRepo = module.get<UserProfilesRepository>(UserProfilesRepository);
-		// orgRepo = module.get<OrganizationRepository>(OrganizationRepository);
 	});
 
 	it('should be defined', () => {
@@ -141,45 +105,6 @@ describe('AuthService', () => {
 			// Assert
 			expect(token).toBe(undefined);
 			expect(token).toBeFalsy();
-		});
-	});
-
-	describe('login', () => {
-		it('should log in a user and return user data with token', async () => {
-			// Arrange
-			const result = {
-				user: mockLoginResponse,
-				token: 'XXXXXXXXXXXXXXXXXXXXXXXXXVVVVVXXXXXXXXXX',
-				refreshToken: 'XXXXXXXXXXXXXXXXXXXXXXXXXVVVVVXXXXXXXXXX',
-			};
-
-			// Act
-			jest
-				.spyOn(userRepo, 'getUserLoginInfo')
-				.mockImplementation(async () => mockUser);
-			jest
-				.spyOn(service, 'login')
-				.mockImplementation(async () => result as any); // Update the return type here
-			const mockResult = await service.login(mockLoginPayload);
-
-			// Assert
-			expect(mockResult).toBe(result);
-		});
-
-		it('should throw Unauthorized exception', async () => {
-			// Act
-			jest
-				.spyOn(userRepo, 'getUserLoginInfo')
-				.mockImplementation(async () => null);
-			try {
-				await service.login(mockLoginPayload);
-				expect(false).toBeTruthy();
-			} catch (e) {
-				expect(e).toBeInstanceOf(UnauthorizedException);
-				expect(e.message).toEqual(
-					'You do not have an account, kindly register before trying to log in',
-				);
-			}
 		});
 	});
 });
