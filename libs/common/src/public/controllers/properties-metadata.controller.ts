@@ -29,6 +29,9 @@ import {
 import { PropertiesCategoryService } from '../../services/properties-category.service';
 import { PropertyMetadataDto } from '../../dto/responses/properties-metadata.dto';
 import { Auth, AuthType } from '@app/auth';
+import { PropertiesAmenityService } from '@app/common/services/properties-amenity.service';
+import { ViewDataDto } from '@app/common/dto/responses/responses.dto';
+import { CreateDto } from '@app/common/dto/requests/requests.dto';
 
 @ApiSecurity('ApiKey')
 @ApiBearerAuth()
@@ -41,6 +44,7 @@ export class PropertyMetadataController {
 		private readonly propertyPurposeService: PropertiesPurposeService,
 		private readonly propertyStatusService: PropertiesStatusService,
 		private readonly propertyTypeService: PropertiesTypeService,
+		private readonly propertyAmenityService: PropertiesAmenityService,
 	) {}
 
 	//#region PROPERTY-CATEGORIES
@@ -281,4 +285,26 @@ export class PropertyMetadataController {
 		return this.propertyTypeService.deletePropertyType(id);
 	}
 	//#endregion
+
+	@Get('property-amenities')
+	@ApiOkResponse({
+		description: 'Returns all  property amenities',
+		type: [ViewDataDto],
+	})
+	async getAllPropertyAmenities(): Promise<ViewDataDto[]> {
+		const propertyAmenities =
+			await this.propertyAmenityService.getAllPropertyAmenities();
+		return propertyAmenities;
+	}
+
+	@Post('property-amenities')
+	@ApiOkResponse({
+		description: 'Creates a new property amenity',
+		type: ViewDataDto,
+	})
+	async createPropertyAmenity(
+		@Body() createDto: CreateDto,
+	): Promise<ViewDataDto> {
+		return this.propertyAmenityService.createPropertyAmenity(createDto);
+	}
 }
