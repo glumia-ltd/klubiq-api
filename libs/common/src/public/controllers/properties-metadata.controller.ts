@@ -25,9 +25,9 @@ import {
 import {
 	CreatePropertyMetadataDto,
 	UpdatePropertyMetadataDto,
-} from '../../dto/create-property-metadata.dto';
+} from '../../dto/requests/create-property-metadata.dto';
 import { PropertiesCategoryService } from '../../services/properties-category.service';
-import { PropertyMetadataDto } from '../../dto/properties-metadata.dto';
+import { PropertyMetadataDto } from '../../dto/responses/properties-metadata.dto';
 import { Auth, AuthType } from '@app/auth';
 
 @ApiSecurity('ApiKey')

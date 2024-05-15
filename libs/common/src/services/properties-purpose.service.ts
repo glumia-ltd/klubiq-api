@@ -4,9 +4,9 @@ import { Mapper } from '@automapper/core';
 import {
 	CreatePropertyMetadataDto,
 	UpdatePropertyMetadataDto,
-} from '../dto/create-property-metadata.dto';
+} from '../dto/requests/create-property-metadata.dto';
 import { PropertyPurposeRepository } from '../repositories/properties-purpose.repository';
-import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
+import { PropertyMetadataDto } from '../dto/responses/properties-metadata.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheService } from './cache.service';
 import { Cache } from 'cache-manager';

@@ -1,12 +1,12 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import {
 	CreatePropertyMetadataDto,
 	UpdatePropertyMetadataDto,
-} from '../dto/create-property-metadata.dto';
+} from '../dto/requests/create-property-metadata.dto';
 import { PropertyTypeRepository } from '../repositories/properties-type.repository';
-import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
+import { PropertyMetadataDto } from '../dto/responses/properties-metadata.dto';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheService } from './cache.service';
@@ -52,21 +52,24 @@ export class PropertiesTypeService {
 
 	async getPropertyTypeById(id: number): Promise<PropertyType> {
 		try {
-			const propertyType = await this.propertyTypeRepository.findOneBy({
-				id: id,
-			});
-
-			if (!propertyType) {
-				throw new NotFoundException('Property type not found');
+			const cachedPropertyType =
+				await this.cacheService.getCacheByIdentifier<PropertyMetadataDto>(
+					this.cacheKey,
+					'id',
+					id,
+				);
+			if (cachedPropertyType) {
+				return cachedPropertyType;
 			}
-
-			const cachedPropertyType = await this.mapper.mapAsync(
+			const propertyType = await this.propertyTypeRepository.findOneWithId({
+				id,
+			});
+			const data = await this.mapper.mapAsync(
 				propertyType,
 				PropertyType,
 				PropertyMetadataDto,
 			);
-
-			return cachedPropertyType;
+			return data;
 		} catch (err) {
 			this.logger.error('Error getting property type', err);
 			throw err;
@@ -123,13 +126,12 @@ export class PropertiesTypeService {
 
 	async deletePropertyType(id: number): Promise<void> {
 		try {
-			const propertyType = await this.getPropertyTypeById(id);
 			await this.cacheService.updateCacheAfterdelete<PropertyMetadataDto>(
 				this.cacheKey,
 				'id',
 				id,
 			);
-			await this.propertyTypeRepository.remove(propertyType);
+			await this.propertyTypeRepository.delete({ id });
 		} catch (error) {
 			this.logger.error('Error deleting property type', error);
 			throw error;
