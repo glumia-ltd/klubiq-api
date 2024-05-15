@@ -14,7 +14,6 @@ import {
 	ApiSecurity,
 	ApiTags,
 } from '@nestjs/swagger';
-import { PermissionsService } from '../../permissions/permissions.service';
 import {
 	OrgRoleResponseDto,
 	ViewSystemRoleDto,
@@ -45,6 +44,7 @@ import {
 	UpdateRoleDto,
 	UpdateRoleFeaturePermissionDto,
 } from '../../dto/requests/role.dto';
+import { PropertiesAmenityService } from '@app/common/services/properties-amenity.service';
 
 @ApiTags('public')
 @ApiSecurity('ApiKey')
@@ -52,7 +52,6 @@ import {
 @Controller('public')
 export class PublicController {
 	constructor(
-		private readonly permissionService: PermissionsService,
 		private readonly propertyCategoryService: PropertiesCategoryService,
 		private readonly propertyStatusService: PropertiesStatusService,
 		private readonly propertyTypeService: PropertiesTypeService,
@@ -60,6 +59,7 @@ export class PublicController {
 		private readonly featuresService: FeaturesService,
 		private readonly featurePermissionService: FeaturePermissionService,
 		private readonly roleService: RolesService,
+		private readonly propertyAmenityService: PropertiesAmenityService,
 	) {}
 
 	@Get('property-metadata')
@@ -69,12 +69,15 @@ export class PublicController {
 		const statuses = await this.propertyStatusService.getAllPropertyStatus();
 		const types = await this.propertyTypeService.getAllPropertyTypes();
 		const purposes = await this.propertyPurposeService.getAllPropertyPurpose();
+		const amenities =
+			await this.propertyAmenityService.getAllPropertyAmenities();
 
 		return {
 			categories,
 			statuses,
 			types,
 			purposes,
+			amenities,
 		};
 	}
 
