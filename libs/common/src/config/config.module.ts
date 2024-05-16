@@ -54,6 +54,7 @@ import * as redis from 'cache-manager-redis-store';
 					request.headers['x-correlation-id'] ?? uuidv4(),
 				setup: (cls, req) => {
 					cls.set('clientName', req.headers['x-client-name']);
+					cls.set('orgId', req.headers['x-org-id']);
 				},
 			},
 		}),

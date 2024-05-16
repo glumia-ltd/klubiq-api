@@ -30,7 +30,7 @@ import { OrganizationUser } from '../../users/entities/organization-user.entity'
 
 @Entity({ schema: 'poo' })
 @Tree('closure-table', {
-	closureTableName: 'property_unit',
+	closureTableName: 'poo.property_unit',
 })
 export class Property {
 	@AutoMap()
@@ -129,7 +129,7 @@ export class Property {
 	status?: PropertyStatus;
 
 	@AutoMap(() => PropertyAddress)
-	@OneToOne(() => PropertyAddress, { eager: true, cascade: true })
+	@OneToOne(() => PropertyAddress, { eager: true, cascade: ['insert'] })
 	@JoinColumn()
 	address: PropertyAddress;
 

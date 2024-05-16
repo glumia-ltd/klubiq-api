@@ -3,11 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyRepository } from '../repositories/properties.repository';
 import { Property } from '../entities/property.entity';
 import { PageOptionsDto } from '@app/common';
-import { CreatePropertyDto } from '../dto/create-property.dto';
-import { UpdatePropertyDto } from '../dto/update-property.dto';
+import { CreatePropertyDto } from '../dto/requests/create-property.dto';
+import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
-import { PropertyDto } from '../dto/property-response.dto';
+import { PropertyDto } from '../dto/responses/property-response.dto';
 
 @Injectable()
 export class PropertiesService {

@@ -13,7 +13,7 @@ import { Exclude } from 'class-transformer';
 export class PropertyAddress {
 	@AutoMap()
 	@PrimaryGeneratedColumn()
-	public id: number;
+	public id?: number;
 
 	@CreateDateColumn()
 	@Exclude()
@@ -28,20 +28,20 @@ export class PropertyAddress {
 	addressLine1: string;
 
 	@AutoMap()
-	@Column({ length: 100, default: '' })
-	addressLine2: string;
+	@Column({ length: 100, default: '', nullable: true })
+	addressLine2?: string;
 
 	@AutoMap()
-	@Column({ length: 50 })
-	city: string;
+	@Column({ length: 50, nullable: true })
+	city?: string;
 
 	@AutoMap()
-	@Column({ length: 50 })
-	state: string;
+	@Column({ length: 50, nullable: true })
+	state?: string;
 
 	@AutoMap()
-	@Column({ length: 20 })
-	postalCode: string;
+	@Column({ length: 20, nullable: true })
+	postalCode?: string;
 
 	@AutoMap()
 	@Column({ length: 50 })
@@ -52,12 +52,12 @@ export class PropertyAddress {
 	isManualAddress: boolean;
 
 	@AutoMap()
-	@Column({ type: 'decimal' })
-	latitude: number;
+	@Column({ type: 'decimal', nullable: true })
+	latitude?: number;
 
 	@AutoMap()
-	@Column({ type: 'decimal' })
-	longitude: number;
+	@Column({ type: 'decimal', nullable: true })
+	longitude?: number;
 
 	@DeleteDateColumn()
 	deletedDate?: Date;

@@ -11,17 +11,22 @@ import {
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
 import { Property } from '../entities/property.entity';
-import { PageOptionsDto } from '@app/common';
-import { CreatePropertyDto } from '../dto/create-property.dto';
-import { PropertyDto } from '../dto/property-response.dto';
-import { UpdatePropertyDto } from '../dto/update-property.dto';
+import { PageOptionsDto, UserRoles } from '@app/common';
+import { CreatePropertyDto } from '../dto/requests/create-property.dto';
+import { PropertyDto } from '../dto/responses/property-response.dto';
+import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
+import { Auth, Roles } from '@app/auth/decorators/auth.decorator';
+import { AuthType } from '@app/auth/types/firebase.types';
 
 @ApiTags('properties')
 @ApiBearerAuth()
+@Auth(AuthType.Bearer)
+@Roles(UserRoles.LANDLORD)
 @Controller('properties')
 export class PropertiesController {
 	constructor(private readonly propertyService: PropertiesService) {}
 
+	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
 	@Post()
 	@ApiOkResponse({
 		description: 'Creates a new property',

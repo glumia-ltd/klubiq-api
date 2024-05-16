@@ -7,6 +7,7 @@ import {
 	IsNumber,
 	IsString,
 } from 'class-validator';
+import { CreateAddressDto } from './create-address.dto';
 
 export class CreatePropertyDto {
 	@AutoMap()
@@ -85,4 +86,47 @@ export class CreatePropertyDto {
 	@IsOptional()
 	@IsNumber()
 	statusId?: number;
+
+	@AutoMap(() => CreateAddressDto)
+	address: CreateAddressDto;
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsArray()
+	@AutoMap(() => [ImagesDto])
+	images?: ImagesDto[];
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsArray()
+	@AutoMap(() => [AmenityDto])
+	amenities?: AmenityDto[];
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	@AutoMap()
+	ownerOrganizationUserUuid?: string;
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	@AutoMap()
+	managerOrganizationUserUuid?: string;
+}
+
+export class ImagesDto {
+	@AutoMap()
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	url?: string;
+}
+
+export class AmenityDto {
+	@AutoMap()
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	name?: string;
 }
