@@ -4,11 +4,11 @@ import { PropertyCategory } from '../database/entities/property-category.entity'
 import {
 	CreatePropertyMetadataDto,
 	UpdatePropertyMetadataDto,
-} from '../dto/create-property-metadata.dto';
+} from '../dto/requests/create-property-metadata.dto';
 import { PropertyType } from '../database/entities/property-type.entity';
 import { PropertyStatus } from '../database/entities/property-status.entity';
 import { PropertyPurpose } from '../database/entities/property-purpose.entity';
-import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
+import { PropertyMetadataDto } from '../dto/responses/properties-metadata.dto';
 
 export class PropertyMetaDataProfile extends AutomapperProfile {
 	constructor(@InjectMapper() mapper: Mapper) {

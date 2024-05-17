@@ -1,13 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PropertiesService } from './properties.service';
 import { BaseRepository } from '@app/common';
 import { Mapper, createMap, createMapper } from '@automapper/core';
 import { Property } from '../entities/property.entity';
 import { PropertyRepository } from '../repositories/properties.repository';
-import { PropertyDto } from '../dto/property-response.dto';
+import { PropertyDto } from '../dto/responses/property-response.dto';
 import { getMapperToken } from '@automapper/nestjs';
 import { classes } from '@automapper/classes';
 import { EntityManager } from 'typeorm';
+import { ClsModule, ClsService } from 'nestjs-cls';
 
 type MockRepository<T = any> = Partial<
 	Record<keyof BaseRepository<T>, jest.Mock>
@@ -48,12 +50,14 @@ describe('PropertiesService', () => {
 	let service: PropertiesService;
 	// let propertyRepository: MockRepository;
 	let mapper: Mapper;
+	let cls: ClsService;
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				PropertiesService,
 				EntityManager,
+				ClsService,
 				{
 					provide: PropertyRepository,
 					useValue: createMockRepository(),
@@ -65,11 +69,13 @@ describe('PropertiesService', () => {
 					}),
 				},
 			],
+			imports: [ClsModule],
 		}).compile();
 
 		mapper = module.get<Mapper>(getMapperToken());
 		// propertyRepository = module.get<MockRepository>(PropertyRepository);
 		service = module.get<PropertiesService>(PropertiesService);
+		cls = module.get<ClsService>(ClsService);
 		createMap(mapper, Property, PropertyDto);
 	});
 

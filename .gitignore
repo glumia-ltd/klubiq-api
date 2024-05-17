@@ -8,6 +8,7 @@ docker-compose.yaml
 docker-compose.yaml
 *.conf
 config.json
+apitesting.json
 fbase.config.json
 *.config.json
 # Logs

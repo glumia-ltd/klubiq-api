@@ -5,8 +5,8 @@ import { PropertyCategoryRepository } from '../repositories/properties-category.
 import {
 	CreatePropertyMetadataDto,
 	UpdatePropertyMetadataDto,
-} from '../dto/create-property-metadata.dto';
-import { PropertyMetadataDto } from '../dto/properties-metadata.dto';
+} from '../dto/requests/create-property-metadata.dto';
+import { PropertyMetadataDto } from '../dto/responses/properties-metadata.dto';
 import { CacheService } from './cache.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';

@@ -10,7 +10,7 @@ export abstract class AbstractEntity {
 	@AutoMap()
 	@PrimaryGeneratedColumn()
 	@Exclude()
-	public id: number;
+	public id?: number;
 
 	@CreateDateColumn()
 	@Exclude()

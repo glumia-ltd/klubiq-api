@@ -59,4 +59,5 @@ export enum CacheKeys {
 	PROPERTY_TYPES = 'property-types',
 	PROPERTY_STATUSES = 'property-status',
 	PROPERTY_PURPOSES = 'property-purposes',
+	PROPERTY_AMENITIES = 'property-amenities',
 }

@@ -1,13 +1,22 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	Injectable,
+	Logger,
+	NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyRepository } from '../repositories/properties.repository';
 import { Property } from '../entities/property.entity';
-import { PageOptionsDto } from '@app/common';
-import { CreatePropertyDto } from '../dto/create-property.dto';
-import { UpdatePropertyDto } from '../dto/update-property.dto';
+import { ErrorMessages } from '@app/common/config/error.constant';
+import { PageOptionsDto } from '@app/common/dto/pagination/page-options.dto';
+import { CreatePropertyDto } from '../dto/requests/create-property.dto';
+import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
-import { PropertyDto } from '../dto/property-response.dto';
+import { PropertyDto } from '../dto/responses/property-response.dto';
+import { ClsService } from 'nestjs-cls';
+import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 
 @Injectable()
 export class PropertiesService {
@@ -15,6 +24,7 @@ export class PropertiesService {
 	constructor(
 		@InjectRepository(PropertyRepository)
 		private readonly propertyRepository: PropertyRepository,
+		private readonly cls: ClsService<SharedClsStore>,
 		@InjectMapper() private readonly mapper: Mapper,
 	) {}
 
@@ -64,15 +74,26 @@ export class PropertiesService {
 		}
 	}
 
-	async createProperty(propertyData: CreatePropertyDto) {
+	async createProperty(createDto: CreatePropertyDto) {
 		try {
+			const orgId = this.cls.get('orgId');
+			if (!orgId)
+				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
+			console.log('Org Id: ', orgId);
+			console.log('Create Dto: ', createDto);
 			this.logger.verbose(`Creating new property`);
-			const property = this.propertyRepository.create(propertyData);
-			const createdProperty = await this.propertyRepository.save(property);
+			createDto.isMultiUnit = createDto.units?.length > 0;
+			const createdProperty = await this.propertyRepository.createProperty(
+				createDto,
+				orgId,
+			);
 			return this.mapper.map(createdProperty, Property, PropertyDto);
 		} catch (error) {
 			this.logger.error('Error creating Property Data', error);
-			return new Error(`Error creating Property Data. Error: ${error}`);
+			throw new BadRequestException(`Error creating New Property.`, {
+				cause: new Error(),
+				description: error.message,
+			});
 		}
 	}
 
