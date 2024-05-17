@@ -29,15 +29,7 @@ import { Organization } from '../../organization/entities/organization.entity';
 import { OrganizationUser } from '../../users/entities/organization-user.entity';
 
 @Entity({ schema: 'poo' })
-@Tree(
-	'closure-table',
-	// , {
-	// 	closureTableName: 'property_closure',
-	// 	ancestorColumnName: () => 'ancestor',
-	// 	descendantColumnName: () => 'descendant',
-
-	// }
-)
+@Tree('closure-table', { closureTableName: 'property_unit' })
 export class Property {
 	@AutoMap()
 	@PrimaryGeneratedColumn('uuid')
