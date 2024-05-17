@@ -28,7 +28,11 @@ export class PropertyAddress {
 	addressLine1: string;
 
 	@AutoMap()
-	@Column({ length: 100, default: '', nullable: true })
+	@Column({ length: 100, nullable: true })
+	unit?: string;
+
+	@AutoMap()
+	@Column({ length: 100, nullable: true })
 	addressLine2?: string;
 
 	@AutoMap()
@@ -48,7 +52,7 @@ export class PropertyAddress {
 	country: string;
 
 	@AutoMap()
-	@Column()
+	@Column({ default: false })
 	isManualAddress: boolean;
 
 	@AutoMap()

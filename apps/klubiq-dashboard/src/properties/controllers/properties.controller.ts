@@ -7,6 +7,7 @@ import {
 	Query,
 	Put,
 	Delete,
+	Headers,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
@@ -32,7 +33,11 @@ export class PropertiesController {
 		description: 'Creates a new property',
 		type: PropertyDto,
 	})
-	createProperty(@Body() propertyData: CreatePropertyDto) {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	createProperty(
+		@Body() propertyData: CreatePropertyDto,
+		@Headers('x-org-id') orgId?: string,
+	) {
 		return this.propertyService.createProperty(propertyData);
 	}
 
@@ -101,21 +106,6 @@ export class PropertiesController {
 	})
 	archiveProperty(@Param('propertyId') propertyId: number) {
 		return this.propertyService.archiveProperty(propertyId);
-	}
-
-	@Post('organization/:organizationUuid')
-	@ApiOkResponse({
-		description: 'Adds a property data of an organization to the db',
-		type: PropertyDto,
-	})
-	createPropertyForOrganization(
-		@Param('organizationUuid') organizationUuid: string,
-		@Body() propertyData: Partial<Property>,
-	) {
-		return this.propertyService.createPropertyForOrganization(
-			organizationUuid,
-			propertyData,
-		);
 	}
 }
 

@@ -3,7 +3,7 @@ import { PropertyStatus } from '@app/common/database/entities/property-status.en
 import { PropertyPurpose } from '@app/common/database/entities/property-purpose.entity';
 import { PropertyCategory } from '@app/common/database/entities/property-category.entity';
 import { PropertyImage } from '@app/common/database/entities/property-image.entity';
-import { PropertyAmenity } from '@app/common/database/entities/property-amenity.entity';
+import { Amenity } from '@app/common/database/entities/property-amenity.entity';
 import { AutoMap } from '@automapper/classes';
 import {
 	Column,
@@ -29,9 +29,15 @@ import { Organization } from '../../organization/entities/organization.entity';
 import { OrganizationUser } from '../../users/entities/organization-user.entity';
 
 @Entity({ schema: 'poo' })
-@Tree('closure-table', {
-	closureTableName: 'poo.property_unit',
-})
+@Tree(
+	'closure-table',
+	// , {
+	// 	closureTableName: 'property_closure',
+	// 	ancestorColumnName: () => 'ancestor',
+	// 	descendantColumnName: () => 'descendant',
+
+	// }
+)
 export class Property {
 	@AutoMap()
 	@PrimaryGeneratedColumn('uuid')
@@ -44,6 +50,7 @@ export class Property {
 	id?: number;
 
 	@AutoMap()
+	@Index()
 	@Column({ length: 100 })
 	name: string;
 
@@ -60,7 +67,7 @@ export class Property {
 	tags?: string[];
 
 	@AutoMap()
-	@Column()
+	@Column({ default: false })
 	isMultiUnit: boolean;
 
 	@AutoMap()
@@ -129,9 +136,13 @@ export class Property {
 	status?: PropertyStatus;
 
 	@AutoMap(() => PropertyAddress)
-	@OneToOne(() => PropertyAddress, { eager: true, cascade: ['insert'] })
+	@OneToOne(() => PropertyAddress, {
+		eager: true,
+		cascade: ['insert'],
+		nullable: true,
+	})
 	@JoinColumn()
-	address: PropertyAddress;
+	address?: PropertyAddress;
 
 	@AutoMap(() => Organization)
 	@ManyToOne(() => Organization, { eager: true })
@@ -144,18 +155,28 @@ export class Property {
 	@TreeParent()
 	parentProperty?: Property;
 
-	@TreeChildren()
+	@TreeChildren({ cascade: true })
 	units?: Property[];
 
-	@AutoMap(() => [PropertyAmenity])
-	@ManyToMany(() => PropertyAmenity, (amenity) => amenity.properties, {
+	@AutoMap(() => [Amenity])
+	@ManyToMany(() => Amenity, (amenity) => amenity.properties, {
 		cascade: ['insert'],
 	})
-	@JoinTable()
-	amenities?: PropertyAmenity[];
+	@JoinTable({
+		name: 'properties_amenities',
+		joinColumn: {
+			name: 'propertyUuid',
+			referencedColumnName: 'uuid',
+		},
+		inverseJoinColumn: {
+			name: 'amenityId',
+			referencedColumnName: 'id',
+		},
+	})
+	amenities?: Amenity[];
 
 	@AutoMap()
-	@Column()
+	@Column({ default: false })
 	isDraft: boolean;
 
 	@AutoMap(() => [PropertyImage])

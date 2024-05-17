@@ -17,6 +17,12 @@ export class CreateAddressDto {
 	@ApiPropertyOptional()
 	@IsOptional()
 	@IsString()
+	unit?: string;
+
+	@AutoMap()
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
 	city?: string;
 
 	@AutoMap()

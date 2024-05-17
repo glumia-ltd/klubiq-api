@@ -38,7 +38,7 @@ export class AuthUserResponseDto {
 
 	@AutoMap()
 	@ApiProperty()
-	companyuuid?: number;
+	companyUuid?: string;
 
 	@AutoMap()
 	@ApiProperty()

@@ -6,13 +6,12 @@ import {
 	IsBoolean,
 	IsNumber,
 	IsString,
+	IsNotEmpty,
 } from 'class-validator';
 import { CreateAddressDto } from './create-address.dto';
 
 export class CreatePropertyDto {
 	@AutoMap()
-	@ApiPropertyOptional()
-	@IsOptional()
 	@IsString()
 	name: string;
 
@@ -33,6 +32,10 @@ export class CreatePropertyDto {
 	@IsOptional()
 	@IsArray()
 	tags?: string[];
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	units?: CreatePropertyUnitDto[];
 
 	@AutoMap()
 	@ApiPropertyOptional()
@@ -87,14 +90,15 @@ export class CreatePropertyDto {
 	@IsNumber()
 	statusId?: number;
 
+	@IsNotEmpty()
 	@AutoMap(() => CreateAddressDto)
 	address: CreateAddressDto;
 
 	@ApiPropertyOptional()
 	@IsOptional()
 	@IsArray()
-	@AutoMap(() => [ImagesDto])
-	images?: ImagesDto[];
+	@AutoMap(() => [ImageDto])
+	images?: ImageDto[];
 
 	@ApiPropertyOptional()
 	@IsOptional()
@@ -115,7 +119,7 @@ export class CreatePropertyDto {
 	managerOrganizationUserUuid?: string;
 }
 
-export class ImagesDto {
+export class ImageDto {
 	@AutoMap()
 	@ApiPropertyOptional()
 	@IsOptional()
@@ -127,6 +131,32 @@ export class AmenityDto {
 	@AutoMap()
 	@ApiPropertyOptional()
 	@IsOptional()
+	@IsNumber()
+	id?: number;
+
+	@AutoMap()
+	@ApiPropertyOptional()
+	@IsOptional()
 	@IsString()
 	name?: string;
+}
+
+export class CreatePropertyUnitDto {
+	@IsString()
+	name: string;
+
+	@IsOptional()
+	@IsNumber()
+	bedroom?: number;
+
+	@IsOptional()
+	@IsNumber()
+	bathroom?: number;
+
+	@IsOptional()
+	@IsNumber()
+	toilet?: number;
+
+	@IsOptional()
+	area?: { value?: number; unit?: string };
 }

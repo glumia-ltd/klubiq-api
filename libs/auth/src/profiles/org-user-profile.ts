@@ -73,6 +73,14 @@ export class OrgUserProfile extends AutomapperProfile {
 					(d) => d.company,
 					mapFrom((s) => s.organizationUser?.organization?.name),
 				),
+				forMember(
+					(d) => d.companyId,
+					mapFrom((s) => s.organizationUser?.organization?.organizationId),
+				),
+				forMember(
+					(d) => d.companyUuid,
+					mapFrom((s) => s.organizationUser?.organization?.organizationUuid),
+				),
 				forMember((d) => d.entitlements, mapFrom(featurePermissionResolver)),
 			);
 		};
