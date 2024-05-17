@@ -8,11 +8,12 @@ import {
 	Put,
 	Delete,
 	Headers,
+	BadRequestException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
 import { Property } from '../entities/property.entity';
-import { PageOptionsDto, UserRoles } from '@app/common';
+import { ErrorMessages, PageOptionsDto, UserRoles } from '@app/common';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { PropertyDto } from '../dto/responses/property-response.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
@@ -33,12 +34,18 @@ export class PropertiesController {
 		description: 'Creates a new property',
 		type: PropertyDto,
 	})
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	createProperty(
 		@Body() propertyData: CreatePropertyDto,
 		@Headers('x-org-id') orgId?: string,
 	) {
-		return this.propertyService.createProperty(propertyData);
+		try {
+			if (!orgId) {
+				throw new BadRequestException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
+			}
+			return this.propertyService.createProperty(propertyData);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
 	@Get('organization/:organizationUuid')
