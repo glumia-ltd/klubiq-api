@@ -1,4 +1,9 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+	BadRequestException,
+	Inject,
+	Injectable,
+	Logger,
+} from '@nestjs/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import {
@@ -26,7 +31,7 @@ export class PropertiesTypeService {
 
 	async createPropertyType(
 		createPropertyTypeDto: CreatePropertyMetadataDto,
-	): Promise<PropertyType> {
+	): Promise<PropertyMetadataDto> {
 		try {
 			const { name, displayText } = createPropertyTypeDto;
 			const propertyType = this.propertyTypeRepository.create({
@@ -46,7 +51,10 @@ export class PropertiesTypeService {
 			return mappedType;
 		} catch (err) {
 			this.logger.error('Error creating property type', err);
-			throw err;
+			throw new BadRequestException('Error creating property type.', {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
@@ -72,11 +80,14 @@ export class PropertiesTypeService {
 			return data;
 		} catch (err) {
 			this.logger.error('Error getting property type', err);
-			throw err;
+			throw new BadRequestException('Error getting property type.', {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
-	async getAllPropertyTypes() {
+	async getAllPropertyTypes(): Promise<PropertyMetadataDto[]> {
 		try {
 			const cachedPropertyTypesList =
 				await this.cacheService.getCache<PropertyMetadataDto>(this.cacheKey);
@@ -96,14 +107,17 @@ export class PropertiesTypeService {
 			return cachedPropertyTypesList;
 		} catch (err) {
 			this.logger.error('Error getting property type list', err);
-			throw err;
+			throw new BadRequestException('Error getting property type list.', {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
 	async updatePropertyType(
 		id: number,
 		updatePropertyTypeDto: UpdatePropertyMetadataDto,
-	): Promise<PropertyType> {
+	): Promise<PropertyMetadataDto> {
 		try {
 			const propertyType = await this.getPropertyTypeById(id);
 			Object.assign(propertyType, updatePropertyTypeDto);
@@ -118,9 +132,12 @@ export class PropertiesTypeService {
 				updatePropertyTypeDto,
 			);
 			return this.mapper.map(updatedType, PropertyType, PropertyMetadataDto);
-		} catch (error) {
-			this.logger.error('Error updating property type', error);
-			throw error;
+		} catch (err) {
+			this.logger.error('Error updating property type', err);
+			throw new BadRequestException('Error updating property type.', {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
@@ -132,9 +149,12 @@ export class PropertiesTypeService {
 				id,
 			);
 			await this.propertyTypeRepository.delete({ id });
-		} catch (error) {
-			this.logger.error('Error deleting property type', error);
-			throw error;
+		} catch (err) {
+			this.logger.error('Error deleting property type', err);
+			throw new BadRequestException('Error deleting property type.', {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 }

@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Inject,
+	Injectable,
+	Logger,
+	NotFoundException,
+} from '@nestjs/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import {
@@ -26,7 +32,7 @@ export class PropertiesStatusService {
 
 	async createPropertyStatus(
 		createPropertyStatusDto: CreatePropertyMetadataDto,
-	): Promise<PropertyStatus> {
+	): Promise<PropertyMetadataDto> {
 		try {
 			const { name, displayText } = createPropertyStatusDto;
 			const propertyStatus = this.propertyStatusRepository.create({
@@ -47,11 +53,14 @@ export class PropertiesStatusService {
 			return mappedStatus;
 		} catch (err) {
 			this.logger.error('Error creating property status', err);
-			throw err;
+			throw new BadRequestException('Error creating property status.', {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
-	async getPropertyStatusById(id: number): Promise<PropertyStatus> {
+	async getPropertyStatusById(id: number): Promise<PropertyMetadataDto> {
 		try {
 			const propertyStatus = await this.propertyStatusRepository.findOneBy({
 				id: id,
@@ -66,11 +75,14 @@ export class PropertiesStatusService {
 			);
 		} catch (err) {
 			this.logger.error('Error getting property status', err);
-			throw err;
+			throw new BadRequestException('Error getting property status.', {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
-	async getAllPropertyStatus() {
+	async getAllPropertyStatus(): Promise<PropertyMetadataDto[]> {
 		try {
 			const cachedPropertyStatusList =
 				await this.cacheService.getCache<PropertyMetadataDto>(this.cacheKey);
@@ -90,14 +102,17 @@ export class PropertiesStatusService {
 			return cachedPropertyStatusList;
 		} catch (err) {
 			this.logger.error('Error getting property status list', err);
-			throw err;
+			throw new BadRequestException('Error getting property status list.', {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
 	async updatePropertyStatus(
 		id: number,
 		updatePropertyStatusDto: UpdatePropertyMetadataDto,
-	): Promise<PropertyStatus> {
+	): Promise<PropertyMetadataDto> {
 		try {
 			const propertyStatus = await this.getPropertyStatusById(id);
 			Object.assign(propertyStatus, updatePropertyStatusDto);
@@ -116,9 +131,12 @@ export class PropertiesStatusService {
 				PropertyStatus,
 				PropertyMetadataDto,
 			);
-		} catch (error) {
-			this.logger.error('Error updating property status', error);
-			throw error;
+		} catch (err) {
+			this.logger.error('Error updating property status', err);
+			throw new BadRequestException('Error updating property status.', {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
@@ -131,9 +149,12 @@ export class PropertiesStatusService {
 				id,
 			);
 			await this.propertyStatusRepository.remove(propertyStatus);
-		} catch (error) {
-			this.logger.error('Error deleting property status', error);
-			throw error;
+		} catch (err) {
+			this.logger.error('Error deleting property status', err);
+			throw new BadRequestException('Error deleting property status.', {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 }

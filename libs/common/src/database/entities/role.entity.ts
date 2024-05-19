@@ -1,11 +1,4 @@
-import {
-	Entity,
-	PrimaryGeneratedColumn,
-	Column,
-	CreateDateColumn,
-	UpdateDateColumn,
-	OneToMany,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { UserProfile } from './user-profile.entity';
 import { AutoMap } from '@automapper/classes';
 
@@ -25,10 +18,4 @@ export class Role {
 
 	@OneToMany(() => UserProfile, (userProfile) => userProfile.systemRole)
 	users?: UserProfile[];
-
-	@CreateDateColumn()
-	createdDate?: Date;
-
-	@UpdateDateColumn()
-	updatedDate?: Date;
 }

@@ -78,7 +78,7 @@ export class Property {
 	@Column({ type: 'json', nullable: true })
 	area?: { value: number; unit: string };
 
-	@DeleteDateColumn()
+	@DeleteDateColumn({ select: false })
 	deletedDate?: Date;
 
 	@AutoMap()
@@ -86,7 +86,7 @@ export class Property {
 	isArchived?: boolean;
 
 	@AutoMap()
-	@Column({ nullable: true })
+	@Column({ nullable: true, select: false })
 	archivedDate?: Date;
 
 	@CreateDateColumn()
@@ -184,4 +184,8 @@ export class Property {
 	@AutoMap(() => OrganizationUser)
 	@ManyToOne(() => OrganizationUser, (orgUser) => orgUser.propertiesManaged)
 	manager?: OrganizationUser;
+
+	@AutoMap()
+	@Column({ default: false })
+	isListingPublished: boolean;
 }

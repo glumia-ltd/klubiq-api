@@ -13,7 +13,12 @@ import {
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
 import { Property } from '../entities/property.entity';
-import { ErrorMessages, PageOptionsDto, UserRoles } from '@app/common';
+import {
+	ErrorMessages,
+	PageOptionsDto,
+	RequiredArgumentException,
+	UserRoles,
+} from '@app/common';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { PropertyDto } from '../dto/responses/property-response.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
@@ -48,35 +53,36 @@ export class PropertiesController {
 		}
 	}
 
-	@Get('organization/:organizationUuid')
-	@ApiOkResponse({
-		description: 'Returns all properties under an organization',
-		type: [PropertyDto],
-	})
-	getAllPropertiesByOrganization(
-		@Param('organizationUuid') organizationUuid: string,
-		@Query() pageOptionsDto: PageOptionsDto,
-	): Promise<Property[]> {
-		return this.propertyService.getAllPropertiesByOrganization(
-			organizationUuid,
-			pageOptionsDto,
-		);
-	}
-
 	@Get()
 	@ApiOkResponse({
 		description: 'Returns all properties under an organization',
-		type: [PropertyDto],
 	})
-	getAllPropertiesByFilter(
-		@Query('filter') filter: any,
+	getOrganizationProperties(
 		@Query() pageOptionsDto: PageOptionsDto,
-	): Promise<Property[]> {
-		return this.propertyService.getAllPropertiesByFilter(
-			filter,
-			pageOptionsDto,
-		);
+		@Headers('x-org-id') orgId?: string,
+	) {
+		try {
+			if (!orgId) throw new RequiredArgumentException(['orgId']);
+			return this.propertyService.getOrganizationProperties(pageOptionsDto);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
+
+	// @Get()
+	// @ApiOkResponse({
+	// 	description: 'Returns all properties under an organization',
+	// 	type: [PropertyDto],
+	// })
+	// getAllPropertiesByFilter(
+	// 	@Query('filter') filter: any,
+	// 	@Query() pageOptionsDto: PageOptionsDto,
+	// ): Promise<Property[]> {
+	// 	return this.propertyService.getAllPropertiesByFilter(
+	// 		filter,
+	// 		pageOptionsDto,
+	// 	);
+	// }
 
 	@Get(':propertyId')
 	@ApiOkResponse({

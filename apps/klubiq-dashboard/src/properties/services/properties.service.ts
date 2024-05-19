@@ -17,6 +17,7 @@ import { Mapper } from '@automapper/core';
 import { PropertyDto } from '../dto/responses/property-response.dto';
 import { ClsService } from 'nestjs-cls';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
+import { RequiredArgumentException } from '@app/common/exceptions/custom-exception';
 
 @Injectable()
 export class PropertiesService {
@@ -79,8 +80,6 @@ export class PropertiesService {
 			const orgId = this.cls.get('orgId');
 			if (!orgId)
 				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
-			console.log('Org Id: ', orgId);
-			console.log('Create Dto: ', createDto);
 			this.logger.verbose(`Creating new property`);
 			createDto.isMultiUnit = createDto.units?.length > 0;
 			const createdProperty = await this.propertyRepository.createProperty(
@@ -97,15 +96,39 @@ export class PropertiesService {
 		}
 	}
 
-	async getAllPropertiesByOrganization(
-		organizationUuid: string,
-		pageDto?: PageOptionsDto,
-	): Promise<Property[]> {
-		return await this.propertyRepository.find({
-			where: { organization: { organizationUuid } },
-			take: pageDto.take,
-			skip: (pageDto.page - 1) * pageDto.take,
-		});
+	/**
+	 * Retrieves the properties of an organization.
+	 *
+	 * @param pageDto - Optional pagination options.
+	 * @returns A promise that resolves to an array of Property objects.
+	 */
+	async getOrganizationProperties(pageDto?: PageOptionsDto) {
+		try {
+			const orgId = this.cls.get('orgId');
+			if (!orgId) throw new RequiredArgumentException(['orgId']);
+			this.logger.debug(
+				`Getting all properties for ORG: ${orgId}. Skip: ${pageDto.skip}, Take: ${pageDto.take}`,
+			);
+			// const queryBuilder = this.propertyRepository.createQueryBuilder('property');
+			// queryBuilder
+			// 	.where('property.organizationUuid = :organizationUuid', { organizationUuid: orgId })
+			// 	.orderBy('property.updatedDate', pageDto.order)
+			// 	.skip(pageDto.skip)
+			// 	.take(pageDto.take);
+			// const itemCount = await queryBuilder.getCount();
+			// const { entities } = await queryBuilder.getRawAndEntities();
+			// const pageMetaDto = new PageMetaDto({ itemCount, pageOptionsDto: pageDto });
+			// return new PageDto(entities, pageMetaDto);
+			return await this.propertyRepository.getOrganizationProperties(
+				orgId,
+				pageDto,
+			);
+		} catch (error) {
+			this.logger.error('Error retrieving organization properties', error);
+			throw new Error(
+				`Error retrieving organization properties. Error: ${error}`,
+			);
+		}
 	}
 
 	async getAllPropertiesByFilter(

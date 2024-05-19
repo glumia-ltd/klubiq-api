@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Inject,
+	Injectable,
+	Logger,
+	NotFoundException,
+} from '@nestjs/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { PropertyCategoryRepository } from '../repositories/properties-category.repository';
@@ -26,7 +32,7 @@ export class PropertiesCategoryService {
 
 	async createPropertyCategory(
 		createPropertyCategoryDto: CreatePropertyMetadataDto,
-	): Promise<PropertyCategory> {
+	): Promise<PropertyMetadataDto> {
 		try {
 			const { name, displayText } = createPropertyCategoryDto;
 			const propertyCategory = this.propertyCategoryRepository.create({
@@ -35,7 +41,7 @@ export class PropertiesCategoryService {
 			});
 			const createdCategory =
 				await this.propertyCategoryRepository.save(propertyCategory);
-			const mappedCategory = await this.mapper.map(
+			const mappedCategory = await this.mapper.mapAsync(
 				createdCategory,
 				PropertyCategory,
 				PropertyMetadataDto,
@@ -47,11 +53,14 @@ export class PropertiesCategoryService {
 			return mappedCategory;
 		} catch (err) {
 			this.logger.error('Error creating property category', err);
-			throw err;
+			throw new BadRequestException(`Error creating property category.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
-	async getPropertyCategoryById(id: number): Promise<PropertyCategory> {
+	async getPropertyCategoryById(id: number): Promise<PropertyMetadataDto> {
 		try {
 			const propertyCategory = await this.propertyCategoryRepository.findOneBy({
 				id: id,
@@ -66,11 +75,14 @@ export class PropertiesCategoryService {
 			);
 		} catch (err) {
 			this.logger.error('Error getting property category', err);
-			throw err;
+			throw new BadRequestException(`Error getting property category.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
-	async getAllPropertyCategories() {
+	async getAllPropertyCategories(): Promise<PropertyMetadataDto[]> {
 		try {
 			const cachedPropertyCategoriesList =
 				await this.cacheService.getCache<PropertyMetadataDto>(this.cacheKey);
@@ -90,14 +102,17 @@ export class PropertiesCategoryService {
 			return cachedPropertyCategoriesList;
 		} catch (err) {
 			this.logger.error('Error getting property categories list', err);
-			throw err;
+			throw new BadRequestException(`Error getting property categories list.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
 	async updatePropertyCategory(
 		id: number,
 		updatePropertyCategoryDto: UpdatePropertyMetadataDto,
-	): Promise<PropertyCategory> {
+	): Promise<PropertyMetadataDto> {
 		try {
 			const propertyCategory = await this.getPropertyCategoryById(id);
 			Object.assign(propertyCategory, updatePropertyCategoryDto);
@@ -116,9 +131,12 @@ export class PropertiesCategoryService {
 				PropertyCategory,
 				PropertyMetadataDto,
 			);
-		} catch (error) {
-			this.logger.error('Error updating property category', error);
-			throw error;
+		} catch (err) {
+			this.logger.error('Error updating property category', err);
+			throw new BadRequestException(`Error updating property category.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
@@ -131,9 +149,12 @@ export class PropertiesCategoryService {
 				id,
 			);
 			await this.propertyCategoryRepository.remove(propertyCategory);
-		} catch (error) {
-			this.logger.error('Error deleting property category', error);
-			throw error;
+		} catch (err) {
+			this.logger.error('Error deleting property category', err);
+			throw new BadRequestException(`Error deleting property category.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 }
