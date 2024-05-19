@@ -41,7 +41,7 @@ export class PropertiesController {
 	})
 	createProperty(
 		@Body() propertyData: CreatePropertyDto,
-		@Headers('x-org-id') orgId?: string,
+		@Headers('x-tenant-org') orgId?: string,
 	) {
 		try {
 			if (!orgId) {
@@ -59,7 +59,7 @@ export class PropertiesController {
 	})
 	getOrganizationProperties(
 		@Query() pageOptionsDto: PageOptionsDto,
-		@Headers('x-org-id') orgId?: string,
+		@Headers('x-tenant-org') orgId?: string,
 	) {
 		try {
 			if (!orgId) throw new RequiredArgumentException(['orgId']);

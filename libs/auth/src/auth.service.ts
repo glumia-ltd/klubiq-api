@@ -4,9 +4,10 @@ import {
 	Injectable,
 	Logger,
 	NotFoundException,
+	UnauthorizedException,
 } from '@nestjs/common';
 import { replace, split } from 'lodash';
-import { ClsService, ClsServiceManager } from 'nestjs-cls';
+import { ClsService } from 'nestjs-cls';
 import { Inject } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import * as auth from 'firebase-admin/auth';
@@ -47,11 +48,11 @@ import {
 	OrgRoleResponseDto,
 	ViewSystemRoleDto,
 } from '@app/common/dto/responses/org-role.dto';
+import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 
 @Injectable()
 export class AuthService {
 	private firebaseClientAuth: Auth;
-	private readonly cls: ClsService;
 	private readonly emailVerificationBaseUrl: string;
 	private readonly emailAuthContinueUrl: string;
 	private readonly logger = new Logger(AuthService.name);
@@ -67,9 +68,9 @@ export class AuthService {
 		private readonly errorMessageHelper: FirebaseErrorMessageHelper,
 		private readonly configService: ConfigService,
 		private readonly httpService: HttpService,
+		private readonly cls: ClsService<SharedClsStore>,
 	) {
 		this.firebaseClientAuth = getAuth(this.firebaseClient);
-		this.cls = ClsServiceManager.getClsService();
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
 		);
@@ -514,8 +515,12 @@ export class AuthService {
 		}
 	}
 
-	async getUserInfo(firebaseId: string): Promise<AuthUserResponseDto> {
-		const user = await this.userProfilesRepository.getUserLoginInfo(firebaseId);
+	async getUserInfo(): Promise<AuthUserResponseDto> {
+		if (!this.cls.get('jwtToken')) {
+			throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
+		}
+		const fbUser = await this.auth.verifyIdToken(this.cls.get('jwtToken'));
+		const user = await this.userProfilesRepository.getUserLoginInfo(fbUser.uid);
 		const userData = this.mapper.map(user, UserProfile, AuthUserResponseDto);
 		return userData;
 	}

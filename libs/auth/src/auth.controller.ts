@@ -50,13 +50,13 @@ export class AuthController {
 		UserRoles.TENANT,
 		UserRoles.LANDLORD,
 	)
-	@Get('user/:uid')
+	@Get('user')
 	@ApiOkResponse({
 		description: 'Gets user data',
 	})
-	async user(@Param('uid') id: string): Promise<any> {
+	async user(): Promise<any> {
 		try {
-			return this.authService.getUserInfo(id);
+			return this.authService.getUserInfo();
 		} catch (err) {
 			throw err;
 		}
