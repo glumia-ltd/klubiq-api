@@ -89,9 +89,11 @@ export class Property {
 	@Column({ nullable: true, select: false })
 	archivedDate?: Date;
 
+	@AutoMap()
 	@CreateDateColumn()
 	createdDate?: Date;
 
+	@AutoMap()
 	@UpdateDateColumn()
 	updatedDate?: Date;
 
@@ -147,6 +149,7 @@ export class Property {
 	@TreeParent()
 	parentProperty?: Property;
 
+	@AutoMap(() => [Property])
 	@TreeChildren({ cascade: true })
 	units?: Property[];
 
@@ -173,7 +176,7 @@ export class Property {
 
 	@AutoMap(() => [PropertyImage])
 	@OneToMany(() => PropertyImage, (image) => image.property, {
-		cascade: ['insert'],
+		cascade: true,
 	})
 	images?: PropertyImage[];
 

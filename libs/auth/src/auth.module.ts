@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { DatabaseModule, ConfigModule } from '@app/common';
 import { ConfigService } from '@nestjs/config';
-import { initializeApp, getApps } from 'firebase/app';
 import * as admin from 'firebase-admin';
 import { RepositoriesModule } from '@app/common';
 import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/organization.repository';
@@ -29,7 +28,7 @@ interface FirebaseConfig {
 	auth_provider_x509_cert_url: string;
 	client_x509_cert_url: string;
 }
-const firebaseAdminConfig = _firebaseConfig as unknown as FirebaseConfig;
+const firebaseAdminConfig = _firebaseConfig as FirebaseConfig;
 
 const firebase_params = {
 	type: firebaseAdminConfig.type,
@@ -42,25 +41,6 @@ const firebase_params = {
 	tokenUri: firebaseAdminConfig.token_uri,
 	authProviderX509CertUrl: firebaseAdminConfig.auth_provider_x509_cert_url,
 	clientC509CertUrl: firebaseAdminConfig.client_x509_cert_url,
-};
-
-const firebaseAuthProvider = {
-	provide: 'FIREBASE_AUTH',
-	inject: [ConfigService],
-	useFactory: (config: ConfigService) => {
-		const firebaseConfig = {
-			apiKey: config.get<string>('FIREBASE_API_KEY'),
-			authDomain: config.get<string>('FIREBASE_AUTH_DOMAIN'),
-			projectId: config.get<string>('FIREBASE_PROJECT_ID'),
-			storageBucket: config.get<string>('FIREBASE_STORAGE_BUCKET'),
-			messagingSenderId: config.get<string>('FIREBASE_MESSAGING_SENDER_ID'),
-			appId: config.get<string>('FIREBASE_APP_ID'),
-			measurementId: config.get<string>('FIREBASE_MEASUREMENT_ID'),
-		};
-		if (!getApps().length) {
-			return initializeApp(firebaseConfig);
-		}
-	},
 };
 
 const firebaseAdminProvider = {
@@ -78,7 +58,6 @@ const firebaseAdminProvider = {
 	providers: [
 		AuthService,
 		ConfigService,
-		firebaseAuthProvider,
 		firebaseAdminProvider,
 		OrgUserProfile,
 		FirebaseErrorMessageHelper,

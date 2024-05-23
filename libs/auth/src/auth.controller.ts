@@ -23,7 +23,7 @@ import { UserRoles } from '@app/common';
 
 @ApiTags('auth')
 @ApiBearerAuth()
-@Auth(AuthType.None, AuthType.Bearer)
+@Auth(AuthType.None)
 @Controller('auth')
 export class AuthController {
 	constructor(private readonly authService: AuthService) {}
@@ -43,6 +43,7 @@ export class AuthController {
 		}
 	}
 
+	@Auth(AuthType.Bearer)
 	@Roles(
 		UserRoles.ADMIN,
 		UserRoles.STAFF,

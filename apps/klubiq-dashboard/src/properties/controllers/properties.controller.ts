@@ -7,18 +7,11 @@ import {
 	Query,
 	Put,
 	Delete,
-	Headers,
 	BadRequestException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
-import { Property } from '../entities/property.entity';
-import {
-	ErrorMessages,
-	PageOptionsDto,
-	RequiredArgumentException,
-	UserRoles,
-} from '@app/common';
+import { PageOptionsDto, UserRoles } from '@app/common';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { PropertyDto } from '../dto/responses/property-response.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
@@ -39,15 +32,36 @@ export class PropertiesController {
 		description: 'Creates a new property',
 		type: PropertyDto,
 	})
-	createProperty(
-		@Body() propertyData: CreatePropertyDto,
-		@Headers('x-tenant-org') orgId?: string,
-	) {
+	createProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
-			if (!orgId) {
-				throw new BadRequestException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
-			}
 			return this.propertyService.createProperty(propertyData);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@Post('draft')
+	@ApiOkResponse({
+		description: 'Creates a draft property',
+		type: PropertyDto,
+	})
+	createDraftProperty(@Body() propertyData: CreatePropertyDto) {
+		try {
+			return this.propertyService.createDraftProperty(propertyData);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@Post(':propertyUuid/draft')
+	@ApiOkResponse({
+		description: 'Saves a draft property',
+	})
+	saveDraftProperty(@Param('propertyUuid') propertyUuid: string) {
+		try {
+			this.propertyService.saveDraftProperty(propertyUuid);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -57,40 +71,23 @@ export class PropertiesController {
 	@ApiOkResponse({
 		description: 'Returns all properties under an organization',
 	})
-	getOrganizationProperties(
-		@Query() pageOptionsDto: PageOptionsDto,
-		@Headers('x-tenant-org') orgId?: string,
-	) {
+	getOrganizationProperties(@Query() pageOptionsDto: PageOptionsDto) {
 		try {
-			if (!orgId) throw new RequiredArgumentException(['orgId']);
 			return this.propertyService.getOrganizationProperties(pageOptionsDto);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
 	}
 
-	// @Get()
-	// @ApiOkResponse({
-	// 	description: 'Returns all properties under an organization',
-	// 	type: [PropertyDto],
-	// })
-	// getAllPropertiesByFilter(
-	// 	@Query('filter') filter: any,
-	// 	@Query() pageOptionsDto: PageOptionsDto,
-	// ): Promise<Property[]> {
-	// 	return this.propertyService.getAllPropertiesByFilter(
-	// 		filter,
-	// 		pageOptionsDto,
-	// 	);
-	// }
-
-	@Get(':propertyId')
+	@Get(':propertyUuid')
 	@ApiOkResponse({
-		description: "Returns a property by it's property id",
+		description: "Returns a property by it's property uuid",
 		type: PropertyDto,
 	})
-	getPropertyById(@Param('propertyId') propertyId: number): Promise<Property> {
-		return this.propertyService.getPropertyById(propertyId);
+	getPropertyById(
+		@Param('propertyUuid') propertyUuid: string,
+	): Promise<PropertyDto> {
+		return this.propertyService.getPropertyById(propertyUuid);
 	}
 
 	@Put(':propertyId')
@@ -105,20 +102,24 @@ export class PropertiesController {
 		return this.propertyService.updateProperty(propertyId, updateData);
 	}
 
-	@Delete(':propertyId')
+	@Delete(':propertyUuid')
 	@ApiOkResponse({
-		description: "Deletes a property found by it's property id",
+		description: "Deletes a property found by it's propertyUuid",
 	})
-	deleteProperty(@Param('propertyId') propertyId: number): Promise<void> {
-		return this.propertyService.deleteProperty(propertyId);
+	deleteProperty(@Param('propertyUuid') propertyUuid: string): Promise<void> {
+		return this.propertyService.deleteProperty(propertyUuid);
 	}
 
-	@Put(':id/archive')
+	@Put(':propertyUuid/archive')
 	@ApiOkResponse({
-		description: "Archive a property found by it's property id",
+		description: "Archive a property found by it's propertyUuid",
 	})
-	archiveProperty(@Param('propertyId') propertyId: number) {
-		return this.propertyService.archiveProperty(propertyId);
+	archiveProperty(@Param('propertyUuid') propertyUuid: string) {
+		try {
+			this.propertyService.archiveProperty(propertyUuid);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 }
 

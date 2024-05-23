@@ -1,14 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-	Amenity,
-	BaseRepository,
-	PageDto,
-	PageMetaDto,
-	PageOptionsDto,
-} from '@app/common';
+import { Amenity, BaseRepository, PageOptionsDto } from '@app/common';
 import { EntityManager } from 'typeorm';
 import { Property } from '../entities/property.entity';
-import { CreatePropertyDto } from '../dto/requests/create-property.dto';
+import {
+	AmenityDto,
+	CreatePropertyDto,
+	CreatePropertyUnitDto,
+} from '../dto/requests/create-property.dto';
+import { CreateAddressDto } from '../dto/requests/create-address.dto';
 
 @Injectable()
 export class PropertyRepository extends BaseRepository<Property> {
@@ -17,15 +16,21 @@ export class PropertyRepository extends BaseRepository<Property> {
 		super(Property, manager);
 	}
 
-	async createProperty(createData: CreatePropertyDto, orgUuid: string) {
+	async createProperty(
+		createData: CreatePropertyDto,
+		orgUuid: string,
+		isDraft: boolean = false,
+	) {
 		try {
-			let property: Property;
+			this.logger.log(`Creating new property for org: ${orgUuid}`);
+			let createdProperty: Property;
+			let propertyUnits: Property[] = [];
 			await this.manager.transaction(async (transactionalEntityManager) => {
-				property = transactionalEntityManager.create(Property, {
+				createdProperty = transactionalEntityManager.create(Property, {
 					name: createData.name,
 					description: createData.description ?? null,
 					isMultiUnit: createData.isMultiUnit,
-					isDraft: false,
+					isDraft: isDraft,
 					tags: createData.tags ?? null,
 					bedroom: createData.bedroom ?? null,
 					bathroom: createData.bathroom ?? null,
@@ -58,100 +63,174 @@ export class PropertyRepository extends BaseRepository<Property> {
 						: null,
 				});
 				if (createData.amenities?.length > 0) {
-					const amenities: Amenity[] = [];
-					createData.amenities.map((data) => {
-						if (data.id) {
-							amenities.push({
-								id: data.id,
-								name: data.name,
-							});
-						} else {
-							amenities.push({
-								name: data.name,
-							});
-						}
-					});
-					property.amenities = amenities;
+					createdProperty.amenities = await this.addAmenities(
+						createData.amenities,
+					);
 				}
-				await transactionalEntityManager.save(property);
+				await transactionalEntityManager.save(createdProperty);
 				if (createData.isMultiUnit) {
-					const units = createData.units.map((unit) => {
-						return {
-							...unit,
-							organization: {
-								organizationUuid: orgUuid,
-							},
-							isDraft: false,
-							parentProperty: {
-								uuid: property.uuid,
-							},
-							status: createData.statusId
-								? {
-										id: createData.statusId,
-									}
-								: null,
-							address: { ...createData.address, unit: unit.name },
-						} as Property;
-					});
-					await transactionalEntityManager.save(Property, units);
+					propertyUnits = await this.addUnitsToProperty(
+						createData.units,
+						orgUuid,
+						transactionalEntityManager,
+						createdProperty,
+						createData.address,
+					);
+					console.log('Units created: ', propertyUnits);
 				}
 			});
-			return property;
+			return { ...createdProperty, units: [...propertyUnits] } as Property;
 		} catch (err) {
+			this.logger.error(err, 'Error creating new property');
 			throw err;
 		}
 	}
 
-	async getOrganizationProperties(orgUuid: string, pageDto?: PageOptionsDto) {
+	private async addAmenities(amenities: AmenityDto[]): Promise<Amenity[]> {
+		const propertyAmenities: Amenity[] = [];
+		amenities.map((data) => {
+			if (data.id) {
+				propertyAmenities.push({
+					id: data.id,
+					name: data.name,
+				});
+			} else {
+				propertyAmenities.push({
+					name: data.name,
+				});
+			}
+		});
+		return propertyAmenities;
+	}
+
+	private async addUnitsToProperty(
+		unitsToCreate: CreatePropertyUnitDto[],
+		orgUuid: string,
+		manager: EntityManager,
+		property: Property,
+		address: CreateAddressDto,
+	): Promise<Property[]> {
+		const units = unitsToCreate.map((unit) => {
+			return {
+				...unit,
+				organization: {
+					organizationUuid: orgUuid,
+				},
+				isDraft: property.isDraft,
+				parentProperty: property,
+				status: property.status,
+				address: { ...address, unit: unit.name },
+			} as Property;
+		});
+		return await manager.save(Property, units);
+	}
+
+	async getOrganizationProperties(
+		orgUuid: string,
+		pageDto?: PageOptionsDto,
+	): Promise<[Property[], number]> {
 		try {
-			console.time('getOrganizationProperties');
 			const queryBuilder = this.createQueryBuilder('property');
 			queryBuilder
 				.leftJoinAndSelect('property.purpose', 'pp')
-				.addSelect(['pp.displayText as purpose', 'pp.id as id'])
 				.leftJoinAndSelect('property.status', 'ps')
-				.addSelect(['ps.displayText as status, ps.id as id'])
 				.leftJoinAndSelect('property.type', 'pt')
-				.addSelect(['pt.displayText as type', 'pt.id as id'])
 				.leftJoinAndSelect('property.category', 'pc')
-				.addSelect(['pc.displayText as category', 'pc.id as id'])
 				.leftJoinAndSelect('property.images', 'pi')
-				.addSelect(['pi.url as url'])
 				.leftJoinAndSelect('property.address', 'pa')
-				.addSelect([
-					'pa.id as id',
-					'pa.addressLine1 as addressLine1',
-					'pa.latitude as latitude',
-					'pa.longitude as longitude',
-					'pa.city as city',
-					'pa.state as state',
-					'pa.postalCode as postalCode',
-					'pa.isManualAddress as isManualAddress',
-					'pa.addressLine2 as addressLine2',
-					'pa.unit as unit',
-					'pa.country as country',
-				])
 				.leftJoinAndSelect('property.amenities', 'pf')
-				.addSelect(['pf.id as id', 'pf.name as name'])
 				.leftJoinAndSelect('property.units', 'punts')
-				.leftJoinAndSelect('punts.status', 'puntstatus')
-				.addSelect(['puntstatus.displayText as status', 'puntstatus.id as id'])
+				.leftJoinAndSelect('punts.status', 'unitsStatus')
 				.where('property.organizationUuid = :organizationUuid', {
 					organizationUuid: orgUuid,
 				})
 				.andWhere('property.parentProperty IS NULL')
+				.andWhere('property.isArchived = :isArchived', {
+					isArchived: false,
+				})
 				.orderBy('property.updatedDate', pageDto.order)
 				.skip(pageDto.skip)
 				.take(pageDto.take);
-			const itemCount = await queryBuilder.getCount();
-			const { entities } = await queryBuilder.getRawAndEntities();
-			const pageMetaDto = new PageMetaDto({
-				itemCount,
-				pageOptionsDto: pageDto,
-			});
-			console.timeEnd('getOrganizationProperties');
-			return new PageDto(entities, pageMetaDto);
+			return await queryBuilder.getManyAndCount();
 		} catch (err) {
+			this.logger.error(err, `Error getting properties for Org: ${orgUuid}`);
+			throw err;
+		}
+	}
+
+	async getAPropertyInAnOrganization(orgUuid: string, propertyUuid: string) {
+		try {
+			console.time('get property');
+			const propertyData = await this.createQueryBuilder('property')
+				.leftJoinAndSelect('property.purpose', 'pp')
+				.leftJoinAndSelect('property.status', 'ps')
+				.leftJoinAndSelect('property.type', 'pt')
+				.leftJoinAndSelect('property.category', 'pc')
+				.leftJoinAndSelect('property.images', 'pi')
+				.leftJoinAndSelect('property.address', 'pa')
+				.leftJoinAndSelect('property.amenities', 'pf')
+				.leftJoinAndSelect('property.units', 'punts')
+				.leftJoinAndSelect('punts.status', 'puntstatus')
+				.where('property.organizationUuid = :organizationUuid', {
+					organizationUuid: orgUuid,
+				})
+				.andWhere('property.uuid = :propertyUuid', {
+					propertyUuid: propertyUuid,
+				})
+				.getOne();
+			console.timeEnd('get property');
+			return propertyData;
+		} catch (err) {
+			this.logger.error(err, `Error getting a property for Org: ${orgUuid}`);
+			throw err;
+		}
+	}
+	async saveDraftProperty(propertyUuid: string, orgUuid: string) {
+		try {
+			const queryBuilder = this.createQueryBuilder('property');
+			queryBuilder
+				.update(Property)
+				.set({ isDraft: false })
+				.where('uuid = :propertyUuid', { propertyUuid })
+				.orWhere('parentPropertyUuid = :propertyUuid', { propertyUuid })
+				.andWhere('organizationUuid = :orgUuid', { orgUuid })
+				.execute();
+		} catch (err) {
+			this.logger.error(
+				err,
+				`Error saving a draft property for Org: ${orgUuid}`,
+			);
+			throw err;
+		}
+	}
+
+	async archiveProperty(propertyUuid: string, orgUuid: string) {
+		try {
+			const queryBuilder = this.createQueryBuilder('property');
+			queryBuilder
+				.update(Property)
+				.set({ isArchived: true, archivedDate: new Date() })
+				.where('uuid = :propertyUuid', { propertyUuid })
+				.orWhere('parentPropertyUuid = :propertyUuid', { propertyUuid })
+				.andWhere('organizationUuid = :orgUuid', { orgUuid })
+				.execute();
+		} catch (err) {
+			this.logger.error(err, `Error archiving a property for Org: ${orgUuid}`);
+			throw err;
+		}
+	}
+
+	async deleteProperty(propertyUuid: string, orgUuid: string) {
+		try {
+			const queryBuilder = this.createQueryBuilder('property');
+			queryBuilder
+				.softDelete()
+				.where('uuid = :propertyUuid', { propertyUuid })
+				.orWhere('parentPropertyUuid = :propertyUuid', { propertyUuid })
+				.andWhere('organizationUuid = :orgUuid', { orgUuid })
+				.execute();
+		} catch (err) {
+			this.logger.error(err, `Error deleting a property from Org: ${orgUuid}`);
 			throw err;
 		}
 	}

@@ -55,7 +55,7 @@ import * as redis from 'cache-manager-redis-store';
 				setup: (cls, req) => {
 					cls.set('clientName', req.headers['x-client-name']);
 					cls.set('orgId', req.headers['x-tenant-org']);
-					cls.set('jwtToken', req.headers.authorization.split(' ')[1]);
+					cls.set('jwtToken', req.headers.authorization?.split(' ')[1]);
 				},
 			},
 		}),
