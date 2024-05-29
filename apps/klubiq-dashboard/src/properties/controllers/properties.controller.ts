@@ -11,12 +11,13 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
-import { PageOptionsDto, UserRoles } from '@app/common';
+import { UserRoles } from '@app/common';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { PropertyDto } from '../dto/responses/property-response.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
 import { Auth, Roles } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
+import { GetPropertyDto } from '../dto/requests/get-property.dto';
 
 @ApiTags('properties')
 @ApiBearerAuth()
@@ -32,9 +33,10 @@ export class PropertiesController {
 		description: 'Creates a new property',
 		type: PropertyDto,
 	})
-	createProperty(@Body() propertyData: CreatePropertyDto) {
+	async createProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
-			return this.propertyService.createProperty(propertyData);
+			const data = await this.propertyService.createProperty(propertyData);
+			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -46,9 +48,10 @@ export class PropertiesController {
 		description: 'Creates a draft property',
 		type: PropertyDto,
 	})
-	createDraftProperty(@Body() propertyData: CreatePropertyDto) {
+	async createDraftProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
-			return this.propertyService.createDraftProperty(propertyData);
+			const data = await this.propertyService.createDraftProperty(propertyData);
+			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -59,9 +62,9 @@ export class PropertiesController {
 	@ApiOkResponse({
 		description: 'Saves a draft property',
 	})
-	saveDraftProperty(@Param('propertyUuid') propertyUuid: string) {
+	async saveDraftProperty(@Param('propertyUuid') propertyUuid: string) {
 		try {
-			this.propertyService.saveDraftProperty(propertyUuid);
+			await this.propertyService.saveDraftProperty(propertyUuid);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -71,9 +74,11 @@ export class PropertiesController {
 	@ApiOkResponse({
 		description: 'Returns all properties under an organization',
 	})
-	getOrganizationProperties(@Query() pageOptionsDto: PageOptionsDto) {
+	async getOrganizationProperties(@Query() getPropertyDto: GetPropertyDto) {
 		try {
-			return this.propertyService.getOrganizationProperties(pageOptionsDto);
+			const data =
+				await this.propertyService.getOrganizationProperties(getPropertyDto);
+			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -84,39 +89,77 @@ export class PropertiesController {
 		description: "Returns a property by it's property uuid",
 		type: PropertyDto,
 	})
-	getPropertyById(
+	async getPropertyById(
 		@Param('propertyUuid') propertyUuid: string,
 	): Promise<PropertyDto> {
-		return this.propertyService.getPropertyById(propertyUuid);
+		try {
+			const data = await this.propertyService.getPropertyById(propertyUuid);
+			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
-	@Put(':propertyId')
+	@Put(':propertyUuid')
 	@ApiOkResponse({
 		description: "Updates a property found by it's property id",
 		type: PropertyDto,
 	})
-	updateProperty(
-		@Param('propertyId') propertyId: number,
+	async updateProperty(
+		@Param('propertyUuid') propertyUuid: string,
 		@Body() updateData: UpdatePropertyDto,
 	) {
-		return this.propertyService.updateProperty(propertyId, updateData);
+		try {
+			const data = await this.propertyService.updateProperty(
+				propertyUuid,
+				updateData,
+			);
+			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
 	@Delete(':propertyUuid')
 	@ApiOkResponse({
 		description: "Deletes a property found by it's propertyUuid",
 	})
-	deleteProperty(@Param('propertyUuid') propertyUuid: string): Promise<void> {
-		return this.propertyService.deleteProperty(propertyUuid);
+	async deleteProperty(
+		@Param('propertyUuid') propertyUuid: string,
+	): Promise<void> {
+		try {
+			await this.propertyService.deleteProperty(propertyUuid);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
 	@Put(':propertyUuid/archive')
 	@ApiOkResponse({
 		description: "Archive a property found by it's propertyUuid",
 	})
-	archiveProperty(@Param('propertyUuid') propertyUuid: string) {
+	async archiveProperty(@Param('propertyUuid') propertyUuid: string) {
 		try {
-			this.propertyService.archiveProperty(propertyUuid);
+			await this.propertyService.archiveProperty(propertyUuid);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Post(':propertyUuid/units')
+	@ApiOkResponse({
+		description: 'Adds units to a property',
+	})
+	async addUnitsToProperty(
+		@Param('propertyUuid') propertyUuid: string,
+		@Body() unitsDto: CreatePropertyDto[],
+	) {
+		try {
+			const data = await this.propertyService.addUnitsToProperty(
+				propertyUuid,
+				unitsDto,
+			);
+			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}

@@ -24,6 +24,8 @@ import { CreateAddressDto } from '../dto/requests/create-address.dto';
 import { PropertyAddress } from '../entities/property-address.entity';
 import { Amenity } from '@app/common/database/entities/property-amenity.entity';
 import { PropertyImage } from '@app/common/database/entities/property-image.entity';
+import { PropertyPurpose } from '@app/common';
+import { MetadataDto } from '../dto/responses/metadata.dto';
 
 export class PropertyProfile extends AutomapperProfile {
 	constructor(@InjectMapper() mapper: Mapper) {
@@ -32,6 +34,7 @@ export class PropertyProfile extends AutomapperProfile {
 
 	override get profile(): MappingProfile {
 		return (mapper) => {
+			createMap(mapper, PropertyPurpose, MetadataDto);
 			createMap(mapper, CreatePropertyDto, Property);
 			createMap(mapper, UpdatePropertyDto, Property);
 			createMap(

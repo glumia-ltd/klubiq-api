@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Amenity, BaseRepository, PageOptionsDto } from '@app/common';
-import { EntityManager } from 'typeorm';
+import { Amenity, BaseRepository } from '@app/common';
+import { Brackets, EntityManager, SelectQueryBuilder } from 'typeorm';
 import { Property } from '../entities/property.entity';
 import {
 	AmenityDto,
@@ -8,21 +8,32 @@ import {
 	CreatePropertyUnitDto,
 } from '../dto/requests/create-property.dto';
 import { CreateAddressDto } from '../dto/requests/create-address.dto';
+import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
+import {
+	GetPropertyDto,
+	PropertyFilterDto,
+} from '../dto/requests/get-property.dto';
+import { indexOf } from 'lodash';
 
 @Injectable()
 export class PropertyRepository extends BaseRepository<Property> {
 	protected readonly logger = new Logger(PropertyRepository.name);
+	private readonly pageOptionsField = [
+		'skip',
+		'take',
+		'order',
+		'sortBy',
+		'page',
+	];
 	constructor(manager: EntityManager) {
 		super(Property, manager);
 	}
 
 	async createProperty(
 		createData: CreatePropertyDto,
-		orgUuid: string,
 		isDraft: boolean = false,
 	) {
 		try {
-			this.logger.log(`Creating new property for org: ${orgUuid}`);
 			let createdProperty: Property;
 			let propertyUnits: Property[] = [];
 			await this.manager.transaction(async (transactionalEntityManager) => {
@@ -39,7 +50,10 @@ export class PropertyRepository extends BaseRepository<Property> {
 					address: createData.address,
 					images: createData.images ?? null,
 					organization: {
-						organizationUuid: orgUuid,
+						organizationUuid: createData.orgUuid,
+					},
+					owner: {
+						firebaseId: createData.ownerUid,
 					},
 					purpose: createData.purposeId
 						? {
@@ -71,7 +85,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 				if (createData.isMultiUnit) {
 					propertyUnits = await this.addUnitsToProperty(
 						createData.units,
-						orgUuid,
 						transactionalEntityManager,
 						createdProperty,
 						createData.address,
@@ -105,7 +118,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 
 	private async addUnitsToProperty(
 		unitsToCreate: CreatePropertyUnitDto[],
-		orgUuid: string,
 		manager: EntityManager,
 		property: Property,
 		address: CreateAddressDto,
@@ -113,9 +125,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 		const units = unitsToCreate.map((unit) => {
 			return {
 				...unit,
-				organization: {
-					organizationUuid: orgUuid,
-				},
+				organization: property.organization,
+				owner: property.owner,
 				isDraft: property.isDraft,
 				parentProperty: property,
 				status: property.status,
@@ -127,7 +138,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 
 	async getOrganizationProperties(
 		orgUuid: string,
-		pageDto?: PageOptionsDto,
+		userId: string,
+		getPropertyDto?: GetPropertyDto,
 	): Promise<[Property[], number]> {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
@@ -144,21 +156,56 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.where('property.organizationUuid = :organizationUuid', {
 					organizationUuid: orgUuid,
 				})
-				.andWhere('property.parentProperty IS NULL')
-				.andWhere('property.isArchived = :isArchived', {
-					isArchived: false,
-				})
-				.orderBy('property.updatedDate', pageDto.order)
-				.skip(pageDto.skip)
-				.take(pageDto.take);
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
+							.orWhere('property.managerUid = :managerUid', {
+								managerUid: userId,
+							})
+							.orWhere(
+								'property.ownerUid IS NULL AND property.managerUid IS NULL',
+							);
+					}),
+				)
+				.andWhere('property.parentProperty IS NULL');
+			await this.getPropertiesFilterQueryString(getPropertyDto, queryBuilder);
+			queryBuilder
+				.orderBy(`property.${getPropertyDto.sortBy}`, getPropertyDto.order)
+				.skip(getPropertyDto.skip)
+				.take(getPropertyDto.take);
 			return await queryBuilder.getManyAndCount();
 		} catch (err) {
 			this.logger.error(err, `Error getting properties for Org: ${orgUuid}`);
 			throw err;
 		}
 	}
+	private async getPropertiesFilterQueryString(
+		filterDto: PropertyFilterDto,
+		queryBuilder: SelectQueryBuilder<Property>,
+	) {
+		if (filterDto) {
+			Object.keys(filterDto).forEach((key) => {
+				const value = filterDto[key];
+				if (typeof value !== 'undefined' && value !== null) {
+					if (key === 'search') {
+						queryBuilder.andWhere(`property.name LIKE :${key}`, {
+							[key]: `%${value}%`,
+						});
+					} else if (indexOf(this.pageOptionsField, key) < 0) {
+						queryBuilder.andWhere(`property.${key} = :${key}`, {
+							[key]: value,
+						});
+					}
+				}
+			});
+		}
+	}
 
-	async getAPropertyInAnOrganization(orgUuid: string, propertyUuid: string) {
+	async getAPropertyInAnOrganization(
+		orgUuid: string,
+		userId: string,
+		propertyUuid: string,
+	) {
 		try {
 			console.time('get property');
 			const propertyData = await this.createQueryBuilder('property')
@@ -171,12 +218,23 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.leftJoinAndSelect('property.amenities', 'pf')
 				.leftJoinAndSelect('property.units', 'punts')
 				.leftJoinAndSelect('punts.status', 'puntstatus')
-				.where('property.organizationUuid = :organizationUuid', {
-					organizationUuid: orgUuid,
-				})
-				.andWhere('property.uuid = :propertyUuid', {
+				.where('property.uuid = :propertyUuid', {
 					propertyUuid: propertyUuid,
 				})
+				.andWhere('property.organizationUuid = :organizationUuid', {
+					organizationUuid: orgUuid,
+				})
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
+							.orWhere('property.managerUid = :managerUid', {
+								managerUid: userId,
+							})
+							.orWhere(
+								'property.ownerUid IS NULL AND property.managerUid IS NULL',
+							);
+					}),
+				)
 				.getOne();
 			console.timeEnd('get property');
 			return propertyData;
@@ -185,7 +243,11 @@ export class PropertyRepository extends BaseRepository<Property> {
 			throw err;
 		}
 	}
-	async saveDraftProperty(propertyUuid: string, orgUuid: string) {
+	async saveDraftProperty(
+		propertyUuid: string,
+		orgUuid: string,
+		userId: string,
+	) {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
 			queryBuilder
@@ -194,6 +256,17 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.where('uuid = :propertyUuid', { propertyUuid })
 				.orWhere('parentPropertyUuid = :propertyUuid', { propertyUuid })
 				.andWhere('organizationUuid = :orgUuid', { orgUuid })
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
+							.orWhere('property.managerUid = :managerUid', {
+								managerUid: userId,
+							})
+							.orWhere(
+								'property.ownerUid IS NULL AND property.managerUid IS NULL',
+							);
+					}),
+				)
 				.execute();
 		} catch (err) {
 			this.logger.error(
@@ -204,7 +277,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 		}
 	}
 
-	async archiveProperty(propertyUuid: string, orgUuid: string) {
+	async archiveProperty(propertyUuid: string, orgUuid: string, userId: string) {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
 			queryBuilder
@@ -213,6 +286,17 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.where('uuid = :propertyUuid', { propertyUuid })
 				.orWhere('parentPropertyUuid = :propertyUuid', { propertyUuid })
 				.andWhere('organizationUuid = :orgUuid', { orgUuid })
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
+							.orWhere('property.managerUid = :managerUid', {
+								managerUid: userId,
+							})
+							.orWhere(
+								'property.ownerUid IS NULL AND property.managerUid IS NULL',
+							);
+					}),
+				)
 				.execute();
 		} catch (err) {
 			this.logger.error(err, `Error archiving a property for Org: ${orgUuid}`);
@@ -220,7 +304,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 		}
 	}
 
-	async deleteProperty(propertyUuid: string, orgUuid: string) {
+	async deleteProperty(propertyUuid: string, orgUuid: string, userId: string) {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
 			queryBuilder
@@ -228,9 +312,81 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.where('uuid = :propertyUuid', { propertyUuid })
 				.orWhere('parentPropertyUuid = :propertyUuid', { propertyUuid })
 				.andWhere('organizationUuid = :orgUuid', { orgUuid })
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
+							.orWhere('property.managerUid = :managerUid', {
+								managerUid: userId,
+							})
+							.orWhere(
+								'property.ownerUid IS NULL AND property.managerUid IS NULL',
+							);
+					}),
+				)
 				.execute();
 		} catch (err) {
 			this.logger.error(err, `Error deleting a property from Org: ${orgUuid}`);
+			throw err;
+		}
+	}
+
+	async updateProperty(
+		propertyUuid: string,
+		orgUuid: string,
+		userId: string,
+		data: UpdatePropertyDto,
+	) {
+		try {
+			const queryBuilder = this.createQueryBuilder('property');
+			queryBuilder
+				.update(Property)
+				.set(data)
+				.where('uuid = :propertyUuid', { propertyUuid })
+				.andWhere('organizationUuid = :orgUuid', { orgUuid })
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
+							.orWhere('property.managerUid = :managerUid', {
+								managerUid: userId,
+							})
+							.orWhere(
+								'property.ownerUid IS NULL AND property.managerUid IS NULL',
+							);
+					}),
+				)
+				.execute();
+			return await this.getAPropertyInAnOrganization(
+				orgUuid,
+				userId,
+				propertyUuid,
+			);
+		} catch (err) {
+			this.logger.error(err, `Error updating a property from Org: ${orgUuid}`);
+			throw err;
+		}
+	}
+
+	async addUnitsToAProperty(
+		propertyUuid: string,
+		orgUuid: string,
+		data: CreatePropertyUnitDto[],
+	): Promise<Property[]> {
+		try {
+			let propertyUnits: Property[] = [];
+			await this.manager.transaction(async (transactionalEntityManager) => {
+				const property = await transactionalEntityManager.findOne(Property, {
+					where: { uuid: propertyUuid },
+				});
+				propertyUnits = await this.addUnitsToProperty(
+					data,
+					transactionalEntityManager,
+					property,
+					property.address,
+				);
+			});
+			return propertyUnits;
+		} catch (err) {
+			this.logger.error(err, `Error updating a property from Org: ${orgUuid}`);
 			throw err;
 		}
 	}

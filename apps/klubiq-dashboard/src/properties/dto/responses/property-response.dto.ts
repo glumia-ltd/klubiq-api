@@ -4,6 +4,7 @@ import {
 	MapperOmitType,
 	MapperPickType,
 } from '@automapper/classes/mapped-types';
+import { MetadataDto } from './metadata.dto';
 
 export class PropertyDto extends MapperOmitType(Property, [
 	'parentProperty',
@@ -24,7 +25,7 @@ export class PropertyDto extends MapperOmitType(Property, [
 	// typeId?: number;
 
 	// @AutoMap()
-	// statusId?: number;
+	// statusId?: number;MetadataDto
 
 	@AutoMap()
 	images?: string[];
@@ -43,6 +44,9 @@ export class PropertyDto extends MapperOmitType(Property, [
 
 	@AutoMap()
 	area?: any;
+
+	@AutoMap(() => MetadataDto)
+	purpose: MetadataDto;
 }
 
 export class PropertyUnitDto extends MapperPickType(Property, [
@@ -53,5 +57,4 @@ export class PropertyUnitDto extends MapperPickType(Property, [
 	'id',
 	'name',
 	'area',
-	'address',
 ]) {}

@@ -48,3 +48,4 @@ export * from './dto/requests/requests.dto';
 export * from './dto/responses/responses.dto';
 export * from './dto/public/shared-clsstore';
 export * from './exceptions/custom-exception';
+export * from './dto/filter/filter.dto';

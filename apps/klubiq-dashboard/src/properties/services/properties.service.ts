@@ -4,13 +4,11 @@ import {
 	Inject,
 	Injectable,
 	Logger,
-	NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyRepository } from '../repositories/properties.repository';
 import { Property } from '../entities/property.entity';
 import { ErrorMessages } from '@app/common/config/error.constant';
-import { PageOptionsDto } from '@app/common/dto/pagination/page-options.dto';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
 import { InjectMapper } from '@automapper/nestjs';
@@ -22,6 +20,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { PageMetaDto } from '@app/common/dto/pagination/page-meta.dto';
+import { GetPropertyDto } from '../dto/requests/get-property.dto';
 
 @Injectable()
 export class PropertiesService {
@@ -37,25 +36,28 @@ export class PropertiesService {
 	) {}
 
 	/**
-	 * Retrieves a property by its UUID.
+	 * Retrieves a property by its UUID from the current organization.
 	 *
 	 * @param {string} uuid - The UUID of the property to retrieve.
-	 * @return {Promise<Property>} A promise that resolves to the retrieved property.
-	 * @throws {ForbiddenException} If the organization ID is not found in the context.
+	 * @return {Promise<PropertyDto>} The property data as a PropertyDto object.
+	 * @throws {ForbiddenException} If the current user does not have an organization ID.
 	 * @throws {NotFoundException} If the property with the given UUID is not found.
 	 * @throws {Error} If there is an error retrieving the property data.
 	 */
 	async getPropertyById(uuid: string): Promise<PropertyDto> {
 		try {
-			const orgId = this.cls.get('currentUser').organizationId;
-			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			this.logger.verbose(`Getting property by id: ${uuid}`);
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			const cacheKey = `${currentUser.uid}.${uuid}`;
+			const cachedProperty = await this.cacheManager.get<PropertyDto>(cacheKey);
+			if (cachedProperty) return cachedProperty;
 			const property =
-				await this.propertyRepository.getAPropertyInAnOrganization(orgId, uuid);
-			//.findOneBy({ id: id });
-			if (!property) {
-				throw new NotFoundException('Property not found');
-			}
+				await this.propertyRepository.getAPropertyInAnOrganization(
+					currentUser.organizationId,
+					currentUser.uid,
+					uuid,
+				);
+			await this.cacheManager.set(cacheKey, property, this.cacheTTL);
 			return await this.mapper.mapAsync(property, Property, PropertyDto);
 		} catch (error) {
 			this.logger.error('Error getting Property Data', error);
@@ -63,25 +65,52 @@ export class PropertiesService {
 		}
 	}
 
-	async updateProperty(id: number, updateData: UpdatePropertyDto) {
+	/**
+	 * Updates a property with the given UUID using the provided data.
+	 *
+	 * @param {string} uuid - The UUID of the property to be updated.
+	 * @param {UpdatePropertyDto} updateData - The data to update the property with.
+	 * @return {Promise<PropertyDto>} - The updated property.
+	 * @throws {ForbiddenException} - If the current user's organization ID is not found in the context.
+	 * @throws {Error} - If there is an error updating the property data.
+	 */
+	async updateProperty(
+		uuid: string,
+		updateData: UpdatePropertyDto,
+	): Promise<PropertyDto> {
 		try {
-			this.logger.verbose(`Updating property data by Id: ${id}`);
-			const property = await this.propertyRepository.findOneBy({ id: id });
-			Object.assign(property, updateData);
-			const updatedProp = await this.propertyRepository.save(property);
-			return this.mapper.map(updatedProp, Property, PropertyDto);
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			const property = await this.propertyRepository.updateProperty(
+				uuid,
+				currentUser.organizationId,
+				currentUser.uid,
+				updateData,
+			);
+			return this.mapper.map(property, Property, PropertyDto);
 		} catch (error) {
 			this.logger.error('Error updating Property Data', error);
-			return new Error(`Error updating Property Data. Error: ${error}`);
+			throw new Error(`Error updating Property Data. Error: ${error}`);
 		}
 	}
 
+	/**
+	 * Deletes a property with the given UUID from the current organization.
+	 *
+	 * @param {string} uuid - The UUID of the property to be deleted.
+	 * @return {Promise<void>} A promise that resolves when the property is successfully deleted, or rejects with an error if there was an issue.
+	 * @throws {ForbiddenException} If the current user's organization ID is not found in the context.
+	 * @throws {Error} If there is an error deleting the property data.
+	 */
 	async deleteProperty(uuid: string): Promise<void> {
 		try {
-			const orgId = this.cls.get('currentUser').organizationId;
-			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			this.logger.verbose(`Deleting Property by id: ${uuid}`);
-			await this.propertyRepository.deleteProperty(uuid, orgId);
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			await this.propertyRepository.deleteProperty(
+				uuid,
+				currentUser.organizationId,
+				currentUser.uid,
+			);
 		} catch (error) {
 			this.logger.error('Error deleting Property Data', error);
 			throw new Error(`Error deleting Property Data. Error: ${error}`);
@@ -97,10 +126,13 @@ export class PropertiesService {
 	 */
 	async archiveProperty(propertyUuid: string): Promise<void> {
 		try {
-			const orgId = this.cls.get('currentUser').organizationId;
-			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			this.logger.verbose(`Archiving Property by id: ${propertyUuid}`);
-			await this.propertyRepository.archiveProperty(propertyUuid, orgId);
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			await this.propertyRepository.archiveProperty(
+				propertyUuid,
+				currentUser.organizationId,
+				currentUser.uid,
+			);
 		} catch (error) {
 			this.logger.error('Error archiving Property Data', error);
 			throw Error(`Error archiving Property Data. Error: ${error}`);
@@ -115,15 +147,14 @@ export class PropertiesService {
 	 */
 	async createProperty(createDto: CreatePropertyDto): Promise<PropertyDto> {
 		try {
-			const orgId = this.cls.get('currentUser').organizationId;
-			if (!orgId)
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser)
 				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
-			this.logger.verbose(`Creating new property`);
 			createDto.isMultiUnit = createDto.units?.length > 0;
-			const createdProperty = await this.propertyRepository.createProperty(
-				createDto,
-				orgId,
-			);
+			createDto.orgUuid = currentUser.organizationId;
+			createDto.ownerUid = currentUser.uid;
+			const createdProperty =
+				await this.propertyRepository.createProperty(createDto);
 			return this.mapper.map(createdProperty, Property, PropertyDto);
 		} catch (error) {
 			this.logger.error('Error creating Property Data', error);
@@ -141,25 +172,24 @@ export class PropertiesService {
 	 * @return {Promise<PageOptionsDto>} The properties belonging to the organization.
 	 */
 	async getOrganizationProperties(
-		pageDto?: PageOptionsDto,
+		getPropertyDto?: GetPropertyDto,
 	): Promise<PageDto<PropertyDto>> {
 		try {
-			const orgId = this.cls.get('currentUser').organizationId;
-			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			this.logger.debug(
-				`Getting all properties for ORG: ${orgId}. Skip: ${pageDto.skip}, Take: ${pageDto.take}`,
-			);
-			const cachedProperties = await this.cacheManager.get<
-				PageDto<PropertyDto>
-			>(`${this.cacheKeyPrefix}.${orgId}.${pageDto.skip}.${pageDto.take}`);
-			if (cachedProperties) {
-				return cachedProperties;
-			}
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			const cacheKey = `${currentUser.uid}/${this.cls.get('requestUrl')}`;
+			const cachedProperties =
+				await this.cacheManager.get<PageDto<PropertyDto>>(cacheKey);
+			if (cachedProperties) return cachedProperties;
 			const [entities, count] =
-				await this.propertyRepository.getOrganizationProperties(orgId, pageDto);
+				await this.propertyRepository.getOrganizationProperties(
+					currentUser.organizationId,
+					currentUser.uid,
+					getPropertyDto,
+				);
 			const pageMetaDto = new PageMetaDto({
 				itemCount: count,
-				pageOptionsDto: pageDto,
+				pageOptionsDto: getPropertyDto,
 			});
 			const mappedEntities = await this.mapper.mapArrayAsync(
 				entities,
@@ -167,11 +197,7 @@ export class PropertiesService {
 				PropertyDto,
 			);
 			const propertiesPageData = new PageDto(mappedEntities, pageMetaDto);
-			await this.cacheManager.set(
-				`${this.cacheKeyPrefix}.${orgId}.${pageDto.skip}.${pageDto.take}`,
-				propertiesPageData,
-				this.cacheTTL,
-			);
+			await this.cacheManager.set(cacheKey, propertiesPageData, this.cacheTTL);
 			return propertiesPageData;
 		} catch (error) {
 			this.logger.error('Error retrieving organization properties', error);
@@ -179,24 +205,6 @@ export class PropertiesService {
 				`Error retrieving organization properties. Error: ${error}`,
 			);
 		}
-	}
-
-	/**
-	 * Retrieves all properties that match the given filter, paginated based on the provided page options.
-	 *
-	 * @param {any} filter - The filter to apply to the properties.
-	 * @param {PageOptionsDto} [pageDto] - The pagination options for the properties.
-	 * @return {Promise<Property[]>} A promise that resolves to an array of Property objects.
-	 */
-	async getAllPropertiesByFilter(
-		filter: any,
-		pageDto?: PageOptionsDto,
-	): Promise<Property[]> {
-		return await this.propertyRepository.find({
-			where: filter,
-			take: pageDto.take,
-			skip: (pageDto.page - 1) * pageDto.take,
-		});
 	}
 
 	/**
@@ -211,18 +219,20 @@ export class PropertiesService {
 		createDto: CreatePropertyDto,
 	): Promise<PropertyDto> {
 		try {
-			const orgId = this.cls.get('currentUser').organizationId;
-			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			this.logger.verbose(`Creating draft property`);
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser)
+				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
 			createDto.isMultiUnit = createDto.units?.length > 0;
+			createDto.orgUuid = currentUser.organizationId;
+			createDto.ownerUid = currentUser.uid;
 			const draftProperty = await this.propertyRepository.createProperty(
 				createDto,
-				orgId,
 				true,
 			);
+			console.log('Draft: ', draftProperty);
 			return this.mapper.map(draftProperty, Property, PropertyDto);
 		} catch (error) {
-			this.logger.error('Error creating draft Property Data', error);
+			this.logger.error('Error creating draft Property Data', error.message);
 			throw new BadRequestException(`Error creating draft Property.`, {
 				cause: new Error(),
 				description: error.message,
@@ -230,15 +240,57 @@ export class PropertiesService {
 		}
 	}
 
+	/**
+	 * Saves a draft property with the specified UUID.
+	 *
+	 * @param {string} propertyUuid - The UUID of the property to save as a draft.
+	 * @return {Promise<void>} - A promise that resolves when the draft property is saved successfully.
+	 * @throws {ForbiddenException} - If no organization ID is found in the context.
+	 * @throws {BadRequestException} - If there is an error saving the draft property.
+	 */
 	async saveDraftProperty(propertyUuid: string): Promise<void> {
 		try {
-			const orgId = this.cls.get('currentUser').organizationId;
-			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			this.logger.verbose(`Saving draft property`);
-			await this.propertyRepository.saveDraftProperty(propertyUuid, orgId);
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			await this.propertyRepository.saveDraftProperty(
+				propertyUuid,
+				currentUser.organizationId,
+				currentUser.uid,
+			);
 		} catch (error) {
 			this.logger.error('Error saving draft Property', error);
 			throw new BadRequestException(`Error saving draft Property.`, {
+				cause: new Error(),
+				description: error.message,
+			});
+		}
+	}
+
+	/**
+	 * Adds units to a property.
+	 *
+	 * @param {string} propertyUuid - The UUID of the property to add units to.
+	 * @param {CreatePropertyDto[]} unitsDto - An array of CreatePropertyDto objects representing the units to add.
+	 * @return {Promise<PropertyDto[]>} A promise that resolves to an array of PropertyDto objects representing the added units.
+	 * @throws {ForbiddenException} If the current user does not have an organization ID.
+	 * @throws {BadRequestException} If there is an error adding the units to the property.
+	 */
+	async addUnitsToProperty(
+		propertyUuid: string,
+		unitsDto: CreatePropertyDto[],
+	): Promise<PropertyDto[]> {
+		try {
+			const orgId = this.cls.get('currentUser').organizationId;
+			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			const units = await this.propertyRepository.addUnitsToAProperty(
+				propertyUuid,
+				orgId,
+				unitsDto,
+			);
+			return await this.mapper.mapArrayAsync(units, Property, PropertyDto);
+		} catch (error) {
+			this.logger.error('Error adding Unit to Property', error);
+			throw new BadRequestException(`Error adding Unit to Property.`, {
 				cause: new Error(),
 				description: error.message,
 			});

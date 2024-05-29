@@ -9,10 +9,12 @@ import {
 	Generated,
 	JoinColumn,
 	Index,
+	OneToMany,
 } from 'typeorm';
 import { Role } from './role.entity';
 import { OrganizationUser } from '../../../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
 import { AutoMap } from '@automapper/classes';
+import { Property } from 'apps/klubiq-dashboard/src/properties/entities/property.entity';
 
 @Entity({ schema: 'kdo' })
 export class UserProfile {
@@ -109,9 +111,16 @@ export class UserProfile {
 		() => OrganizationUser,
 		(organizationUser) => organizationUser.profile,
 		{ eager: true },
-		// {cascade:['update']}
 	)
 	organizationUser?: OrganizationUser;
+
+	@AutoMap(() => [Property])
+	@OneToMany(() => Property, (property) => property.manager)
+	propertiesManaged?: Property[];
+
+	@AutoMap(() => [Property])
+	@OneToMany(() => Property, (property) => property.owner)
+	propertiesOwned?: Property[];
 
 	@CreateDateColumn()
 	createdDate?: Date;
