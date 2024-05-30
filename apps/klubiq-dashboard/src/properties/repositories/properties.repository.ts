@@ -10,20 +10,24 @@ import {
 import { CreateAddressDto } from '../dto/requests/create-address.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
 import {
+	DisplayOptions,
 	GetPropertyDto,
 	PropertyFilterDto,
+	UnitType,
 } from '../dto/requests/get-property.dto';
 import { indexOf } from 'lodash';
 
 @Injectable()
 export class PropertyRepository extends BaseRepository<Property> {
 	protected readonly logger = new Logger(PropertyRepository.name);
-	private readonly pageOptionsField = [
+	private readonly nonFilterColumns = [
 		'skip',
 		'take',
 		'order',
 		'sortBy',
 		'page',
+		'display',
+		'unitType',
 	];
 	constructor(manager: EntityManager) {
 		super(Property, manager);
@@ -191,7 +195,15 @@ export class PropertyRepository extends BaseRepository<Property> {
 						queryBuilder.andWhere(`property.name LIKE :${key}`, {
 							[key]: `%${value}%`,
 						});
-					} else if (indexOf(this.pageOptionsField, key) < 0) {
+					} else if (key === 'display') {
+						queryBuilder.andWhere(`property.isArchived = :${key}`, {
+							[key]: value === DisplayOptions.ARCHIVED ? true : false,
+						});
+					} else if (key === 'unitType') {
+						queryBuilder.andWhere(`property.isMultiUnit = :${key}`, {
+							[key]: value === UnitType.MULTI_UNIT ? true : false,
+						});
+					} else if (indexOf(this.nonFilterColumns, key) < 0) {
 						queryBuilder.andWhere(`property.${key} = :${key}`, {
 							[key]: value,
 						});

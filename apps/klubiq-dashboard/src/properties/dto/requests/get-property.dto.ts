@@ -2,7 +2,7 @@ import { PageOptionsDto } from '@app/common/dto/pagination/page-options.dto';
 //import { IntersectionType } from "@nestjs/mapped-types"
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
 import { IntersectionType } from '@nestjs/swagger';
 
 export enum SortProperties {
@@ -10,17 +10,31 @@ export enum SortProperties {
 	CREATED_DATE = 'createdDate',
 	PROPERTY_NAME = 'name',
 }
+export enum DisplayOptions {
+	ALL = 'all',
+	ARCHIVED = 'archived',
+}
+export enum UnitType {
+	SINGLE_UNIT = 'single-unit',
+	MULTI_UNIT = 'multi-unit',
+}
 
 export class PropertyFilterDto {
 	@IsOptional()
-	@IsBoolean()
-	@Type(() => Boolean)
-	isArchived?: boolean;
+	@ApiPropertyOptional({
+		enum: UnitType,
+		default: UnitType.SINGLE_UNIT,
+	})
+	@IsEnum(UnitType)
+	unitType?: UnitType;
 
 	@IsOptional()
-	@IsBoolean()
-	@Type(() => Boolean)
-	isMultiUnit?: boolean;
+	@ApiPropertyOptional({
+		enum: DisplayOptions,
+		default: DisplayOptions.ALL,
+	})
+	@IsEnum(DisplayOptions)
+	display?: DisplayOptions;
 
 	@IsOptional()
 	@Type(() => Number)
