@@ -7,18 +7,17 @@ import {
 	Query,
 	Put,
 	Delete,
-	Headers,
 	BadRequestException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
-import { Property } from '../entities/property.entity';
-import { ErrorMessages, PageOptionsDto, UserRoles } from '@app/common';
+import { UserRoles } from '@app/common';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { PropertyDto } from '../dto/responses/property-response.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
 import { Auth, Roles } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
+import { GetPropertyDto } from '../dto/requests/get-property.dto';
 
 @ApiTags('properties')
 @ApiBearerAuth()
@@ -34,85 +33,136 @@ export class PropertiesController {
 		description: 'Creates a new property',
 		type: PropertyDto,
 	})
-	createProperty(
-		@Body() propertyData: CreatePropertyDto,
-		@Headers('x-org-id') orgId?: string,
-	) {
+	async createProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
-			if (!orgId) {
-				throw new BadRequestException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
-			}
-			return this.propertyService.createProperty(propertyData);
+			const data = await this.propertyService.createProperty(propertyData);
+			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
 	}
 
-	@Get('organization/:organizationUuid')
+	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@Post('draft')
 	@ApiOkResponse({
-		description: 'Returns all properties under an organization',
-		type: [PropertyDto],
+		description: 'Creates a draft property',
+		type: PropertyDto,
 	})
-	getAllPropertiesByOrganization(
-		@Param('organizationUuid') organizationUuid: string,
-		@Query() pageOptionsDto: PageOptionsDto,
-	): Promise<Property[]> {
-		return this.propertyService.getAllPropertiesByOrganization(
-			organizationUuid,
-			pageOptionsDto,
-		);
+	async createDraftProperty(@Body() propertyData: CreatePropertyDto) {
+		try {
+			const data = await this.propertyService.createDraftProperty(propertyData);
+			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@Post(':propertyUuid/draft')
+	@ApiOkResponse({
+		description: 'Saves a draft property',
+	})
+	async saveDraftProperty(@Param('propertyUuid') propertyUuid: string) {
+		try {
+			await this.propertyService.saveDraftProperty(propertyUuid);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
 	@Get()
 	@ApiOkResponse({
 		description: 'Returns all properties under an organization',
-		type: [PropertyDto],
 	})
-	getAllPropertiesByFilter(
-		@Query('filter') filter: any,
-		@Query() pageOptionsDto: PageOptionsDto,
-	): Promise<Property[]> {
-		return this.propertyService.getAllPropertiesByFilter(
-			filter,
-			pageOptionsDto,
-		);
+	async getOrganizationProperties(@Query() getPropertyDto: GetPropertyDto) {
+		try {
+			const data =
+				await this.propertyService.getOrganizationProperties(getPropertyDto);
+			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
-	@Get(':propertyId')
+	@Get(':propertyUuid')
 	@ApiOkResponse({
-		description: "Returns a property by it's property id",
+		description: "Returns a property by it's property uuid",
 		type: PropertyDto,
 	})
-	getPropertyById(@Param('propertyId') propertyId: number): Promise<Property> {
-		return this.propertyService.getPropertyById(propertyId);
+	async getPropertyById(
+		@Param('propertyUuid') propertyUuid: string,
+	): Promise<PropertyDto> {
+		try {
+			const data = await this.propertyService.getPropertyById(propertyUuid);
+			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
-	@Put(':propertyId')
+	@Put(':propertyUuid')
 	@ApiOkResponse({
 		description: "Updates a property found by it's property id",
 		type: PropertyDto,
 	})
-	updateProperty(
-		@Param('propertyId') propertyId: number,
+	async updateProperty(
+		@Param('propertyUuid') propertyUuid: string,
 		@Body() updateData: UpdatePropertyDto,
 	) {
-		return this.propertyService.updateProperty(propertyId, updateData);
+		try {
+			const data = await this.propertyService.updateProperty(
+				propertyUuid,
+				updateData,
+			);
+			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
-	@Delete(':propertyId')
+	@Delete(':propertyUuid')
 	@ApiOkResponse({
-		description: "Deletes a property found by it's property id",
+		description: "Deletes a property found by it's propertyUuid",
 	})
-	deleteProperty(@Param('propertyId') propertyId: number): Promise<void> {
-		return this.propertyService.deleteProperty(propertyId);
+	async deleteProperty(
+		@Param('propertyUuid') propertyUuid: string,
+	): Promise<void> {
+		try {
+			await this.propertyService.deleteProperty(propertyUuid);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
-	@Put(':id/archive')
+	@Put(':propertyUuid/archive')
 	@ApiOkResponse({
-		description: "Archive a property found by it's property id",
+		description: "Archive a property found by it's propertyUuid",
 	})
-	archiveProperty(@Param('propertyId') propertyId: number) {
-		return this.propertyService.archiveProperty(propertyId);
+	async archiveProperty(@Param('propertyUuid') propertyUuid: string) {
+		try {
+			await this.propertyService.archiveProperty(propertyUuid);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Post(':propertyUuid/units')
+	@ApiOkResponse({
+		description: 'Adds units to a property',
+	})
+	async addUnitsToProperty(
+		@Param('propertyUuid') propertyUuid: string,
+		@Body() unitsDto: CreatePropertyDto[],
+	) {
+		try {
+			const data = await this.propertyService.addUnitsToProperty(
+				propertyUuid,
+				unitsDto,
+			);
+			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 }
 

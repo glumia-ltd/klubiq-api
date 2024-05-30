@@ -1,11 +1,4 @@
-import {
-	Entity,
-	PrimaryGeneratedColumn,
-	Column,
-	CreateDateColumn,
-	UpdateDateColumn,
-	OneToMany,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 import { FeaturePermission } from './feature-permission.entity';
 import { AutoMap } from '@automapper/classes';
@@ -27,12 +20,6 @@ export class Permission {
 	@AutoMap()
 	@Column({ type: 'text', nullable: true })
 	description?: string;
-
-	@CreateDateColumn()
-	createdDate?: Date;
-
-	@UpdateDateColumn()
-	updatedDate?: Date;
 
 	@OneToMany(
 		() => FeaturePermission,

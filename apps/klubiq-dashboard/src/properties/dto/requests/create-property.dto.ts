@@ -1,5 +1,4 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsOptional,
 	IsArray,
@@ -16,76 +15,63 @@ export class CreatePropertyDto {
 	name: string;
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsString()
 	description?: string;
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsString()
 	note?: string;
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsArray()
 	tags?: string[];
 
-	@ApiPropertyOptional()
 	@IsOptional()
 	units?: CreatePropertyUnitDto[];
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsBoolean()
 	isMultiUnit?: boolean;
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsNumber()
 	bedroom?: number;
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsNumber()
 	bathroom?: number;
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsNumber()
 	toilet?: number;
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	area?: { value?: number; unit?: string };
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsNumber()
 	categoryId?: number;
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsNumber()
 	typeId?: number;
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsNumber()
 	purposeId?: number;
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsNumber()
 	statusId?: number;
@@ -94,34 +80,31 @@ export class CreatePropertyDto {
 	@AutoMap(() => CreateAddressDto)
 	address: CreateAddressDto;
 
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsArray()
 	@AutoMap(() => [ImageDto])
 	images?: ImageDto[];
 
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsArray()
 	@AutoMap(() => [AmenityDto])
 	amenities?: AmenityDto[];
 
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsString()
-	@AutoMap()
-	ownerOrganizationUserUuid?: string;
+	ownerUid?: string;
 
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsString()
-	@AutoMap()
-	managerOrganizationUserUuid?: string;
+	managerUid?: string;
+
+	@IsOptional()
+	@IsString()
+	orgUuid: string;
 }
 
 export class ImageDto {
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsString()
 	url?: string;
@@ -129,13 +112,11 @@ export class ImageDto {
 
 export class AmenityDto {
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsNumber()
 	id?: number;
 
 	@AutoMap()
-	@ApiPropertyOptional()
 	@IsOptional()
 	@IsString()
 	name?: string;

@@ -3,8 +3,6 @@ import {
 	Entity,
 	PrimaryGeneratedColumn,
 	Column,
-	CreateDateColumn,
-	UpdateDateColumn,
 	OneToMany,
 	ManyToMany,
 	JoinTable,
@@ -30,12 +28,6 @@ export class OrganizationRole {
 	@AutoMap()
 	@Column({ type: 'text', nullable: true })
 	description?: string;
-
-	@CreateDateColumn()
-	createdDate?: Date;
-
-	@UpdateDateColumn()
-	updatedDate?: Date;
 
 	@OneToMany(() => OrganizationUser, (orgUser) => orgUser.orgRole)
 	users?: OrganizationUser[];

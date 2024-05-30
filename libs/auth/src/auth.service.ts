@@ -4,9 +4,10 @@ import {
 	Injectable,
 	Logger,
 	NotFoundException,
+	UnauthorizedException,
 } from '@nestjs/common';
 import { replace, split } from 'lodash';
-import { ClsService, ClsServiceManager } from 'nestjs-cls';
+import { ClsService } from 'nestjs-cls';
 import { Inject } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import * as auth from 'firebase-admin/auth';
@@ -19,7 +20,6 @@ import {
 	SignUpResponseDto,
 	TokenResponseDto,
 } from './dto/auth-response.dto';
-import { Auth, getAuth } from 'firebase/auth';
 import { EntityManager } from 'typeorm';
 import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/organization.repository';
 import { OrganizationRole } from '@app/common/database/entities/organization-role.entity';
@@ -47,11 +47,10 @@ import {
 	OrgRoleResponseDto,
 	ViewSystemRoleDto,
 } from '@app/common/dto/responses/org-role.dto';
+import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 
 @Injectable()
 export class AuthService {
-	private firebaseClientAuth: Auth;
-	private readonly cls: ClsService;
 	private readonly emailVerificationBaseUrl: string;
 	private readonly emailAuthContinueUrl: string;
 	private readonly logger = new Logger(AuthService.name);
@@ -59,7 +58,6 @@ export class AuthService {
 	constructor(
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		@Inject('FIREBASE_ADMIN') private firebaseAdminApp: admin.app.App,
-		@Inject('FIREBASE_AUTH') private firebaseClient: any,
 		@InjectMapper() private readonly mapper: Mapper,
 		private emailService: MailerSendService,
 		private readonly organizationRepository: OrganizationRepository,
@@ -67,9 +65,8 @@ export class AuthService {
 		private readonly errorMessageHelper: FirebaseErrorMessageHelper,
 		private readonly configService: ConfigService,
 		private readonly httpService: HttpService,
+		private readonly cls: ClsService<SharedClsStore>,
 	) {
-		this.firebaseClientAuth = getAuth(this.firebaseClient);
-		this.cls = ClsServiceManager.getClsService();
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
 		);
@@ -79,10 +76,6 @@ export class AuthService {
 
 	get auth(): auth.Auth {
 		return this.firebaseAdminApp.auth();
-	}
-
-	get clientAuth() {
-		return this.firebaseClientAuth;
 	}
 
 	async createOrgUser(
@@ -282,7 +275,6 @@ export class AuthService {
 			);
 			return data;
 		} catch (err) {
-			console.log('ERROR HERRE: ', err);
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
@@ -514,8 +506,12 @@ export class AuthService {
 		}
 	}
 
-	async getUserInfo(firebaseId: string): Promise<AuthUserResponseDto> {
-		const user = await this.userProfilesRepository.getUserLoginInfo(firebaseId);
+	async getUserInfo(): Promise<AuthUserResponseDto> {
+		const user_id = this.cls.get('currentUser')?.uid;
+		if (!user_id) {
+			throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
+		}
+		const user = await this.userProfilesRepository.getUserLoginInfo(user_id);
 		const userData = this.mapper.map(user, UserProfile, AuthUserResponseDto);
 		return userData;
 	}

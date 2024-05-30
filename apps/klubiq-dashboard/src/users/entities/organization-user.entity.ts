@@ -10,13 +10,11 @@ import {
 	CreateDateColumn,
 	UpdateDateColumn,
 	Index,
-	OneToMany,
 } from 'typeorm';
 import { UserProfile } from '@app/common';
 import { OrganizationRole } from '@app/common';
 import { Organization } from '../../organization/entities/organization.entity';
 import { AutoMap } from '@automapper/classes';
-import { Property } from '../../properties/entities/property.entity';
 
 @Entity({ schema: 'poo' })
 export class OrganizationUser {
@@ -86,12 +84,4 @@ export class OrganizationUser {
 
 	@UpdateDateColumn()
 	updatedDate?: Date;
-
-	@AutoMap(() => [Property])
-	@OneToMany(() => Property, (property) => property.manager)
-	propertiesManaged?: Property[];
-
-	@AutoMap(() => [Property])
-	@OneToMany(() => Property, (property) => property.owner)
-	propertiesOwned?: Property[];
 }

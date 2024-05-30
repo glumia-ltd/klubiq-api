@@ -38,5 +38,7 @@ export interface ActiveUserData {
 	email: string;
 	systemRole: string;
 	organizationRole?: string;
-	permissions?: string[];
+	organizationId?: string;
+	uid?: string;
+	permissions: string[];
 }

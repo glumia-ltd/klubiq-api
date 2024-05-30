@@ -7,12 +7,15 @@ import {
 	FirebaseAdminErrorMessages,
 } from '../helpers/firebase-error-helper';
 import { ErrorMessages } from '@app/common/config/error.constant';
+import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
+import { ClsService } from 'nestjs-cls';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
 	constructor(
 		private authService: AuthService,
 		private configService: ConfigService,
+		private readonly cls: ClsService<SharedClsStore>,
 	) {}
 
 	async canActivate(
@@ -27,6 +30,7 @@ export class FirebaseAuthGuard implements CanActivate {
 			throw new Error(ErrorMessages.UNAUTHORIZED);
 		}
 		request.user = fireUser;
+		this.cls.set('currentUser', fireUser);
 		return true;
 	}
 

@@ -1,4 +1,9 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+	BadRequestException,
+	Inject,
+	Injectable,
+	Logger,
+} from '@nestjs/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { Cache } from 'cache-manager';
@@ -32,11 +37,14 @@ export class PropertiesAmenityService {
 			return propertyAmenity;
 		} catch (err) {
 			this.logger.error('Error creating property amenity', err);
-			throw err;
+			throw new BadRequestException(`Error creating property amenity.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
-	async getAllPropertyAmenities() {
+	async getAllPropertyAmenities(): Promise<ViewDataDto[]> {
 		try {
 			const cachedPropertyAmenityList =
 				await this.cacheService.getCache<ViewDataDto>(this.cacheKey);
@@ -51,7 +59,10 @@ export class PropertiesAmenityService {
 			return cachedPropertyAmenityList;
 		} catch (err) {
 			this.logger.error('Error getting property amenity list', err);
-			throw err;
+			throw new BadRequestException(`Error getting property amenity list.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
@@ -63,9 +74,12 @@ export class PropertiesAmenityService {
 				id,
 			);
 			await this.propertyAmenityRepository.delete({ id });
-		} catch (error) {
-			this.logger.error('Error deleting property amenity', error);
-			throw error;
+		} catch (err) {
+			this.logger.error('Error deleting property amenity', err);
+			throw new BadRequestException(`Error deleting property amenity.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 }

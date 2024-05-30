@@ -26,7 +26,7 @@ import {
 } from 'typeorm';
 import { PropertyAddress } from './property-address.entity';
 import { Organization } from '../../organization/entities/organization.entity';
-import { OrganizationUser } from '../../users/entities/organization-user.entity';
+import { UserProfile } from '@app/common';
 
 @Entity({ schema: 'poo' })
 @Tree('closure-table', { closureTableName: 'property_unit' })
@@ -78,7 +78,7 @@ export class Property {
 	@Column({ type: 'json', nullable: true })
 	area?: { value: number; unit: string };
 
-	@DeleteDateColumn()
+	@DeleteDateColumn({ select: false })
 	deletedDate?: Date;
 
 	@AutoMap()
@@ -86,12 +86,14 @@ export class Property {
 	isArchived?: boolean;
 
 	@AutoMap()
-	@Column({ nullable: true })
+	@Column({ nullable: true, select: false })
 	archivedDate?: Date;
 
+	@AutoMap()
 	@CreateDateColumn()
 	createdDate?: Date;
 
+	@AutoMap()
 	@UpdateDateColumn()
 	updatedDate?: Date;
 
@@ -147,6 +149,7 @@ export class Property {
 	@TreeParent()
 	parentProperty?: Property;
 
+	@AutoMap(() => [Property])
 	@TreeChildren({ cascade: true })
 	units?: Property[];
 
@@ -173,15 +176,21 @@ export class Property {
 
 	@AutoMap(() => [PropertyImage])
 	@OneToMany(() => PropertyImage, (image) => image.property, {
-		cascade: ['insert'],
+		cascade: true,
 	})
 	images?: PropertyImage[];
 
-	@AutoMap(() => OrganizationUser)
-	@ManyToOne(() => OrganizationUser, (orgUser) => orgUser.propertiesOwned)
-	owner?: OrganizationUser;
+	@AutoMap(() => UserProfile)
+	@ManyToOne(() => UserProfile, (user) => user.propertiesOwned)
+	@JoinColumn({ name: 'ownerUid', referencedColumnName: 'firebaseId' })
+	owner?: UserProfile;
 
-	@AutoMap(() => OrganizationUser)
-	@ManyToOne(() => OrganizationUser, (orgUser) => orgUser.propertiesManaged)
-	manager?: OrganizationUser;
+	@AutoMap(() => UserProfile)
+	@ManyToOne(() => UserProfile, (user) => user.propertiesManaged)
+	@JoinColumn({ name: 'managerUid', referencedColumnName: 'firebaseId' })
+	manager?: UserProfile;
+
+	@AutoMap()
+	@Column({ default: false })
+	isListingPublished: boolean;
 }

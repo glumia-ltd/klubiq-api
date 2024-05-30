@@ -2,8 +2,6 @@ import {
 	Entity,
 	PrimaryGeneratedColumn,
 	Column,
-	CreateDateColumn,
-	UpdateDateColumn,
 	ManyToOne,
 	ManyToMany,
 } from 'typeorm';
@@ -34,12 +32,6 @@ export class FeaturePermission {
 	@AutoMap()
 	@Column({ type: 'text', nullable: true })
 	description?: string;
-
-	@CreateDateColumn()
-	createdDate?: Date;
-
-	@UpdateDateColumn()
-	updatedDate?: Date;
 
 	@AutoMap(() => Permission)
 	@ManyToOne(() => Permission, (permission) => permission.featurePermissions, {

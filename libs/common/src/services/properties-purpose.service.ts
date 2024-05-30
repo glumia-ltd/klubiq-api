@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Inject,
+	Injectable,
+	Logger,
+	NotFoundException,
+} from '@nestjs/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import {
@@ -26,7 +32,7 @@ export class PropertiesPurposeService {
 
 	async createPropertyPurpose(
 		createPropertyPurposeDto: CreatePropertyMetadataDto,
-	): Promise<PropertyPurpose> {
+	): Promise<PropertyMetadataDto> {
 		try {
 			const { name, displayText } = createPropertyPurposeDto;
 			const propertyPurpose = this.propertyPurposeRepository.create({
@@ -47,11 +53,14 @@ export class PropertiesPurposeService {
 			return mappedPurpose;
 		} catch (err) {
 			this.logger.error('Error creating property Purpose', err);
-			throw err;
+			throw new BadRequestException(`Error creating property Purpose.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
-	async getPropertyPurposeById(id: number): Promise<PropertyPurpose> {
+	async getPropertyPurposeById(id: number): Promise<PropertyMetadataDto> {
 		try {
 			const propertyPurpose = await this.propertyPurposeRepository.findOneBy({
 				id: id,
@@ -66,11 +75,14 @@ export class PropertiesPurposeService {
 			);
 		} catch (err) {
 			this.logger.error('Error getting property Purpose', err);
-			throw err;
+			throw new BadRequestException(`Error getting property Purpose.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
-	async getAllPropertyPurpose() {
+	async getAllPropertyPurpose(): Promise<PropertyMetadataDto[]> {
 		try {
 			const cachedPropertyPurposesList =
 				await this.cacheService.getCache<PropertyMetadataDto>(this.cacheKey);
@@ -90,14 +102,17 @@ export class PropertiesPurposeService {
 			return cachedPropertyPurposesList;
 		} catch (err) {
 			this.logger.error('Error getting property purpose list', err);
-			throw err;
+			throw new BadRequestException(`Error getting property purpose list.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
 	async updatePropertyPurpose(
 		id: number,
 		updatePropertyPurposeDto: UpdatePropertyMetadataDto,
-	): Promise<PropertyPurpose> {
+	): Promise<PropertyMetadataDto> {
 		try {
 			const propertyPurpose = await this.getPropertyPurposeById(id);
 			Object.assign(propertyPurpose, updatePropertyPurposeDto);
@@ -116,9 +131,12 @@ export class PropertiesPurposeService {
 				PropertyPurpose,
 				PropertyMetadataDto,
 			);
-		} catch (error) {
-			this.logger.error('Error updating property purpose', error);
-			throw error;
+		} catch (err) {
+			this.logger.error('Error updating property purpose', err);
+			throw new BadRequestException(`Error updating property purpose. `, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 
@@ -131,9 +149,12 @@ export class PropertiesPurposeService {
 				id,
 			);
 			await this.propertyPurposeRepository.remove(propertyPurpose);
-		} catch (error) {
-			this.logger.error('Error deleting property purpose', error);
-			throw error;
+		} catch (err) {
+			this.logger.error('Error deleting property purpose', err);
+			throw new BadRequestException(`Error deleting property purpose.`, {
+				cause: new Error(),
+				description: err.message,
+			});
 		}
 	}
 }

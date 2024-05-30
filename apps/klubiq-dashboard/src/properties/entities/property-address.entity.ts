@@ -15,11 +15,11 @@ export class PropertyAddress {
 	@PrimaryGeneratedColumn()
 	public id?: number;
 
-	@CreateDateColumn()
+	@CreateDateColumn({ select: false })
 	@Exclude()
 	createdDate?: Date;
 
-	@UpdateDateColumn()
+	@UpdateDateColumn({ select: false })
 	@Exclude()
 	updatedDate?: Date;
 
@@ -63,6 +63,6 @@ export class PropertyAddress {
 	@Column({ type: 'decimal', nullable: true })
 	longitude?: number;
 
-	@DeleteDateColumn()
+	@DeleteDateColumn({ select: false })
 	deletedDate?: Date;
 }

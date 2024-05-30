@@ -4,7 +4,7 @@ import { IsEnum, IsOptional, IsInt, Min, Max } from 'class-validator';
 import { Order } from '../../types/page-meta-dto-parameters';
 
 export class PageOptionsDto {
-	@ApiPropertyOptional({ enum: Order, default: Order.ASC })
+	@ApiPropertyOptional({ enum: Order, default: Order.DESC })
 	@IsEnum(Order)
 	@IsOptional()
 	readonly order?: Order = Order.ASC;

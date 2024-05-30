@@ -54,7 +54,8 @@ import * as redis from 'cache-manager-redis-store';
 					request.headers['x-correlation-id'] ?? uuidv4(),
 				setup: (cls, req) => {
 					cls.set('clientName', req.headers['x-client-name']);
-					cls.set('orgId', req.headers['x-org-id']);
+					cls.set('jwtToken', req.headers.authorization?.split(' ')[1]);
+					cls.set('requestUrl', req.originalUrl);
 				},
 			},
 		}),
@@ -64,7 +65,7 @@ import * as redis from 'cache-manager-redis-store';
 				store: redis,
 				host: 'localhost',
 				port: 6379,
-				max: 20,
+				max: 5,
 				ttl: 10000,
 			}),
 		}),
