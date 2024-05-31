@@ -230,9 +230,9 @@ export class AuthService {
 			}
 			const resetPasswordLink = await this.auth.generatePasswordResetLink(
 				email,
-				this.getActionCodeSettings(),
+				this.getActionCodeSettings([`email=${email}`]),
 			);
-			const actionUrl = replace(resetPasswordLink, '_auth_', 'forgotPassword');
+			const actionUrl = replace(resetPasswordLink, '_auth_', 'reset-password');
 			const emailTemplate = EmailTemplates['password-reset'];
 			await this.emailService.sendTransactionalEmail(
 				{
@@ -336,7 +336,10 @@ export class AuthService {
 		try {
 			const verificationLink = await admin
 				.auth()
-				.generateEmailVerificationLink(email, this.getActionCodeSettings());
+				.generateEmailVerificationLink(
+					email,
+					this.getActionCodeSettings([`email=${email}`]),
+				);
 			const actionUrl = replace(verificationLink, '_auth_', 'verify-email');
 			const emailTemplate = EmailTemplates['email-verification'];
 			await this.emailService.sendTransactionalEmail(
@@ -511,9 +514,10 @@ export class AuthService {
 		return userData;
 	}
 
-	getActionCodeSettings() {
+	getActionCodeSettings(queries: string[]) {
+		const queryString = queries.join('&');
 		return {
-			url: `${this.emailVerificationBaseUrl}${this.emailAuthContinueUrl}`,
+			url: `${this.emailVerificationBaseUrl}${this.emailAuthContinueUrl}?${queryString}`,
 		};
 	}
 }

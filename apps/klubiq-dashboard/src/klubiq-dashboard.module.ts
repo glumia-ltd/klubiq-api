@@ -21,6 +21,7 @@ import { UsersService } from './users/users.service';
 import { UsersRepository } from './users/users.repository';
 import { APP_GUARD } from '@nestjs/core';
 import { PropertiesModule } from './properties/properties.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
 	imports: [
@@ -33,6 +34,7 @@ import { PropertiesModule } from './properties/properties.module';
 		ConfigModule,
 		PropertiesModule,
 		PublicModule,
+		DashboardModule,
 	],
 	providers: [
 		UsersService,
