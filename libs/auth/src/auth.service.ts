@@ -12,7 +12,7 @@ import { Inject } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import * as auth from 'firebase-admin/auth';
 import { FirebaseException } from './exception/firebase.exception';
-import { OrgUserSignUpDto } from './dto/user-login.dto';
+import { OrgUserSignUpDto, UpdateFirebaseUserDto } from './dto/user-login.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import {
@@ -191,6 +191,24 @@ export class AuthService {
 		}
 	}
 
+	async updatePassword(updateDto: UpdateFirebaseUserDto) {
+		try {
+			const user = await this.auth.getUserByEmail(updateDto.email);
+			if (!user) {
+				throw new NotFoundException('User not found');
+			}
+			await this.auth.updateUser(user.uid, {
+				password: updateDto.password,
+			});
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(
+				firebaseErrorMessage ? firebaseErrorMessage : err.message,
+			);
+		}
+	}
+
 	async deleteUser(uid: string): Promise<void> {
 		try {
 			await this.auth.deleteUser(uid);
@@ -331,29 +349,6 @@ export class AuthService {
 				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
 				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
-		}
-	}
-
-	async exchangeGoogleToken(authorizationCode: string) {
-		try {
-			const auth = admin.auth();
-
-			const credential = await auth.verifyIdToken(authorizationCode);
-
-			const accessToken = credential.accessToken;
-			const idToken = credential.idToken;
-			const email = credential.email;
-			const existingUser = await this.userProfilesRepository.findOneByCondition(
-				{ email: email },
-			);
-
-			return { user: existingUser, accessToken: accessToken, idToken: idToken };
-		} catch (error) {
-			const firebaseErrorMessage =
-				this.errorMessageHelper.parseFirebaseError(error);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : error.message,
 			);
 		}
 	}

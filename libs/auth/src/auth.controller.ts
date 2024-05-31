@@ -3,7 +3,6 @@ import {
 	Post,
 	Body,
 	HttpStatus,
-	Param,
 	HttpCode,
 	Get,
 } from '@nestjs/common';
@@ -15,6 +14,7 @@ import {
 	RefreshTokenExchangeDto,
 	ResetPasswordDto,
 	SendVerifyEmailDto,
+	UpdateFirebaseUserDto,
 	VerifyEmailDto,
 } from './dto/user-login.dto';
 import { SignUpResponseDto, TokenResponseDto } from './dto/auth-response.dto';
@@ -63,18 +63,16 @@ export class AuthController {
 		}
 	}
 
-	@Post('sign-in/google/:authorizationCode')
-	@ApiOkResponse({
-		description:
-			'Exchanges token from google credential to get user access token',
-	})
-	async googleSignIn(
-		@Param('authorizationCode') authorizationCode: string,
+	@HttpCode(HttpStatus.OK)
+	@Post('reset-password')
+	@ApiOkResponse()
+	async resetPassword(
+		@Body() resetPasswordDto: UpdateFirebaseUserDto,
 	): Promise<any> {
 		try {
-			return this.authService.exchangeGoogleToken(authorizationCode);
+			return this.authService.updatePassword(resetPasswordDto);
 		} catch (err) {
-			console.error('Error verifying email:', err);
+			console.error('Error updating password:', err);
 			throw err;
 		}
 	}
@@ -89,6 +87,7 @@ export class AuthController {
 		return userData;
 	}
 
+	@HttpCode(HttpStatus.OK)
 	@Post('email-verification-link')
 	@ApiOkResponse({
 		description: 'Send email verification link to user',
@@ -102,6 +101,7 @@ export class AuthController {
 		);
 	}
 
+	@HttpCode(HttpStatus.OK)
 	@Post('reset-password-link')
 	@ApiOkResponse({
 		description: 'Send email password reset link to user',
@@ -110,6 +110,7 @@ export class AuthController {
 		await this.authService.generatePasswordResetEmail(request.email);
 	}
 
+	@HttpCode(HttpStatus.OK)
 	@Post('exchange-refresh-token')
 	@ApiOkResponse({
 		type: TokenResponseDto,

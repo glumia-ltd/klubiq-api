@@ -1,5 +1,11 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsEmail, IsString, IsStrongPassword } from 'class-validator';
+import {
+	IsEmail,
+	IsPhoneNumber,
+	IsString,
+	IsStrongPassword,
+	IsUrl,
+} from 'class-validator';
 
 export class userLoginDto {
 	@ApiProperty({
@@ -45,6 +51,20 @@ export class UserSignUpDto extends PartialType(userLoginDto) {
 		minSymbols: 1,
 	})
 	password: string;
+}
+
+export class UpdateFirebaseUserDto extends PartialType(UserSignUpDto) {
+	@ApiProperty()
+	@IsUrl()
+	photoURL: number;
+
+	@ApiProperty()
+	@IsPhoneNumber()
+	phoneNumber: string;
+
+	@ApiProperty()
+	@IsString()
+	displayName: string;
 }
 
 export class OrgUserSignUpDto extends PartialType(UserSignUpDto) {
