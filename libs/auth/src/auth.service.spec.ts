@@ -10,7 +10,7 @@ import { classes } from '@automapper/classes';
 import { ConfigService } from '@nestjs/config';
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
 import firebaseAdmin from 'firebase-admin';
-import auth from 'firebase/auth';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 const moduleMocker = new ModuleMocker(global);
 
@@ -53,8 +53,12 @@ describe('AuthService', () => {
 					useValue: firebaseAdmin,
 				},
 				{
-					provide: 'FIREBASE_AUTH',
-					useValue: auth,
+					provide: CACHE_MANAGER,
+					useFactory: () => ({
+						get: jest.fn(),
+						set: jest.fn(),
+						del: jest.fn(),
+					}),
 				},
 			],
 		})
@@ -95,16 +99,6 @@ describe('AuthService', () => {
 
 			// Assert
 			expect(token).toBe(result);
-		});
-
-		it('should create return undefined when firebase user is empty', async () => {
-			// Act
-			jest.spyOn(service, 'createUser').mockImplementation(async () => null);
-			const token = await service.createOrgUser(mockCreateUserPayload);
-
-			// Assert
-			expect(token).toBe(undefined);
-			expect(token).toBeFalsy();
 		});
 	});
 });

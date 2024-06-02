@@ -9,7 +9,9 @@ import { PropertyDto } from '../dto/responses/property-response.dto';
 import { getMapperToken } from '@automapper/nestjs';
 import { classes } from '@automapper/classes';
 import { EntityManager } from 'typeorm';
-import { ClsModule, ClsService } from 'nestjs-cls';
+import { ClsService } from 'nestjs-cls';
+import { AsyncLocalStorage } from 'async_hooks';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 type MockRepository<T = any> = Partial<
 	Record<keyof BaseRepository<T>, jest.Mock>
@@ -57,7 +59,6 @@ describe('PropertiesService', () => {
 			providers: [
 				PropertiesService,
 				EntityManager,
-				ClsService,
 				{
 					provide: PropertyRepository,
 					useValue: createMockRepository(),
@@ -68,8 +69,19 @@ describe('PropertiesService', () => {
 						strategyInitializer: classes(),
 					}),
 				},
+				{
+					provide: ClsService,
+					useFactory: () => new ClsService(new AsyncLocalStorage()),
+				},
+				{
+					provide: CACHE_MANAGER,
+					useFactory: () => ({
+						get: jest.fn(),
+						set: jest.fn(),
+						del: jest.fn(),
+					}),
+				},
 			],
-			imports: [ClsModule],
 		}).compile();
 
 		mapper = module.get<Mapper>(getMapperToken());
