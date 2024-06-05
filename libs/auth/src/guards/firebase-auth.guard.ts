@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
-import { AuthService } from '../auth.service';
+// import { AuthService } from '../services/auth.service';
 import {
 	FirebaseAdminErrors,
 	FirebaseAdminErrorMessages,
@@ -9,11 +9,12 @@ import {
 import { ErrorMessages } from '@app/common/config/error.constant';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { ClsService } from 'nestjs-cls';
+import { LandlordAuthService } from '../services/landlord-auth.service';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
 	constructor(
-		private authService: AuthService,
+		private authService: LandlordAuthService,
 		private configService: ConfigService,
 		private readonly cls: ClsService<SharedClsStore>,
 	) {}

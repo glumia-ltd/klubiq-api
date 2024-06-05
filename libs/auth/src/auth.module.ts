@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
 import { DatabaseModule, ConfigModule } from '@app/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
@@ -12,8 +11,9 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { HttpModule } from '@nestjs/axios';
 import { CacheService } from '@app/common/services/cache.service';
+import { LandlordAuthService } from './services/landlord-auth.service';
 
-const _firebaseConfig = require('../../../config.json');
+import _firebaseConfig from '../../../config.json';
 const apps = admin.apps;
 
 interface FirebaseConfig {
@@ -56,7 +56,6 @@ const firebaseAdminProvider = {
 
 @Module({
 	providers: [
-		AuthService,
 		ConfigService,
 		firebaseAdminProvider,
 		OrgUserProfile,
@@ -67,8 +66,16 @@ const firebaseAdminProvider = {
 			provide: CacheService,
 			useFactory: () => new CacheService(null, 60 * 60 * 24),
 		},
+		// {
+		// 	provide: 'MAPPER',
+		// 	useFactory: () => {
+		// 		const mapper = createMapper({ strategyInitializer: classes() });
+		// 		return mapper;
+		// 	},
+		// },
+		LandlordAuthService,
 	],
-	exports: [AuthService],
+	exports: [LandlordAuthService],
 	imports: [DatabaseModule, ConfigModule, RepositoriesModule, HttpModule],
 	controllers: [AuthController],
 })

@@ -27,7 +27,7 @@ export const featurePermissionResolver: Resolver<
 	},
 };
 export class OrgUserProfile extends AutomapperProfile {
-	constructor(@InjectMapper() mapper: Mapper) {
+	constructor(@InjectMapper('MAPPER') mapper: Mapper) {
 		super(mapper);
 	}
 

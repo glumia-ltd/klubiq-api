@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from './auth.service';
 import { UserProfilesRepository } from '@app/common';
-import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/organization.repository';
+import { OrganizationRepository } from '../../../../apps/klubiq-dashboard/src/organization/organization.repository';
 import { MailerSendService } from '@app/common/email/email.service';
 import { MailerSendSMTPService } from '@app/common/email/smtp-email.service';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
@@ -11,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
 import firebaseAdmin from 'firebase-admin';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { LandlordAuthService } from './landlord-auth.service';
 
 const moduleMocker = new ModuleMocker(global);
 
@@ -27,7 +27,7 @@ jest.mock('firebase/app');
 jest.mock('firebase-admin');
 
 describe('AuthService', () => {
-	let service: AuthService;
+	let service: LandlordAuthService;
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let mapper: Mapper;
 	//let userRepo: UserProfilesRepository;
@@ -41,7 +41,7 @@ describe('AuthService', () => {
 				OrganizationRepository,
 				MailerSendService,
 				MailerSendSMTPService,
-				AuthService,
+				LandlordAuthService,
 				{
 					provide: getMapperToken(),
 					useValue: createMapper({
@@ -79,7 +79,7 @@ describe('AuthService', () => {
 			.compile();
 
 		mapper = module.get<Mapper>(getMapperToken());
-		service = module.get<AuthService>(AuthService);
+		service = module.get<LandlordAuthService>(LandlordAuthService);
 	});
 
 	it('should be defined', () => {

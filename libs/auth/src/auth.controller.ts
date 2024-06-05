@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Auth, Roles } from './decorators/auth.decorator';
-import { AuthService } from './auth.service';
 import {
 	OrgUserSignUpDto,
 	RefreshTokenExchangeDto,
@@ -20,13 +19,14 @@ import {
 import { SignUpResponseDto, TokenResponseDto } from './dto/auth-response.dto';
 import { AuthType } from './types/firebase.types';
 import { UserRoles } from '@app/common';
+import { LandlordAuthService } from './services/landlord-auth.service';
 
 @ApiTags('auth')
 @ApiBearerAuth()
 @Auth(AuthType.None)
 @Controller('auth')
 export class AuthController {
-	constructor(private readonly authService: AuthService) {}
+	constructor(private readonly authService: LandlordAuthService) {}
 
 	@HttpCode(HttpStatus.OK)
 	@Post('verify-email')

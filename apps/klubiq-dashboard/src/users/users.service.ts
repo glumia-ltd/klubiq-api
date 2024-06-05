@@ -22,7 +22,7 @@ export class UsersService {
 		private readonly usersRepository: UsersRepository,
 		private readonly userProfilesRepository: UserProfilesRepository,
 		private readonly rolesRepository: RolesRepository,
-		@InjectMapper() private readonly mapper: Mapper,
+		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 	) {}
 
 	async getUserByFireBaseId(firebaseId: string) {

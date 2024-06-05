@@ -12,6 +12,7 @@ import { ClsModule } from 'nestjs-cls';
 import { v4 as uuidv4 } from 'uuid';
 import { CacheModule } from '@nestjs/cache-manager';
 import * as redis from 'cache-manager-redis-store';
+import { createMapper } from '@automapper/core';
 
 @Module({
 	imports: [
@@ -42,9 +43,12 @@ import * as redis from 'cache-manager-redis-store';
 				GOOGLE_IDENTITY_ENDPOINT: Joi.string().required(),
 			}),
 		}),
-		AutomapperModule.forRoot({
-			strategyInitializer: classes(),
-		}),
+		AutomapperModule.forRoot([
+			{
+				name: 'MAPPER',
+				strategyInitializer: classes(),
+			},
+		]),
 		ClsModule.forRoot({
 			global: true,
 			middleware: {
@@ -70,7 +74,18 @@ import * as redis from 'cache-manager-redis-store';
 			}),
 		}),
 	],
-	providers: [ConfigService, MailerSendService, MailerSendSMTPService],
+	providers: [
+		ConfigService,
+		MailerSendService,
+		MailerSendSMTPService,
+		{
+			provide: 'MAPPER',
+			useFactory: () => {
+				const mapper = createMapper({ strategyInitializer: classes() });
+				return mapper;
+			},
+		},
+	],
 	exports: [ConfigService, MailerSendService, MailerSendSMTPService],
 })
 export class ConfigModule {}

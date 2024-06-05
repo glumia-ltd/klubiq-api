@@ -26,7 +26,7 @@ export class PropertiesCategoryService {
 	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		private readonly propertyCategoryRepository: PropertyCategoryRepository,
-		@InjectMapper() private readonly mapper: Mapper,
+		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 

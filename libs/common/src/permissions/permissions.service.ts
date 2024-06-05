@@ -1,8 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-// import { EntityManager } from 'typeorm';
 import { PermissionsRepository } from '../repositories/permissions.repository';
-import { OrganizationRolesRepository } from '../repositories/organization-roles.repository';
-import { FeaturesRepository } from '../repositories/features.repository';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -19,14 +16,11 @@ import { CacheKeys } from '..';
 @Injectable()
 export class PermissionsService {
 	private readonly logger = new Logger(PermissionsService.name);
-	private readonly rolesPermissionCacheKey = CacheKeys.ROLES_PERMISSIONS;
 	private readonly permissionsCacheKey = CacheKeys.PERMISSIONS;
 	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
-		@InjectMapper() private readonly mapper: Mapper,
+		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		private readonly permissionsRepository: PermissionsRepository,
-		private readonly organizationRoleRepository: OrganizationRolesRepository,
-		private readonly featuresRepository: FeaturesRepository,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 

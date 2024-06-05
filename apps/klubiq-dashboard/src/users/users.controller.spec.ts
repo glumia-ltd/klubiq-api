@@ -8,6 +8,7 @@ import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { Mapper, createMapper } from '@automapper/core';
 import { classes } from '@automapper/classes';
 import { AuthService } from '@app/auth';
+import { LandlordAuthService } from '@app/auth/services/landlord-auth.service';
 
 describe('UsersController', () => {
 	let controller: UsersController;
@@ -24,7 +25,7 @@ describe('UsersController', () => {
 				UsersRepository,
 				RolesRepository,
 				UserProfilesRepository,
-				AuthService,
+				LandlordAuthService,
 				{
 					provide: getMapperToken(),
 					useValue: createMapper({

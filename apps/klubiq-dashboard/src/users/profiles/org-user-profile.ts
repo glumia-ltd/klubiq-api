@@ -12,7 +12,7 @@ import { UserResponseDto } from '../dto/create-organization-user.dto';
 import { OrganizationUser } from '../entities/organization-user.entity';
 
 export class OrgUserMapProfile extends AutomapperProfile {
-	constructor(@InjectMapper() mapper: Mapper) {
+	constructor(@InjectMapper('MAPPER') mapper: Mapper) {
 		super(mapper);
 	}
 
