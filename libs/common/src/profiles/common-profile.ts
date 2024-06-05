@@ -27,8 +27,8 @@ import { FeaturePermission } from '../database/entities/feature-permission.entit
 import { Role } from '../database/entities/role.entity';
 
 export class CommonProfile extends AutomapperProfile {
-	@InjectMapper() customMapper: Mapper;
-	constructor(@InjectMapper() mapper: Mapper) {
+	@InjectMapper('MAPPER') customMapper: Mapper;
+	constructor(@InjectMapper('MAPPER') mapper: Mapper) {
 		super(mapper);
 		this.customMapper = createMapper({
 			strategyInitializer: classes(),

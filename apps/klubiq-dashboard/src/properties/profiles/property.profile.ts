@@ -28,7 +28,7 @@ import { PropertyPurpose } from '@app/common';
 import { MetadataDto } from '../dto/responses/metadata.dto';
 
 export class PropertyProfile extends AutomapperProfile {
-	constructor(@InjectMapper() mapper: Mapper) {
+	constructor(@InjectMapper('MAPPER') mapper: Mapper) {
 		super(mapper);
 	}
 

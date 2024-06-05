@@ -21,7 +21,7 @@ describe('OrganizationController', () => {
 				OrganizationRepository,
 				EntityManager,
 				{
-					provide: getMapperToken(),
+					provide: getMapperToken('MAPPER'),
 					useValue: createMapper({
 						strategyInitializer: classes(),
 					}),
@@ -29,7 +29,7 @@ describe('OrganizationController', () => {
 			],
 		}).compile();
 
-		mapper = module.get<Mapper>(getMapperToken());
+		mapper = module.get<Mapper>(getMapperToken('MAPPER'));
 		controller = module.get<OrganizationController>(OrganizationController);
 	});
 

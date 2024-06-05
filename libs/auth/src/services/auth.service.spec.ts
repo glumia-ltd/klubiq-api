@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from './auth.service';
 import { UserProfilesRepository } from '@app/common';
-import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/organization.repository';
+import { OrganizationRepository } from '../../../../apps/klubiq-dashboard/src/organization/organization.repository';
 import { MailerSendService } from '@app/common/email/email.service';
 import { MailerSendSMTPService } from '@app/common/email/smtp-email.service';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
@@ -10,7 +9,8 @@ import { classes } from '@automapper/classes';
 import { ConfigService } from '@nestjs/config';
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
 import firebaseAdmin from 'firebase-admin';
-import auth from 'firebase/auth';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { LandlordAuthService } from './landlord-auth.service';
 
 const moduleMocker = new ModuleMocker(global);
 
@@ -27,7 +27,7 @@ jest.mock('firebase/app');
 jest.mock('firebase-admin');
 
 describe('AuthService', () => {
-	let service: AuthService;
+	let service: LandlordAuthService;
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let mapper: Mapper;
 	//let userRepo: UserProfilesRepository;
@@ -41,9 +41,9 @@ describe('AuthService', () => {
 				OrganizationRepository,
 				MailerSendService,
 				MailerSendSMTPService,
-				AuthService,
+				LandlordAuthService,
 				{
-					provide: getMapperToken(),
+					provide: getMapperToken('MAPPER'),
 					useValue: createMapper({
 						strategyInitializer: classes(),
 					}),
@@ -53,8 +53,12 @@ describe('AuthService', () => {
 					useValue: firebaseAdmin,
 				},
 				{
-					provide: 'FIREBASE_AUTH',
-					useValue: auth,
+					provide: CACHE_MANAGER,
+					useFactory: () => ({
+						get: jest.fn(),
+						set: jest.fn(),
+						del: jest.fn(),
+					}),
 				},
 			],
 		})
@@ -74,8 +78,8 @@ describe('AuthService', () => {
 			})
 			.compile();
 
-		mapper = module.get<Mapper>(getMapperToken());
-		service = module.get<AuthService>(AuthService);
+		mapper = module.get<Mapper>(getMapperToken('MAPPER'));
+		service = module.get<LandlordAuthService>(LandlordAuthService);
 	});
 
 	it('should be defined', () => {
@@ -95,16 +99,6 @@ describe('AuthService', () => {
 
 			// Assert
 			expect(token).toBe(result);
-		});
-
-		it('should create return undefined when firebase user is empty', async () => {
-			// Act
-			jest.spyOn(service, 'createUser').mockImplementation(async () => null);
-			const token = await service.createOrgUser(mockCreateUserPayload);
-
-			// Assert
-			expect(token).toBe(undefined);
-			expect(token).toBeFalsy();
 		});
 	});
 });

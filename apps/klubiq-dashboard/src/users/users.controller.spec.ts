@@ -24,9 +24,8 @@ describe('UsersController', () => {
 				UsersRepository,
 				RolesRepository,
 				UserProfilesRepository,
-				AuthService,
 				{
-					provide: getMapperToken(),
+					provide: getMapperToken('MAPPER'),
 					useValue: createMapper({
 						strategyInitializer: classes(),
 					}),
@@ -37,7 +36,7 @@ describe('UsersController', () => {
 			.useValue('')
 			.compile();
 
-		mapper = module.get<Mapper>(getMapperToken());
+		mapper = module.get<Mapper>(getMapperToken('MAPPER'));
 		controller = module.get<UsersController>(UsersController);
 	});
 

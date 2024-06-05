@@ -18,7 +18,7 @@ export class OrganizationService {
 	constructor(
 		@InjectEntityManager() private entityManager: EntityManager,
 		private readonly organizationRepository: OrganizationRepository,
-		@InjectMapper() private readonly mapper: Mapper,
+		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 	) {}
 
 	// This gets the organization by uuid

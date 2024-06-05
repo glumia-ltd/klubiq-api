@@ -8,6 +8,8 @@ import {
 	Put,
 	Delete,
 	BadRequestException,
+	HttpCode,
+	HttpStatus,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
@@ -27,7 +29,7 @@ import { GetPropertyDto } from '../dto/requests/get-property.dto';
 export class PropertiesController {
 	constructor(private readonly propertyService: PropertiesService) {}
 
-	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@Roles(UserRoles.ORG_OWNER)
 	@Post()
 	@ApiOkResponse({
 		description: 'Creates a new property',
@@ -42,7 +44,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@Roles(UserRoles.ORG_OWNER)
 	@Post('draft')
 	@ApiOkResponse({
 		description: 'Creates a draft property',
@@ -58,6 +60,7 @@ export class PropertiesController {
 	}
 
 	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@HttpCode(HttpStatus.OK)
 	@Post(':propertyUuid/draft')
 	@ApiOkResponse({
 		description: 'Saves a draft property',
@@ -70,6 +73,11 @@ export class PropertiesController {
 		}
 	}
 
+	@Roles(
+		UserRoles.ORG_OWNER,
+		UserRoles.PROPERTY_OWNER,
+		UserRoles.PROPERTY_MANAGER,
+	)
 	@Get()
 	@ApiOkResponse({
 		description: 'Returns all properties under an organization',
@@ -84,6 +92,11 @@ export class PropertiesController {
 		}
 	}
 
+	@Roles(
+		UserRoles.ORG_OWNER,
+		UserRoles.PROPERTY_OWNER,
+		UserRoles.PROPERTY_MANAGER,
+	)
 	@Get(':propertyUuid')
 	@ApiOkResponse({
 		description: "Returns a property by it's property uuid",
@@ -100,6 +113,12 @@ export class PropertiesController {
 		}
 	}
 
+	@Roles(
+		UserRoles.ORG_OWNER,
+		UserRoles.PROPERTY_OWNER,
+		UserRoles.PROPERTY_MANAGER,
+	)
+	@HttpCode(HttpStatus.OK)
 	@Put(':propertyUuid')
 	@ApiOkResponse({
 		description: "Updates a property found by it's property id",
@@ -120,6 +139,8 @@ export class PropertiesController {
 		}
 	}
 
+	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@HttpCode(HttpStatus.OK)
 	@Delete(':propertyUuid')
 	@ApiOkResponse({
 		description: "Deletes a property found by it's propertyUuid",
@@ -134,6 +155,8 @@ export class PropertiesController {
 		}
 	}
 
+	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@HttpCode(HttpStatus.OK)
 	@Put(':propertyUuid/archive')
 	@ApiOkResponse({
 		description: "Archive a property found by it's propertyUuid",
@@ -146,6 +169,8 @@ export class PropertiesController {
 		}
 	}
 
+	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@HttpCode(HttpStatus.OK)
 	@Post(':propertyUuid/units')
 	@ApiOkResponse({
 		description: 'Adds units to a property',
@@ -165,13 +190,3 @@ export class PropertiesController {
 		}
 	}
 }
-
-// create property
-// get all properties by organization with pagination
-// get all properties by propertyManager with pagination
-// get all properties by filter with pagination
-// get property by id
-// update property
-// delete property
-// archive property
-// create property for organization

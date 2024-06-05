@@ -83,7 +83,7 @@ describe('UsersService', () => {
 					useValue: createMockRepository(),
 				},
 				{
-					provide: getMapperToken(),
+					provide: getMapperToken('MAPPER'),
 					useValue: createMapper({
 						strategyInitializer: classes(),
 					}),
@@ -91,7 +91,7 @@ describe('UsersService', () => {
 			],
 		}).compile();
 
-		mapper = module.get<Mapper>(getMapperToken());
+		mapper = module.get<Mapper>(getMapperToken('MAPPER'));
 		service = module.get<UsersService>(UsersService);
 		userRepo = module.get<MockRepository>(UsersRepository);
 		roleRepo = module.get<MockRepository>(RolesRepository);

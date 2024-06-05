@@ -26,7 +26,9 @@ import {
 } from 'typeorm';
 import { PropertyAddress } from './property-address.entity';
 import { Organization } from '../../organization/entities/organization.entity';
-import { UserProfile } from '@app/common';
+import { UserProfile } from '@app/common/database/entities/user-profile.entity';
+import { Lease } from '@app/common/database/entities/lease.entity';
+import { Maintenance } from '@app/common/database/entities/maintenance.entity';
 
 @Entity({ schema: 'poo' })
 @Tree('closure-table', { closureTableName: 'property_unit' })
@@ -139,6 +141,7 @@ export class Property {
 	address?: PropertyAddress;
 
 	@AutoMap(() => Organization)
+	@Index()
 	@ManyToOne(() => Organization, { eager: true })
 	@JoinColumn({
 		name: 'organizationUuid',
@@ -181,11 +184,13 @@ export class Property {
 	images?: PropertyImage[];
 
 	@AutoMap(() => UserProfile)
+	@Index()
 	@ManyToOne(() => UserProfile, (user) => user.propertiesOwned)
 	@JoinColumn({ name: 'ownerUid', referencedColumnName: 'firebaseId' })
 	owner?: UserProfile;
 
 	@AutoMap(() => UserProfile)
+	@Index()
 	@ManyToOne(() => UserProfile, (user) => user.propertiesManaged)
 	@JoinColumn({ name: 'managerUid', referencedColumnName: 'firebaseId' })
 	manager?: UserProfile;
@@ -193,4 +198,12 @@ export class Property {
 	@AutoMap()
 	@Column({ default: false })
 	isListingPublished: boolean;
+
+	@AutoMap(() => [Lease])
+	@OneToMany(() => Lease, (lease) => lease.property)
+	leases?: Lease[];
+
+	@AutoMap(() => [Maintenance])
+	@OneToMany(() => Maintenance, (maintenance) => maintenance.property)
+	maintenances?: Maintenance[];
 }

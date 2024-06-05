@@ -31,7 +31,7 @@ export class PropertiesService {
 		@InjectRepository(PropertyRepository)
 		private readonly propertyRepository: PropertyRepository,
 		private readonly cls: ClsService<SharedClsStore>,
-		@InjectMapper() private readonly mapper: Mapper,
+		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 

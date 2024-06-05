@@ -32,7 +32,7 @@ export class RolesService {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private rolesRepository: RolesRepository,
 		private orgRolesRepository: OrganizationRolesRepository,
-		@InjectMapper() private readonly mapper: Mapper,
+		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 	) {}
 
 	//#region SYSTEM ROLES

@@ -11,7 +11,7 @@ import { PropertyPurpose } from '../database/entities/property-purpose.entity';
 import { PropertyMetadataDto } from '../dto/responses/properties-metadata.dto';
 
 export class PropertyMetaDataProfile extends AutomapperProfile {
-	constructor(@InjectMapper() mapper: Mapper) {
+	constructor(@InjectMapper('MAPPER') mapper: Mapper) {
 		super(mapper);
 	}
 

@@ -20,7 +20,7 @@ export class FeaturesService {
 	private readonly cacheKey = CacheKeys.FEATURES;
 	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
-		@InjectMapper() private readonly mapper: Mapper,
+		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		private readonly featuresRepository: FeaturesRepository,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}

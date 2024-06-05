@@ -6,7 +6,7 @@ import { CreateOrganizationDto } from '../dto/create-organization.dto';
 import { OrganizationResponseDto } from '../dto/organization-response.dto';
 
 export class OrganizationProfile extends AutomapperProfile {
-	constructor(@InjectMapper() mapper: Mapper) {
+	constructor(@InjectMapper('MAPPER') mapper: Mapper) {
 		super(mapper);
 	}
 

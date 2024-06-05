@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PropertiesController } from './properties.controller';
 import { Mapper, createMapper } from '@automapper/core';
@@ -6,11 +7,14 @@ import { classes } from '@automapper/classes';
 import { EntityManager } from 'typeorm';
 import { PropertyRepository } from '../repositories/properties.repository';
 import { PropertiesService } from '../services/properties.service';
+import { ClsService } from 'nestjs-cls';
+import { AsyncLocalStorage } from 'async_hooks';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 describe('OrganizationController', () => {
 	let controller: PropertiesController;
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let mapper: Mapper;
+	let cls: ClsService;
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -21,16 +25,29 @@ describe('OrganizationController', () => {
 				PropertyRepository,
 				EntityManager,
 				{
-					provide: getMapperToken(),
+					provide: getMapperToken('MAPPER'),
 					useValue: createMapper({
 						strategyInitializer: classes(),
+					}),
+				},
+				{
+					provide: ClsService,
+					useFactory: () => new ClsService(new AsyncLocalStorage()),
+				},
+				{
+					provide: CACHE_MANAGER,
+					useFactory: () => ({
+						get: jest.fn(),
+						set: jest.fn(),
+						del: jest.fn(),
 					}),
 				},
 			],
 		}).compile();
 
-		mapper = module.get<Mapper>(getMapperToken());
+		mapper = module.get<Mapper>(getMapperToken('MAPPER'));
 		controller = module.get<PropertiesController>(PropertiesController);
+		cls = module.get<ClsService>(ClsService);
 	});
 
 	it('should be defined', () => {
