@@ -43,7 +43,7 @@ describe('AuthService', () => {
 				MailerSendSMTPService,
 				LandlordAuthService,
 				{
-					provide: getMapperToken(),
+					provide: getMapperToken('MAPPER'),
 					useValue: createMapper({
 						strategyInitializer: classes(),
 					}),
@@ -78,7 +78,7 @@ describe('AuthService', () => {
 			})
 			.compile();
 
-		mapper = module.get<Mapper>(getMapperToken());
+		mapper = module.get<Mapper>(getMapperToken('MAPPER'));
 		service = module.get<LandlordAuthService>(LandlordAuthService);
 	});
 

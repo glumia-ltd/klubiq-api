@@ -8,7 +8,6 @@ import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { Mapper, createMapper } from '@automapper/core';
 import { classes } from '@automapper/classes';
 import { AuthService } from '@app/auth';
-import { LandlordAuthService } from '@app/auth/services/landlord-auth.service';
 
 describe('UsersController', () => {
 	let controller: UsersController;
@@ -25,9 +24,8 @@ describe('UsersController', () => {
 				UsersRepository,
 				RolesRepository,
 				UserProfilesRepository,
-				LandlordAuthService,
 				{
-					provide: getMapperToken(),
+					provide: getMapperToken('MAPPER'),
 					useValue: createMapper({
 						strategyInitializer: classes(),
 					}),
@@ -38,7 +36,7 @@ describe('UsersController', () => {
 			.useValue('')
 			.compile();
 
-		mapper = module.get<Mapper>(getMapperToken());
+		mapper = module.get<Mapper>(getMapperToken('MAPPER'));
 		controller = module.get<UsersController>(UsersController);
 	});
 

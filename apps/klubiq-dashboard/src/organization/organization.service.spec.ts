@@ -71,7 +71,7 @@ describe('OrganizationService', () => {
 					useValue: createMockRepository(),
 				},
 				{
-					provide: getMapperToken(),
+					provide: getMapperToken('MAPPER'),
 					useValue: createMapper({
 						strategyInitializer: classes(),
 					}),
@@ -79,7 +79,7 @@ describe('OrganizationService', () => {
 			],
 		}).compile();
 
-		mapper = module.get<Mapper>(getMapperToken());
+		mapper = module.get<Mapper>(getMapperToken('MAPPER'));
 		organizationRepository = module.get<MockRepository>(OrganizationRepository);
 		service = module.get<OrganizationService>(OrganizationService);
 		createMap(mapper, Organization, OrganizationResponseDto);

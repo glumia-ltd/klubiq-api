@@ -64,7 +64,7 @@ describe('PropertiesService', () => {
 					useValue: createMockRepository(),
 				},
 				{
-					provide: getMapperToken(),
+					provide: getMapperToken('MAPPER'),
 					useValue: createMapper({
 						strategyInitializer: classes(),
 					}),
@@ -84,7 +84,7 @@ describe('PropertiesService', () => {
 			],
 		}).compile();
 
-		mapper = module.get<Mapper>(getMapperToken());
+		mapper = module.get<Mapper>(getMapperToken('MAPPER'));
 		// propertyRepository = module.get<MockRepository>(PropertyRepository);
 		service = module.get<PropertiesService>(PropertiesService);
 		cls = module.get<ClsService>(ClsService);
