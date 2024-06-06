@@ -21,7 +21,7 @@ import { PaymentFrequency } from '../../config/config.constants';
 @Entity({ schema: 'poo' })
 export class Lease {
 	@AutoMap()
-	@PrimaryGeneratedColumn('identity')
+	@PrimaryGeneratedColumn()
 	id?: number;
 
 	@AutoMap()

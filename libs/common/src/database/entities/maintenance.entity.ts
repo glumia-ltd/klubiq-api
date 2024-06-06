@@ -19,7 +19,7 @@ import {
 @Entity({ schema: 'poo' })
 export class Maintenance {
 	@AutoMap()
-	@PrimaryGeneratedColumn('identity')
+	@PrimaryGeneratedColumn()
 	id?: number;
 
 	@AutoMap()

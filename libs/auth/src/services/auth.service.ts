@@ -265,11 +265,7 @@ export abstract class AuthService {
 		return userData;
 	}
 
-	abstract getActionCodeSettings(
-		baseUrl: string,
-		continueUrl: string,
-		queries: string[],
-	): any;
+	abstract getActionCodeSettings(baseUrl: string, continueUrl: string): any;
 
 	abstract generatePasswordResetEmail(email: string): void;
 
