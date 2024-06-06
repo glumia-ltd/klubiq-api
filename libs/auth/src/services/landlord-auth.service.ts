@@ -118,14 +118,14 @@ export class LandlordAuthService extends AuthService {
 			if (!user) {
 				throw new NotFoundException('User not found');
 			}
-			const resetPasswordLink = await this.auth.generatePasswordResetLink(
+			let resetPasswordLink = await this.auth.generatePasswordResetLink(
 				email,
 				this.getActionCodeSettings(
 					this.emailVerificationBaseUrl,
 					this.emailAuthContinueUrl,
-					[`email=${email}`],
 				),
 			);
+			resetPasswordLink += `&email=${email}`;
 			const actionUrl = replace(resetPasswordLink, '_auth_', 'reset-password');
 			const emailTemplate = EmailTemplates['password-reset'];
 			await this.emailService.sendTransactionalEmail(
@@ -163,7 +163,6 @@ export class LandlordAuthService extends AuthService {
 					this.getActionCodeSettings(
 						this.emailVerificationBaseUrl,
 						this.emailAuthContinueUrl,
-						[`email=${email}`],
 					),
 				);
 			const actionUrl = replace(verificationLink, '_auth_', 'verify-email');
@@ -293,14 +292,9 @@ export class LandlordAuthService extends AuthService {
 		});
 	}
 
-	override getActionCodeSettings(
-		baseUrl: string,
-		continueUrl: string,
-		queries: string[],
-	) {
-		const queryString = queries.join('&');
+	override getActionCodeSettings(baseUrl: string, continueUrl: string) {
 		return {
-			url: `${baseUrl}${continueUrl}?${queryString}`,
+			url: `${baseUrl}${continueUrl}`,
 		};
 	}
 }
