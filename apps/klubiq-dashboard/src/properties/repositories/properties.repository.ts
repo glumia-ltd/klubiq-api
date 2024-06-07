@@ -64,11 +64,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 								id: createData.purposeId,
 							}
 						: null,
-					status: createData.statusId
-						? {
-								id: createData.statusId,
-							}
-						: null,
 					type: createData.typeId
 						? {
 								id: createData.typeId,
@@ -93,7 +88,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 						createdProperty,
 						createData.address,
 					);
-					console.log('Units created: ', propertyUnits);
 				}
 			});
 			return { ...createdProperty, units: [...propertyUnits] } as Property;
@@ -133,7 +127,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 				owner: property.owner,
 				isDraft: property.isDraft,
 				parentProperty: property,
-				status: property.status,
 				address: { ...address, unit: unit.name },
 			} as Property;
 		});

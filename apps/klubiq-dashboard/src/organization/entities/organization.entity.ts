@@ -12,6 +12,7 @@ import {
 import { OrganizationUser } from '../../users/entities/organization-user.entity';
 import { AutoMap } from '@automapper/classes';
 import { Property } from '../../properties/entities/property.entity';
+import { Transaction } from '@app/common/database/entities/transaction.entity';
 
 @Entity({ schema: 'poo' })
 export class Organization {
@@ -116,6 +117,11 @@ export class Organization {
 	@Column({ default: false })
 	isMaintenanceRequestNotificationEnabled?: boolean;
 
+	@AutoMap(() => [Property])
 	@OneToMany(() => Property, (property) => property.category)
 	properties?: Property[];
+
+	@AutoMap(() => [Transaction])
+	@OneToMany(() => Transaction, (transaction) => transaction.organization)
+	transactions?: Transaction[];
 }
