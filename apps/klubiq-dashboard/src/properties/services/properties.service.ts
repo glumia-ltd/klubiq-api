@@ -21,9 +21,11 @@ import { Cache } from 'cache-manager';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { PageMetaDto } from '@app/common/dto/pagination/page-meta.dto';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
+import { IPropertyMetrics } from './interfaces/property-metrics.service.interface';
+import { PropertyMetrics } from '@app/common/dto/responses/property-metrics.dto';
 
 @Injectable()
-export class PropertiesService {
+export class PropertiesService implements IPropertyMetrics {
 	private readonly logger = new Logger(PropertiesService.name);
 	private readonly cacheKeyPrefix = 'properties';
 	private readonly cacheTTL = 60000;
@@ -34,7 +36,89 @@ export class PropertiesService {
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
-
+	async getTotalUnits(organizationUuid: string): Promise<number> {
+		try {
+			const totalUnits =
+				await this.propertyRepository.getTotalUnits(organizationUuid);
+			console.log('Total units', totalUnits);
+			return totalUnits;
+		} catch (error) {
+			this.logger.error('Error getting total properties', error);
+		}
+	}
+	async getTotalVacantUnits(organizationUuid: string): Promise<number> {
+		try {
+			const vacantProperties =
+				await this.propertyRepository.getTotalVacantUnits(organizationUuid);
+			return vacantProperties;
+		} catch (error) {
+			this.logger.error('Error getting total vacant properties', error);
+		}
+	}
+	async getTotalOccupiedUnits(organizationUuid: string): Promise<number> {
+		try {
+			const vacantProperties =
+				await this.propertyRepository.getTotalOccupiedUnits(organizationUuid);
+			return vacantProperties;
+		} catch (error) {
+			this.logger.error('Error getting total occupied properties', error);
+		}
+	}
+	async getTotalMaintenanceUnits(organizationUuid: string): Promise<number> {
+		try {
+			const vacantProperties =
+				await this.propertyRepository.getTotalUnitsInMaintenance(
+					organizationUuid,
+				);
+			return vacantProperties;
+		} catch (error) {
+			this.logger.error('Error getting total maintenance properties', error);
+		}
+	}
+	async getPropertyMetricsByOrganization(
+		organizationUuid: string,
+	): Promise<PropertyMetrics> {
+		try {
+			const vacantUnits = await this.getTotalVacantUnits(organizationUuid);
+			const occupiedUnits = await this.getTotalOccupiedUnits(organizationUuid);
+			const totalUnits = await this.getTotalUnits(organizationUuid);
+			const maintenanceUnits =
+				await this.getTotalMaintenanceUnits(organizationUuid);
+			const occupancyRate = await this.getOccupancyRate(
+				occupiedUnits,
+				totalUnits,
+			);
+			const propertyCountData =
+				await this.propertyRepository.getPropertyCountDataInOrganization(
+					organizationUuid,
+				);
+			const propertyMetrics: PropertyMetrics = {
+				vacantUnits,
+				occupiedUnits,
+				totalUnits,
+				maintenanceUnits,
+				occupancyRate,
+				totalProperties: propertyCountData.totalProperties,
+				multiUnits: propertyCountData.multiUnits,
+				singleUnits: propertyCountData.singleUnits,
+			};
+			return propertyMetrics;
+		} catch (err) {
+			this.logger.error(err, `Error getting property metrics by organization`);
+			throw err;
+		}
+	}
+	private async getOccupancyRate(
+		occupiedUnits: number,
+		totalUnits: number,
+	): Promise<number> {
+		try {
+			const occupancyRate = (occupiedUnits * 100) / totalUnits;
+			return occupancyRate;
+		} catch (error) {
+			this.logger.error('Error getting occupancy rate', error);
+		}
+	}
 	/**
 	 * Retrieves a property by its UUID from the current organization.
 	 *
