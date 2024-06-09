@@ -156,6 +156,9 @@ export class Property {
 	@TreeChildren({ cascade: true })
 	units?: Property[];
 
+	@Column({ default: 1 })
+	unitCount: number;
+
 	@AutoMap(() => [Amenity])
 	@ManyToMany(() => Amenity, (amenity) => amenity.properties, {
 		cascade: ['insert'],

@@ -1,6 +1,9 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import {
+	IsArray,
 	IsEmail,
+	IsNumber,
+	IsOptional,
 	IsPhoneNumber,
 	IsString,
 	IsStrongPassword,
@@ -122,11 +125,57 @@ export class RefreshTokenExchangeDto {
 	refreshToken: string;
 }
 
-export class ResetPasswordDto {
-	@ApiProperty({
-		description: 'user email',
-	})
+/* The ResetPasswordLinkDto class in TypeScript defines a data transfer object with an email property
+that is annotated with validation decorators for string and email format. */
+export class ResetPasswordLinkDto {
+	@ApiProperty()
 	@IsString()
 	@IsEmail()
 	email: string;
+}
+
+export class ResetPasswordDto extends ResetPasswordLinkDto {
+	@ApiProperty()
+	@IsString()
+	@IsEmail()
+	email: string;
+
+	@ApiProperty()
+	@IsString()
+	oobCode: string;
+
+	newPassword: PasswordDto;
+}
+
+export class PasswordDto {
+	@ApiProperty()
+	@IsString()
+	@IsStrongPassword({
+		minLength: 6,
+		minUppercase: 1,
+		minNumbers: 1,
+		minSymbols: 1,
+	})
+	password: string;
+}
+
+export class UpdatePasswordDto extends ResetPasswordDto {
+	oldPassword: PasswordDto;
+}
+
+export class InviteUserDto extends PartialType(SendVerifyEmailDto) {
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsNumber()
+	orgRoleId?: number;
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	organizationName?: string;
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsArray()
+	propertyIds?: string[];
 }

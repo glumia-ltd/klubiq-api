@@ -1,14 +1,21 @@
 import { Module } from '@nestjs/common';
 import { RepositoriesModule } from '@app/common/repositories/repositories.module';
-import { DatabaseModule } from '@app/common/database/database.module';
-import { ConfigModule } from '@app/common/config/config.module';
-import { AuthModule } from '@app/auth/auth.module';
 import { DashboardController } from './controllers/dashboard.controller';
 import { DashboardService } from './services/dashboard.service';
+import { PROPERTY_METRICS } from '../properties/services/interfaces/property-metrics.service.interface';
+import { PropertiesService } from '../properties/services/properties.service';
+import { PropertyRepository } from '../properties/repositories/properties.repository';
 
 @Module({
-	imports: [DatabaseModule, RepositoriesModule, ConfigModule, AuthModule],
+	imports: [RepositoriesModule],
 	controllers: [DashboardController],
-	providers: [DashboardService],
+	providers: [
+		DashboardService,
+		{
+			provide: PROPERTY_METRICS,
+			useClass: PropertiesService,
+		},
+		PropertyRepository,
+	],
 })
 export class DashboardModule {}

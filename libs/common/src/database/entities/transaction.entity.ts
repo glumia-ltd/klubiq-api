@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { Lease } from './lease.entity';
 import { TransactionType } from '../../config/config.constants';
+import { Organization } from '../../../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
 
 @Entity({ schema: 'poo' })
 export class Transaction {
@@ -46,4 +47,13 @@ export class Transaction {
 	@ManyToOne(() => Lease, (lease) => lease.transactions)
 	@JoinColumn({ name: 'leaseId', referencedColumnName: 'id' })
 	lease?: Lease;
+
+	@AutoMap(() => Organization)
+	@Index()
+	@ManyToOne(() => Organization, (organization) => organization.transactions)
+	@JoinColumn({
+		name: 'organizationUuid',
+		referencedColumnName: 'organizationUuid',
+	})
+	organization?: Organization;
 }

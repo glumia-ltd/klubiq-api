@@ -186,3 +186,117 @@ export const resetPasswordEmailTemplate = (): EmailTemplate => ({
     `,
 	subject: 'Reset your Klubiq password',
 });
+
+export const inviteOrgUserTemplate = (): EmailTemplate => ({
+	text: ` 
+      🔑 Unlock Your Klubiq Access – Dive Into Property Management Fun!
+            
+            Exciting news! Your manager at {{ organization_name }} has invited you 
+            to join thier team on the Klubiq. Get ready to streamline your tasks and manage properties with ease. 
+
+            Setting up your account is a breeze and will only take a few seconds. 
+            Click the link below to embark on your Klubiq journey.
+
+            {{ action_link }}
+
+            Don't miss out! This invitation expires after {{ expires_after }}. 
+            We can’t wait for you to join us and start exploring all the fantastic features KlubIQ has to offer.
+
+            If you have any questions or need assistance, our friendly support team is here to help. 
+            Reach out to us at {{ support_email }}.
+
+            Thank you for being a part of Klubiq!
+
+            Best regards,
+            The Klubiq Team
+    `,
+	html: `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+          <meta http-equiv="ScreenOrientation" content="autoRotate:disabled">
+          <meta name="theme-color" content="#002147" />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+          <link href="https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400..600&display=swap" rel="stylesheet"/>
+          <title>🔑 Unlock Your Klubiq Access </title>
+          <style>
+            .container {
+              width: 90%;
+              margin: 0 auto;
+            }
+            p,
+            button {
+              font-size: 16px;
+              font-style: normal;
+              font-weight: 400;
+              line-height: 150%;
+            }
+          </style>
+        </head>
+        <body style="padding-inline: 3em; color: #002147;">
+          <div class="container" style="padding: 30px 40px; border-radius: 8px;">
+            <div style="display: flex; justify-content: center; align-items: center; width: fit-content; gap: 8px; margin-block: 50px; margin-bottom: 24px;">
+              <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be52a3b-a911-46f1-8a4f-c19fa4f9c73b.png" width="35" height="35" alt="klubiq logo" />
+              <div style="color:#002147; margin-left: 8px; font-size: 24px;">Klubiq</div>
+            </div>
+            <p>Dear <strong>{{ username }},</strong></p>
+            <p>
+              Exciting news! Your manager at {{ organization_name }} has invited you 
+              to join thier team on the Klubiq. Get ready to streamline your tasks and manage properties with ease.
+            </p>
+            <p>
+              Setting up your account is a breeze and will only take a few seconds. 
+              Click the button below to embark on your Klubiq journey.
+
+            </p>
+            <div style="margin-top: 20px; margin-bottom: 20px;">
+            <a
+              href="{{action_link}}"
+              style="
+                text-decoration: none;
+                color: #FFFFFF;
+              "
+            >
+              <button
+                style="
+                  background-color: #002147;
+                  color: #FFFFFF;
+                  border-radius: 4px;
+                  padding: 8px 32px;
+                  font-weight: 500;
+                  font-size: 16px;
+                  outline: none;
+                  border: none;
+                  cursor: pointer;
+                "
+              >
+                Accept Invitation ✉️
+              </button>
+            </a>
+            </div>
+
+            <div style="margin-bottom: 30px;">
+              <p>
+                Don't miss out! This invitation expires after {{ expires_after }}. 
+                We can’t wait for you to join us and start exploring all the fantastic features KlubIQ has to offer.
+              </p>
+              <p>Thank you for being a part of Klubiq!</p>
+              <p>Best regards,</p>
+              <p>The Klubiq Team.</p>
+            </div>
+
+            <div style="padding-top: 20px; border-top: 1px solid #eaeaea;"></div>
+            <div style="padding-bottom: 20px;"> 
+                <p><strong>If you have any questions or need assistance, our friendly support team is here to help at {{support_email}}</strong></p>
+            </div>
+            
+          </div>
+        </body>
+      </html>
+    `,
+	subject: '🔑 Unlock Your Klubiq Access – Dive Into Property Management Fun!',
+});

@@ -9,11 +9,14 @@ import {
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Auth, Roles } from './decorators/auth.decorator';
 import {
+	InviteUserDto,
 	OrgUserSignUpDto,
 	RefreshTokenExchangeDto,
 	ResetPasswordDto,
+	ResetPasswordLinkDto,
 	SendVerifyEmailDto,
-	UpdateFirebaseUserDto,
+	// UpdateFirebaseUserDto,
+	// UpdatePasswordDto,
 	VerifyEmailDto,
 } from './dto/user-login.dto';
 import { SignUpResponseDto, TokenResponseDto } from './dto/auth-response.dto';
@@ -67,10 +70,10 @@ export class AuthController {
 	@Post('reset-password')
 	@ApiOkResponse()
 	async resetPassword(
-		@Body() resetPasswordDto: UpdateFirebaseUserDto,
+		@Body() resetPasswordDto: ResetPasswordDto,
 	): Promise<any> {
 		try {
-			return this.authService.updatePassword(resetPasswordDto);
+			return this.authService.resetPassword(resetPasswordDto);
 		} catch (err) {
 			console.error('Error updating password:', err);
 			throw err;
@@ -83,8 +86,20 @@ export class AuthController {
 		type: SignUpResponseDto,
 	})
 	async createUser(@Body() createUser: OrgUserSignUpDto) {
-		const userData = await this.authService.createOrgUser(createUser);
+		const userData = await this.authService.createOrgOwner(createUser);
 		return userData;
+	}
+
+	@Auth(AuthType.Bearer)
+	@Roles(UserRoles.ORG_OWNER)
+	@HttpCode(HttpStatus.OK)
+	@Post('landlord/invite')
+	@ApiOkResponse({
+		description: 'invites a new Org user',
+	})
+	async inviteUser(@Body() invitedUser: InviteUserDto) {
+		const result = await this.authService.inviteUser(invitedUser);
+		return result;
 	}
 
 	@HttpCode(HttpStatus.OK)
@@ -106,7 +121,7 @@ export class AuthController {
 	@ApiOkResponse({
 		description: 'Send email password reset link to user',
 	})
-	async sendPasswordResetLinkEmail(@Body() request: ResetPasswordDto) {
+	async sendPasswordResetLinkEmail(@Body() request: ResetPasswordLinkDto) {
 		await this.authService.generatePasswordResetEmail(request.email);
 	}
 

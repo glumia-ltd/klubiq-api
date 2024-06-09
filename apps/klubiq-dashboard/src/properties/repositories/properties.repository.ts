@@ -16,10 +16,13 @@ import {
 	UnitType,
 } from '../dto/requests/get-property.dto';
 import { indexOf } from 'lodash';
+import { DateTime } from 'luxon';
+import { PropertyCountData } from '../dto/responses/property-count.dto';
 
 @Injectable()
 export class PropertyRepository extends BaseRepository<Property> {
 	protected readonly logger = new Logger(PropertyRepository.name);
+	private readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	private readonly nonFilterColumns = [
 		'skip',
 		'take',
@@ -53,6 +56,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 					area: createData.area ?? null,
 					address: createData.address,
 					images: createData.images ?? null,
+					unitCount: createData.isMultiUnit ? 0 : 1,
 					organization: {
 						organizationUuid: createData.orgUuid,
 					},
@@ -62,11 +66,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 					purpose: createData.purposeId
 						? {
 								id: createData.purposeId,
-							}
-						: null,
-					status: createData.statusId
-						? {
-								id: createData.statusId,
 							}
 						: null,
 					type: createData.typeId
@@ -93,7 +92,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 						createdProperty,
 						createData.address,
 					);
-					console.log('Units created: ', propertyUnits);
 				}
 			});
 			return { ...createdProperty, units: [...propertyUnits] } as Property;
@@ -129,11 +127,11 @@ export class PropertyRepository extends BaseRepository<Property> {
 		const units = unitsToCreate.map((unit) => {
 			return {
 				...unit,
+				unitCount: 1,
 				organization: property.organization,
 				owner: property.owner,
 				isDraft: property.isDraft,
 				parentProperty: property,
-				status: property.status,
 				address: { ...address, unit: unit.name },
 			} as Property;
 		});
@@ -219,7 +217,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 		propertyUuid: string,
 	) {
 		try {
-			console.time('get property');
 			const propertyData = await this.createQueryBuilder('property')
 				.leftJoinAndSelect('property.purpose', 'pp')
 				.leftJoinAndSelect('property.status', 'ps')
@@ -248,7 +245,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 					}),
 				)
 				.getOne();
-			console.timeEnd('get property');
 			return propertyData;
 		} catch (err) {
 			this.logger.error(err, `Error getting a property for Org: ${orgUuid}`);
@@ -401,5 +397,126 @@ export class PropertyRepository extends BaseRepository<Property> {
 			this.logger.error(err, `Error updating a property from Org: ${orgUuid}`);
 			throw err;
 		}
+	}
+
+	async getTotalUnits(orgUuid: string): Promise<number> {
+		try {
+			const queryBuilder = this.createQueryBuilder('property');
+			await this.getOrganizationUnitsConditions(orgUuid, queryBuilder);
+			const result = await queryBuilder.getCount();
+			return result;
+		} catch (err) {
+			this.logger.error(err, `Error getting total units in Org`);
+			throw err;
+		}
+	}
+
+	async getTotalVacantUnits(orgUuid: string): Promise<number> {
+		try {
+			const queryBuilder = this.createQueryBuilder('property');
+			queryBuilder.leftJoin('property.leases', 'pl');
+			await this.getOrganizationUnitsConditions(orgUuid, queryBuilder);
+			const count = await queryBuilder
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('pl.propertyUuId IS NULL').orWhere(
+							'pl.endDate <= :timestamp',
+							{ timestamp: this.timestamp },
+						);
+					}),
+				)
+				.getCount();
+			return count;
+		} catch (err) {
+			this.logger.error(err, `Error getting total vacant units in Org`);
+			throw err;
+		}
+	}
+
+	async getTotalOccupiedUnits(organizationUuid: string): Promise<number> {
+		try {
+			const queryBuilder = this.createQueryBuilder('property');
+			queryBuilder.innerJoin('property.leases', 'pl');
+			await this.getOrganizationUnitsConditions(organizationUuid, queryBuilder);
+			const count = await queryBuilder
+				.andWhere('pl.endDate > :timestamp', { timestamp: this.timestamp })
+				.getCount();
+			return count;
+		} catch (err) {
+			this.logger.error(err, `Error getting total occupied units in Org`);
+			throw err;
+		}
+	}
+	async getTotalUnitsInMaintenance(organizationUuid: string): Promise<number> {
+		try {
+			const queryBuilder = this.createQueryBuilder('property');
+			queryBuilder.innerJoin('property.maintenances', 'pm');
+			await this.getOrganizationUnitsConditions(organizationUuid, queryBuilder);
+			const count = await queryBuilder
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('pm.startDate <= :timestamp', {
+							timestamp: this.timestamp,
+						}).andWhere('pm.endDate >= :timestamp', {
+							timestamp: this.timestamp,
+						});
+					}),
+				)
+				.getCount();
+			return count;
+		} catch (err) {
+			this.logger.error(err, `Error getting total units in maintenance in Org`);
+			throw err;
+		}
+	}
+
+	async getPropertyCountDataInOrganization(
+		organizationUuid: string,
+	): Promise<PropertyCountData> {
+		try {
+			const propertyCountData = new PropertyCountData();
+			const queryBuilder = this.createQueryBuilder('property').where(
+				'property.organizationUuid = :organizationUuid',
+				{ organizationUuid: organizationUuid },
+			);
+			propertyCountData.totalProperties = await queryBuilder
+				.where('property.isArchived = false')
+				.andWhere('property.deletedDate IS NULL')
+				.andWhere('property.parentPropertyUuid IS NULL')
+				.getCount();
+			propertyCountData.multiUnits = await queryBuilder
+				.where('property.isArchived = false')
+				.andWhere('property.deletedDate IS NULL')
+				.andWhere('property.isMultiUnit = true')
+				.getCount();
+			propertyCountData.archivedProperties = await queryBuilder
+				.where('property.isArchived = true')
+				.getCount();
+			propertyCountData.archivedProperties = await queryBuilder
+				.where('property.isDraft = true')
+				.getCount();
+			propertyCountData.singleUnits =
+				propertyCountData.totalProperties - propertyCountData.multiUnits;
+			return propertyCountData;
+		} catch (err) {
+			this.logger.error(
+				err,
+				`Error getting property count data in organization`,
+			);
+			throw err;
+		}
+	}
+
+	private async getOrganizationUnitsConditions(
+		organizationUuid: string,
+		queryBuilder: SelectQueryBuilder<Property>,
+	) {
+		queryBuilder
+			.where('property.organizationUuid = :organizationUuid', {
+				organizationUuid,
+			})
+			.andWhere('property.isArchived = false')
+			.andWhere('property.deletedDate IS NULL')
+			.andWhere('property.isMultiUnit = false');
 	}
 }

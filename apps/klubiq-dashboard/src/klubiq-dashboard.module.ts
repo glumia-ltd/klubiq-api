@@ -26,15 +26,15 @@ import { DashboardModule } from './dashboard/dashboard.module';
 @Module({
 	imports: [
 		DatabaseModule,
-		UsersModule,
-		AuthModule,
-		OrganizationModule,
-		HealthModule,
-		PermissionsModule,
 		ConfigModule,
+		AuthModule,
+		DashboardModule,
+		HealthModule,
+		OrganizationModule,
+		PermissionsModule,
 		PropertiesModule,
 		PublicModule,
-		DashboardModule,
+		UsersModule,
 	],
 	providers: [
 		UsersService,

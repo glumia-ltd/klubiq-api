@@ -6,6 +6,10 @@ import {
 export enum EmailTypes {
 	EMAIL_VERIFICATION = 'email-verification',
 	PASSWORD_RESET = 'password-reset',
+	PASSWORD_CHANGE = 'password-change',
+	ORG_USER_INVITE = 'org-user-invite',
+	USER_INVITE_ACCEPT = 'user-invite-accept',
+	WELCOME = 'welcome',
 }
 export interface EmailInterfaceParams {
 	from?: string;
@@ -50,4 +54,8 @@ export interface EmailTemplate {
 export const EmailTemplates: Record<EmailTypes, EmailTemplate> = {
 	[EmailTypes.EMAIL_VERIFICATION]: verifyEmailTemplate(),
 	[EmailTypes.PASSWORD_RESET]: resetPasswordEmailTemplate(),
+	[EmailTypes.ORG_USER_INVITE]: resetPasswordEmailTemplate(),
+	[EmailTypes.WELCOME]: resetPasswordEmailTemplate(),
+	[EmailTypes.PASSWORD_CHANGE]: resetPasswordEmailTemplate(),
+	[EmailTypes.USER_INVITE_ACCEPT]: resetPasswordEmailTemplate(),
 };

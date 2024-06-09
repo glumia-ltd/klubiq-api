@@ -9,7 +9,11 @@ import { Inject } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import * as auth from 'firebase-admin/auth';
 import { FirebaseException } from '../exception/firebase.exception';
-import { UpdateFirebaseUserDto } from '../dto/user-login.dto';
+import {
+	InviteUserDto,
+	ResetPasswordDto,
+	//UpdateFirebaseUserDto,
+} from '../dto/user-login.dto';
 import {
 	AuthUserResponseDto,
 	TokenResponseDto,
@@ -27,7 +31,8 @@ import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
-
+import { createHmac } from 'crypto';
+import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
@@ -38,7 +43,7 @@ export abstract class AuthService {
 		protected readonly errorMessageHelper: FirebaseErrorMessageHelper,
 		protected readonly configService: ConfigService,
 		private readonly httpService: HttpService,
-		private readonly cls: ClsService<SharedClsStore>,
+		protected readonly cls: ClsService<SharedClsStore>,
 	) {}
 
 	get auth(): auth.Auth {
@@ -124,16 +129,32 @@ export abstract class AuthService {
 		}
 	}
 
-	async updatePassword(updateDto: UpdateFirebaseUserDto) {
+	async resetPassword(resetPassword: ResetPasswordDto) {
 		try {
-			const user = await this.auth.getUserByEmail(updateDto.email);
-			if (!user) {
-				throw new NotFoundException('User not found');
-			}
-			await this.auth.updateUser(user.uid, {
-				password: updateDto.password,
-			});
+			const body = {
+				oobCode: resetPassword.oobCode,
+				newPassword: resetPassword.newPassword,
+				email: resetPassword.email,
+			};
+			const { data } = await firstValueFrom(
+				this.httpService
+					.post(
+						`${this.configService.get('GOOGLE_IDENTITY_ENDPOINT')}:resetPassword?key=${this.configService.get('FIREBASE_API_KEY')}`,
+						body,
+					)
+					.pipe(
+						catchError((error: AxiosError) => {
+							this.logger.error(
+								'Error resetting password:',
+								error.response.data,
+							);
+							throw new FirebaseException('Error resetting password');
+						}),
+					),
+			);
+			return data;
 		} catch (err) {
+			console.error('Error resetting password:', err);
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
@@ -265,6 +286,35 @@ export abstract class AuthService {
 		return userData;
 	}
 
+	async createInvitedUser(invitedUserDto: InviteUserDto): Promise<any> {
+		try {
+			const userRecord = await this.auth.createUser({
+				email: invitedUserDto.email,
+				displayName: `${invitedUserDto.firstName} ${invitedUserDto.lastName}`,
+			});
+			return userRecord;
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			this.logger.error(
+				`Firebase Error creating user: ${invitedUserDto.email} - ${firebaseErrorMessage}`,
+			);
+			throw new FirebaseException(
+				firebaseErrorMessage ? firebaseErrorMessage : err.message,
+			);
+		}
+	}
+
+	async getInvitationToken(invitedUserDto: InviteUserDto): Promise<string> {
+		const secret = this.configService.get<string>('ADMIN_API_KEY');
+		const token = createHmac('sha256', secret)
+			.update(
+				`${invitedUserDto.email}|${invitedUserDto.firstName}||${invitedUserDto.lastName}`,
+			)
+			.digest('hex');
+		return token;
+	}
+
 	abstract getActionCodeSettings(baseUrl: string, continueUrl: string): any;
 
 	abstract generatePasswordResetEmail(email: string): void;
@@ -274,4 +324,11 @@ export abstract class AuthService {
 		firstName: string,
 		lastName: string,
 	): void;
+
+	abstract inviteUser(invitedUserDto: InviteUserDto): any;
+
+	abstract sendInvitationEmail(
+		invitedUserDto: InviteUserDto,
+		invitation: UserInvitation,
+	): any;
 }
