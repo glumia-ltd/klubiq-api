@@ -31,6 +31,7 @@ export class MailerSendService {
 		emailRecipient: EmailRecipient,
 		actionLink: string,
 		emailTemplate: EmailTemplate,
+		customData?: { [key: string]: any },
 	) {
 		const verifyEmailBody = emailTemplate;
 		const personalization = [
@@ -40,6 +41,7 @@ export class MailerSendService {
 					username: emailRecipient.firstName,
 					support_email: this.configService.get('SUPPORT_EMAIL'),
 					action_link: actionLink,
+					...customData,
 				},
 			},
 		];
