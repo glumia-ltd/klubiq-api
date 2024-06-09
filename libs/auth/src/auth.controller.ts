@@ -90,6 +90,8 @@ export class AuthController {
 		return userData;
 	}
 
+	@Auth(AuthType.Bearer)
+	@Roles(UserRoles.ORG_OWNER)
 	@HttpCode(HttpStatus.OK)
 	@Post('landlord/invite')
 	@ApiOkResponse({
