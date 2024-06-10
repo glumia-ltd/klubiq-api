@@ -52,3 +52,4 @@ export * from './dto/responses/responses.dto';
 export * from './dto/public/shared-clsstore';
 export * from './exceptions/custom-exception';
 export * from './dto/responses/property-metrics.dto';
+export * from './database/entities/user-invitation.entity';
