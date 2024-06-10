@@ -133,7 +133,7 @@ export abstract class AuthService {
 		try {
 			const body = {
 				oobCode: resetPassword.oobCode,
-				newPassword: resetPassword.newPassword,
+				newPassword: resetPassword.password,
 				email: resetPassword.email,
 			};
 			const { data } = await firstValueFrom(

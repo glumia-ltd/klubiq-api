@@ -1,4 +1,9 @@
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import {
+	ApiProperty,
+	ApiPropertyOptional,
+	IntersectionType,
+	PartialType,
+} from '@nestjs/swagger';
 import {
 	IsArray,
 	IsEmail,
@@ -133,20 +138,6 @@ export class ResetPasswordLinkDto {
 	@IsEmail()
 	email: string;
 }
-
-export class ResetPasswordDto extends ResetPasswordLinkDto {
-	@ApiProperty()
-	@IsString()
-	@IsEmail()
-	email: string;
-
-	@ApiProperty()
-	@IsString()
-	oobCode: string;
-
-	newPassword: PasswordDto;
-}
-
 export class PasswordDto {
 	@ApiProperty()
 	@IsString()
@@ -158,9 +149,30 @@ export class PasswordDto {
 	})
 	password: string;
 }
+export class ResetPasswordDto extends IntersectionType(
+	ResetPasswordLinkDto,
+	PasswordDto,
+) {
+	@ApiProperty()
+	@IsString()
+	@IsEmail()
+	email: string;
+
+	@ApiProperty()
+	@IsString()
+	oobCode: string;
+}
 
 export class UpdatePasswordDto extends ResetPasswordDto {
-	oldPassword: PasswordDto;
+	@ApiProperty()
+	@IsString()
+	@IsStrongPassword({
+		minLength: 6,
+		minUppercase: 1,
+		minNumbers: 1,
+		minSymbols: 1,
+	})
+	oldPassword: string;
 }
 
 export class InviteUserDto extends PartialType(SendVerifyEmailDto) {

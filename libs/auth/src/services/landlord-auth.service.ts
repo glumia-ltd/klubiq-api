@@ -215,12 +215,16 @@ export class LandlordAuthService extends AuthService {
 					'name',
 					UserRoles.LANDLORD,
 				)) ?? (await this.getSystemRole(transactionalEntityManager));
+			const orgRole = await transactionalEntityManager.findOneBy(
+				OrganizationRole,
+				{ id: invitedUserDto.orgRoleId },
+			);
 			const user = new OrganizationUser();
 			user.firstName = invitedUserDto.firstName;
 			user.lastName = invitedUserDto.lastName;
 			user.firebaseId = fireUser.uid;
 			user.organization = organization;
-			user.orgRole.id = invitedUserDto.orgRoleId;
+			user.orgRole = orgRole;
 
 			const userProfile = new UserProfile();
 			userProfile.email = invitedUserDto.email;
@@ -234,9 +238,9 @@ export class LandlordAuthService extends AuthService {
 			invitation.organization = organization;
 			invitation.firebaseUid = fireUser.uid;
 			invitation.systemRole = systemRole;
-			invitation.orgRole.id = invitedUserDto.orgRoleId;
+			invitation.orgRole = orgRole;
 			invitation.invitedAt = this.timestamp;
-			invitation.propertyIds = invitedUserDto.propertyIds;
+			invitation.propertyIds = invitedUserDto.propertyIds ?? null;
 
 			await transactionalEntityManager.save(user);
 			await transactionalEntityManager.save(userProfile);
@@ -396,7 +400,7 @@ export class LandlordAuthService extends AuthService {
 					this.emailAuthContinueUrl,
 				),
 			);
-			resetPasswordLink += `&email=${invitedUserDto.email}?type=user-invitation?invited_as=${invitation.orgRole.name}`;
+			resetPasswordLink += `&email=${invitedUserDto.email}&type=user-invitation&invited_as=${invitation.orgRole.name}`;
 			const actionUrl = replace(resetPasswordLink, '_auth_', 'reset-password');
 			const emailTemplate = EmailTemplates['org-user-invite'];
 			await this.emailService.sendTransactionalEmail(
@@ -434,8 +438,9 @@ export class LandlordAuthService extends AuthService {
 				);
 				await this.sendInvitationEmail(invitedUserDto, userInvitation);
 				fbid = null;
+			} else {
+				throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
 			}
-			throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
 		} catch (error) {
 			await this.deleteUser(fbid);
 			throw new FirebaseException(error);

@@ -1,4 +1,5 @@
 import {
+	inviteOrgUserTemplate,
 	resetPasswordEmailTemplate,
 	verifyEmailTemplate,
 } from '../templates/transaction-emails.template';
@@ -54,7 +55,7 @@ export interface EmailTemplate {
 export const EmailTemplates: Record<EmailTypes, EmailTemplate> = {
 	[EmailTypes.EMAIL_VERIFICATION]: verifyEmailTemplate(),
 	[EmailTypes.PASSWORD_RESET]: resetPasswordEmailTemplate(),
-	[EmailTypes.ORG_USER_INVITE]: resetPasswordEmailTemplate(),
+	[EmailTypes.ORG_USER_INVITE]: inviteOrgUserTemplate(),
 	[EmailTypes.WELCOME]: resetPasswordEmailTemplate(),
 	[EmailTypes.PASSWORD_CHANGE]: resetPasswordEmailTemplate(),
 	[EmailTypes.USER_INVITE_ACCEPT]: resetPasswordEmailTemplate(),
