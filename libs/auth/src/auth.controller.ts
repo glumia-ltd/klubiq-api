@@ -80,7 +80,7 @@ export class AuthController {
 		}
 	}
 
-	@Post('landlord-signup')
+	@Post('landlord/signup')
 	@ApiOkResponse({
 		description: 'Creates a new Org user and returns the data an auth token',
 		type: SignUpResponseDto,

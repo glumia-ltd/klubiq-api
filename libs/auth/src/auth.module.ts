@@ -66,13 +66,6 @@ const firebaseAdminProvider = {
 			provide: CacheService,
 			useFactory: () => new CacheService(null, 60 * 60 * 24),
 		},
-		// {
-		// 	provide: 'MAPPER',
-		// 	useFactory: () => {
-		// 		const mapper = createMapper({ strategyInitializer: classes() });
-		// 		return mapper;
-		// 	},
-		// },
 		LandlordAuthService,
 	],
 	exports: [LandlordAuthService],

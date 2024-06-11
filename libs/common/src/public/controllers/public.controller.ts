@@ -9,21 +9,22 @@ import {
 	Put,
 } from '@nestjs/common';
 import {
+	ApiBearerAuth,
 	ApiCreatedResponse,
 	ApiOkResponse,
-	ApiSecurity,
 	ApiTags,
 } from '@nestjs/swagger';
 import {
 	OrgRoleResponseDto,
 	ViewSystemRoleDto,
 } from '../../dto/responses/org-role.dto';
-import { Auth, AuthType } from '@app/auth';
+import { Auth, AuthType, Roles } from '@app/auth';
 import {
 	PropertiesCategoryService,
 	PropertiesPurposeService,
 	PropertiesStatusService,
 	PropertiesTypeService,
+	UserRoles,
 	ViewFeaturePermissionDto,
 } from '../..';
 
@@ -47,9 +48,10 @@ import {
 import { PropertiesAmenityService } from '@app/common/services/properties-amenity.service';
 
 @ApiTags('public')
-@ApiSecurity('ApiKey')
-@Auth(AuthType.ApiKey)
+@ApiBearerAuth()
+@Auth(AuthType.Bearer)
 @Controller('public')
+@Roles(UserRoles.LANDLORD)
 export class PublicController {
 	constructor(
 		private readonly propertyCategoryService: PropertiesCategoryService,
@@ -104,6 +106,7 @@ export class PublicController {
 		}
 	}
 
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Post('features')
 	@ApiCreatedResponse({ description: 'Creates a new feature for the app' })
 	async createFeature(
@@ -117,6 +120,7 @@ export class PublicController {
 		}
 	}
 
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Patch('features/:id')
 	@ApiOkResponse({
 		description: 'Updates a feature',
@@ -134,6 +138,7 @@ export class PublicController {
 		}
 	}
 
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('features/:id')
 	@ApiOkResponse({
 		description: 'Deletes a feature',
@@ -174,6 +179,7 @@ export class PublicController {
 		}
 	}
 
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Post('features-permissions')
 	@ApiCreatedResponse({
 		description: 'Creates a new feature-permission for the app',
@@ -192,6 +198,7 @@ export class PublicController {
 		}
 	}
 
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Patch('features-permissions/:id')
 	@ApiOkResponse({
 		description: 'Updates a feature permission',
@@ -213,6 +220,7 @@ export class PublicController {
 		}
 	}
 
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('features-permissions/:id')
 	@ApiOkResponse({
 		description: 'Deletes a feature permission',
@@ -249,6 +257,8 @@ export class PublicController {
 			throw error;
 		}
 	}
+
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Post('system-roles')
 	@ApiCreatedResponse({
 		description: 'Creates a new system role for the app',
@@ -265,6 +275,7 @@ export class PublicController {
 		}
 	}
 
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Patch('system-roles/:id')
 	@ApiOkResponse({
 		description: 'Updates a system role',
@@ -281,6 +292,8 @@ export class PublicController {
 			throw error;
 		}
 	}
+
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('system-roles/:id')
 	@ApiOkResponse({
 		description: 'Deletes a system role',
@@ -318,6 +331,7 @@ export class PublicController {
 		}
 	}
 
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Post('organization-roles')
 	@ApiCreatedResponse({
 		description: 'Creates a new organization role for the app',
@@ -332,6 +346,7 @@ export class PublicController {
 		}
 	}
 
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Put('organization-roles/:id')
 	@ApiOkResponse({
 		description: 'Updates an organization role',
@@ -349,6 +364,7 @@ export class PublicController {
 		}
 	}
 
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('organization-roles/:id')
 	@ApiOkResponse({
 		description: 'Deletes an organization role',
