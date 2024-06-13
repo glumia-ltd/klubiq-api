@@ -1,26 +1,61 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+	Injectable,
+	CanActivate,
+	ExecutionContext,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
-import { FeaturePermissions } from '@app/common';
-import { ActiveUserData } from '../types/firebase.types';
+import { Actions, AppFeature, ErrorMessages, UserRoles } from '@app/common';
+import { LandlordAuthService } from '../services/landlord-auth.service';
+import {
+	FEATURES_KEY,
+	ABILITY_KEY,
+	ROLES_KEY,
+} from '../decorators/auth.decorator';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-	constructor(private readonly reflector: Reflector) {}
+	constructor(
+		private reflector: Reflector,
+		private authService: LandlordAuthService,
+	) {}
 
-	canActivate(
-		context: ExecutionContext,
-	): boolean | Promise<boolean> | Observable<boolean> {
-		const requiredPermissions = this.reflector.getAllAndOverride<
-			FeaturePermissions[]
-		>('permissions', [context.getHandler(), context.getClass()]);
+	async canActivate(context: ExecutionContext): Promise<boolean> {
+		const feature = this.reflector.get<AppFeature>(
+			FEATURES_KEY,
+			context.getClass(),
+		);
+		const requiredPermissions = this.reflector.get<Actions[]>(
+			ABILITY_KEY,
+			context.getHandler(),
+		);
+		const overridePermissionRoles = this.reflector.get<UserRoles[]>(
+			ROLES_KEY,
+			context.getHandler(),
+		);
+
 		if (!requiredPermissions) {
+			return true; // No permissions required, allow access
+		}
+
+		const request = context.switchToHttp().getRequest();
+		const token = request.headers.authorization?.split(' ')[1];
+		if (!token) {
+			throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED); // No token provided, deny access
+		}
+		const roleAndEntitlements =
+			await this.authService.getUserRolesFromToken(token);
+		if (
+			!!overridePermissionRoles &&
+			overridePermissionRoles.some((role) =>
+				roleAndEntitlements.roles.includes(role),
+			)
+		) {
 			return true;
 		}
-		const request = context.switchToHttp().getRequest();
-		const user: ActiveUserData = request.user;
-		return requiredPermissions.every((permission) =>
-			user.permissions?.includes(permission),
+		const hasRequiredPermission = requiredPermissions.some((permission) =>
+			roleAndEntitlements.entitlements.includes(`${feature}:${permission}`),
 		);
+		return hasRequiredPermission;
 	}
 }

@@ -1,3 +1,5 @@
+import { UserRoles } from '@app/common/config/config.constants';
+
 export interface FirebaseUser {
 	name: string;
 	picture: string;
@@ -40,5 +42,9 @@ export interface ActiveUserData {
 	organizationRole?: string;
 	organizationId?: string;
 	uid?: string;
-	permissions: string[];
+	entitlements: string[];
+}
+export interface RolesAndEntitlements {
+	roles: UserRoles[];
+	entitlements: string[];
 }

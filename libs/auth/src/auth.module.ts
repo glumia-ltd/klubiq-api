@@ -46,11 +46,16 @@ const firebase_params = {
 const firebaseAdminProvider = {
 	provide: 'FIREBASE_ADMIN',
 	useFactory: () => {
-		if (!apps.length) {
-			return admin.initializeApp({
-				credential: admin.credential.cert(firebase_params),
-			});
+		if (apps.length > 0) {
+			console.log(
+				'Firebase Admin already initialized. APP: ',
+				apps[0].appCheck,
+			);
+			return apps[0];
 		}
+		return admin.initializeApp({
+			credential: admin.credential.cert(firebase_params),
+		});
 	},
 };
 

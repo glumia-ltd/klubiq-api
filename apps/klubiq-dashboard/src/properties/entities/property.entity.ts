@@ -62,7 +62,7 @@ export class Property {
 
 	@AutoMap()
 	@Column({ default: false })
-	isMultiUnit: boolean;
+	isMultiUnit?: boolean;
 
 	@AutoMap()
 	@Column({ type: 'decimal', nullable: true })
@@ -105,7 +105,7 @@ export class Property {
 		name: 'categoryId',
 		referencedColumnName: 'id',
 	})
-	category: PropertyCategory;
+	category?: PropertyCategory;
 
 	@AutoMap(() => PropertyType)
 	@ManyToOne(() => PropertyType, { eager: true })
@@ -113,7 +113,7 @@ export class Property {
 		name: 'typeId',
 		referencedColumnName: 'id',
 	})
-	type: PropertyType;
+	type?: PropertyType;
 
 	@AutoMap(() => PropertyPurpose)
 	@ManyToOne(() => PropertyPurpose, { eager: true })
@@ -147,7 +147,7 @@ export class Property {
 		name: 'organizationUuid',
 		referencedColumnName: 'organizationUuid',
 	})
-	organization: Organization;
+	organization?: Organization;
 
 	@TreeParent()
 	parentProperty?: Property;
@@ -157,7 +157,7 @@ export class Property {
 	units?: Property[];
 
 	@Column({ default: 1 })
-	unitCount: number;
+	unitCount?: number;
 
 	@AutoMap(() => [Amenity])
 	@ManyToMany(() => Amenity, (amenity) => amenity.properties, {
@@ -178,7 +178,7 @@ export class Property {
 
 	@AutoMap()
 	@Column({ default: false })
-	isDraft: boolean;
+	isDraft?: boolean;
 
 	@AutoMap(() => [PropertyImage])
 	@OneToMany(() => PropertyImage, (image) => image.property, {
@@ -200,7 +200,7 @@ export class Property {
 
 	@AutoMap()
 	@Column({ default: false })
-	isListingPublished: boolean;
+	isListingPublished?: boolean;
 
 	@AutoMap(() => [Lease])
 	@OneToMany(() => Lease, (lease) => lease.property)

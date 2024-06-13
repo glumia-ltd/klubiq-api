@@ -13,11 +13,16 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
-import { UserRoles } from '@app/common';
+import { Actions, AppFeature, UserRoles } from '@app/common';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { PropertyDto } from '../dto/responses/property-response.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
-import { Auth, Roles } from '@app/auth/decorators/auth.decorator';
+import {
+	Auth,
+	Feature,
+	Roles,
+	Ability,
+} from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
 
@@ -26,10 +31,11 @@ import { GetPropertyDto } from '../dto/requests/get-property.dto';
 @Auth(AuthType.Bearer)
 @Roles(UserRoles.LANDLORD)
 @Controller('properties')
+@Feature(AppFeature.PROPERTY)
 export class PropertiesController {
 	constructor(private readonly propertyService: PropertiesService) {}
 
-	@Roles(UserRoles.ORG_OWNER)
+	@Ability(Actions.WRITE)
 	@Post()
 	@ApiOkResponse({
 		description: 'Creates a new property',
@@ -44,7 +50,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Roles(UserRoles.ORG_OWNER)
+	@Ability(Actions.WRITE)
 	@Post('draft')
 	@ApiOkResponse({
 		description: 'Creates a draft property',
@@ -59,7 +65,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@Ability(Actions.WRITE)
 	@HttpCode(HttpStatus.OK)
 	@Post(':propertyUuid/draft')
 	@ApiOkResponse({
@@ -73,11 +79,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Roles(
-		UserRoles.ORG_OWNER,
-		UserRoles.PROPERTY_OWNER,
-		UserRoles.PROPERTY_MANAGER,
-	)
+	@Ability(Actions.WRITE, Actions.VIEW)
 	@Get()
 	@ApiOkResponse({
 		description: 'Returns all properties under an organization',
@@ -92,11 +94,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Roles(
-		UserRoles.ORG_OWNER,
-		UserRoles.PROPERTY_OWNER,
-		UserRoles.PROPERTY_MANAGER,
-	)
+	@Ability(Actions.WRITE, Actions.VIEW)
 	@Get(':propertyUuid')
 	@ApiOkResponse({
 		description: "Returns a property by it's property uuid",
@@ -113,11 +111,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Roles(
-		UserRoles.ORG_OWNER,
-		UserRoles.PROPERTY_OWNER,
-		UserRoles.PROPERTY_MANAGER,
-	)
+	@Ability(Actions.WRITE)
 	@HttpCode(HttpStatus.OK)
 	@Put(':propertyUuid')
 	@ApiOkResponse({
@@ -139,7 +133,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@Ability(Actions.WRITE)
 	@HttpCode(HttpStatus.OK)
 	@Delete(':propertyUuid')
 	@ApiOkResponse({
@@ -155,7 +149,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@Ability(Actions.WRITE)
 	@HttpCode(HttpStatus.OK)
 	@Put(':propertyUuid/archive')
 	@ApiOkResponse({
@@ -169,7 +163,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Roles(UserRoles.ORG_OWNER, UserRoles.PROPERTY_OWNER)
+	@Ability(Actions.WRITE)
 	@HttpCode(HttpStatus.OK)
 	@Post(':propertyUuid/units')
 	@ApiOkResponse({

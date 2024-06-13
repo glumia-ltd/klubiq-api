@@ -197,13 +197,13 @@ export class PropertyMetadataController {
 
 	@Get('property-statuses')
 	@ApiOkResponse({
-		description: 'Returns all  available property Statuss',
+		description: 'Returns all  available property Status',
 		type: [PropertyMetadataDto],
 	})
-	async getAllPropertyStatuss(): Promise<PropertyMetadataDto[]> {
-		const propertyStatuss =
+	async getAllPropertyStatus(): Promise<PropertyMetadataDto[]> {
+		const propertyStatus =
 			await this.propertyStatusService.getAllPropertyStatus();
-		return propertyStatuss;
+		return propertyStatus;
 	}
 
 	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)

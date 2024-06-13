@@ -22,6 +22,7 @@ import { UsersRepository } from './users/users.repository';
 import { APP_GUARD } from '@nestjs/core';
 import { PropertiesModule } from './properties/properties.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { PermissionsGuard } from '@app/auth/guards/permissions.guard';
 
 @Module({
 	imports: [
@@ -50,6 +51,10 @@ import { DashboardModule } from './dashboard/dashboard.module';
 		{
 			provide: APP_GUARD,
 			useClass: RolesGuard,
+		},
+		{
+			provide: APP_GUARD,
+			useClass: PermissionsGuard,
 		},
 	],
 	exports: [UsersModule],

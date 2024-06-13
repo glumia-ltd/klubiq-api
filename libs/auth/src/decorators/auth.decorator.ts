@@ -1,11 +1,17 @@
 import { SetMetadata } from '@nestjs/common';
-import { UserRoles, FeaturePermissions } from '@app/common';
+import { UserRoles, AppFeature, Actions } from '@app/common';
 import { AuthType } from '../types/firebase.types';
 
-export const Permissions = (...permissions: FeaturePermissions[]) =>
-	SetMetadata('permissions', permissions);
+export const FEATURES_KEY = 'features';
+export const Feature = (feature: AppFeature) =>
+	SetMetadata(FEATURES_KEY, feature);
 
-export const Roles = (...roles: UserRoles[]) => SetMetadata('roles', roles);
+export const ABILITY_KEY = 'abilities';
+export const Ability = (...abilities: Actions[]) =>
+	SetMetadata(ABILITY_KEY, abilities);
+
+export const ROLES_KEY = 'roles';
+export const Roles = (...roles: UserRoles[]) => SetMetadata(ROLES_KEY, roles);
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);

@@ -93,9 +93,9 @@ describe('AuthService', () => {
 
 			// Act
 			jest
-				.spyOn(service, 'createOrgUser')
+				.spyOn(service, 'createOrgOwner')
 				.mockImplementation(async () => result);
-			const token = await service.createOrgUser(mockCreateUserPayload);
+			const token = await service.createOrgOwner(mockCreateUserPayload);
 
 			// Assert
 			expect(token).toBe(result);

@@ -18,8 +18,11 @@ import {
 	// UpdateFirebaseUserDto,
 	// UpdatePasswordDto,
 	VerifyEmailDto,
-} from './dto/user-login.dto';
-import { SignUpResponseDto, TokenResponseDto } from './dto/auth-response.dto';
+} from './dto/requests/user-login.dto';
+import {
+	SignUpResponseDto,
+	TokenResponseDto,
+} from './dto/responses/auth-response.dto';
 import { AuthType } from './types/firebase.types';
 import { UserRoles } from '@app/common';
 import { LandlordAuthService } from './services/landlord-auth.service';

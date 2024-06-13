@@ -26,19 +26,23 @@ export const ORG_ROLES: UserRoles[] = [
 	UserRoles.LEASE_MANAGER,
 	UserRoles.CUSTOM,
 ];
-export enum FeaturePermissions {
-	VIEW_PROPERTY = 'view_property_access',
-	MANAGE_PROPERTY = 'all_property_access',
-	VIEW_REPORT = 'view_report_access',
-	MANAGE_REPORT = 'all_report_access',
-	VIEW_LEASE = 'view_lease_access',
-	MANAGE_LEASE = 'all_lease_access',
-	VIEW_TENANT = 'view_tenant_access',
-	MANAGE_TENANT = 'all_tenant_access',
-	VIEW_USER = 'view_user_access',
-	MANAGE_USER = 'all_user_access',
-	VIEW_SETTING = 'view_setting_access',
-	MANAGE_SETTING = 'all_setting_access',
+
+export enum Actions {
+	VIEW = 'View',
+	WRITE = 'Write',
+}
+
+export enum AppFeature {
+	PROPERTY = 'Property',
+	REPORT = 'Report',
+	LEASE = 'Lease',
+	TENANT = 'Tenant',
+	USER = 'User',
+	SETTING = 'Setting',
+	MAINTENANCE = 'Maintenance',
+	MESSAGING = 'Messaging',
+	PUBLIC = 'Public',
+	DASHBOARD = 'Dashboard',
 }
 
 //Enums to identify if it's a sign-up event or invite user event
@@ -94,4 +98,10 @@ export enum MaintenanceType {
 	SERVICE = 'Service',
 	INSPECTION = 'Inspection',
 	OTHER = 'Other',
+}
+
+export enum ADMIN_DOMAINS {
+	'klubiq.com',
+	'glumia.ng',
+	'glumia.com',
 }
