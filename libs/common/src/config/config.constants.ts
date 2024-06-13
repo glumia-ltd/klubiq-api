@@ -101,7 +101,7 @@ export enum MaintenanceType {
 }
 
 export enum ADMIN_DOMAINS {
-	'klubiq.com',
-	'glumia.ng',
-	'glumia.com',
+	KLUBIQ_COM = 'klubiq.com',
+	GLUMIA_NG = 'glumia.ng',
+	GLUMIA_COM = 'glumia.com',
 }

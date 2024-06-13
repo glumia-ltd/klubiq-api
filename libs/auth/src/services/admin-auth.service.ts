@@ -70,9 +70,9 @@ export class AdminAuthService extends AuthService {
 
 	async createDomainSuperAdmin(dto: CreateSuperAdminDTO): Promise<any> {
 		const displayName = dto.username;
-		const fbid = '';
+		let fbid = '';
 		try {
-			const user = await this.adminAuth.createUser({
+			const user = await this.auth.createUser({
 				email: `${dto.username}@${dto.domain}`,
 				password: dto.password,
 				displayName: displayName,
@@ -81,8 +81,12 @@ export class AdminAuthService extends AuthService {
 			if (!user) {
 				throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
 			}
-			return this.createAdminUser(user, UserRoles.SUPER_ADMIN);
+			fbid = user.uid;
+			const adminUser = this.createAdminUser(user, UserRoles.SUPER_ADMIN);
+			fbid = null;
+			return adminUser;
 		} catch (error) {
+			console.log('CREATE USER ERROR: ', error);
 			await this.deleteUser(fbid);
 			throw new FirebaseException(error);
 		}
@@ -98,7 +102,7 @@ export class AdminAuthService extends AuthService {
 				(await this.cacheService.getCacheByIdentifier<ViewSystemRoleDto>(
 					CacheKeys.SYSTEM_ROLES,
 					'name',
-					UserRoles.LANDLORD,
+					role,
 				)) ??
 				(await transactionalEntityManager.findOne(Role, {
 					where: { name: role },

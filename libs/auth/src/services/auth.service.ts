@@ -55,13 +55,13 @@ export abstract class AuthService {
 	get auth(): auth.Auth {
 		return this.firebaseAdminApp.auth();
 	}
-	get adminAuth(): auth.TenantAwareAuth {
-		const tAuth = this.firebaseAdminApp
-			.auth()
-			.tenantManager()
-			.authForTenant(this.adminIdentityTenantId);
-		return tAuth;
-	}
+	// get adminAuth(): auth.TenantAwareAuth {
+	// 	const tAuth = this.firebaseAdminApp
+	// 		.auth()
+	// 		.tenantManager()
+	// 		.authForTenant(this.adminIdentityTenantId);
+	// 	return tAuth;
+	// }
 
 	async setCustomClaims(uuid: string, claims: any) {
 		try {
@@ -74,6 +74,18 @@ export abstract class AuthService {
 			);
 		}
 	}
+
+	// async setAdminClaims(uuid: string, claims: any) {
+	// 	try {
+	// 		await this.adminAuth.setCustomUserClaims(uuid, claims);
+	// 	} catch (err) {
+	// 		const firebaseErrorMessage =
+	// 			this.errorMessageHelper.parseFirebaseError(err);
+	// 		throw new FirebaseException(
+	// 			firebaseErrorMessage ? firebaseErrorMessage : err.message,
+	// 		);
+	// 	}
+	// }
 	async createUser(newUser: {
 		email: string;
 		password: string;
@@ -165,6 +177,45 @@ export abstract class AuthService {
 						}),
 					),
 			);
+			return data;
+		} catch (err) {
+			console.error('Error resetting password:', err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(
+				firebaseErrorMessage ? firebaseErrorMessage : err.message,
+			);
+		}
+	}
+
+	async acceptInvitation(resetPassword: ResetPasswordDto) {
+		try {
+			const body = {
+				oobCode: resetPassword.oobCode,
+				password: resetPassword.password,
+				email: resetPassword.email,
+				emailVerified: true,
+			};
+			const { data } = await firstValueFrom(
+				this.httpService
+					.post(
+						`${this.configService.get('GOOGLE_IDENTITY_ENDPOINT')}:update?key=${this.configService.get('FIREBASE_API_KEY')}`,
+						body,
+					)
+					.pipe(
+						catchError((error: AxiosError) => {
+							this.logger.error(
+								'Error resetting password:',
+								error.response.data,
+							);
+							throw new FirebaseException('Error resetting password');
+						}),
+					),
+			);
+			if (!data.localId || data['localId'] === undefined) {
+				throw new FirebaseException('User not found');
+			}
+			this.userProfilesRepository.acceptInvitation(data.localId);
 			return data;
 		} catch (err) {
 			console.error('Error resetting password:', err);

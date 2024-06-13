@@ -14,6 +14,7 @@ import { CacheService } from '@app/common/services/cache.service';
 import { LandlordAuthService } from './services/landlord-auth.service';
 
 import _firebaseConfig from '../../../config.json';
+import { AdminAuthService } from './services/admin-auth.service';
 const apps = admin.apps;
 
 interface FirebaseConfig {
@@ -47,10 +48,7 @@ const firebaseAdminProvider = {
 	provide: 'FIREBASE_ADMIN',
 	useFactory: () => {
 		if (apps.length > 0) {
-			console.log(
-				'Firebase Admin already initialized. APP: ',
-				apps[0].appCheck,
-			);
+			console.log('Firebase Admin already initialized. APP: ', apps[0].name);
 			return apps[0];
 		}
 		return admin.initializeApp({
@@ -72,6 +70,7 @@ const firebaseAdminProvider = {
 			useFactory: () => new CacheService(null, 60 * 60 * 24),
 		},
 		LandlordAuthService,
+		AdminAuthService,
 	],
 	exports: [LandlordAuthService],
 	imports: [DatabaseModule, ConfigModule, RepositoriesModule, HttpModule],

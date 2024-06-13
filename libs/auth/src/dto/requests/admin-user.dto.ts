@@ -5,10 +5,10 @@ import { IsEnum, IsString, IsStrongPassword } from 'class-validator';
 export class CreateSuperAdminDTO {
 	@ApiPropertyOptional({
 		enum: ADMIN_DOMAINS,
-		default: ADMIN_DOMAINS['glumia.ng'],
+		default: ADMIN_DOMAINS.GLUMIA_NG,
 	})
 	@IsEnum(ADMIN_DOMAINS)
-	readonly domain?: ADMIN_DOMAINS = ADMIN_DOMAINS['glumia.com'];
+	readonly domain?: ADMIN_DOMAINS = ADMIN_DOMAINS.GLUMIA_NG;
 
 	@IsString()
 	@IsStrongPassword({
