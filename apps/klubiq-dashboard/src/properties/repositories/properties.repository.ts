@@ -141,6 +141,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 	async getOrganizationProperties(
 		orgUuid: string,
 		userId: string,
+		isOrgOwner: boolean,
 		getPropertyDto?: GetPropertyDto,
 	): Promise<[Property[], number]> {
 		try {
@@ -158,18 +159,18 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.where('property.organizationUuid = :organizationUuid', {
 					organizationUuid: orgUuid,
 				})
-				.andWhere(
-					new Brackets((qb) => {
-						qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
-							.orWhere('property.managerUid = :managerUid', {
-								managerUid: userId,
-							})
-							.orWhere(
-								'property.ownerUid IS NULL AND property.managerUid IS NULL',
-							);
-					}),
-				)
 				.andWhere('property.parentProperty IS NULL');
+			if (!isOrgOwner) {
+				queryBuilder.andWhere(
+					new Brackets((qb) => {
+						qb.where('property.ownerUid = :ownerUid', {
+							ownerUid: userId,
+						}).orWhere('property.managerUid = :managerUid', {
+							managerUid: userId,
+						});
+					}),
+				);
+			}
 			await this.getPropertiesFilterQueryString(getPropertyDto, queryBuilder);
 			queryBuilder
 				.orderBy(`property.${getPropertyDto.sortBy}`, getPropertyDto.order)
@@ -214,10 +215,11 @@ export class PropertyRepository extends BaseRepository<Property> {
 	async getAPropertyInAnOrganization(
 		orgUuid: string,
 		userId: string,
+		isOrgOwner: boolean,
 		propertyUuid: string,
 	) {
 		try {
-			const propertyData = await this.createQueryBuilder('property')
+			const propertyData = this.createQueryBuilder('property')
 				.leftJoinAndSelect('property.purpose', 'pp')
 				.leftJoinAndSelect('property.status', 'ps')
 				.leftJoinAndSelect('property.type', 'pt')
@@ -232,20 +234,19 @@ export class PropertyRepository extends BaseRepository<Property> {
 				})
 				.andWhere('property.organizationUuid = :organizationUuid', {
 					organizationUuid: orgUuid,
-				})
-				.andWhere(
+				});
+			if (!isOrgOwner) {
+				propertyData.andWhere(
 					new Brackets((qb) => {
-						qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
-							.orWhere('property.managerUid = :managerUid', {
-								managerUid: userId,
-							})
-							.orWhere(
-								'property.ownerUid IS NULL AND property.managerUid IS NULL',
-							);
+						qb.where('property.ownerUid = :ownerUid', {
+							ownerUid: userId,
+						}).orWhere('property.managerUid = :managerUid', {
+							managerUid: userId,
+						});
 					}),
-				)
-				.getOne();
-			return propertyData;
+				);
+			}
+			return await propertyData.getOne();
 		} catch (err) {
 			this.logger.error(err, `Error getting a property for Org: ${orgUuid}`);
 			throw err;
@@ -343,6 +344,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 		orgUuid: string,
 		userId: string,
 		data: UpdatePropertyDto,
+		isOrgOwner: boolean,
 	) {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
@@ -366,6 +368,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 			return await this.getAPropertyInAnOrganization(
 				orgUuid,
 				userId,
+				isOrgOwner,
 				propertyUuid,
 			);
 		} catch (err) {

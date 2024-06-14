@@ -23,6 +23,7 @@ import { PageMetaDto } from '@app/common/dto/pagination/page-meta.dto';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
 import { IPropertyMetrics } from './interfaces/property-metrics.service.interface';
 import { PropertyMetrics } from '@app/common/dto/responses/property-metrics.dto';
+import { UserRoles } from '@app/common';
 
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
@@ -139,6 +140,7 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.propertyRepository.getAPropertyInAnOrganization(
 					currentUser.organizationId,
 					currentUser.uid,
+					currentUser.organizationRole === UserRoles.ORG_OWNER,
 					uuid,
 				);
 			await this.cacheManager.set(cacheKey, property, this.cacheTTL);
@@ -170,6 +172,7 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.organizationId,
 				currentUser.uid,
 				updateData,
+				currentUser.organizationRole === UserRoles.ORG_OWNER,
 			);
 			return this.mapper.map(property, Property, PropertyDto);
 		} catch (error) {
@@ -269,6 +272,7 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.propertyRepository.getOrganizationProperties(
 					currentUser.organizationId,
 					currentUser.uid,
+					currentUser.organizationRole === UserRoles.ORG_OWNER,
 					getPropertyDto,
 				);
 			const pageMetaDto = new PageMetaDto({
