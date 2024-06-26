@@ -64,6 +64,7 @@ export enum CacheKeys {
 	PROPERTY_STATUSES = 'property-status',
 	PROPERTY_PURPOSES = 'property-purposes',
 	PROPERTY_AMENITIES = 'property-amenities',
+	PROPERTY_METRICS = 'property-metrics',
 }
 
 export enum TransactionType {

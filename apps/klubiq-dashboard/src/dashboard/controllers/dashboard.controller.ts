@@ -6,7 +6,6 @@ import {
 	AppFeature,
 	UserRoles,
 } from '@app/common/config/config.constants';
-import { DashboardMetrics } from '../dto/responses/dashboard-metrics.dto';
 import {
 	Ability,
 	Auth,
@@ -14,6 +13,7 @@ import {
 	Roles,
 } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
+import { PropertyMetrics } from '@app/common/dto/responses/property-metrics.dto';
 
 @ApiBearerAuth()
 @ApiTags('dashboard')
@@ -25,11 +25,11 @@ export class DashboardController {
 
 	@Roles(UserRoles.ORG_OWNER, UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Ability(Actions.WRITE, Actions.VIEW)
-	@Get('metrics')
-	@ApiOkResponse({ type: DashboardMetrics })
-	async metrics(): Promise<DashboardMetrics> {
+	@Get('property-metrics')
+	@ApiOkResponse()
+	async metrics(): Promise<PropertyMetrics> {
 		try {
-			const data = await this.dashboardService.getMetrics();
+			const data = await this.dashboardService.getPropertyMetrics();
 			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);

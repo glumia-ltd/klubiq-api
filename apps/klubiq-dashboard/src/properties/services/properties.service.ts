@@ -21,7 +21,7 @@ import { Cache } from 'cache-manager';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { PageMetaDto } from '@app/common/dto/pagination/page-meta.dto';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
-import { IPropertyMetrics } from './interfaces/property-metrics.service.interface';
+import { IPropertyMetrics } from '../interfaces/property-metrics.service.interface';
 import { PropertyMetrics } from '@app/common/dto/responses/property-metrics.dto';
 import { UserRoles } from '@app/common';
 
@@ -37,6 +37,16 @@ export class PropertiesService implements IPropertyMetrics {
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
+	async getTotalOverdueRents(organizationUuid: string): Promise<number> {
+		try {
+			const totalOverdueRents =
+				await this.propertyRepository.getTotalOverdueRents(organizationUuid);
+			console.log('Total overdue rents', totalOverdueRents);
+			return totalOverdueRents;
+		} catch (error) {
+			this.logger.error('Error getting total overdue rents', error);
+		}
+	}
 	async getTotalUnits(organizationUuid: string): Promise<number> {
 		try {
 			const totalUnits =
@@ -56,20 +66,30 @@ export class PropertiesService implements IPropertyMetrics {
 			this.logger.error('Error getting total vacant properties', error);
 		}
 	}
-	async getTotalOccupiedUnits(organizationUuid: string): Promise<number> {
+	async getTotalOccupiedUnits(
+		organizationUuid: string,
+		days?: number,
+	): Promise<number> {
 		try {
 			const vacantProperties =
-				await this.propertyRepository.getTotalOccupiedUnits(organizationUuid);
+				await this.propertyRepository.getTotalOccupiedUnits(
+					organizationUuid,
+					days,
+				);
 			return vacantProperties;
 		} catch (error) {
 			this.logger.error('Error getting total occupied properties', error);
 		}
 	}
-	async getTotalMaintenanceUnits(organizationUuid: string): Promise<number> {
+	async getTotalMaintenanceUnits(
+		organizationUuid: string,
+		days?: number,
+	): Promise<number> {
 		try {
 			const vacantProperties =
 				await this.propertyRepository.getTotalUnitsInMaintenance(
 					organizationUuid,
+					days,
 				);
 			return vacantProperties;
 		} catch (error) {
@@ -78,21 +98,37 @@ export class PropertiesService implements IPropertyMetrics {
 	}
 	async getPropertyMetricsByOrganization(
 		organizationUuid: string,
+		daysAgo?: number,
 	): Promise<PropertyMetrics> {
 		try {
 			const vacantUnits = await this.getTotalVacantUnits(organizationUuid);
 			const occupiedUnits = await this.getTotalOccupiedUnits(organizationUuid);
+			const occupiedUnitsDaysAgo = await this.getTotalOccupiedUnits(
+				organizationUuid,
+				daysAgo,
+			);
 			const totalUnits = await this.getTotalUnits(organizationUuid);
 			const maintenanceUnits =
 				await this.getTotalMaintenanceUnits(organizationUuid);
+
+			const maintenanceUnitsDaysAgo = await this.getTotalMaintenanceUnits(
+				organizationUuid,
+				daysAgo,
+			);
+
 			const occupancyRate = await this.getOccupancyRate(
 				occupiedUnits,
+				totalUnits,
+			);
+			const occupancyRateDaysAgo = await this.getOccupancyRate(
+				occupiedUnitsDaysAgo,
 				totalUnits,
 			);
 			const propertyCountData =
 				await this.propertyRepository.getPropertyCountDataInOrganization(
 					organizationUuid,
 				);
+			const rentOverdue = await this.getTotalOverdueRents(organizationUuid);
 			const propertyMetrics: PropertyMetrics = {
 				vacantUnits,
 				occupiedUnits,
@@ -102,6 +138,9 @@ export class PropertiesService implements IPropertyMetrics {
 				totalProperties: propertyCountData.totalProperties,
 				multiUnits: propertyCountData.multiUnits,
 				singleUnits: propertyCountData.singleUnits,
+				occupancyRateLastMonth: occupancyRateDaysAgo,
+				maintenanceUnitsLastMonth: maintenanceUnitsDaysAgo,
+				rentOverdue: rentOverdue,
 			};
 			return propertyMetrics;
 		} catch (err) {
@@ -239,7 +278,7 @@ export class PropertiesService implements IPropertyMetrics {
 				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
 			createDto.isMultiUnit = createDto.units?.length > 0;
 			createDto.orgUuid = currentUser.organizationId;
-			createDto.ownerUid = currentUser.uid;
+			//createDto.ownerUid = currentUser.uid;
 			const createdProperty =
 				await this.propertyRepository.createProperty(createDto);
 			return this.mapper.map(createdProperty, Property, PropertyDto);

@@ -7,13 +7,13 @@ import {
 	Put,
 	Body,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { UsersService } from '../services/users.service';
 
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { OrganizationUser } from './entities/organization-user.entity';
+import { OrganizationUser } from '../entities/organization-user.entity';
 import { Actions, AppFeature, UserRoles } from '@app/common';
 import { AuthType, Auth, Roles, Feature, Ability } from '@app/auth';
-import { UpdateUserDto } from './dto/update-organization-user.dto';
+import { UpdateUserDto } from '../dto/update-organization-user.dto';
 
 @ApiTags('users')
 @Controller('users')

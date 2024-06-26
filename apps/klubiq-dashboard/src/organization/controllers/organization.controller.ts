@@ -11,10 +11,10 @@ import {
 	Put,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { OrganizationService } from './organization.service';
-import { CreateOrganizationDto } from './dto/create-organization.dto';
-import { UpdateOrganizationDto } from './dto/update-organization.dto';
-import { OrganizationResponseDto } from './dto/organization-response.dto';
+import { OrganizationService } from '../services/organization.service';
+import { CreateOrganizationDto } from '../dto/create-organization.dto';
+import { UpdateOrganizationDto } from '../dto/update-organization.dto';
+import { OrganizationResponseDto } from '../dto/organization-response.dto';
 import {
 	UserRoles,
 	PageDto,

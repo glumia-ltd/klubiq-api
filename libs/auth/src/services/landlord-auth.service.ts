@@ -19,7 +19,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SignUpResponseDto } from '../dto/responses/auth-response.dto';
 import { EntityManager } from 'typeorm';
-import { OrganizationRepository } from '../../../../apps/klubiq-dashboard/src/organization/organization.repository';
+import { OrganizationRepository } from '../../../../apps/klubiq-dashboard/src/organization/repositories/organization.repository';
 import { OrganizationRole } from '@app/common/database/entities/organization-role.entity';
 import { Role } from '@app/common/database/entities/role.entity';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';

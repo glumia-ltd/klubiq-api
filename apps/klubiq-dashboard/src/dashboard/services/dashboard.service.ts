@@ -5,8 +5,7 @@ import { ClsService } from 'nestjs-cls';
 import {
 	IPropertyMetrics,
 	PROPERTY_METRICS,
-} from '../../properties/services/interfaces/property-metrics.service.interface';
-import { DashboardMetrics } from '../dto/responses/dashboard-metrics.dto';
+} from '../../properties/interfaces/property-metrics.service.interface';
 import { PropertyMetrics } from '@app/common/dto/responses/property-metrics.dto';
 
 @Injectable()
@@ -17,15 +16,16 @@ export class DashboardService {
 		@Inject(PROPERTY_METRICS)
 		private readonly propertyMetrics: IPropertyMetrics,
 	) {}
-	async getMetrics(): Promise<DashboardMetrics> {
+	async getPropertyMetrics(): Promise<PropertyMetrics> {
 		this.logger.log('getMetrics');
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		const propertyMetrics: PropertyMetrics =
 			await this.propertyMetrics.getPropertyMetricsByOrganization(
 				currentUser.organizationId,
+				30,
 			);
-		const metrics = { propertyMetrics } as DashboardMetrics;
-		return metrics;
+
+		return propertyMetrics;
 	}
 }

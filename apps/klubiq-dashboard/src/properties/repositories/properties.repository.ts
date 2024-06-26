@@ -23,6 +23,8 @@ import { PropertyCountData } from '../dto/responses/property-count.dto';
 export class PropertyRepository extends BaseRepository<Property> {
 	protected readonly logger = new Logger(PropertyRepository.name);
 	private readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
+	private daysAgo = (days: number) =>
+		DateTime.utc().minus({ days }).toSQL({ includeOffset: false });
 	private readonly nonFilterColumns = [
 		'skip',
 		'take',
@@ -60,9 +62,16 @@ export class PropertyRepository extends BaseRepository<Property> {
 					organization: {
 						organizationUuid: createData.orgUuid,
 					},
-					owner: {
-						firebaseId: createData.ownerUid,
-					},
+					owner: createData.ownerUid
+						? {
+								firebaseId: createData.ownerUid,
+							}
+						: null,
+					manager: createData.managerUid
+						? {
+								firebaseId: createData.managerUid,
+							}
+						: null,
 					purpose: createData.purposeId
 						? {
 								id: createData.purposeId,
@@ -414,7 +423,10 @@ export class PropertyRepository extends BaseRepository<Property> {
 		}
 	}
 
-	async getTotalVacantUnits(orgUuid: string): Promise<number> {
+	async getTotalVacantUnits(
+		orgUuid: string,
+		pastDays: number = 0,
+	): Promise<number> {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
 			queryBuilder.leftJoin('property.leases', 'pl');
@@ -424,7 +436,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 					new Brackets((qb) => {
 						qb.where('pl.propertyUuId IS NULL').orWhere(
 							'pl.endDate <= :timestamp',
-							{ timestamp: this.timestamp },
+							{ timestamp: this.daysAgo(pastDays) },
 						);
 					}),
 				)
@@ -436,13 +448,24 @@ export class PropertyRepository extends BaseRepository<Property> {
 		}
 	}
 
-	async getTotalOccupiedUnits(organizationUuid: string): Promise<number> {
+	async getTotalOccupiedUnits(
+		organizationUuid: string,
+		pastDays: number = 0,
+	): Promise<number> {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
 			queryBuilder.innerJoin('property.leases', 'pl');
 			await this.getOrganizationUnitsConditions(organizationUuid, queryBuilder);
 			const count = await queryBuilder
-				.andWhere('pl.endDate > :timestamp', { timestamp: this.timestamp })
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('pl.startDate <= :timestamp', {
+							timestamp: this.daysAgo(pastDays),
+						}).andWhere('pl.endDate >= :timestamp', {
+							timestamp: this.daysAgo(pastDays),
+						});
+					}),
+				)
 				.getCount();
 			return count;
 		} catch (err) {
@@ -450,7 +473,10 @@ export class PropertyRepository extends BaseRepository<Property> {
 			throw err;
 		}
 	}
-	async getTotalUnitsInMaintenance(organizationUuid: string): Promise<number> {
+	async getTotalUnitsInMaintenance(
+		organizationUuid: string,
+		pastDays: number = 0,
+	): Promise<number> {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
 			queryBuilder.innerJoin('property.maintenances', 'pm');
@@ -459,9 +485,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.andWhere(
 					new Brackets((qb) => {
 						qb.where('pm.startDate <= :timestamp', {
-							timestamp: this.timestamp,
+							timestamp: this.daysAgo(pastDays),
 						}).andWhere('pm.endDate >= :timestamp', {
-							timestamp: this.timestamp,
+							timestamp: this.daysAgo(pastDays),
 						});
 					}),
 				)
@@ -506,6 +532,31 @@ export class PropertyRepository extends BaseRepository<Property> {
 				err,
 				`Error getting property count data in organization`,
 			);
+			throw err;
+		}
+	}
+	async getTotalOverdueRents(organizationUuid: string): Promise<number> {
+		try {
+			const queryBuilder = this.createQueryBuilder('property').where(
+				'property.organizationUuid = :organizationUuid',
+				{ organizationUuid: organizationUuid },
+			);
+			console.log('getting total overdue rents');
+			const result = await queryBuilder
+				.select('property.unitCount')
+				.addSelect('SUM(pl.rentAmount)', 'totalOverdueRents')
+				.innerJoin('property.leases', 'pl')
+				.leftJoin('pl.transactions', 't', 't.transactionDate <= :timestamp', {
+					timestamp: this.timestamp,
+				})
+				.where('pl.rentDueDate < :timestamp', { timestamp: this.timestamp })
+				.andWhere('t.uuid IS NULL')
+				.groupBy('property.unitCount')
+				.getRawMany();
+			console.log('getting total overdue rents result: ', result);
+			return 0;
+		} catch (err) {
+			this.logger.error(err, `Error getting total overdue rents in Org`);
 			throw err;
 		}
 	}

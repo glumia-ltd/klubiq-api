@@ -10,7 +10,7 @@ import { InviteUserDto } from '../dto/requests/user-login.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 //import { SignUpResponseDto } from '../dto/responses/auth-response.dto';
-import { OrganizationRepository } from '../../../../apps/klubiq-dashboard/src/organization/organization.repository';
+import { OrganizationRepository } from '../../../../apps/klubiq-dashboard/src/organization/repositories/organization.repository';
 // import {
 // 	CreateUserEventTypes,
 // } from '@app/common/config/config.constants';

@@ -4,7 +4,7 @@ import { DatabaseModule, ConfigModule } from '@app/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
 import { RepositoriesModule } from '@app/common';
-import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/organization.repository';
+import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/repositories/organization.repository';
 import { OrgUserProfile } from './profiles/org-user-profile';
 import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
 import { JwtService } from '@nestjs/jwt';

@@ -50,8 +50,12 @@ export class Lease {
 	endDate?: Date;
 
 	@AutoMap()
-	@Column({ type: 'date', nullable: true })
-	rentDueDate?: Date;
+	@Column({ type: 'int', nullable: true })
+	rentDueDay: number;
+
+	@AutoMap()
+	@Column({ type: 'int', nullable: true })
+	rentDueMonth?: number;
 
 	@AutoMap()
 	@Column({ type: 'money' })

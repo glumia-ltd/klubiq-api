@@ -144,6 +144,7 @@ export class PublicController {
 	@Delete('features/:id')
 	@ApiOkResponse({
 		description: 'Deletes a feature',
+		type: Boolean,
 	})
 	async deleteFeature(@Param('id') id: number) {
 		try {
