@@ -65,6 +65,7 @@ export enum CacheKeys {
 	PROPERTY_PURPOSES = 'property-purposes',
 	PROPERTY_AMENITIES = 'property-amenities',
 	PROPERTY_METRICS = 'property-metrics',
+	TRANSACTION_METRICS = 'transaction-metrics',
 }
 
 export enum TransactionType {
@@ -84,6 +85,16 @@ export enum MaintenanceStatus {
 	NEW = 'New',
 	IN_PROGRESS = 'In Progress',
 	COMPLETED = 'Completed',
+	ON_HOLD = 'On Hold',
+}
+
+export enum LeaseStatus {
+	NEW = 'New',
+	SIGNED = 'Signed',
+	ACTIVE = 'Active',
+	IN_ACTIVE = 'In Active',
+	CANCELLED = 'Cancelled',
+	EXPIRED = 'Expired',
 	ON_HOLD = 'On Hold',
 }
 

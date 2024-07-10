@@ -172,7 +172,7 @@ export class PropertiesService implements IPropertyMetrics {
 		try {
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			const cacheKey = `${currentUser.uid}.${uuid}`;
+			const cacheKey = `${currentUser.uid}/${this.cacheKeyPrefix}.${uuid}`;
 			const cachedProperty = await this.cacheManager.get<PropertyDto>(cacheKey);
 			if (cachedProperty) return cachedProperty;
 			const property =
@@ -303,7 +303,7 @@ export class PropertiesService implements IPropertyMetrics {
 		try {
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			const cacheKey = `${currentUser.uid}/${this.cls.get('requestUrl')}`;
+			const cacheKey = `${this.cacheKeyPrefix}/${currentUser.organizationId}${this.cls.get('requestUrl')}`;
 			const cachedProperties =
 				await this.cacheManager.get<PageDto<PropertyDto>>(cacheKey);
 			if (cachedProperties) return cachedProperties;
