@@ -57,4 +57,5 @@ export class PropertyUnitDto extends MapperPickType(Property, [
 	'id',
 	'name',
 	'area',
+	'uuid',
 ]) {}

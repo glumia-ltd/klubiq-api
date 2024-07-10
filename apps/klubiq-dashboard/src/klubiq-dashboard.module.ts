@@ -17,11 +17,13 @@ import {
 } from '@app/auth';
 import { UsersModule } from './users/users.module';
 import { OrganizationModule } from './organization/organization.module';
-import { UsersService } from './users/users.service';
-import { UsersRepository } from './users/users.repository';
+import { UsersService } from './users/services/users.service';
+import { UsersRepository } from './users/repositories/users.repository';
 import { APP_GUARD } from '@nestjs/core';
 import { PropertiesModule } from './properties/properties.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { PermissionsGuard } from '@app/auth/guards/permissions.guard';
+import { LeaseModule } from './lease/lease.module';
 
 @Module({
 	imports: [
@@ -35,6 +37,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 		PropertiesModule,
 		PublicModule,
 		UsersModule,
+		LeaseModule,
 	],
 	providers: [
 		UsersService,
@@ -50,6 +53,10 @@ import { DashboardModule } from './dashboard/dashboard.module';
 		{
 			provide: APP_GUARD,
 			useClass: RolesGuard,
+		},
+		{
+			provide: APP_GUARD,
+			useClass: PermissionsGuard,
 		},
 	],
 	exports: [UsersModule],

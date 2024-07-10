@@ -3,16 +3,16 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { UsersRepository } from './users.repository';
+import { UsersRepository } from '../repositories/users.repository';
 import {
 	UserProfilesRepository,
 	RolesRepository,
 	UserProfile,
 } from '@app/common';
-import { OrganizationUser } from './entities/organization-user.entity';
-import { UpdateUserDto } from './dto/update-organization-user.dto';
+import { OrganizationUser } from '../entities/organization-user.entity';
+import { UpdateUserDto } from '../dto/update-organization-user.dto';
 import { AuthUserResponseDto } from '@app/auth';
-import { UserResponseDto } from './dto/create-organization-user.dto';
+import { UserResponseDto } from '../dto/create-organization-user.dto';
 
 @Injectable()
 export class UsersService {

@@ -1,25 +1,29 @@
-import { OrganizationRepository } from './organization.repository';
 import { Test, TestingModule } from '@nestjs/testing';
-import { OrganizationController } from './organization.controller';
-import { OrganizationService } from './organization.service';
+import { UsersController } from './users.controller';
+import { UsersService } from '../services/users.service';
+import { EntityManager } from 'typeorm';
+import { UsersRepository } from '../repositories/users.repository';
+import { RolesRepository, UserProfilesRepository } from '@app/common';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { Mapper, createMapper } from '@automapper/core';
 import { classes } from '@automapper/classes';
-import { EntityManager } from 'typeorm';
+import { AuthService } from '@app/auth';
 
-describe('OrganizationController', () => {
-	let controller: OrganizationController;
+describe('UsersController', () => {
+	let controller: UsersController;
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let mapper: Mapper;
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
 			imports: [AutomapperModule],
-			controllers: [OrganizationController],
+			controllers: [UsersController],
 			providers: [
-				OrganizationService,
-				OrganizationRepository,
+				UsersService,
 				EntityManager,
+				UsersRepository,
+				RolesRepository,
+				UserProfilesRepository,
 				{
 					provide: getMapperToken('MAPPER'),
 					useValue: createMapper({
@@ -27,10 +31,13 @@ describe('OrganizationController', () => {
 					}),
 				},
 			],
-		}).compile();
+		})
+			.overrideProvider(AuthService)
+			.useValue('')
+			.compile();
 
 		mapper = module.get<Mapper>(getMapperToken('MAPPER'));
-		controller = module.get<OrganizationController>(OrganizationController);
+		controller = module.get<UsersController>(UsersController);
 	});
 
 	it('should be defined', () => {

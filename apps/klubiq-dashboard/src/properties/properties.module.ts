@@ -7,7 +7,7 @@ import { PropertyAddress } from './entities/property-address.entity';
 import { PropertyProfile } from './profiles/property.profile';
 import { RepositoriesModule } from '@app/common';
 import { PropertyRepository } from './repositories/properties.repository';
-import { PROPERTY_METRICS } from './services/interfaces/property-metrics.service.interface';
+import { PROPERTY_METRICS } from './interfaces/property-metrics.service.interface';
 
 @Module({
 	providers: [

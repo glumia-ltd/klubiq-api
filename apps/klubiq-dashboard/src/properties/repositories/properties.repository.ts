@@ -23,6 +23,8 @@ import { PropertyCountData } from '../dto/responses/property-count.dto';
 export class PropertyRepository extends BaseRepository<Property> {
 	protected readonly logger = new Logger(PropertyRepository.name);
 	private readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
+	private daysAgo = (days: number) =>
+		DateTime.utc().minus({ days }).toSQL({ includeOffset: false });
 	private readonly nonFilterColumns = [
 		'skip',
 		'take',
@@ -60,9 +62,16 @@ export class PropertyRepository extends BaseRepository<Property> {
 					organization: {
 						organizationUuid: createData.orgUuid,
 					},
-					owner: {
-						firebaseId: createData.ownerUid,
-					},
+					owner: createData.ownerUid
+						? {
+								firebaseId: createData.ownerUid,
+							}
+						: null,
+					manager: createData.managerUid
+						? {
+								firebaseId: createData.managerUid,
+							}
+						: null,
 					purpose: createData.purposeId
 						? {
 								id: createData.purposeId,
@@ -141,6 +150,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 	async getOrganizationProperties(
 		orgUuid: string,
 		userId: string,
+		isOrgOwner: boolean,
 		getPropertyDto?: GetPropertyDto,
 	): Promise<[Property[], number]> {
 		try {
@@ -158,18 +168,18 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.where('property.organizationUuid = :organizationUuid', {
 					organizationUuid: orgUuid,
 				})
-				.andWhere(
-					new Brackets((qb) => {
-						qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
-							.orWhere('property.managerUid = :managerUid', {
-								managerUid: userId,
-							})
-							.orWhere(
-								'property.ownerUid IS NULL AND property.managerUid IS NULL',
-							);
-					}),
-				)
 				.andWhere('property.parentProperty IS NULL');
+			if (!isOrgOwner) {
+				queryBuilder.andWhere(
+					new Brackets((qb) => {
+						qb.where('property.ownerUid = :ownerUid', {
+							ownerUid: userId,
+						}).orWhere('property.managerUid = :managerUid', {
+							managerUid: userId,
+						});
+					}),
+				);
+			}
 			await this.getPropertiesFilterQueryString(getPropertyDto, queryBuilder);
 			queryBuilder
 				.orderBy(`property.${getPropertyDto.sortBy}`, getPropertyDto.order)
@@ -214,10 +224,11 @@ export class PropertyRepository extends BaseRepository<Property> {
 	async getAPropertyInAnOrganization(
 		orgUuid: string,
 		userId: string,
+		isOrgOwner: boolean,
 		propertyUuid: string,
 	) {
 		try {
-			const propertyData = await this.createQueryBuilder('property')
+			const propertyData = this.createQueryBuilder('property')
 				.leftJoinAndSelect('property.purpose', 'pp')
 				.leftJoinAndSelect('property.status', 'ps')
 				.leftJoinAndSelect('property.type', 'pt')
@@ -232,20 +243,19 @@ export class PropertyRepository extends BaseRepository<Property> {
 				})
 				.andWhere('property.organizationUuid = :organizationUuid', {
 					organizationUuid: orgUuid,
-				})
-				.andWhere(
+				});
+			if (!isOrgOwner) {
+				propertyData.andWhere(
 					new Brackets((qb) => {
-						qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
-							.orWhere('property.managerUid = :managerUid', {
-								managerUid: userId,
-							})
-							.orWhere(
-								'property.ownerUid IS NULL AND property.managerUid IS NULL',
-							);
+						qb.where('property.ownerUid = :ownerUid', {
+							ownerUid: userId,
+						}).orWhere('property.managerUid = :managerUid', {
+							managerUid: userId,
+						});
 					}),
-				)
-				.getOne();
-			return propertyData;
+				);
+			}
+			return await propertyData.getOne();
 		} catch (err) {
 			this.logger.error(err, `Error getting a property for Org: ${orgUuid}`);
 			throw err;
@@ -343,6 +353,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 		orgUuid: string,
 		userId: string,
 		data: UpdatePropertyDto,
+		isOrgOwner: boolean,
 	) {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
@@ -366,6 +377,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 			return await this.getAPropertyInAnOrganization(
 				orgUuid,
 				userId,
+				isOrgOwner,
 				propertyUuid,
 			);
 		} catch (err) {
@@ -411,7 +423,10 @@ export class PropertyRepository extends BaseRepository<Property> {
 		}
 	}
 
-	async getTotalVacantUnits(orgUuid: string): Promise<number> {
+	async getTotalVacantUnits(
+		orgUuid: string,
+		pastDays: number = 0,
+	): Promise<number> {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
 			queryBuilder.leftJoin('property.leases', 'pl');
@@ -421,7 +436,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 					new Brackets((qb) => {
 						qb.where('pl.propertyUuId IS NULL').orWhere(
 							'pl.endDate <= :timestamp',
-							{ timestamp: this.timestamp },
+							{ timestamp: this.daysAgo(pastDays) },
 						);
 					}),
 				)
@@ -433,13 +448,24 @@ export class PropertyRepository extends BaseRepository<Property> {
 		}
 	}
 
-	async getTotalOccupiedUnits(organizationUuid: string): Promise<number> {
+	async getTotalOccupiedUnits(
+		organizationUuid: string,
+		pastDays: number = 0,
+	): Promise<number> {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
 			queryBuilder.innerJoin('property.leases', 'pl');
 			await this.getOrganizationUnitsConditions(organizationUuid, queryBuilder);
 			const count = await queryBuilder
-				.andWhere('pl.endDate > :timestamp', { timestamp: this.timestamp })
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('pl.startDate <= :timestamp', {
+							timestamp: this.daysAgo(pastDays),
+						}).andWhere('pl.endDate >= :timestamp', {
+							timestamp: this.daysAgo(pastDays),
+						});
+					}),
+				)
 				.getCount();
 			return count;
 		} catch (err) {
@@ -447,7 +473,10 @@ export class PropertyRepository extends BaseRepository<Property> {
 			throw err;
 		}
 	}
-	async getTotalUnitsInMaintenance(organizationUuid: string): Promise<number> {
+	async getTotalUnitsInMaintenance(
+		organizationUuid: string,
+		pastDays: number = 0,
+	): Promise<number> {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
 			queryBuilder.innerJoin('property.maintenances', 'pm');
@@ -456,9 +485,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.andWhere(
 					new Brackets((qb) => {
 						qb.where('pm.startDate <= :timestamp', {
-							timestamp: this.timestamp,
+							timestamp: this.daysAgo(pastDays),
 						}).andWhere('pm.endDate >= :timestamp', {
-							timestamp: this.timestamp,
+							timestamp: this.daysAgo(pastDays),
 						});
 					}),
 				)
@@ -503,6 +532,31 @@ export class PropertyRepository extends BaseRepository<Property> {
 				err,
 				`Error getting property count data in organization`,
 			);
+			throw err;
+		}
+	}
+	async getTotalOverdueRents(organizationUuid: string): Promise<number> {
+		try {
+			const queryBuilder = this.createQueryBuilder('property').where(
+				'property.organizationUuid = :organizationUuid',
+				{ organizationUuid: organizationUuid },
+			);
+			console.log('getting total overdue rents');
+			const result = await queryBuilder
+				.select('property.unitCount')
+				.addSelect('SUM(pl.rentAmount)', 'totalOverdueRents')
+				.innerJoin('property.leases', 'pl')
+				.leftJoin('pl.transactions', 't', 't.transactionDate <= :timestamp', {
+					timestamp: this.timestamp,
+				})
+				.where('pl.rentDueDate < :timestamp', { timestamp: this.timestamp })
+				.andWhere('t.uuid IS NULL')
+				.groupBy('property.unitCount')
+				.getRawMany();
+			console.log('getting total overdue rents result: ', result);
+			return 0;
+		} catch (err) {
+			this.logger.error(err, `Error getting total overdue rents in Org`);
 			throw err;
 		}
 	}

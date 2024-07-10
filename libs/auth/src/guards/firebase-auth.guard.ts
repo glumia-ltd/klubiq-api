@@ -37,7 +37,6 @@ export class FirebaseAuthGuard implements CanActivate {
 
 	public async validate(token: string) {
 		let firebaseUser: any;
-		if (this.configService.get('LOCAL_USER') === 'true') return firebaseUser;
 		const jwtToken = token.split('Bearer ')[1];
 		if (!jwtToken) {
 			throw new Error(ErrorMessages.UNAUTHORIZED);

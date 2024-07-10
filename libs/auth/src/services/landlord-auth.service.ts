@@ -5,18 +5,21 @@ import {
 	Logger,
 	NotFoundException,
 } from '@nestjs/common';
-import { replace, split } from 'lodash';
+import { map, replace, split } from 'lodash';
 import { ClsService } from 'nestjs-cls';
 import { Inject } from '@nestjs/common';
 import { InjectMapper } from '@automapper/nestjs';
 import * as admin from 'firebase-admin';
 import { FirebaseException } from '../exception/firebase.exception';
-import { InviteUserDto, OrgUserSignUpDto } from '../dto/user-login.dto';
+import {
+	InviteUserDto,
+	OrgUserSignUpDto,
+} from '../dto/requests/user-login.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { SignUpResponseDto } from '../dto/auth-response.dto';
+import { SignUpResponseDto } from '../dto/responses/auth-response.dto';
 import { EntityManager } from 'typeorm';
-import { OrganizationRepository } from '../../../../apps/klubiq-dashboard/src/organization/organization.repository';
+import { OrganizationRepository } from '../../../../apps/klubiq-dashboard/src/organization/repositories/organization.repository';
 import { OrganizationRole } from '@app/common/database/entities/organization-role.entity';
 import { Role } from '@app/common/database/entities/role.entity';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
@@ -196,7 +199,14 @@ export class LandlordAuthService extends AuthService {
 				);
 		}
 	}
-
+	private async getRolesPermission(
+		orgRole: OrganizationRole,
+	): Promise<string[]> {
+		const permissions = orgRole.featurePermissions?.map((fp) => {
+			return `${fp.feature.name}:${fp.permission.name}`;
+		});
+		return permissions;
+	}
 	private async inviteOrganizationUser(
 		fireUser: any,
 		invitedUserDto: InviteUserDto,
@@ -219,6 +229,7 @@ export class LandlordAuthService extends AuthService {
 				OrganizationRole,
 				{ id: invitedUserDto.orgRoleId },
 			);
+
 			const user = new OrganizationUser();
 			user.firstName = invitedUserDto.firstName;
 			user.lastName = invitedUserDto.lastName;
@@ -226,6 +237,7 @@ export class LandlordAuthService extends AuthService {
 			user.organization = organization;
 			user.orgRole = orgRole;
 
+			/// USER PROFILE DATA
 			const userProfile = new UserProfile();
 			userProfile.email = invitedUserDto.email;
 			userProfile.firebaseId = fireUser.uid;
@@ -233,15 +245,28 @@ export class LandlordAuthService extends AuthService {
 			userProfile.systemRole = systemRole;
 			userProfile.isPrivacyPolicyAgreed = true;
 			userProfile.isTermsAndConditionAccepted = true;
+			userProfile.propertiesOwned = !!invitedUserDto.propertiesToOwn
+				? [...invitedUserDto.propertiesToOwn]
+				: null;
+			userProfile.propertiesManaged = !!invitedUserDto.propertiesToManage
+				? [...invitedUserDto.propertiesToManage]
+				: null;
 
+			/// INVITATION DATA
 			const invitation = new UserInvitation();
 			invitation.organization = organization;
 			invitation.firebaseUid = fireUser.uid;
 			invitation.systemRole = systemRole;
 			invitation.orgRole = orgRole;
 			invitation.invitedAt = this.timestamp;
-			invitation.propertyIds = invitedUserDto.propertyIds ?? null;
+			invitation.propertyToManageIds = !!invitedUserDto.propertiesToManage
+				? map(invitedUserDto.propertiesToManage, 'uuid')
+				: null;
+			invitation.propertyToOwnIds = !!invitedUserDto.propertiesToOwn
+				? map(invitedUserDto.propertiesToOwn, 'uuid')
+				: null;
 
+			/// TRANSACTION SAVES DATA
 			await transactionalEntityManager.save(user);
 			await transactionalEntityManager.save(userProfile);
 			await transactionalEntityManager.save(invitation);
@@ -306,12 +331,14 @@ export class LandlordAuthService extends AuthService {
 				systemRole: systemRole.name,
 				organizationRole: organizationRole.name,
 				organizationId: organization.organizationUuid,
+				entitlements: await this.getRolesPermission(organizationRole),
 			});
 			return userProfile;
 		});
 	}
 
 	// OVERRIDE METHODS
+
 	override getActionCodeSettings(baseUrl: string, continueUrl: string) {
 		return {
 			url: `${baseUrl}${continueUrl}`,

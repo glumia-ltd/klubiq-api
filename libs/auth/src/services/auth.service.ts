@@ -13,11 +13,11 @@ import {
 	InviteUserDto,
 	ResetPasswordDto,
 	//UpdateFirebaseUserDto,
-} from '../dto/user-login.dto';
+} from '../dto/requests/user-login.dto';
 import {
 	AuthUserResponseDto,
 	TokenResponseDto,
-} from '../dto/auth-response.dto';
+} from '../dto/responses/auth-response.dto';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { UserRoles } from '@app/common/config/config.constants';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
@@ -33,9 +33,11 @@ import { AxiosError } from 'axios';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { createHmac } from 'crypto';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
+import { RolesAndEntitlements } from '../types/firebase.types';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
+	private readonly adminIdentityTenantId: string;
 	constructor(
 		@Inject('FIREBASE_ADMIN') protected firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
@@ -44,11 +46,22 @@ export abstract class AuthService {
 		protected readonly configService: ConfigService,
 		private readonly httpService: HttpService,
 		protected readonly cls: ClsService<SharedClsStore>,
-	) {}
+	) {
+		this.adminIdentityTenantId = this.configService.get<string>(
+			'ADMIN_IDENTITY_TENANT_ID',
+		);
+	}
 
 	get auth(): auth.Auth {
 		return this.firebaseAdminApp.auth();
 	}
+	// get adminAuth(): auth.TenantAwareAuth {
+	// 	const tAuth = this.firebaseAdminApp
+	// 		.auth()
+	// 		.tenantManager()
+	// 		.authForTenant(this.adminIdentityTenantId);
+	// 	return tAuth;
+	// }
 
 	async setCustomClaims(uuid: string, claims: any) {
 		try {
@@ -61,6 +74,18 @@ export abstract class AuthService {
 			);
 		}
 	}
+
+	// async setAdminClaims(uuid: string, claims: any) {
+	// 	try {
+	// 		await this.adminAuth.setCustomUserClaims(uuid, claims);
+	// 	} catch (err) {
+	// 		const firebaseErrorMessage =
+	// 			this.errorMessageHelper.parseFirebaseError(err);
+	// 		throw new FirebaseException(
+	// 			firebaseErrorMessage ? firebaseErrorMessage : err.message,
+	// 		);
+	// 	}
+	// }
 	async createUser(newUser: {
 		email: string;
 		password: string;
@@ -152,6 +177,45 @@ export abstract class AuthService {
 						}),
 					),
 			);
+			return data;
+		} catch (err) {
+			console.error('Error resetting password:', err);
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(
+				firebaseErrorMessage ? firebaseErrorMessage : err.message,
+			);
+		}
+	}
+
+	async acceptInvitation(resetPassword: ResetPasswordDto) {
+		try {
+			const body = {
+				oobCode: resetPassword.oobCode,
+				password: resetPassword.password,
+				email: resetPassword.email,
+				emailVerified: true,
+			};
+			const { data } = await firstValueFrom(
+				this.httpService
+					.post(
+						`${this.configService.get('GOOGLE_IDENTITY_ENDPOINT')}:update?key=${this.configService.get('FIREBASE_API_KEY')}`,
+						body,
+					)
+					.pipe(
+						catchError((error: AxiosError) => {
+							this.logger.error(
+								'Error resetting password:',
+								error.response.data,
+							);
+							throw new FirebaseException('Error resetting password');
+						}),
+					),
+			);
+			if (!data.localId || data['localId'] === undefined) {
+				throw new FirebaseException('User not found');
+			}
+			this.userProfilesRepository.acceptInvitation(data.localId);
 			return data;
 		} catch (err) {
 			console.error('Error resetting password:', err);
@@ -255,24 +319,24 @@ export abstract class AuthService {
 		}
 	}
 
-	async getUserRolesFromToken(token: string): Promise<UserRoles[]> {
+	async getUserRolesFromToken(token: string): Promise<RolesAndEntitlements> {
 		try {
-			//   const decodedToken = this.jwtService.decode(token);
 			const decodedToken = await this.auth.verifyIdToken(token);
-			const systemRole = decodedToken.systemRole;
-			const organizationRole = decodedToken.organizationRole;
 			const userRoles: UserRoles[] = [];
-			if (!!systemRole) {
-				userRoles.push(systemRole);
+			if (!!decodedToken.systemRole) {
+				userRoles.push(decodedToken.systemRole);
 			}
-			if (!!organizationRole) {
-				userRoles.push(organizationRole);
+			if (!!decodedToken.organizationRole) {
+				userRoles.push(decodedToken.organizationRole);
 			}
-
-			return userRoles;
+			const roleAndEntitlements: RolesAndEntitlements = {
+				roles: userRoles,
+				entitlements: decodedToken.entitlements,
+			};
+			return roleAndEntitlements;
 		} catch (error) {
 			console.error('Error decoding token:', error);
-			return [];
+			return null;
 		}
 	}
 

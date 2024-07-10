@@ -26,19 +26,23 @@ export const ORG_ROLES: UserRoles[] = [
 	UserRoles.LEASE_MANAGER,
 	UserRoles.CUSTOM,
 ];
-export enum FeaturePermissions {
-	VIEW_PROPERTY = 'view_property_access',
-	MANAGE_PROPERTY = 'all_property_access',
-	VIEW_REPORT = 'view_report_access',
-	MANAGE_REPORT = 'all_report_access',
-	VIEW_LEASE = 'view_lease_access',
-	MANAGE_LEASE = 'all_lease_access',
-	VIEW_TENANT = 'view_tenant_access',
-	MANAGE_TENANT = 'all_tenant_access',
-	VIEW_USER = 'view_user_access',
-	MANAGE_USER = 'all_user_access',
-	VIEW_SETTING = 'view_setting_access',
-	MANAGE_SETTING = 'all_setting_access',
+
+export enum Actions {
+	VIEW = 'View',
+	WRITE = 'Write',
+}
+
+export enum AppFeature {
+	PROPERTY = 'Property',
+	REPORT = 'Report',
+	LEASE = 'Lease',
+	TENANT = 'Tenant',
+	USER = 'User',
+	SETTING = 'Setting',
+	MAINTENANCE = 'Maintenance',
+	MESSAGING = 'Messaging',
+	PUBLIC = 'Public',
+	DASHBOARD = 'Dashboard',
 }
 
 //Enums to identify if it's a sign-up event or invite user event
@@ -60,6 +64,8 @@ export enum CacheKeys {
 	PROPERTY_STATUSES = 'property-status',
 	PROPERTY_PURPOSES = 'property-purposes',
 	PROPERTY_AMENITIES = 'property-amenities',
+	PROPERTY_METRICS = 'property-metrics',
+	TRANSACTION_METRICS = 'transaction-metrics',
 }
 
 export enum TransactionType {
@@ -82,6 +88,16 @@ export enum MaintenanceStatus {
 	ON_HOLD = 'On Hold',
 }
 
+export enum LeaseStatus {
+	NEW = 'New',
+	SIGNED = 'Signed',
+	ACTIVE = 'Active',
+	IN_ACTIVE = 'In Active',
+	CANCELLED = 'Cancelled',
+	EXPIRED = 'Expired',
+	ON_HOLD = 'On Hold',
+}
+
 export enum MaintenancePriority {
 	LOW = 'Low',
 	MEDIUM = 'Medium',
@@ -94,4 +110,10 @@ export enum MaintenanceType {
 	SERVICE = 'Service',
 	INSPECTION = 'Inspection',
 	OTHER = 'Other',
+}
+
+export enum ADMIN_DOMAINS {
+	KLUBIQ_COM = 'klubiq.com',
+	GLUMIA_NG = 'glumia.ng',
+	GLUMIA_COM = 'glumia.com',
 }

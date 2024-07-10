@@ -1,11 +1,13 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { BaseRepository } from '@app/common';
+import { BaseRepository, UserInvitation } from '@app/common';
 import { UserProfile } from '../database/entities/user-profile.entity';
 import { EntityManager } from 'typeorm';
+import { DateTime } from 'luxon';
 
 @Injectable()
 export class UserProfilesRepository extends BaseRepository<UserProfile> {
 	protected readonly logger = new Logger(UserProfilesRepository.name);
+	private readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	constructor(manager: EntityManager) {
 		super(UserProfile, manager);
 	}
@@ -47,5 +49,13 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 			throw new NotFoundException('Landlord User not found');
 		}
 		return data;
+	}
+
+	async acceptInvitation(userFirebaseId: string) {
+		await this.manager.update(
+			UserInvitation,
+			{ firebaseUid: userFirebaseId },
+			{ acceptedAt: this.timestamp },
+		);
 	}
 }

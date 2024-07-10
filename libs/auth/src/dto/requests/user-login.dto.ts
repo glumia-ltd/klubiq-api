@@ -189,5 +189,24 @@ export class InviteUserDto extends PartialType(SendVerifyEmailDto) {
 	@ApiPropertyOptional()
 	@IsOptional()
 	@IsArray()
-	propertyIds?: string[];
+	propertiesToOwn?: PropertyInvitationDto[];
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsArray()
+	propertiesToManage?: PropertyInvitationDto[];
+}
+
+export class PropertyInvitationDto {
+	@ApiProperty()
+	@IsString()
+	uuid: string;
+
+	@ApiProperty()
+	@IsNumber()
+	id: number;
+
+	@ApiProperty()
+	@IsString()
+	name: string;
 }

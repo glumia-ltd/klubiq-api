@@ -2,7 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { EntityManager } from 'typeorm';
-import { UsersRepository } from './users.repository';
+import { UsersRepository } from '../repositories/users.repository';
 import {
 	RolesRepository,
 	UserProfile,
@@ -12,7 +12,7 @@ import { classes } from '@automapper/classes';
 import { createMapper, Mapper } from '@automapper/core';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { BaseRepository } from '@app/common';
-import { OrganizationUser } from './entities/organization-user.entity';
+import { OrganizationUser } from '../entities/organization-user.entity';
 import { NotFoundException } from '@nestjs/common';
 import { object } from 'joi';
 

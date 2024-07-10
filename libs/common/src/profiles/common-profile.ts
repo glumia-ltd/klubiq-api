@@ -25,7 +25,12 @@ import {
 import { Permission } from '../database/entities/permission.entity';
 import { FeaturePermission } from '../database/entities/feature-permission.entity';
 import { Role } from '../database/entities/role.entity';
+import { UserProfile } from '../database/entities/user-profile.entity';
+import { TenantDto } from '../dto/responses/tenant.dto';
 
+export const publicProfile: MappingProfile = (mapper) => {
+	createMap(mapper, UserProfile, TenantDto);
+};
 export class CommonProfile extends AutomapperProfile {
 	@InjectMapper('MAPPER') customMapper: Mapper;
 	constructor(@InjectMapper('MAPPER') mapper: Mapper) {
@@ -35,7 +40,6 @@ export class CommonProfile extends AutomapperProfile {
 			namingConventions: new CamelCaseNamingConvention(),
 		});
 	}
-
 	override get profile(): MappingProfile {
 		return (customMapper) => {
 			createMap(customMapper, Feature, ViewFeatureDto);

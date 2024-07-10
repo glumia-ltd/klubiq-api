@@ -7,4 +7,7 @@ export interface PropertyMetrics {
 	occupancyRate?: number;
 	multiUnits?: number;
 	singleUnits?: number;
+	occupancyRateLastMonth?: number;
+	maintenanceUnitsLastMonth?: number;
+	rentOverdue?: number;
 }

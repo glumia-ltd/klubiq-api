@@ -16,7 +16,7 @@ import {
 import { UserProfile } from './user-profile.entity';
 import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
 import { Transaction } from './transaction.entity';
-import { PaymentFrequency } from '../../config/config.constants';
+import { LeaseStatus, PaymentFrequency } from '../../config/config.constants';
 
 @Entity({ schema: 'poo' })
 export class Lease {
@@ -26,8 +26,8 @@ export class Lease {
 
 	@AutoMap()
 	@Index()
-	@Column({ length: 255, unique: true })
-	name: string;
+	@Column({ length: 255, unique: true, nullable: false })
+	name?: string;
 
 	@AutoMap()
 	@Column({
@@ -36,6 +36,14 @@ export class Lease {
 		default: PaymentFrequency.ANNUALLY,
 	})
 	paymentFrequency: PaymentFrequency;
+
+	@AutoMap()
+	@Column({
+		type: 'enum',
+		enum: LeaseStatus,
+		default: LeaseStatus.NEW,
+	})
+	status?: LeaseStatus;
 
 	@AutoMap()
 	@Column({ nullable: true })
@@ -50,21 +58,25 @@ export class Lease {
 	endDate?: Date;
 
 	@AutoMap()
-	@Column({ type: 'date', nullable: true })
-	rentDueDate?: Date;
+	@Column({ type: 'int', nullable: false })
+	rentDueDay?: number;
 
 	@AutoMap()
-	@Column({ type: 'money' })
-	rentAmount: number;
+	@Column({ type: 'int', nullable: true })
+	rentDueMonth?: number;
 
 	@AutoMap()
-	@Column({ type: 'money', nullable: true })
-	securityDeposit: number;
+	@Column({ type: 'decimal', precision: 18, scale: 2, nullable: false })
+	rentAmount?: number;
 
-	@CreateDateColumn({ select: false })
+	@AutoMap()
+	@Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
+	securityDeposit?: number;
+
+	@CreateDateColumn()
 	createdDate?: Date;
 
-	@UpdateDateColumn({ select: false })
+	@UpdateDateColumn()
 	updatedDate?: Date;
 
 	@DeleteDateColumn({ nullable: true })
@@ -73,6 +85,10 @@ export class Lease {
 	@AutoMap()
 	@Column({ default: false })
 	isDraft?: boolean;
+
+	@AutoMap()
+	@Column({ default: false })
+	isArchived?: boolean;
 
 	@AutoMap(() => [UserProfile])
 	@ManyToMany(() => UserProfile, (user) => user.leases)

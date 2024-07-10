@@ -9,6 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 //import { AuthService } from '../services/auth.service';
 import { LandlordAuthService } from '../services/landlord-auth.service';
+import { ROLES_KEY } from '../decorators/auth.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -19,7 +20,7 @@ export class RolesGuard implements CanActivate {
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const requiredRoles = this.reflector.get<UserRoles[]>(
-			'roles',
+			ROLES_KEY,
 			context.getHandler(),
 		);
 
@@ -36,7 +37,7 @@ export class RolesGuard implements CanActivate {
 		const userRoles = await this.authService.getUserRolesFromToken(token);
 
 		const hasRequiredRole = requiredRoles.some((role) =>
-			userRoles.includes(role),
+			userRoles.roles.includes(role),
 		);
 
 		return hasRequiredRole;

@@ -11,23 +11,35 @@ import {
 	Put,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { OrganizationService } from './organization.service';
-import { CreateOrganizationDto } from './dto/create-organization.dto';
-import { UpdateOrganizationDto } from './dto/update-organization.dto';
-import { OrganizationResponseDto } from './dto/organization-response.dto';
-import { UserRoles, PageDto, PageOptionsDto } from '@app/common';
-import { Auth, Roles } from '@app/auth/decorators/auth.decorator';
+import { OrganizationService } from '../services/organization.service';
+import { CreateOrganizationDto } from '../dto/create-organization.dto';
+import { UpdateOrganizationDto } from '../dto/update-organization.dto';
+import { OrganizationResponseDto } from '../dto/organization-response.dto';
+import {
+	UserRoles,
+	PageDto,
+	PageOptionsDto,
+	AppFeature,
+	Actions,
+} from '@app/common';
+import {
+	Ability,
+	Auth,
+	Feature,
+	Roles,
+} from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 
 @ApiTags('organization')
 @Controller('organization')
 @Auth(AuthType.Bearer)
 @ApiBearerAuth()
+@Feature(AppFeature.SETTING)
 export class OrganizationController {
 	constructor(private readonly organizationService: OrganizationService) {}
 
 	@Post()
-	@Roles(UserRoles.SUPER_ADMIN)
+	@Roles(UserRoles.SUPER_ADMIN, UserRoles.SUPER_ADMIN)
 	@ApiOkResponse({
 		description: 'Creates a new organization',
 		type: OrganizationResponseDto,
@@ -37,7 +49,7 @@ export class OrganizationController {
 	}
 
 	@Get()
-	@Roles(UserRoles.LANDLORD)
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN, UserRoles.STAFF)
 	@ApiOkResponse({
 		description: 'Gets all organization',
 		type: OrganizationResponseDto,
@@ -49,7 +61,8 @@ export class OrganizationController {
 	}
 
 	@Get(':uuid')
-	@Roles(UserRoles.LANDLORD)
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN, UserRoles.STAFF)
+	@Ability(Actions.WRITE, Actions.VIEW)
 	@ApiOkResponse({
 		description: 'Gets a organization by uuid',
 		type: OrganizationResponseDto,
@@ -59,7 +72,8 @@ export class OrganizationController {
 	}
 
 	@Patch(':uuid')
-	@Roles(UserRoles.ORG_OWNER)
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN, UserRoles.STAFF)
+	@Ability(Actions.WRITE)
 	@ApiOkResponse({
 		description: 'Updates an organization',
 		type: OrganizationResponseDto,
@@ -71,7 +85,7 @@ export class OrganizationController {
 		return await this.organizationService.update(uuid, updateOrganizationDto);
 	}
 
-	@Roles(UserRoles.ORG_OWNER, UserRoles.ADMIN)
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@ApiOkResponse({
 		description: 'soft deletes an organization',
 	})
@@ -90,7 +104,8 @@ export class OrganizationController {
 	}
 
 	@Put(':uuid')
-	@Roles(UserRoles.ORG_OWNER)
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+	@Ability(Actions.WRITE)
 	@ApiOkResponse({
 		description: 'Updates an organization',
 		type: OrganizationResponseDto,

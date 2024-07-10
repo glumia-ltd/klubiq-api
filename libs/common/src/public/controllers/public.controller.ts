@@ -18,8 +18,10 @@ import {
 	OrgRoleResponseDto,
 	ViewSystemRoleDto,
 } from '../../dto/responses/org-role.dto';
-import { Auth, AuthType, Roles } from '@app/auth';
+import { Ability, Auth, AuthType, Feature, Roles } from '@app/auth';
 import {
+	Actions,
+	AppFeature,
 	PropertiesCategoryService,
 	PropertiesPurposeService,
 	PropertiesStatusService,
@@ -51,7 +53,7 @@ import { PropertiesAmenityService } from '@app/common/services/properties-amenit
 @ApiBearerAuth()
 @Auth(AuthType.Bearer)
 @Controller('public')
-@Roles(UserRoles.LANDLORD)
+@Feature(AppFeature.SETTING)
 export class PublicController {
 	constructor(
 		private readonly propertyCategoryService: PropertiesCategoryService,
@@ -142,6 +144,7 @@ export class PublicController {
 	@Delete('features/:id')
 	@ApiOkResponse({
 		description: 'Deletes a feature',
+		type: Boolean,
 	})
 	async deleteFeature(@Param('id') id: number) {
 		try {
@@ -180,6 +183,7 @@ export class PublicController {
 	}
 
 	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+	@Ability(Actions.WRITE)
 	@Post('features-permissions')
 	@ApiCreatedResponse({
 		description: 'Creates a new feature-permission for the app',
@@ -199,6 +203,7 @@ export class PublicController {
 	}
 
 	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+	@Ability(Actions.WRITE)
 	@Patch('features-permissions/:id')
 	@ApiOkResponse({
 		description: 'Updates a feature permission',
@@ -332,6 +337,7 @@ export class PublicController {
 	}
 
 	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+	@Ability(Actions.WRITE)
 	@Post('organization-roles')
 	@ApiCreatedResponse({
 		description: 'Creates a new organization role for the app',
@@ -347,6 +353,7 @@ export class PublicController {
 	}
 
 	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+	@Ability(Actions.WRITE)
 	@Put('organization-roles/:id')
 	@ApiOkResponse({
 		description: 'Updates an organization role',

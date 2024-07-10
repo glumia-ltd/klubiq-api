@@ -27,6 +27,37 @@ import { PropertyImage } from '@app/common/database/entities/property-image.enti
 import { PropertyPurpose } from '@app/common';
 import { MetadataDto } from '../dto/responses/metadata.dto';
 
+export const unitsProfile: MappingProfile = (mapper) => {
+	createMap(mapper, Property, PropertyUnitDto);
+};
+export const propertyProfile: MappingProfile = (mapper) => {
+	createMap(
+		mapper,
+		Property,
+		PropertyDto,
+		forMember(
+			(d) => d.units,
+			mapWith(PropertyUnitDto, Property, (s) => s.units),
+		),
+		forMember(
+			(d) => d.images,
+			mapFrom((s) => s.images.map((i) => i.url)),
+		),
+		forMember(
+			(d) => d.amenities,
+			mapFrom((s) => s.amenities.map((i) => i.name)),
+		),
+		forMember(
+			(d) => d.tags,
+			mapFrom((s) => s.tags),
+		),
+		forMember(
+			(d) => d.area,
+			mapFrom((s) => s.area),
+		),
+		namingConventions(new CamelCaseNamingConvention()),
+	);
+};
 export class PropertyProfile extends AutomapperProfile {
 	constructor(@InjectMapper('MAPPER') mapper: Mapper) {
 		super(mapper);

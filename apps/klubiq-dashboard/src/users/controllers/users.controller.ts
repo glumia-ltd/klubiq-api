@@ -7,24 +7,26 @@ import {
 	Put,
 	Body,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { UsersService } from '../services/users.service';
 
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { OrganizationUser } from './entities/organization-user.entity';
-import { UserRoles } from '@app/common';
-import { AuthType, Auth, Roles } from '@app/auth';
-import { UpdateUserDto } from './dto/update-organization-user.dto';
+import { OrganizationUser } from '../entities/organization-user.entity';
+import { Actions, AppFeature, UserRoles } from '@app/common';
+import { AuthType, Auth, Roles, Feature, Ability } from '@app/auth';
+import { UpdateUserDto } from '../dto/update-organization-user.dto';
 
 @ApiTags('users')
 @Controller('users')
 @ApiBearerAuth()
 @Auth(AuthType.Bearer)
+@Feature(AppFeature.USER)
 @Roles(UserRoles.LANDLORD)
 export class UsersController {
 	constructor(private readonly usersService: UsersService) {}
 
 	@Get()
-	@Roles(UserRoles.ORG_OWNER)
+	//@Roles(UserRoles.ORG_OWNER)
+	@Ability(Actions.VIEW, Actions.WRITE)
 	@ApiOkResponse({
 		description: 'Returns all the users available ',
 	})

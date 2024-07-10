@@ -8,7 +8,7 @@ import {
 } from '@automapper/core';
 import { AutomapperProfile, InjectMapper } from '@automapper/nestjs';
 import { UserProfile } from '@app/common';
-import { AuthUserResponseDto } from './../dto/auth-response.dto';
+import { AuthUserResponseDto } from '../dto/responses/auth-response.dto';
 
 export const featurePermissionResolver: Resolver<
 	UserProfile,

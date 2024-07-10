@@ -1,15 +1,15 @@
-import { Organization } from './entities/organization.entity';
+import { Organization } from '../entities/organization.entity';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
-import { OrganizationRepository } from './organization.repository';
-import { CreateOrganizationDto } from './dto/create-organization.dto';
-import { UpdateOrganizationDto } from './dto/update-organization.dto';
+import { OrganizationRepository } from '../repositories/organization.repository';
+import { CreateOrganizationDto } from '../dto/create-organization.dto';
+import { UpdateOrganizationDto } from '../dto/update-organization.dto';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { PageOptionsDto, PageDto, PageMetaDto } from '@app/common';
-import { OrganizationResponseDto } from './dto/organization-response.dto';
+import { OrganizationResponseDto } from '../dto/organization-response.dto';
 import { Console } from 'console';
 
 @Injectable()

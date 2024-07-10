@@ -4,7 +4,7 @@ import { DatabaseModule, ConfigModule } from '@app/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
 import { RepositoriesModule } from '@app/common';
-import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/organization.repository';
+import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/repositories/organization.repository';
 import { OrgUserProfile } from './profiles/org-user-profile';
 import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
 import { JwtService } from '@nestjs/jwt';
@@ -14,6 +14,7 @@ import { CacheService } from '@app/common/services/cache.service';
 import { LandlordAuthService } from './services/landlord-auth.service';
 
 import _firebaseConfig from '../../../config.json';
+import { AdminAuthService } from './services/admin-auth.service';
 const apps = admin.apps;
 
 interface FirebaseConfig {
@@ -46,11 +47,13 @@ const firebase_params = {
 const firebaseAdminProvider = {
 	provide: 'FIREBASE_ADMIN',
 	useFactory: () => {
-		if (!apps.length) {
-			return admin.initializeApp({
-				credential: admin.credential.cert(firebase_params),
-			});
+		if (apps.length > 0) {
+			console.log('Firebase Admin already initialized. APP: ', apps[0].name);
+			return apps[0];
 		}
+		return admin.initializeApp({
+			credential: admin.credential.cert(firebase_params),
+		});
 	},
 };
 
@@ -67,6 +70,7 @@ const firebaseAdminProvider = {
 			useFactory: () => new CacheService(null, 60 * 60 * 24),
 		},
 		LandlordAuthService,
+		AdminAuthService,
 	],
 	exports: [LandlordAuthService],
 	imports: [DatabaseModule, ConfigModule, RepositoriesModule, HttpModule],

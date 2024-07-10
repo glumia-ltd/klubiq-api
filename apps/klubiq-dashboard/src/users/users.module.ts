@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersService } from './users.service';
-import { UsersController } from './users.controller';
+import { UsersService } from './services/users.service';
+import { UsersController } from './controllers/users.controller';
 import { DatabaseModule } from '@app/common';
 import { OrganizationUser } from './entities/organization-user.entity';
-import { UsersRepository } from './users.repository';
+import { UsersRepository } from './repositories/users.repository';
 import { EntityManager } from 'typeorm';
 import { RepositoriesModule } from '@app/common';
 import { OrgUserMapProfile } from './profiles/org-user-profile';

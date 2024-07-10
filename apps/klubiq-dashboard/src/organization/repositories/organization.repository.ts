@@ -1,4 +1,4 @@
-import { Organization } from './entities/organization.entity';
+import { Organization } from '../entities/organization.entity';
 import {
 	Injectable,
 	Logger,
@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { BaseRepository, UserRoles } from '@app/common';
 import { EntityManager } from 'typeorm';
-import { UpdateOrganizationDto } from './dto/update-organization.dto';
-import { OrganizationUser } from '../users/entities/organization-user.entity';
+import { UpdateOrganizationDto } from '../dto/update-organization.dto';
+import { OrganizationUser } from '../../users/entities/organization-user.entity';
 
 @Injectable()
 export class OrganizationRepository extends BaseRepository<Organization> {

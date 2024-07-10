@@ -6,7 +6,12 @@ import {
 	HttpCode,
 	Get,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiOkResponse,
+	ApiSecurity,
+	ApiTags,
+} from '@nestjs/swagger';
 import { Auth, Roles } from './decorators/auth.decorator';
 import {
 	InviteUserDto,
@@ -18,18 +23,26 @@ import {
 	// UpdateFirebaseUserDto,
 	// UpdatePasswordDto,
 	VerifyEmailDto,
-} from './dto/user-login.dto';
-import { SignUpResponseDto, TokenResponseDto } from './dto/auth-response.dto';
+} from './dto/requests/user-login.dto';
+// import {
+// 	SignUpResponseDto,
+// } from './dto/responses/auth-response.dto';
 import { AuthType } from './types/firebase.types';
 import { UserRoles } from '@app/common';
 import { LandlordAuthService } from './services/landlord-auth.service';
+import { AdminAuthService } from './services/admin-auth.service';
+import { CreateSuperAdminDTO } from './dto/requests/admin-user.dto';
 
 @ApiTags('auth')
 @ApiBearerAuth()
+@ApiSecurity('ApiKey')
 @Auth(AuthType.None)
 @Controller('auth')
 export class AuthController {
-	constructor(private readonly authService: LandlordAuthService) {}
+	constructor(
+		private readonly landlordAuthService: LandlordAuthService,
+		private readonly adminAuthService: AdminAuthService,
+	) {}
 
 	@HttpCode(HttpStatus.OK)
 	@Post('verify-email')
@@ -38,7 +51,7 @@ export class AuthController {
 	})
 	async verifyEmail(@Body() data: VerifyEmailDto): Promise<any> {
 		try {
-			await this.authService.verifyEmail(data.oobCode);
+			await this.landlordAuthService.verifyEmail(data.oobCode);
 			return { message: 'Email verification successful!' };
 		} catch (err) {
 			console.error('Error verifying email:', err);
@@ -60,7 +73,7 @@ export class AuthController {
 	})
 	async user(): Promise<any> {
 		try {
-			return this.authService.getUserInfo();
+			return this.landlordAuthService.getUserInfo();
 		} catch (err) {
 			throw err;
 		}
@@ -73,7 +86,7 @@ export class AuthController {
 		@Body() resetPasswordDto: ResetPasswordDto,
 	): Promise<any> {
 		try {
-			return this.authService.resetPassword(resetPasswordDto);
+			return this.landlordAuthService.resetPassword(resetPasswordDto);
 		} catch (err) {
 			console.error('Error updating password:', err);
 			throw err;
@@ -83,10 +96,19 @@ export class AuthController {
 	@Post('landlord/signup')
 	@ApiOkResponse({
 		description: 'Creates a new Org user and returns the data an auth token',
-		type: SignUpResponseDto,
 	})
 	async createUser(@Body() createUser: OrgUserSignUpDto) {
-		const userData = await this.authService.createOrgOwner(createUser);
+		const userData = await this.landlordAuthService.createOrgOwner(createUser);
+		return userData;
+	}
+	@Auth(AuthType.ApiKey)
+	@Post('admin/signup')
+	@ApiOkResponse({
+		description: 'Creates a new super Admin user',
+	})
+	async createAdmin(@Body() createUser: CreateSuperAdminDTO) {
+		const userData =
+			await this.adminAuthService.createDomainSuperAdmin(createUser);
 		return userData;
 	}
 
@@ -98,7 +120,7 @@ export class AuthController {
 		description: 'invites a new Org user',
 	})
 	async inviteUser(@Body() invitedUser: InviteUserDto) {
-		const result = await this.authService.inviteUser(invitedUser);
+		const result = await this.landlordAuthService.inviteUser(invitedUser);
 		return result;
 	}
 
@@ -106,10 +128,9 @@ export class AuthController {
 	@Post('email-verification-link')
 	@ApiOkResponse({
 		description: 'Send email verification link to user',
-		type: SignUpResponseDto,
 	})
 	async sendEmailVerification(@Body() reqBody: SendVerifyEmailDto) {
-		await this.authService.sendVerificationEmail(
+		await this.landlordAuthService.sendVerificationEmail(
 			reqBody.email,
 			reqBody.firstName,
 			reqBody.lastName,
@@ -122,15 +143,22 @@ export class AuthController {
 		description: 'Send email password reset link to user',
 	})
 	async sendPasswordResetLinkEmail(@Body() request: ResetPasswordLinkDto) {
-		await this.authService.generatePasswordResetEmail(request.email);
+		await this.landlordAuthService.generatePasswordResetEmail(request.email);
 	}
 
 	@HttpCode(HttpStatus.OK)
 	@Post('exchange-refresh-token')
-	@ApiOkResponse({
-		type: TokenResponseDto,
-	})
+	@ApiOkResponse()
 	async exchangeRefreshToken(@Body() request: RefreshTokenExchangeDto) {
-		return await this.authService.exchangeRefreshToken(request.refreshToken);
+		return await this.landlordAuthService.exchangeRefreshToken(
+			request.refreshToken,
+		);
+	}
+
+	@HttpCode(HttpStatus.OK)
+	@Post('accept-invitation')
+	@ApiOkResponse()
+	async acceptInvitation(@Body() resetPasswordDto: ResetPasswordDto) {
+		return await this.landlordAuthService.acceptInvitation(resetPasswordDto);
 	}
 }

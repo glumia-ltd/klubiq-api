@@ -48,5 +48,8 @@ export class UserInvitation {
 	acceptedAt?: string;
 
 	@Column({ type: 'simple-array', nullable: true })
-	propertyIds?: string[];
+	propertyToOwnIds?: string[];
+
+	@Column({ type: 'simple-array', nullable: true })
+	propertyToManageIds?: string[];
 }

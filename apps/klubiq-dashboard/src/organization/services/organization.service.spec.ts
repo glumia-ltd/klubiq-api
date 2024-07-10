@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrganizationService } from './organization.service';
-import { OrganizationRepository } from './organization.repository';
+import { OrganizationRepository } from '../repositories/organization.repository';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { createMap, createMapper, Mapper } from '@automapper/core';
 import { classes } from '@automapper/classes';
@@ -9,8 +9,8 @@ import {
 	BaseRepository,
 	//Order
 } from '@app/common';
-import { OrganizationResponseDto } from './dto/organization-response.dto';
-import { Organization } from './entities/organization.entity';
+import { OrganizationResponseDto } from '../dto/organization-response.dto';
+import { Organization } from '../entities/organization.entity';
 
 type MockRepository<T = any> = Partial<
 	Record<keyof BaseRepository<T>, jest.Mock>
