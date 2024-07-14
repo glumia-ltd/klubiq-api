@@ -41,7 +41,7 @@ import { createMapper } from '@automapper/core';
 				TRANSACTIONAL_EMAIL_SENDER: Joi.string().required(),
 				TRANSACTIONAL_EMAIL_SENDER_NAME: Joi.string().required(),
 				GOOGLE_IDENTITY_ENDPOINT: Joi.string().required(),
-				ADMIN_IDENTITY_TENANT_ID: Joi.string().required(),
+				//ADMIN_IDENTITY_TENANT_ID: Joi.string().required(),
 			}),
 		}),
 		AutomapperModule.forRoot([
