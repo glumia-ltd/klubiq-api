@@ -1,5 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Amenity, BaseRepository } from '@app/common';
+import {
+	Amenity,
+	BaseRepository,
+	RentOverdueLeaseDto,
+	RevenueType,
+	TransactionType,
+} from '@app/common';
 import { Brackets, EntityManager, SelectQueryBuilder } from 'typeorm';
 import { Property } from '../entities/property.entity';
 import {
@@ -165,6 +171,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.leftJoinAndSelect('property.amenities', 'pf')
 				.leftJoinAndSelect('property.units', 'punts')
 				.leftJoinAndSelect('punts.status', 'unitsStatus')
+				.leftJoinAndSelect('property.manager', 'pm')
+				.leftJoinAndSelect('property.owner', 'po')
+				.leftJoinAndSelect('property.leases', 'pl')
 				.where('property.organizationUuid = :organizationUuid', {
 					organizationUuid: orgUuid,
 				})
@@ -238,6 +247,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.leftJoinAndSelect('property.amenities', 'pf')
 				.leftJoinAndSelect('property.units', 'punts')
 				.leftJoinAndSelect('punts.status', 'puntstatus')
+				.leftJoinAndSelect('property.manager', 'pm')
+				.leftJoinAndSelect('property.owner', 'po')
+				.leftJoinAndSelect('property.leases', 'pl')
 				.where('property.uuid = :propertyUuid', {
 					propertyUuid: propertyUuid,
 				})
@@ -535,26 +547,53 @@ export class PropertyRepository extends BaseRepository<Property> {
 			throw err;
 		}
 	}
-	async getTotalOverdueRents(organizationUuid: string): Promise<number> {
+	async getTotalOverdueRents(
+		organizationUuid: string,
+	): Promise<RentOverdueLeaseDto> {
 		try {
-			const queryBuilder = this.createQueryBuilder('property').where(
-				'property.organizationUuid = :organizationUuid',
-				{ organizationUuid: organizationUuid },
+			const overdueRentsResult = await this.manager.query(
+				`
+				SELECT 
+					COUNT(*) AS overDueLeaseCount,
+					SUM(l."rentAmount") AS overDueRentSum
+				FROM
+					poo.lease l
+				JOIN
+					poo.property p ON p.uuid = l."propertyUuId" AND p."organizationUuid" = $3
+				LEFT JOIN
+					(
+						SELECT
+							t."leaseId",
+							SUM(t.amount) AS totalPaid
+						FROM
+							poo.transaction t
+						WHERE
+							t."transactionType" = $1
+							AND t."revenueType" = $2
+							AND t."transactionDate" <= CURRENT_DATE
+						GROUP BY
+							t."leaseId"
+					) payments ON l.id = payments."leaseId"
+				WHERE
+					l."endDate" >= CURRENT_DATE
+					AND calculate_next_due_date(l."startDate", l."paymentFrequency", l."customPaymentFrequency", l."rentDueDay") <= CURRENT_DATE
+					AND (payments."totalPaid" IS NULL OR payments."totalPaid" < l."rentAmount");
+					AND l.status = :status
+					AND l.isArchived = false
+					AND l.isDraft = false
+			`,
+				[
+					TransactionType.REVENUE,
+					RevenueType.PROPERTY_RENTAL,
+					organizationUuid,
+				],
 			);
-			console.log('getting total overdue rents');
-			const result = await queryBuilder
-				.select('property.unitCount')
-				.addSelect('SUM(pl.rentAmount)', 'totalOverdueRents')
-				.innerJoin('property.leases', 'pl')
-				.leftJoin('pl.transactions', 't', 't.transactionDate <= :timestamp', {
-					timestamp: this.timestamp,
-				})
-				.where('pl.rentDueDate < :timestamp', { timestamp: this.timestamp })
-				.andWhere('t.uuid IS NULL')
-				.groupBy('property.unitCount')
-				.getRawMany();
-			console.log('getting total overdue rents result: ', result);
-			return 0;
+			const overdueRents: RentOverdueLeaseDto = {
+				overDueLeaseCount:
+					parseInt(overdueRentsResult[0].overDueLeaseCount, 10) || 0,
+				overDueRentSum: parseFloat(overdueRentsResult[0].overDueRentSum) || 0,
+			};
+			return overdueRents;
 		} catch (err) {
 			this.logger.error(err, `Error getting total overdue rents in Org`);
 			throw err;

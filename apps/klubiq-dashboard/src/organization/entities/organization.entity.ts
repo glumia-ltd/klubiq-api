@@ -118,7 +118,7 @@ export class Organization {
 	isMaintenanceRequestNotificationEnabled?: boolean;
 
 	@AutoMap(() => [Property])
-	@OneToMany(() => Property, (property) => property.category)
+	@OneToMany(() => Property, (property) => property.organization)
 	properties?: Property[];
 
 	@AutoMap(() => [Transaction])

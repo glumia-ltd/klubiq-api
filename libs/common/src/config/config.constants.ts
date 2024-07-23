@@ -66,6 +66,7 @@ export enum CacheKeys {
 	PROPERTY_AMENITIES = 'property-amenities',
 	PROPERTY_METRICS = 'property-metrics',
 	TRANSACTION_METRICS = 'transaction-metrics',
+	REVENUE_METRICS = 'revenue-metrics',
 }
 
 export enum TransactionType {
@@ -73,11 +74,23 @@ export enum TransactionType {
 	EXPENSE = 'Expense',
 }
 
+export enum RevenueType {
+	PROPERTY_SALES = 'Property Sales',
+	PROPERTY_RENTAL = 'Property Rental',
+}
+
+export enum ExpenseType {
+	PROPERTY_TAX = 'Property Tax',
+}
+
 export enum PaymentFrequency {
 	WEEKLY = 'Weekly',
 	BI_WEEKLY = 'Bi-Weekly',
 	MONTHLY = 'Monthly',
 	ANNUALLY = 'Annually',
+	ONE_TIME = 'One Time',
+	BI_MONTHLY = 'Bi-Monthly',
+	QUARTERLY = 'Quarterly',
 	CUSTOM = 'Custom',
 }
 

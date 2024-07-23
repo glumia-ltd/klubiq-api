@@ -1,4 +1,7 @@
-import { PropertyMetrics } from '@app/common/dto/responses/property-metrics.dto';
+import {
+	PropertyMetrics,
+	RentOverdueLeaseDto,
+} from '@app/common/dto/responses/dashboard-metrics.dto';
 
 export const PROPERTY_METRICS = 'PROPERTY METRICS';
 
@@ -17,5 +20,5 @@ export interface IPropertyMetrics {
 		organizationUuid: string,
 		days?: number,
 	): Promise<PropertyMetrics>;
-	getTotalOverdueRents(organizationUuid: string): Promise<number>;
+	getTotalOverdueRents(organizationUuid: string): Promise<RentOverdueLeaseDto>;
 }

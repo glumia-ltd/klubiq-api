@@ -22,8 +22,12 @@ import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { PageMetaDto } from '@app/common/dto/pagination/page-meta.dto';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
 import { IPropertyMetrics } from '../interfaces/property-metrics.service.interface';
-import { PropertyMetrics } from '@app/common/dto/responses/property-metrics.dto';
-import { UserRoles } from '@app/common';
+import {
+	PropertyMetrics,
+	RentOverdueLeaseDto,
+} from '@app/common/dto/responses/dashboard-metrics.dto';
+import { UserRoles } from '@app/common/config/config.constants';
+import { Util } from '@app/common/helpers/util';
 
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
@@ -36,8 +40,11 @@ export class PropertiesService implements IPropertyMetrics {
 		private readonly cls: ClsService<SharedClsStore>,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
+		private readonly util: Util,
 	) {}
-	async getTotalOverdueRents(organizationUuid: string): Promise<number> {
+	async getTotalOverdueRents(
+		organizationUuid: string,
+	): Promise<RentOverdueLeaseDto> {
 		try {
 			const totalOverdueRents =
 				await this.propertyRepository.getTotalOverdueRents(organizationUuid);
@@ -128,7 +135,8 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.propertyRepository.getPropertyCountDataInOrganization(
 					organizationUuid,
 				);
-			const rentOverdue = await this.getTotalOverdueRents(organizationUuid);
+			const rentOverdueData = await this.getTotalOverdueRents(organizationUuid);
+			//await this.getTotalOverdueRents(organizationUuid);
 			const propertyMetrics: PropertyMetrics = {
 				vacantUnits,
 				occupiedUnits,
@@ -140,7 +148,20 @@ export class PropertiesService implements IPropertyMetrics {
 				singleUnits: propertyCountData.singleUnits,
 				occupancyRateLastMonth: occupancyRateDaysAgo,
 				maintenanceUnitsLastMonth: maintenanceUnitsDaysAgo,
-				rentOverdue: rentOverdue,
+				rentOverdue: rentOverdueData,
+				maintenanceUnitsChangeIndicator:
+					maintenanceUnitsDaysAgo > maintenanceUnits
+						? 'positive'
+						: maintenanceUnitsDaysAgo < maintenanceUnits
+							? 'negative'
+							: 'neutral',
+				maintenanceUnitsPercentageDifference:
+					maintenanceUnitsDaysAgo > 0 && maintenanceUnits > 0
+						? this.util.getPercentageIncreaseOrDecrease(
+								maintenanceUnitsDaysAgo,
+								maintenanceUnits,
+							)
+						: 0,
 			};
 			return propertyMetrics;
 		} catch (err) {
@@ -148,6 +169,7 @@ export class PropertiesService implements IPropertyMetrics {
 			throw err;
 		}
 	}
+
 	private async getOccupancyRate(
 		occupiedUnits: number,
 		totalUnits: number,
