@@ -12,6 +12,8 @@ export interface PropertyMetrics {
 	maintenanceUnits?: number;
 	totalProperties?: number;
 	occupancyRate?: number;
+	occupancyRatePercentageDifference?: number;
+	occupancyRateChangeIndicator: 'positive' | 'negative' | 'neutral';
 	multiUnits?: number;
 	singleUnits?: number;
 	occupancyRateLastMonth?: number;

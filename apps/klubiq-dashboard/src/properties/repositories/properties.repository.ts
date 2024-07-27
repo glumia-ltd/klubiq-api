@@ -111,6 +111,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 			});
 			return { ...createdProperty, units: [...propertyUnits] } as Property;
 		} catch (err) {
+			console.error('Error creating new property', err.message);
 			this.logger.error(err, 'Error creating new property');
 			throw err;
 		}
@@ -559,7 +560,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 				FROM
 					poo.lease l
 				JOIN
-					poo.property p ON p.uuid = l."propertyUuId" AND p."organizationUuid" = $3
+					poo.property p ON p.uuid = l."propertyUuId" AND p."organizationUuid" = '${organizationUuid}'
 				LEFT JOIN
 					(
 						SELECT
@@ -568,8 +569,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 						FROM
 							poo.transaction t
 						WHERE
-							t."transactionType" = $1
-							AND t."revenueType" = $2
+							t."transactionType" = '${TransactionType.REVENUE}'
+							AND t."revenueType" = '${RevenueType.PROPERTY_RENTAL}'
 							AND t."transactionDate" <= CURRENT_DATE
 						GROUP BY
 							t."leaseId"
@@ -582,11 +583,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 					AND l.isArchived = false
 					AND l.isDraft = false
 			`,
-				[
-					TransactionType.REVENUE,
-					RevenueType.PROPERTY_RENTAL,
-					organizationUuid,
-				],
 			);
 			const overdueRents: RentOverdueLeaseDto = {
 				overDueLeaseCount:

@@ -9,6 +9,7 @@ import {
 import {
 	PropertyMetrics,
 	RevenueResponseDto,
+	TransactionMetricsDto,
 } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -58,6 +59,23 @@ export class DashboardService {
 			return cachedRevenueMetrics;
 		}
 		const result = await this.dashboardRepository.getMonthlyRevenueData(
+			currentUser.organizationId,
+		);
+		await this.cacheManager.set(cacheKey, result, this.cacheTTL);
+		return result;
+	}
+
+	async getTransactionMetricsData(): Promise<TransactionMetricsDto> {
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		const cacheKey = `${this.cacheKeyPrefix}}/${CacheKeys.TRANSACTION_METRICS}/${currentUser.organizationId}`;
+		const cachedTransactionMetrics =
+			await this.cacheManager.get<TransactionMetricsDto>(cacheKey);
+		if (cachedTransactionMetrics) {
+			this.logger.log('Retrieving transaction metrics from cache');
+			return cachedTransactionMetrics;
+		}
+		const result = await this.dashboardRepository.getTransactionMetricsData(
 			currentUser.organizationId,
 		);
 		await this.cacheManager.set(cacheKey, result, this.cacheTTL);

@@ -41,14 +41,15 @@ export class LeaseRepository extends BaseRepository<Lease> {
 					securityDeposit: lease.securityDeposit ?? null,
 					rentDueMonth: lease.rentDueMonth ?? null,
 					isDraft: isDraft,
-					startDate: DateTime.fromSQL(lease.startDate),
-					endDate: DateTime.fromSQL(lease.endDate),
+					startDate: DateTime.fromISO(lease.startDate).toSQL(),
+					endDate: DateTime.fromISO(lease.endDate).toSQL(),
 					property: { uuid: lease.propertyUuId },
 					status: lease.status ?? LeaseStatus.NEW,
 					tenants: lease.tenants ?? null,
 					paymentFrequency: lease.paymentFrequency,
 				});
 			});
+			console.log('createdLease: ', createdLease);
 			return createdLease;
 		} catch (e) {
 			this.logger.error(e);

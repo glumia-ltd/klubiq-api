@@ -5,9 +5,11 @@ import {
 	RevenueResponseDto,
 	MonthlyRevenueDto,
 	RevenueChartDto,
+	TransactionMetricsDto,
 } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { Util } from '@app/common/helpers/util';
 import { find } from 'lodash';
+import { TransactionType } from '@app/common';
 
 @Injectable()
 export class DashboardRepository {
@@ -26,7 +28,7 @@ export class DashboardRepository {
             FROM
                 poo.transaction t
             WHERE
-                t."transactionType" = 'Revenue'
+                t."transactionType" = '${TransactionType.REVENUE}'
                 AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '12 months')
                 AND t."organizationUuid" = '${orgUuid}'
             GROUP BY
@@ -41,7 +43,7 @@ export class DashboardRepository {
             FROM
                 poo.transaction t
             WHERE
-                t."transactionType" = 'Revenue'
+                t."transactionType" = '${TransactionType.REVENUE}'
                 AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '12 months')
                 AND t."organizationUuid" = '${orgUuid}';`,
 		);
@@ -55,7 +57,7 @@ export class DashboardRepository {
                 poo.transaction t
             WHERE
                 t."organizationUuid" = '${orgUuid}'
-                AND t."transactionType" = 'Revenue'
+                AND t."transactionType" = '${TransactionType.REVENUE}'
                 AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '24 months')
                 AND t."transactionDate" < (CURRENT_DATE - INTERVAL '12 months');`,
 		);
@@ -63,7 +65,7 @@ export class DashboardRepository {
 			totalRevenuePrevious12MonthsResult[0].totalRevenuePrevious12Months || 0,
 		);
 		const percentageDifference =
-			totalRevenuePrevious12Months > 0
+			totalRevenuePrevious12Months > 0 && totalRevenueLast12Months > 0
 				? this.util.getPercentageIncreaseOrDecrease(
 						totalRevenuePrevious12Months,
 						totalRevenueLast12Months,
@@ -126,5 +128,138 @@ export class DashboardRepository {
 			changeIndicator,
 			revenueChart: revenueChartData,
 		};
+	}
+
+	async getTransactionMetricsData(
+		orgUuid: string,
+	): Promise<TransactionMetricsDto> {
+		try {
+			let totalExpensesMTD: number,
+				totalExpensesPreviousMTD: number,
+				totalRevenueMTD: number,
+				totalRevenuePreviousMTD: number;
+			const todaysRevenuerResult = await this.manager.query(
+				`SELECT
+                SUM(t.amount) as totalRevenue
+            FROM
+                poo.transaction t
+            WHERE
+                t."transactionType" = '${TransactionType.REVENUE}'
+                AND t."transactionDate" = CURRENT_DATE
+                AND t."organizationUuid" = '${orgUuid}';`,
+			);
+			const yesterdayRevenueResult = await this.manager.query(
+				`SELECT
+                SUM(t.amount) as totalRevenue
+            FROM
+                poo.transaction t
+            WHERE
+                t."transactionType" = '${TransactionType.REVENUE}'
+                AND t."transactionDate" = (CURRENT_DATE - INTERVAL '1 day')
+                AND t."organizationUuid" = '${orgUuid}';`,
+			);
+			const totalTransactionsMTDResult = await this.manager.query(
+				`SELECT
+                t."transactionType",
+                SUM(t.amount) as totalAmount
+            FROM
+                poo.transaction t
+            WHERE
+                t."transactionDate" >= (CURRENT_DATE - INTERVAL '30 days')
+                AND t."organizationUuid" = '${orgUuid}'
+            GROUP BY t."transactionType";`,
+			);
+			const totalTransactionsPreviousMTDResult = await this.manager.query(
+				`SELECT
+                t."transactionType",
+                SUM(t.amount) as totalAmount
+            FROM
+                poo.transaction t
+            WHERE
+                t."transactionDate" >= (CURRENT_DATE - INTERVAL '60 days')
+                AND t."transactionDate" < (CURRENT_DATE - INTERVAL '30 days')
+                AND t."organizationUuid" = '${orgUuid}'
+            GROUP BY t."transactionType";`,
+			);
+			const todaysRevenue = parseFloat(
+				todaysRevenuerResult[0].totalRevenue || 0,
+			);
+			const yesterdayRevenue = parseFloat(
+				yesterdayRevenueResult[0].totalRevenue || 0,
+			);
+			totalTransactionsMTDResult.forEach((row: any) => {
+				if (row.transactionType === TransactionType.REVENUE) {
+					totalRevenueMTD = parseFloat(row.totalAmount || 0);
+				} else if (row.transactionType === TransactionType.EXPENSE) {
+					totalExpensesMTD = parseFloat(row.totalAmount || 0);
+				}
+			});
+			totalTransactionsPreviousMTDResult.forEach((row: any) => {
+				if (row.transactionType === TransactionType.REVENUE) {
+					totalRevenuePreviousMTD = parseFloat(row.totalAmount || 0);
+				} else if (row.transactionType === TransactionType.EXPENSE) {
+					totalExpensesPreviousMTD = parseFloat(row.totalAmount || 0);
+				}
+			});
+			const dailyRevenuePercentageDifference =
+				yesterdayRevenue > 0 && todaysRevenue > 0
+					? this.util.getPercentageIncreaseOrDecrease(
+							yesterdayRevenue,
+							todaysRevenue,
+						)
+					: 0;
+
+			const dailyRevenueChangeIndicator =
+				todaysRevenue > yesterdayRevenue
+					? 'positive'
+					: todaysRevenue < yesterdayRevenue
+						? 'negative'
+						: 'neutral';
+			const expensesPercentageDifference =
+				totalExpensesPreviousMTD > 0 && totalExpensesMTD > 0
+					? this.util.getPercentageIncreaseOrDecrease(
+							totalRevenuePreviousMTD,
+							totalRevenueMTD,
+						)
+					: 0;
+			const expensesChangeIndicator =
+				totalExpensesPreviousMTD > totalExpensesMTD
+					? 'positive'
+					: totalExpensesPreviousMTD < totalExpensesMTD
+						? 'negative'
+						: 'neutral';
+			const netCashFlowMTD = totalRevenueMTD - totalExpensesMTD;
+			const netCashFlowPreviousMTD =
+				totalRevenuePreviousMTD - totalExpensesPreviousMTD;
+			const netCashFlowPercentageDifference =
+				netCashFlowPreviousMTD > 0 && netCashFlowMTD > 0
+					? this.util.getPercentageIncreaseOrDecrease(
+							netCashFlowPreviousMTD,
+							netCashFlowMTD,
+						)
+					: 0;
+			const cashFlowChangeIndicator =
+				netCashFlowMTD > netCashFlowPreviousMTD
+					? 'positive'
+					: netCashFlowMTD < netCashFlowPreviousMTD
+						? 'negative'
+						: 'neutral';
+			const transactionMetricsData: TransactionMetricsDto = {
+				totalExpenses: totalExpensesMTD,
+				netCashFlow: netCashFlowMTD,
+				totalExpensesLastMonth: totalExpensesPreviousMTD,
+				netCashFlowLastMonth: netCashFlowPreviousMTD,
+				totalExpensesPercentageDifference: expensesPercentageDifference,
+				netCashFlowPercentageDifference: netCashFlowPercentageDifference,
+				totalExpensesChangeIndicator: expensesChangeIndicator,
+				netCashFlowChangeIndicator: cashFlowChangeIndicator,
+				todaysRevenue,
+				dailyRevenuePercentageDifference,
+				dailyRevenueChangeIndicator,
+			};
+			return transactionMetricsData;
+		} catch (error) {
+			throw new Error(error);
+		}
 	}
 }

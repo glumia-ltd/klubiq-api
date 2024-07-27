@@ -9,6 +9,18 @@ export class PropertyImage extends AbstractEntity {
 	@Column()
 	url: string;
 
+	@AutoMap()
+	@Column({
+		type: 'timestamptz',
+		nullable: true,
+		default: () => 'CURRENT_TIMESTAMP',
+	})
+	uploadDate?: Date;
+
+	@AutoMap()
+	@Column({ type: 'decimal', nullable: true })
+	fileSize?: number;
+
 	@ManyToOne(() => Property, (property) => property.images)
 	property?: Property;
 }

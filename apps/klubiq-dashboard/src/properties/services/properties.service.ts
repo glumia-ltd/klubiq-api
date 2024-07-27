@@ -148,7 +148,20 @@ export class PropertiesService implements IPropertyMetrics {
 				singleUnits: propertyCountData.singleUnits,
 				occupancyRateLastMonth: occupancyRateDaysAgo,
 				maintenanceUnitsLastMonth: maintenanceUnitsDaysAgo,
-				rentOverdue: rentOverdueData,
+				rentOverdue: rentOverdueData || null,
+				occupancyRatePercentageDifference:
+					occupancyRateDaysAgo > 0 && occupancyRate > 0
+						? this.util.getPercentageIncreaseOrDecrease(
+								occupiedUnitsDaysAgo,
+								occupiedUnits,
+							)
+						: 0,
+				occupancyRateChangeIndicator:
+					occupancyRate > occupancyRateDaysAgo
+						? 'positive'
+						: occupancyRate < occupancyRateDaysAgo
+							? 'negative'
+							: 'neutral',
 				maintenanceUnitsChangeIndicator:
 					maintenanceUnitsDaysAgo > maintenanceUnits
 						? 'positive'
@@ -303,9 +316,10 @@ export class PropertiesService implements IPropertyMetrics {
 			//createDto.ownerUid = currentUser.uid;
 			const createdProperty =
 				await this.propertyRepository.createProperty(createDto);
+			console.log('Created PROPERTY: ', createdProperty);
 			return this.mapper.map(createdProperty, Property, PropertyDto);
 		} catch (error) {
-			this.logger.error('Error creating Property Data', error);
+			this.logger.error('Error creating Property Data', error.message);
 			throw new BadRequestException(`Error creating New Property.`, {
 				cause: new Error(),
 				description: error.message,

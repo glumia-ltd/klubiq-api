@@ -16,6 +16,7 @@ export class CreateLeaseDto {
 	@AutoMap()
 	@IsString()
 	name: string;
+
 	@AutoMap()
 	@IsDateString()
 	startDate: string;
@@ -47,6 +48,7 @@ export class CreateLeaseDto {
 	rentAmount: number;
 
 	@AutoMap()
+	@IsOptional()
 	@IsNumber()
 	securityDeposit?: number;
 
