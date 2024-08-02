@@ -6,6 +6,8 @@ import {
 } from '@automapper/classes/mapped-types';
 import { MetadataDto } from './metadata.dto';
 import { IsOptional } from 'class-validator';
+import { PropertyImage } from '@app/common/database/entities/property-image.entity';
+import { LeaseDto } from 'apps/klubiq-dashboard/src/lease/dto/responses/view-lease.dto';
 
 export class PropertyDto extends MapperOmitType(Property, [
 	'parentProperty',
@@ -41,18 +43,44 @@ export class PropertyDto extends MapperOmitType(Property, [
 	@IsOptional()
 	area?: any;
 
+	@AutoMap()
+	@IsOptional()
+	rent?: number;
+
+	@AutoMap()
+	@IsOptional()
+	unitCount?: number;
+
+	@AutoMap()
+	@IsOptional()
+	totalTenants?: number;
+
+	@AutoMap()
+	@IsOptional()
+	openMaintenanceRequests?: number;
+
+	@AutoMap()
+	@IsOptional()
+	vacantUnit?: number;
+
 	@AutoMap(() => MetadataDto)
 	purpose: MetadataDto;
 
-	@AutoMap(() => [PropertyUnitDto])
+	@AutoMap(() => [PropertyDto])
 	@IsOptional()
-	units?: PropertyUnitDto[];
+	units?: PropertyDto[];
 
 	@AutoMap(() => MetadataDto)
 	category: MetadataDto;
 
 	@AutoMap(() => MetadataDto)
 	type: MetadataDto;
+
+	@AutoMap(() => PropertyImage)
+	mainPhoto?: PropertyImage;
+
+	@AutoMap(() => [LeaseDto])
+	leases?: LeaseDto[];
 }
 
 export class PropertyUnitDto extends MapperPickType(Property, [

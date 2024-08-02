@@ -44,6 +44,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 		super(Property, manager);
 	}
 
+	///
+	/// CREATES PROPERTY RECORD
+	///
 	async createProperty(
 		createData: CreatePropertyDto,
 		isDraft: boolean = false,
@@ -164,17 +167,25 @@ export class PropertyRepository extends BaseRepository<Property> {
 			const queryBuilder = this.createQueryBuilder('property');
 			queryBuilder
 				.leftJoinAndSelect('property.purpose', 'pp')
-				.leftJoinAndSelect('property.status', 'ps')
 				.leftJoinAndSelect('property.type', 'pt')
 				.leftJoinAndSelect('property.category', 'pc')
-				.leftJoinAndSelect('property.images', 'pi')
+				.leftJoinAndMapOne(
+					'property.mainPhoto',
+					'property.images',
+					'pi',
+					'pi.isMain = TRUE',
+				)
 				.leftJoinAndSelect('property.address', 'pa')
-				.leftJoinAndSelect('property.amenities', 'pf')
-				.leftJoinAndSelect('property.units', 'punts')
-				.leftJoinAndSelect('punts.status', 'unitsStatus')
-				.leftJoinAndSelect('property.manager', 'pm')
-				.leftJoinAndSelect('property.owner', 'po')
-				.leftJoinAndSelect('property.leases', 'pl')
+				// .leftJoinAndSelect('property.amenities', 'pf')
+				// .leftJoinAndSelect('property.units', 'unit')
+				// .leftJoinAndSelect('unit.purpose', 'up')
+				// .leftJoinAndSelect('unit.manager', 'um')
+				// .leftJoinAndSelect('unit.leases', 'ul', 'ul.endDate >= NOW()')
+				// .leftJoinAndSelect('ul.tenants', 'unit_tenants')
+				// .leftJoinAndSelect('property.manager', 'pm')
+				// .leftJoinAndSelect('property.owner', 'po')
+				// .leftJoinAndSelect('property.leases', 'pl', 'pl.endDate >= NOW()')
+				// .leftJoinAndSelect('pl.tenants', 'tenants')
 				.where('property.organizationUuid = :organizationUuid', {
 					organizationUuid: orgUuid,
 				})
@@ -246,11 +257,35 @@ export class PropertyRepository extends BaseRepository<Property> {
 				.leftJoinAndSelect('property.images', 'pi')
 				.leftJoinAndSelect('property.address', 'pa')
 				.leftJoinAndSelect('property.amenities', 'pf')
-				.leftJoinAndSelect('property.units', 'punts')
-				.leftJoinAndSelect('punts.status', 'puntstatus')
 				.leftJoinAndSelect('property.manager', 'pm')
 				.leftJoinAndSelect('property.owner', 'po')
-				.leftJoinAndSelect('property.leases', 'pl')
+				.leftJoinAndSelect('property.leases', 'pl', 'pl.endDate >= NOW()')
+				.leftJoinAndSelect('pl.tenants', 'property_tenants')
+				.leftJoinAndSelect('property.units', 'units')
+				.leftJoinAndSelect('units.status', 'unitStatus')
+				.leftJoinAndSelect('units.manager', 'unitManager')
+				.leftJoinAndSelect('units.images', 'unitImages')
+				.leftJoinAndSelect(
+					'units.leases',
+					'unitLeases',
+					'unitLeases.endDate >= NOW()',
+				)
+				.leftJoinAndSelect('unitLeases.tenants', 'lease_tenants');
+			// if (isMultiUnit) {
+			// 	propertyData
+
+			// 	//.addSelect('COALESCE(SUM(CASE WHEN COUNT(unitLeases.id) > 0 THEN 1 ELSE 0 END),0)', 'occupiedUnits')
+			// 	//.addSelect('IFNULL(SUM(unitLeases.rentAmount), 0)', 'totalRent')
+			// 	//.addSelect('COALESCE(SUM(COUNT(DISTINCT tenants.profileId)), 0)', 'totalTenants');
+			// } else {
+			// 	propertyData
+
+			// 	// .addSelect('CASE WHEN COUNT(pl.id) > 0 THEN 1 ELSE 0 END', 'occupiedUnits')
+			// 	// .addSelect('COALESCE(SUM(pl.rentAmount), 0)', 'totalRent')
+			// 	// .addSelect('COALESCE(COUNT(DISTINCT tenants.profileId), 0)', 'totalTenants');
+			// }
+			// //propertyData.addSelect('property.unitCount - property.occupiedUnits', 'availableUnits');
+			propertyData
 				.where('property.uuid = :propertyUuid', {
 					propertyUuid: propertyUuid,
 				})
@@ -268,7 +303,12 @@ export class PropertyRepository extends BaseRepository<Property> {
 					}),
 				);
 			}
-			return await propertyData.getOne();
+
+			const property = await propertyData.getOne();
+			property.occupiedUnits = 0;
+			property.totalRent = 0;
+			property.totalTenants = 0;
+			return property;
 		} catch (err) {
 			this.logger.error(err, `Error getting a property for Org: ${orgUuid}`);
 			throw err;

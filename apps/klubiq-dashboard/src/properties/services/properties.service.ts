@@ -28,6 +28,7 @@ import {
 } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { UserRoles } from '@app/common/config/config.constants';
 import { Util } from '@app/common/helpers/util';
+import { forEach, map } from 'lodash';
 
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
@@ -217,6 +218,7 @@ export class PropertiesService implements IPropertyMetrics {
 					currentUser.organizationRole === UserRoles.ORG_OWNER,
 					uuid,
 				);
+			await this.calculatePropertyMetrics(property);
 			await this.cacheManager.set(cacheKey, property, this.cacheTTL);
 			return await this.mapper.mapAsync(property, Property, PropertyDto);
 		} catch (error) {
@@ -316,7 +318,6 @@ export class PropertiesService implements IPropertyMetrics {
 			//createDto.ownerUid = currentUser.uid;
 			const createdProperty =
 				await this.propertyRepository.createProperty(createDto);
-			console.log('Created PROPERTY: ', createdProperty);
 			return this.mapper.map(createdProperty, Property, PropertyDto);
 		} catch (error) {
 			this.logger.error('Error creating Property Data', error.message);
@@ -456,6 +457,30 @@ export class PropertiesService implements IPropertyMetrics {
 			throw new BadRequestException(`Error adding Unit to Property.`, {
 				cause: new Error(),
 				description: error.message,
+			});
+		}
+	}
+
+	private async calculatePropertyMetrics(property: Property): Promise<void> {
+		if (property.units && property.units.length > 0) {
+			forEach(property.units, (unit) => {
+				if (unit.leases && unit.leases.length > 0) {
+					property.occupiedUnits += 1;
+					unit.occupiedUnits = 1;
+					unit.totalRent = 0;
+					map(unit.leases, (lease) => {
+						property.totalRent += Number(lease.rentAmount);
+						property.totalTenants += lease.tenants?.length;
+						unit.totalTenants = lease.tenants?.length;
+						unit.totalRent += Number(lease.rentAmount);
+					});
+				}
+			});
+		} else {
+			property.occupiedUnits = property.leases?.length > 0 ? 1 : 0;
+			map(property.leases, (lease) => {
+				property.totalRent += Number(lease.rentAmount);
+				property.totalTenants = lease.tenants?.length;
 			});
 		}
 	}

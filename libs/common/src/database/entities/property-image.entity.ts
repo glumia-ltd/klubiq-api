@@ -21,6 +21,10 @@ export class PropertyImage extends AbstractEntity {
 	@Column({ type: 'decimal', nullable: true })
 	fileSize?: number;
 
+	@AutoMap()
+	@Column({ default: false })
+	isMain?: boolean;
+
 	@ManyToOne(() => Property, (property) => property.images)
 	property?: Property;
 }

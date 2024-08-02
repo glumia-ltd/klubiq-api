@@ -9,10 +9,12 @@ import { RepositoriesModule } from '@app/common';
 import { PropertyRepository } from './repositories/properties.repository';
 import { PROPERTY_METRICS } from './interfaces/property-metrics.service.interface';
 import { Util } from '@app/common/helpers/util';
+import { LeaseProfile } from '../lease/profiles/lease.profile';
 
 @Module({
 	providers: [
 		PropertyProfile,
+		LeaseProfile,
 		PropertiesService,
 		PropertyRepository,
 		Util,
