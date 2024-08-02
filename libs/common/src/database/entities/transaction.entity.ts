@@ -10,7 +10,7 @@ import {
 	PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Lease } from './lease.entity';
-import { TransactionType } from '../../config/config.constants';
+import { RevenueType, TransactionType } from '../../config/config.constants';
 import { Organization } from '../../../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
 
 @Entity({ schema: 'poo' })
@@ -34,7 +34,11 @@ export class Transaction {
 
 	@AutoMap()
 	@Column({ type: 'enum', enum: TransactionType })
-	type: TransactionType;
+	transactionType: TransactionType;
+
+	@AutoMap()
+	@Column({ type: 'enum', enum: RevenueType })
+	revenueType: RevenueType;
 
 	@CreateDateColumn({ select: false })
 	createdDate?: Date;

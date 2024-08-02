@@ -22,8 +22,13 @@ import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { PageMetaDto } from '@app/common/dto/pagination/page-meta.dto';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
 import { IPropertyMetrics } from '../interfaces/property-metrics.service.interface';
-import { PropertyMetrics } from '@app/common/dto/responses/property-metrics.dto';
-import { UserRoles } from '@app/common';
+import {
+	PropertyMetrics,
+	RentOverdueLeaseDto,
+} from '@app/common/dto/responses/dashboard-metrics.dto';
+import { UserRoles } from '@app/common/config/config.constants';
+import { Util } from '@app/common/helpers/util';
+import { forEach, map } from 'lodash';
 
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
@@ -36,8 +41,11 @@ export class PropertiesService implements IPropertyMetrics {
 		private readonly cls: ClsService<SharedClsStore>,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
+		private readonly util: Util,
 	) {}
-	async getTotalOverdueRents(organizationUuid: string): Promise<number> {
+	async getTotalOverdueRents(
+		organizationUuid: string,
+	): Promise<RentOverdueLeaseDto> {
 		try {
 			const totalOverdueRents =
 				await this.propertyRepository.getTotalOverdueRents(organizationUuid);
@@ -128,7 +136,8 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.propertyRepository.getPropertyCountDataInOrganization(
 					organizationUuid,
 				);
-			const rentOverdue = await this.getTotalOverdueRents(organizationUuid);
+			const rentOverdueData = await this.getTotalOverdueRents(organizationUuid);
+			//await this.getTotalOverdueRents(organizationUuid);
 			const propertyMetrics: PropertyMetrics = {
 				vacantUnits,
 				occupiedUnits,
@@ -140,7 +149,33 @@ export class PropertiesService implements IPropertyMetrics {
 				singleUnits: propertyCountData.singleUnits,
 				occupancyRateLastMonth: occupancyRateDaysAgo,
 				maintenanceUnitsLastMonth: maintenanceUnitsDaysAgo,
-				rentOverdue: rentOverdue,
+				rentOverdue: rentOverdueData || null,
+				occupancyRatePercentageDifference:
+					occupancyRateDaysAgo > 0 && occupancyRate > 0
+						? this.util.getPercentageIncreaseOrDecrease(
+								occupiedUnitsDaysAgo,
+								occupiedUnits,
+							)
+						: 0,
+				occupancyRateChangeIndicator:
+					occupancyRate > occupancyRateDaysAgo
+						? 'positive'
+						: occupancyRate < occupancyRateDaysAgo
+							? 'negative'
+							: 'neutral',
+				maintenanceUnitsChangeIndicator:
+					maintenanceUnitsDaysAgo > maintenanceUnits
+						? 'positive'
+						: maintenanceUnitsDaysAgo < maintenanceUnits
+							? 'negative'
+							: 'neutral',
+				maintenanceUnitsPercentageDifference:
+					maintenanceUnitsDaysAgo > 0 && maintenanceUnits > 0
+						? this.util.getPercentageIncreaseOrDecrease(
+								maintenanceUnitsDaysAgo,
+								maintenanceUnits,
+							)
+						: 0,
 			};
 			return propertyMetrics;
 		} catch (err) {
@@ -148,6 +183,7 @@ export class PropertiesService implements IPropertyMetrics {
 			throw err;
 		}
 	}
+
 	private async getOccupancyRate(
 		occupiedUnits: number,
 		totalUnits: number,
@@ -182,6 +218,7 @@ export class PropertiesService implements IPropertyMetrics {
 					currentUser.organizationRole === UserRoles.ORG_OWNER,
 					uuid,
 				);
+			await this.calculatePropertyMetrics(property);
 			await this.cacheManager.set(cacheKey, property, this.cacheTTL);
 			return await this.mapper.mapAsync(property, Property, PropertyDto);
 		} catch (error) {
@@ -283,7 +320,7 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.propertyRepository.createProperty(createDto);
 			return this.mapper.map(createdProperty, Property, PropertyDto);
 		} catch (error) {
-			this.logger.error('Error creating Property Data', error);
+			this.logger.error('Error creating Property Data', error.message);
 			throw new BadRequestException(`Error creating New Property.`, {
 				cause: new Error(),
 				description: error.message,
@@ -420,6 +457,30 @@ export class PropertiesService implements IPropertyMetrics {
 			throw new BadRequestException(`Error adding Unit to Property.`, {
 				cause: new Error(),
 				description: error.message,
+			});
+		}
+	}
+
+	private async calculatePropertyMetrics(property: Property): Promise<void> {
+		if (property.units && property.units.length > 0) {
+			forEach(property.units, (unit) => {
+				if (unit.leases && unit.leases.length > 0) {
+					property.occupiedUnits += 1;
+					unit.occupiedUnits = 1;
+					unit.totalRent = 0;
+					map(unit.leases, (lease) => {
+						property.totalRent += Number(lease.rentAmount);
+						property.totalTenants += lease.tenants?.length;
+						unit.totalTenants = lease.tenants?.length;
+						unit.totalRent += Number(lease.rentAmount);
+					});
+				}
+			});
+		} else {
+			property.occupiedUnits = property.leases?.length > 0 ? 1 : 0;
+			map(property.leases, (lease) => {
+				property.totalRent += Number(lease.rentAmount);
+				property.totalTenants = lease.tenants?.length;
 			});
 		}
 	}

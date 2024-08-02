@@ -156,6 +156,7 @@ export class Property {
 	@TreeChildren({ cascade: true })
 	units?: Property[];
 
+	@AutoMap()
 	@Column({ default: 1 })
 	unitCount?: number;
 
@@ -209,4 +210,19 @@ export class Property {
 	@AutoMap(() => [Maintenance])
 	@OneToMany(() => Maintenance, (maintenance) => maintenance.property)
 	maintenances?: Maintenance[];
+
+	@AutoMap(() => PropertyImage)
+	mainPhoto?: PropertyImage;
+
+	@AutoMap()
+	occupiedUnits?: number;
+
+	@AutoMap()
+	totalTenants?: number;
+
+	@AutoMap()
+	totalRent?: number;
+
+	@AutoMap()
+	availableUnits?: number;
 }

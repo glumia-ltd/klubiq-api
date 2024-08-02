@@ -46,7 +46,7 @@ export class Lease {
 	status?: LeaseStatus;
 
 	@AutoMap()
-	@Column({ nullable: true })
+	@Column({ default: 0 })
 	customPaymentFrequency?: number;
 
 	@AutoMap()
@@ -58,12 +58,8 @@ export class Lease {
 	endDate?: Date;
 
 	@AutoMap()
-	@Column({ type: 'int', nullable: false })
-	rentDueDay?: number;
-
-	@AutoMap()
 	@Column({ type: 'int', nullable: true })
-	rentDueMonth?: number;
+	rentDueDay?: number;
 
 	@AutoMap()
 	@Column({ type: 'decimal', precision: 18, scale: 2, nullable: false })

@@ -13,7 +13,7 @@ import {
 	Roles,
 } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
-import { PropertyMetrics } from '@app/common/dto/responses/property-metrics.dto';
+import { DashboardMetricsDto } from '@app/common/dto/responses/dashboard-metrics.dto';
 
 @ApiBearerAuth()
 @ApiTags('dashboard')
@@ -25,11 +25,16 @@ export class DashboardController {
 
 	@Roles(UserRoles.ORG_OWNER, UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Ability(Actions.WRITE, Actions.VIEW)
-	@Get('property-metrics')
+	@Get('metrics')
 	@ApiOkResponse()
-	async metrics(): Promise<PropertyMetrics> {
+	async metrics(): Promise<DashboardMetricsDto> {
 		try {
-			const data = await this.dashboardService.getPropertyMetrics();
+			const data: DashboardMetricsDto = {
+				propertyMetrics: await this.dashboardService.getPropertyMetrics(),
+				revenueMetrics: await this.dashboardService.getRevenueBarChartData(),
+				transactionMetrics:
+					await this.dashboardService.getTransactionMetricsData(),
+			};
 			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);

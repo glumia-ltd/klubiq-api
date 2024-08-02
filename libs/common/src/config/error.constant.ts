@@ -1,5 +1,5 @@
 export enum ErrorMessages {
-	UNAUTHORIZED = 'Unauthorized Acces',
+	UNAUTHORIZED = 'Unauthorized Access',
 	INTERNAL_SERVER_ERROR = 'Internal Server Error',
 	NOT_FOUND = 'Not Found',
 	BAD_REQUEST = 'Bad Request',
