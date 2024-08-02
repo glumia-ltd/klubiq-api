@@ -134,10 +134,10 @@ export class DashboardRepository {
 		orgUuid: string,
 	): Promise<TransactionMetricsDto> {
 		try {
-			let totalExpensesMTD: number,
-				totalExpensesPreviousMTD: number,
-				totalRevenueMTD: number,
-				totalRevenuePreviousMTD: number;
+			let totalExpensesMTD: number = 0,
+				totalExpensesPreviousMTD: number = 0,
+				totalRevenueMTD: number = 0,
+				totalRevenuePreviousMTD: number = 0;
 			const todaysRevenuerResult = await this.manager.query(
 				`SELECT
                 SUM(t.amount) as totalRevenue

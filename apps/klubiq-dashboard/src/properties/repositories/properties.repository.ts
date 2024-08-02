@@ -605,7 +605,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 					(
 						SELECT
 							t."leaseId",
-							SUM(t.amount) AS totalPaid
+							SUM(t.amount) AS total_paid
 						FROM
 							poo.transaction t
 						WHERE
@@ -617,11 +617,10 @@ export class PropertyRepository extends BaseRepository<Property> {
 					) payments ON l.id = payments."leaseId"
 				WHERE
 					l."endDate" >= CURRENT_DATE
-					AND calculate_next_due_date(l."startDate", l."paymentFrequency", l."customPaymentFrequency", l."rentDueDay") <= CURRENT_DATE
-					AND (payments."totalPaid" IS NULL OR payments."totalPaid" < l."rentAmount");
-					AND l.status = :status
-					AND l.isArchived = false
-					AND l.isDraft = false
+					AND public.calculate_next_due_date(l."startDate", l."paymentFrequency", l."customPaymentFrequency", l."rentDueDay") <= CURRENT_DATE
+					AND (payments.total_paid IS NULL OR payments.total_paid < l."rentAmount")
+					AND l."isArchived" = false
+					AND l."isDraft" = false;
 			`,
 			);
 			const overdueRents: RentOverdueLeaseDto = {
@@ -631,7 +630,11 @@ export class PropertyRepository extends BaseRepository<Property> {
 			};
 			return overdueRents;
 		} catch (err) {
-			this.logger.error(err, `Error getting total overdue rents in Org`);
+			this.logger.error(
+				err.message,
+				err,
+				`Error getting total overdue rents in Org`,
+			);
 			throw err;
 		}
 	}
