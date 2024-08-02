@@ -124,14 +124,14 @@ export class PropertiesService implements IPropertyMetrics {
 				daysAgo,
 			);
 
-			const occupancyRate = await this.getOccupancyRate(
-				occupiedUnits,
-				totalUnits,
-			);
-			const occupancyRateDaysAgo = await this.getOccupancyRate(
-				occupiedUnitsDaysAgo,
-				totalUnits,
-			);
+			const occupancyRate =
+				occupiedUnits > 0 && totalUnits > 0
+					? await this.getOccupancyRate(occupiedUnits, totalUnits)
+					: 0;
+			const occupancyRateDaysAgo =
+				occupiedUnitsDaysAgo > 0 && totalUnits > 0
+					? await this.getOccupancyRate(occupiedUnitsDaysAgo, totalUnits)
+					: 0;
 			const propertyCountData =
 				await this.propertyRepository.getPropertyCountDataInOrganization(
 					organizationUuid,
@@ -149,7 +149,7 @@ export class PropertiesService implements IPropertyMetrics {
 				singleUnits: propertyCountData.singleUnits,
 				occupancyRateLastMonth: occupancyRateDaysAgo,
 				maintenanceUnitsLastMonth: maintenanceUnitsDaysAgo,
-				rentOverdue: rentOverdueData || null,
+				rentOverdue: rentOverdueData,
 				occupancyRatePercentageDifference:
 					occupancyRateDaysAgo > 0 && occupancyRate > 0
 						? this.util.getPercentageIncreaseOrDecrease(
