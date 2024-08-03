@@ -49,7 +49,6 @@ export class LeaseRepository extends BaseRepository<Lease> {
 					paymentFrequency: lease.paymentFrequency,
 				});
 			});
-			console.log('createdLease: ', createdLease);
 			return createdLease;
 		} catch (e) {
 			this.logger.error(e);

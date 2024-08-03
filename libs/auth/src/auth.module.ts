@@ -48,7 +48,6 @@ const firebaseAdminProvider = {
 	provide: 'FIREBASE_ADMIN',
 	useFactory: () => {
 		if (apps.length > 0) {
-			console.log('Firebase Admin already initialized. APP: ', apps[0].name);
 			return apps[0];
 		}
 		return admin.initializeApp({

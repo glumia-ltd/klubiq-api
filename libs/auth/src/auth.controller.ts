@@ -54,7 +54,6 @@ export class AuthController {
 			await this.landlordAuthService.verifyEmail(data.oobCode);
 			return { message: 'Email verification successful!' };
 		} catch (err) {
-			console.error('Error verifying email:', err);
 			throw err;
 		}
 	}
@@ -88,7 +87,6 @@ export class AuthController {
 		try {
 			return this.landlordAuthService.resetPassword(resetPasswordDto);
 		} catch (err) {
-			console.error('Error updating password:', err);
 			throw err;
 		}
 	}

@@ -16,7 +16,6 @@ export class Util {
 			customPaymentFrequency,
 		} = lease;
 		const currentDate = DateTime.utc().toJSDate();
-		console.log('Formatted currentDate', currentDate);
 		if (currentDate > endDate) return null;
 		let nextDueDate: Date = startDate;
 		while (nextDueDate <= currentDate) {
