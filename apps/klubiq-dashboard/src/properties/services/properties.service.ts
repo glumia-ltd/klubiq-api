@@ -49,7 +49,6 @@ export class PropertiesService implements IPropertyMetrics {
 		try {
 			const totalOverdueRents =
 				await this.propertyRepository.getTotalOverdueRents(organizationUuid);
-			console.log('Total overdue rents', totalOverdueRents);
 			return totalOverdueRents;
 		} catch (error) {
 			this.logger.error('Error getting total overdue rents', error);
@@ -59,7 +58,6 @@ export class PropertiesService implements IPropertyMetrics {
 		try {
 			const totalUnits =
 				await this.propertyRepository.getTotalUnits(organizationUuid);
-			console.log('Total units', totalUnits);
 			return totalUnits;
 		} catch (error) {
 			this.logger.error('Error getting total properties', error);
@@ -393,7 +391,6 @@ export class PropertiesService implements IPropertyMetrics {
 				createDto,
 				true,
 			);
-			console.log('Draft: ', draftProperty);
 			return this.mapper.map(draftProperty, Property, PropertyDto);
 		} catch (error) {
 			this.logger.error('Error creating draft Property Data', error.message);

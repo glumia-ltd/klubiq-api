@@ -86,7 +86,6 @@ export class AdminAuthService extends AuthService {
 			fbid = null;
 			return adminUser;
 		} catch (error) {
-			console.log('CREATE USER ERROR: ', error);
 			await this.deleteUser(fbid);
 			throw new FirebaseException(error);
 		}

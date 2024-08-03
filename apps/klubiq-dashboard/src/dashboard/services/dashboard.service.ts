@@ -31,7 +31,7 @@ export class DashboardService {
 	async getPropertyMetrics(): Promise<PropertyMetrics> {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const cacheKey = `${this.cacheKeyPrefix}}/${CacheKeys.PROPERTY_METRICS}/${currentUser.organizationId}`;
+		const cacheKey = `${this.cacheKeyPrefix}/${CacheKeys.PROPERTY_METRICS}/${currentUser.organizationId}`;
 		const cachedPropertyMetrics =
 			await this.cacheManager.get<PropertyMetrics>(cacheKey);
 		if (cachedPropertyMetrics) {
@@ -43,7 +43,6 @@ export class DashboardService {
 				currentUser.organizationId,
 				30,
 			);
-		console.log('propertyMetrics: ', propertyMetrics);
 		await this.cacheManager.set(cacheKey, propertyMetrics, this.cacheTTL);
 		return propertyMetrics;
 	}
@@ -51,7 +50,7 @@ export class DashboardService {
 	async getRevenueBarChartData(): Promise<RevenueResponseDto> {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const cacheKey = `${this.cacheKeyPrefix}}/${CacheKeys.REVENUE_METRICS}/${currentUser.organizationId}`;
+		const cacheKey = `${this.cacheKeyPrefix}/${CacheKeys.REVENUE_METRICS}/${currentUser.organizationId}`;
 		const cachedRevenueMetrics =
 			await this.cacheManager.get<RevenueResponseDto>(cacheKey);
 		if (cachedRevenueMetrics) {
@@ -68,7 +67,7 @@ export class DashboardService {
 	async getTransactionMetricsData(): Promise<TransactionMetricsDto> {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const cacheKey = `${this.cacheKeyPrefix}}/${CacheKeys.TRANSACTION_METRICS}/${currentUser.organizationId}`;
+		const cacheKey = `${this.cacheKeyPrefix}/${CacheKeys.TRANSACTION_METRICS}/${currentUser.organizationId}`;
 		const cachedTransactionMetrics =
 			await this.cacheManager.get<TransactionMetricsDto>(cacheKey);
 		if (cachedTransactionMetrics) {

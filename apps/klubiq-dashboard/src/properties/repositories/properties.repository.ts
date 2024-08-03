@@ -114,9 +114,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 			});
 			return { ...createdProperty, units: [...propertyUnits] } as Property;
 		} catch (err) {
-			console.error('Error creating new property', err.message);
-			this.logger.error(err, 'Error creating new property');
-			throw err;
+			this.logger.error(err.message, err, 'Error creating new property');
+			throw err.message;
 		}
 	}
 

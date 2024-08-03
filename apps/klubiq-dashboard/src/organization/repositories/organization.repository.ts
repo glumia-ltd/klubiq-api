@@ -36,7 +36,11 @@ export class OrganizationRepository extends BaseRepository<Organization> {
 
 			return existingEntity;
 		} catch (error) {
-			console.error('Error finding or creating entity:', error);
+			this.logger.error(
+				error.message,
+				error,
+				'Error finding or creating entity',
+			);
 			throw error;
 		}
 	}

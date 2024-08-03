@@ -10,7 +10,6 @@ import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { PageOptionsDto, PageDto, PageMetaDto } from '@app/common';
 import { OrganizationResponseDto } from '../dto/organization-response.dto';
-import { Console } from 'console';
 
 @Injectable()
 export class OrganizationService {

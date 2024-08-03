@@ -179,7 +179,6 @@ export abstract class AuthService {
 			);
 			return data;
 		} catch (err) {
-			console.error('Error resetting password:', err);
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
@@ -218,7 +217,6 @@ export abstract class AuthService {
 			this.userProfilesRepository.acceptInvitation(data.localId);
 			return data;
 		} catch (err) {
-			console.error('Error resetting password:', err);
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
@@ -302,7 +300,6 @@ export abstract class AuthService {
 			);
 			return data;
 		} catch (err) {
-			console.error('Error verifying code:', err);
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(
@@ -335,7 +332,6 @@ export abstract class AuthService {
 			};
 			return roleAndEntitlements;
 		} catch (error) {
-			console.error('Error decoding token:', error);
 			return null;
 		}
 	}
