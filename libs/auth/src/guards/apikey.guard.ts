@@ -14,7 +14,7 @@ export class ApikeyGuard implements CanActivate {
 		if (!apiKey) throw new Error('API Key not found.');
 		try {
 			const adminApiKey = this.configService.getOrThrow('ADMIN_API_KEY'); //use temporarily for admin access
-			console.log('admin ApiKey', adminApiKey);
+			console.log('ADMIN APIKEY USED', adminApiKey);
 			return adminApiKey === apiKey;
 		} catch {
 			throw new Error('Invalid API Key');
