@@ -366,7 +366,7 @@ export abstract class AuthService {
 	}
 
 	async getInvitationToken(invitedUserDto: InviteUserDto): Promise<string> {
-		const secret = this.configService.get<string>('ADMIN_API_KEY');
+		const secret = this.configService.get<string>('KLUBIQ_ADMIN_API_KEY');
 		const token = createHmac('sha256', secret)
 			.update(
 				`${invitedUserDto.email}|${invitedUserDto.firstName}||${invitedUserDto.lastName}`,

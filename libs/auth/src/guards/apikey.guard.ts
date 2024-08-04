@@ -13,7 +13,7 @@ export class ApikeyGuard implements CanActivate {
 		const apiKey = this.extractKeyFromHeader(request);
 		if (!apiKey) throw new Error('API Key not found.');
 		try {
-			const adminApiKey = this.configService.getOrThrow('ADMIN_API_KEY'); //use temporarily for admin access
+			const adminApiKey = this.configService.getOrThrow('KLUBIQ_ADMIN_API_KEY'); //use temporarily for admin access
 			return adminApiKey === apiKey;
 		} catch {
 			throw new Error('Invalid API Key');
