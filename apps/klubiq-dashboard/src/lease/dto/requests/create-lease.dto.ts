@@ -39,11 +39,6 @@ export class CreateLeaseDto {
 	rentDueDay: number;
 
 	@AutoMap()
-	@IsOptional()
-	@IsNumber()
-	rentDueMonth?: number;
-
-	@AutoMap()
 	@IsNumber()
 	rentAmount: number;
 
