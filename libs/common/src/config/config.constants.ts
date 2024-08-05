@@ -109,6 +109,8 @@ export enum LeaseStatus {
 	CANCELLED = 'Cancelled',
 	EXPIRED = 'Expired',
 	ON_HOLD = 'On Hold',
+	EXPIRING = 'Expiring',
+	TERMINATED = 'Terminated',
 }
 
 export enum MaintenancePriority {

@@ -39,7 +39,6 @@ export class LeaseRepository extends BaseRepository<Lease> {
 					rentDueDay: lease.rentDueDay,
 					rentAmount: lease.rentAmount,
 					securityDeposit: lease.securityDeposit ?? null,
-					rentDueMonth: lease.rentDueMonth ?? null,
 					isDraft: isDraft,
 					startDate: DateTime.fromISO(lease.startDate).toSQL(),
 					endDate: DateTime.fromISO(lease.endDate).toSQL(),
