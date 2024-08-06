@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
 	Amenity,
 	BaseRepository,
+	LeaseStatus,
 	RentOverdueLeaseDto,
 	RevenueType,
 	TransactionType,
@@ -175,16 +176,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 					'pi.isMain = TRUE',
 				)
 				.leftJoinAndSelect('property.address', 'pa')
-				// .leftJoinAndSelect('property.amenities', 'pf')
-				// .leftJoinAndSelect('property.units', 'unit')
-				// .leftJoinAndSelect('unit.purpose', 'up')
-				// .leftJoinAndSelect('unit.manager', 'um')
-				// .leftJoinAndSelect('unit.leases', 'ul', 'ul.endDate >= NOW()')
-				// .leftJoinAndSelect('ul.tenants', 'unit_tenants')
-				// .leftJoinAndSelect('property.manager', 'pm')
-				// .leftJoinAndSelect('property.owner', 'po')
-				// .leftJoinAndSelect('property.leases', 'pl', 'pl.endDate >= NOW()')
-				// .leftJoinAndSelect('pl.tenants', 'tenants')
 				.where('property.organizationUuid = :organizationUuid', {
 					organizationUuid: orgUuid,
 				})
@@ -481,8 +472,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 	): Promise<number> {
 		try {
 			const queryBuilder = this.createQueryBuilder('property');
-			queryBuilder.leftJoin('property.leases', 'pl');
 			await this.getOrganizationUnitsConditions(orgUuid, queryBuilder);
+			queryBuilder.leftJoin('property.leases', 'pl');
 			const count = await queryBuilder
 				.andWhere(
 					new Brackets((qb) => {
@@ -509,6 +500,16 @@ export class PropertyRepository extends BaseRepository<Property> {
 			queryBuilder.innerJoin('property.leases', 'pl');
 			await this.getOrganizationUnitsConditions(organizationUuid, queryBuilder);
 			const count = await queryBuilder
+				.select()
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('pl.status = :status', {
+							status: LeaseStatus.ACTIVE,
+						}).orWhere('pl.status = :status', {
+							status: LeaseStatus.EXPIRING,
+						});
+					}),
+				)
 				.andWhere(
 					new Brackets((qb) => {
 						qb.where('pl.startDate <= :timestamp', {
