@@ -127,7 +127,7 @@ export class LeaseController {
 	@Ability(Actions.WRITE)
 	@ApiOkResponse({
 		description: 'add tenants to lease',
-		type: () => PageDto<LeaseDto>,
+		type: () => LeaseDto,
 	})
 	async addTenants(
 		@Param('id') id: number,
