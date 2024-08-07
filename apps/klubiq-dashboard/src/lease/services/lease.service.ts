@@ -4,6 +4,7 @@ import { CreateLeaseDto } from '../dto/requests/create-lease.dto';
 import { LeaseDto } from '../dto/responses/view-lease.dto';
 import { ClsService } from 'nestjs-cls';
 import {
+	CreateTenantDto,
 	ErrorMessages,
 	Lease,
 	PageDto,
@@ -23,7 +24,7 @@ import { GetLeaseDto } from '../dto/requests/get-lease.dto';
 export class LeaseService implements ILeaseService {
 	private readonly logger = new Logger(LeaseService.name);
 	private readonly cacheKeyPrefix = 'leases';
-	private readonly cacheTTL = 60000;
+	private readonly cacheTTL = 15000;
 
 	constructor(
 		private readonly cls: ClsService<SharedClsStore>,
@@ -111,5 +112,25 @@ export class LeaseService implements ILeaseService {
 		const lease = await this.leaseRepository.createLease(leaseDto, false);
 		const mappedLease = await this.mapper.mapAsync(lease, Lease, LeaseDto);
 		return mappedLease;
+	}
+
+	async addTenantToLease(
+		tenantDtos: CreateTenantDto[],
+		leaseId: number,
+	): Promise<LeaseDto> {
+		try {
+			const updatedLease = await this.leaseRepository.addTenantToLease(
+				tenantDtos,
+				leaseId,
+			);
+			const mappedLease = await this.mapper.mapAsync(
+				updatedLease,
+				Lease,
+				LeaseDto,
+			);
+			return mappedLease;
+		} catch (error) {
+			throw new Error(error.message);
+		}
 	}
 }

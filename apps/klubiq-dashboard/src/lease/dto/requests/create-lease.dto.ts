@@ -1,3 +1,4 @@
+import { CreateTenantDto } from '@app/common';
 import {
 	LeaseStatus,
 	PaymentFrequency,
@@ -28,7 +29,7 @@ export class CreateLeaseDto {
 	@AutoMap()
 	@IsArray()
 	@IsOptional()
-	tenants?: LeaseTenantsDto[];
+	tenants?: CreateTenantDto[];
 
 	@AutoMap()
 	@IsString()
@@ -66,5 +67,5 @@ export class CreateLeaseDto {
 export class LeaseTenantsDto {
 	@AutoMap()
 	@IsString()
-	firebaseId: string;
+	profileUuid: string;
 }

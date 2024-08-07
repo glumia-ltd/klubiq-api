@@ -7,7 +7,7 @@ export const PROPERTY_METRICS = 'PROPERTY METRICS';
 
 export interface IPropertyMetrics {
 	getTotalUnits(organizationUuid: string): Promise<number>;
-	getTotalVacantUnits(organizationUuid: string): Promise<number>;
+	//getTotalVacantUnits(organizationUuid: string): Promise<number>;
 	getTotalOccupiedUnits(
 		organizationUuid: string,
 		days?: number,

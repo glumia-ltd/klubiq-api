@@ -12,7 +12,8 @@ import {
 	LeaseFilterDto,
 } from '../dto/requests/get-lease.dto';
 import { indexOf } from 'lodash';
-//import { UserProfile } from "@app/common/database/entities/user-profile.entity";
+import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
+import { TenantUser } from '@app/common/database/entities/tenant.entity';
 
 @Injectable()
 export class LeaseRepository extends BaseRepository<Lease> {
@@ -180,6 +181,33 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				e,
 				'LeaseRepository',
 			);
+		}
+	}
+
+	async addTenantToLease(
+		tenantDtos: CreateTenantDto[],
+		leaseId: number,
+	): Promise<Lease> {
+		try {
+			let lease: Lease;
+			await this.manager.transaction(async (transactionalEntityManager) => {
+				const tenants: TenantUser[] = tenantDtos.map((tenant) => ({
+					...tenant,
+					dateOfBirth: DateTime.fromISO(tenant.dateOfBirth).toJSDate(),
+				}));
+				const tenantUsers = await transactionalEntityManager.save(
+					TenantUser,
+					tenants,
+				);
+				const lease = await transactionalEntityManager.preload(Lease, {
+					id: leaseId,
+					tenants: [...tenantUsers],
+				});
+				await transactionalEntityManager.update(Lease, lease.id, lease);
+			});
+			return lease;
+		} catch (e) {
+			this.logger.error(e);
 		}
 	}
 }

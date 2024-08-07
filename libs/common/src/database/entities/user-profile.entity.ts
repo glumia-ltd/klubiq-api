@@ -10,13 +10,12 @@ import {
 	JoinColumn,
 	Index,
 	OneToMany,
-	ManyToMany,
 } from 'typeorm';
 import { Role } from './role.entity';
 import { OrganizationUser } from '../../../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
 import { AutoMap } from '@automapper/classes';
 import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
-import { Lease } from './lease.entity';
+import { TenantUser } from './tenant.entity';
 
 @Entity({ schema: 'kdo' })
 export class UserProfile {
@@ -116,6 +115,12 @@ export class UserProfile {
 	)
 	organizationUser?: OrganizationUser;
 
+	@AutoMap(() => TenantUser)
+	@OneToOne(() => TenantUser, (tenantUser) => tenantUser.profile, {
+		eager: true,
+	})
+	tenantUser?: TenantUser;
+
 	@AutoMap(() => [Property])
 	@OneToMany(() => Property, (property) => property.manager)
 	propertiesManaged?: Property[];
@@ -123,10 +128,6 @@ export class UserProfile {
 	@AutoMap(() => [Property])
 	@OneToMany(() => Property, (property) => property.owner)
 	propertiesOwned?: Property[];
-
-	@AutoMap(() => [Lease])
-	@ManyToMany(() => Lease, (lease) => lease.tenants)
-	leases?: Lease[];
 
 	@CreateDateColumn()
 	createdDate?: Date;
