@@ -25,6 +25,7 @@ import {
 import { indexOf } from 'lodash';
 import { DateTime } from 'luxon';
 import { PropertyCountData } from '../dto/responses/property-count.dto';
+import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
 
 @Injectable()
 export class PropertyRepository extends BaseRepository<Property> {
@@ -45,6 +46,31 @@ export class PropertyRepository extends BaseRepository<Property> {
 		super(Property, manager);
 	}
 
+	async assignPropertyToManagerOrOwner(
+		propertyUuid: string,
+		orgId: string,
+		managerDto: PropertyManagerDto,
+	) {
+		try {
+			const update = await this.createQueryBuilder('property')
+				.update(Property)
+				.set({
+					manager: managerDto.isPropertyOwner
+						? null
+						: { firebaseId: managerDto.uid },
+					owner: managerDto.isPropertyOwner
+						? { firebaseId: managerDto.uid }
+						: null,
+				})
+				.where('uuid = :propertyUuid', { propertyUuid })
+				.andWhere('organizationId = :orgId', { orgId })
+				.execute();
+			return update.affected > 0;
+		} catch (err) {
+			this.logger.error(err, `Error assigning property to manager`);
+			throw err;
+		}
+	}
 	///
 	/// CREATES PROPERTY RECORD
 	///

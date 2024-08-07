@@ -20,7 +20,7 @@ export class CacheService {
 
 	// sets all cache data
 	async setCache<T>(data: T, cacheKey: string): Promise<void> {
-		await this.cacheManager.set(cacheKey, data);
+		await this.cacheManager.set(cacheKey, data, this.cacheTTL);
 	}
 
 	// gets a cached data by Id or identifier

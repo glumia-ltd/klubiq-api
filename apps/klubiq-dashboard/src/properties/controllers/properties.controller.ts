@@ -25,6 +25,7 @@ import {
 } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
+import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
 
 @ApiTags('properties')
 @ApiBearerAuth()
@@ -177,6 +178,27 @@ export class PropertiesController {
 			const data = await this.propertyService.addUnitsToProperty(
 				propertyUuid,
 				unitsDto,
+			);
+			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Ability(Actions.WRITE)
+	@HttpCode(HttpStatus.OK)
+	@Post(':propertyUuid/assignToManagerOrOwner')
+	@ApiOkResponse({
+		description: 'Assign a property to a manager or owner',
+	})
+	async assignToManager(
+		@Param('propertyUuid') propertyUuid: string,
+		@Body() managerDto: PropertyManagerDto,
+	) {
+		try {
+			const data = await this.propertyService.assignPropertyToManagerOrOwner(
+				propertyUuid,
+				managerDto,
 			);
 			return data;
 		} catch (error) {

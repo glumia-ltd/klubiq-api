@@ -13,10 +13,10 @@ import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
 } from 'typeorm';
-import { UserProfile } from './user-profile.entity';
 import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
 import { Transaction } from './transaction.entity';
 import { LeaseStatus, PaymentFrequency } from '../../config/config.constants';
+import { TenantUser } from './tenant.entity';
 
 @Entity({ schema: 'poo' })
 export class Lease {
@@ -86,20 +86,20 @@ export class Lease {
 	@Column({ default: false })
 	isArchived?: boolean;
 
-	@AutoMap(() => [UserProfile])
-	@ManyToMany(() => UserProfile, (user) => user.leases)
+	@AutoMap(() => [TenantUser])
+	@ManyToMany(() => TenantUser, (user) => user.leases)
 	@JoinTable({
-		name: 'tenants_leases',
+		name: 'leases_tenants',
 		joinColumn: {
 			name: 'leaseId',
 			referencedColumnName: 'id',
 		},
 		inverseJoinColumn: {
-			name: 'tenantUid',
-			referencedColumnName: 'firebaseId',
+			name: 'tenantId',
+			referencedColumnName: 'id',
 		},
 	})
-	tenants?: UserProfile[];
+	tenants?: TenantUser[];
 
 	@AutoMap(() => Property)
 	@Index()

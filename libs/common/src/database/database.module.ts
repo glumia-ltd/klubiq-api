@@ -18,6 +18,7 @@ import { Lease } from './entities/lease.entity';
 import { Transaction } from './entities/transaction.entity';
 import { Maintenance } from './entities/maintenance.entity';
 import { UserInvitation } from './entities/user-invitation.entity';
+import { TenantUser } from './entities/tenant.entity';
 
 /// WE HAVE 2 SCHEMA TYPES. => KDO and POO
 /// KDO = Klubiq Data Object
@@ -41,6 +42,7 @@ import { UserInvitation } from './entities/user-invitation.entity';
 			Maintenance,
 			Transaction,
 			UserInvitation,
+			TenantUser,
 		]),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],

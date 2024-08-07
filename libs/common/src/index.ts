@@ -55,3 +55,4 @@ export * from './dto/responses/dashboard-metrics.dto';
 export * from './database/entities/user-invitation.entity';
 export * from './dto/responses/tenant.dto';
 export * from './helpers/util';
+export * from './dto/requests/create-tenant.dto';

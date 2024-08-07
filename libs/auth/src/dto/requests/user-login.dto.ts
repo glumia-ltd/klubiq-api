@@ -15,6 +15,12 @@ import {
 	IsUrl,
 } from 'class-validator';
 
+/**
+ * Represents the data transfer object for user login.
+ *
+ * @remarks
+ * This class is used to encapsulate the user's email and password for login.
+ */
 export class userLoginDto {
 	@ApiProperty({
 		description: "User's email",
@@ -32,6 +38,9 @@ export class userLoginDto {
 	password: string;
 }
 
+/**
+ * Represents a user sign up data transfer object.
+ */
 export class UserSignUpDto extends PartialType(userLoginDto) {
 	@ApiProperty({
 		description: "User's first name",
@@ -61,6 +70,9 @@ export class UserSignUpDto extends PartialType(userLoginDto) {
 	password: string;
 }
 
+/**
+ * Represents the data transfer object for updating a Firebase user.
+ */
 export class UpdateFirebaseUserDto extends PartialType(UserSignUpDto) {
 	@ApiProperty()
 	@IsUrl()
@@ -75,6 +87,10 @@ export class UpdateFirebaseUserDto extends PartialType(UserSignUpDto) {
 	displayName: string;
 }
 
+/**
+ * Represents the data transfer object for signing up an organization user.
+ * Extends the partial type of UserSignUpDto.
+ */
 export class OrgUserSignUpDto extends PartialType(UserSignUpDto) {
 	@ApiProperty({
 		description: 'Company name',
@@ -84,6 +100,9 @@ export class OrgUserSignUpDto extends PartialType(UserSignUpDto) {
 	companyName: string;
 }
 
+/**
+ * Represents the data transfer object for verifying email.
+ */
 export class VerifyEmailDto {
 	@ApiProperty({
 		description: 'verification code',
@@ -92,6 +111,9 @@ export class VerifyEmailDto {
 	oobCode: string;
 }
 
+/**
+ * Represents a data transfer object for looking up a user.
+ */
 export class LookUpUserDto {
 	@ApiProperty({
 		description: 'User email',
@@ -101,6 +123,9 @@ export class LookUpUserDto {
 	email: string;
 }
 
+/**
+ * Data transfer object for sending a verification email to a user.
+ */
 export class SendVerifyEmailDto {
 	@ApiProperty({
 		description: 'user email',
@@ -122,6 +147,9 @@ export class SendVerifyEmailDto {
 	lastName: string;
 }
 
+/**
+ * Represents the data transfer object for exchanging a refresh token.
+ */
 export class RefreshTokenExchangeDto {
 	@ApiProperty({
 		description: 'refresh token',
@@ -130,14 +158,18 @@ export class RefreshTokenExchangeDto {
 	refreshToken: string;
 }
 
-/* The ResetPasswordLinkDto class in TypeScript defines a data transfer object with an email property
-that is annotated with validation decorators for string and email format. */
+/**
+ * Represents the data transfer object for resetting password link.
+ */
 export class ResetPasswordLinkDto {
 	@ApiProperty()
 	@IsString()
 	@IsEmail()
 	email: string;
 }
+/**
+ * Represents the data transfer object for the password field.
+ */
 export class PasswordDto {
 	@ApiProperty()
 	@IsString()
@@ -149,6 +181,9 @@ export class PasswordDto {
 	})
 	password: string;
 }
+/**
+ * Represents the data transfer object for resetting a user's password.
+ */
 export class ResetPasswordDto extends IntersectionType(
 	ResetPasswordLinkDto,
 	PasswordDto,
@@ -163,6 +198,10 @@ export class ResetPasswordDto extends IntersectionType(
 	oobCode: string;
 }
 
+/**
+ * Represents the data transfer object for updating a user's password.
+ * Inherits properties from the ResetPasswordDto class.
+ */
 export class UpdatePasswordDto extends ResetPasswordDto {
 	@ApiProperty()
 	@IsString()
@@ -175,6 +214,9 @@ export class UpdatePasswordDto extends ResetPasswordDto {
 	oldPassword: string;
 }
 
+/**
+ * Represents the data transfer object for inviting a user.
+ */
 export class InviteUserDto extends PartialType(SendVerifyEmailDto) {
 	@ApiPropertyOptional()
 	@IsOptional()
@@ -197,6 +239,9 @@ export class InviteUserDto extends PartialType(SendVerifyEmailDto) {
 	propertiesToManage?: PropertyInvitationDto[];
 }
 
+/**
+ * Represents a property invitation data transfer object.
+ */
 export class PropertyInvitationDto {
 	@ApiProperty()
 	@IsString()

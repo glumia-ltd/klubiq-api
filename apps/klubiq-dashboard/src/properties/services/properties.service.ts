@@ -29,6 +29,7 @@ import {
 import { UserRoles } from '@app/common/config/config.constants';
 import { Util } from '@app/common/helpers/util';
 import { forEach, map } from 'lodash';
+import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
 
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
@@ -452,6 +453,30 @@ export class PropertiesService implements IPropertyMetrics {
 		} catch (error) {
 			this.logger.error('Error adding Unit to Property', error);
 			throw new BadRequestException(`Error adding Unit to Property.`, {
+				cause: new Error(),
+				description: error.message,
+			});
+		}
+	}
+
+	async assignPropertyToManagerOrOwner(
+		propertyUuid: string,
+		managerDto: PropertyManagerDto,
+	): Promise<boolean> {
+		try {
+			const orgId = this.cls.get('currentUser').organizationId;
+			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			const assigned =
+				await this.propertyRepository.assignPropertyToManagerOrOwner(
+					propertyUuid,
+					orgId,
+					managerDto,
+				);
+			return assigned;
+		} catch (error) {
+			const logMessage = `Error assigning property ${propertyUuid} to ${managerDto.isPropertyOwner ? 'owner' : 'manager'}`;
+			this.logger.error(error.message, logMessage, error);
+			throw new BadRequestException(logMessage, {
 				cause: new Error(),
 				description: error.message,
 			});

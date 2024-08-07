@@ -31,6 +31,7 @@ import { LeaseDto } from '../dto/responses/view-lease.dto';
 import { UpdateLeaseDto } from '../dto/requests/update-lease.dto';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { GetLeaseDto } from '../dto/requests/get-lease.dto';
+import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 
 @ApiTags('leases')
 @ApiBearerAuth()
@@ -116,6 +117,24 @@ export class LeaseController {
 	async getLeases(@Query() getLeaseDto: GetLeaseDto) {
 		try {
 			const result = await this.leaseService.getOrganizationLeases(getLeaseDto);
+			return result;
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	@Post(':id/addTenants')
+	@Ability(Actions.WRITE)
+	@ApiOkResponse({
+		description: 'add tenants to lease',
+		type: () => PageDto<LeaseDto>,
+	})
+	async addTenants(
+		@Param('id') id: number,
+		@Body() tenantDtos: CreateTenantDto[],
+	) {
+		try {
+			const result = await this.leaseService.addTenantToLease(tenantDtos, id);
 			return result;
 		} catch (error) {
 			throw error;
