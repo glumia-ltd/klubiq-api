@@ -10,6 +10,7 @@ import {
 import { LeaseService } from '../services/lease.service';
 import {
 	ApiBearerAuth,
+	ApiBody,
 	ApiCreatedResponse,
 	ApiOkResponse,
 	ApiTags,
@@ -129,6 +130,7 @@ export class LeaseController {
 		description: 'add tenants to lease',
 		type: () => LeaseDto,
 	})
+	@ApiBody({ type: () => [CreateTenantDto] })
 	async addTenants(
 		@Param('id') id: number,
 		@Body() tenantDtos: CreateTenantDto[],
