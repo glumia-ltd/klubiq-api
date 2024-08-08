@@ -3,6 +3,7 @@ import {
 	Amenity,
 	BaseRepository,
 	LeaseStatus,
+	MaintenanceStatus,
 	RentOverdueLeaseDto,
 	RevenueType,
 	TransactionType,
@@ -482,37 +483,22 @@ export class PropertyRepository extends BaseRepository<Property> {
 
 	async getTotalUnits(orgUuid: string): Promise<number> {
 		try {
-			const queryBuilder = this.createQueryBuilder('property');
-			await this.getOrganizationUnitsConditions(orgUuid, queryBuilder);
-			const result = await queryBuilder.getCount();
-			return result;
+			const totalUnitsQuery = await this.manager.query(
+				`
+				SELECT 
+					P."organizationUuid" AS org_uuid,
+					SUM(P."unitCount") AS total_units
+				FROM poo.property P
+				WHERE (P."organizationUuid" = '${orgUuid}' AND P."isArchived" = false AND P."deletedDate" IS NULL AND P."parentPropertyUuid" IS NULL)
+				GROUP BY P."organizationUuid"
+			`,
+			);
+			const queryResult = totalUnitsQuery.length
+				? parseInt(totalUnitsQuery[0].total_units, 10)
+				: 0;
+			return queryResult;
 		} catch (err) {
-			this.logger.error(err, `Error getting total units in Org`);
-			throw err;
-		}
-	}
-
-	async getTotalVacantUnits(
-		orgUuid: string,
-		pastDays: number = 0,
-	): Promise<number> {
-		try {
-			const queryBuilder = this.createQueryBuilder('property');
-			await this.getOrganizationUnitsConditions(orgUuid, queryBuilder);
-			queryBuilder.leftJoin('property.leases', 'pl');
-			const count = await queryBuilder
-				.andWhere(
-					new Brackets((qb) => {
-						qb.where('pl.propertyUuId IS NULL').orWhere(
-							'pl.endDate <= :timestamp',
-							{ timestamp: this.daysAgo(pastDays) },
-						);
-					}),
-				)
-				.getCount();
-			return count;
-		} catch (err) {
-			this.logger.error(err, `Error getting total vacant units in Org`);
+			this.logger.error(err.message, `Error getting total units in Org`);
 			throw err;
 		}
 	}
@@ -522,31 +508,23 @@ export class PropertyRepository extends BaseRepository<Property> {
 		pastDays: number = 0,
 	): Promise<number> {
 		try {
-			const queryBuilder = this.createQueryBuilder('property');
-			queryBuilder.innerJoin('property.leases', 'pl');
-			await this.getOrganizationUnitsConditions(organizationUuid, queryBuilder);
-			const count = await queryBuilder
-				.select()
-				.andWhere(
-					new Brackets((qb) => {
-						qb.where('pl.status = :status', {
-							status: LeaseStatus.ACTIVE,
-						}).orWhere('pl.status = :status', {
-							status: LeaseStatus.EXPIRING,
-						});
-					}),
-				)
-				.andWhere(
-					new Brackets((qb) => {
-						qb.where('pl.startDate <= :timestamp', {
-							timestamp: this.daysAgo(pastDays),
-						}).andWhere('pl.endDate >= :timestamp', {
-							timestamp: this.daysAgo(pastDays),
-						});
-					}),
-				)
-				.getCount();
-			return count;
+			const occupiedUnitsQuery = await this.manager.query(
+				`SELECT COUNT(DISTINCT "property"."uuid") AS "total_occupied_units", "property"."organizationUuid" AS "org_uuid"
+ 					FROM "poo"."property" "property"
+ 					INNER JOIN "poo"."lease" "pl" ON "pl"."propertyUuId"="property"."uuid" AND ("pl"."deletedAt" IS NULL)
+ 					WHERE (
+						 "property"."organizationUuid" = '${organizationUuid}'
+						 AND "property"."isArchived" = false
+						 AND "property"."deletedDate" IS NULL
+ 						 AND ("pl"."status" = '${LeaseStatus.ACTIVE}' OR "pl"."status" = '${LeaseStatus.EXPIRING}')
+						 AND ("pl"."startDate" <= (CURRENT_DATE - INTERVAL '${pastDays} days') AND "pl"."endDate" >= (CURRENT_DATE - INTERVAL '${pastDays} days')) )
+ 					GROUP BY "org_uuid"
+				`,
+			);
+			const queryResult = occupiedUnitsQuery.length
+				? parseInt(occupiedUnitsQuery[0].total_occupied_units ?? 0, 10)
+				: 0;
+			return queryResult;
 		} catch (err) {
 			this.logger.error(err, `Error getting total occupied units in Org`);
 			throw err;
@@ -557,23 +535,28 @@ export class PropertyRepository extends BaseRepository<Property> {
 		pastDays: number = 0,
 	): Promise<number> {
 		try {
-			const queryBuilder = this.createQueryBuilder('property');
-			queryBuilder.innerJoin('property.maintenances', 'pm');
-			await this.getOrganizationUnitsConditions(organizationUuid, queryBuilder);
-			const count = await queryBuilder
-				.andWhere(
-					new Brackets((qb) => {
-						qb.where('pm.startDate <= :timestamp', {
-							timestamp: this.daysAgo(pastDays),
-						}).andWhere('pm.endDate >= :timestamp', {
-							timestamp: this.daysAgo(pastDays),
-						});
-					}),
-				)
-				.getCount();
-			return count;
+			const maintenanceUnitsQuery = await this.manager.query(
+				`SELECT COUNT(DISTINCT "property"."uuid") AS "total_maintenance_units", "property"."organizationUuid" AS "org_uuid"
+ 					FROM "poo"."property" "property"
+ 					INNER JOIN "poo"."maintenance" "pm" ON "pm"."propertyUuId"="property"."uuid" AND ("pm"."deletedAt" IS NULL)
+ 					WHERE (
+						 "property"."organizationUuid" = '${organizationUuid}'
+						 AND "property"."isArchived" = false
+						 AND "property"."deletedDate" IS NULL
+ 						 AND ("pm"."status" != '${MaintenanceStatus.COMPLETED}')
+						 AND ("pm"."startDate" <= (CURRENT_DATE - INTERVAL '${pastDays} days') AND "pm"."endDate" >= (CURRENT_DATE - INTERVAL '${pastDays} days')) )
+ 					GROUP BY "org_uuid"
+				`,
+			);
+			const queryResult = maintenanceUnitsQuery.length
+				? parseInt(maintenanceUnitsQuery[0].total_maintenance_units ?? 0, 10)
+				: 0;
+			return queryResult;
 		} catch (err) {
-			this.logger.error(err, `Error getting total units in maintenance in Org`);
+			this.logger.error(
+				err.message,
+				`Error getting total units in maintenance in Org`,
+			);
 			throw err;
 		}
 	}
@@ -583,28 +566,29 @@ export class PropertyRepository extends BaseRepository<Property> {
 	): Promise<PropertyCountData> {
 		try {
 			const propertyCountData = new PropertyCountData();
-			const queryBuilder = this.createQueryBuilder('property').where(
-				'property.organizationUuid = :organizationUuid',
-				{ organizationUuid: organizationUuid },
-			);
-			propertyCountData.totalProperties = await queryBuilder
-				.where('property.isArchived = false')
-				.andWhere('property.deletedDate IS NULL')
-				.andWhere('property.parentPropertyUuid IS NULL')
-				.getCount();
-			propertyCountData.multiUnits = await queryBuilder
-				.where('property.isArchived = false')
-				.andWhere('property.deletedDate IS NULL')
-				.andWhere('property.isMultiUnit = true')
-				.getCount();
-			propertyCountData.archivedProperties = await queryBuilder
-				.where('property.isArchived = true')
-				.getCount();
-			propertyCountData.archivedProperties = await queryBuilder
-				.where('property.isDraft = true')
-				.getCount();
-			propertyCountData.singleUnits =
-				propertyCountData.totalProperties - propertyCountData.multiUnits;
+			const propertyCountDataQuery = await this.manager.query(`
+				SELECT P."organizationUuid" AS "org_uuid",
+					SUM(CASE WHEN P."parentPropertyUuid" IS NULL and P."isArchived" = false  then 1 else 0 end) as total_properties,
+					SUM(CASE WHEN P."isMultiUnit" = true and P."isArchived" = false  then 1 else 0 end) as multi_units_properties,
+					SUM(CASE WHEN P."isArchived"  = true then 1 else 0 end) as archived_units,
+					SUM(CASE WHEN P."isDraft"  = true then 1 else 0 end) as draft_units
+				FROM "poo"."property" P
+				WHERE P."organizationUuid" = '${organizationUuid}' AND P."deletedDate" IS NULL
+				GROUP BY org_uuid
+			`);
+			if (propertyCountDataQuery.length) {
+				propertyCountData.totalProperties =
+					parseInt(propertyCountDataQuery[0].total_properties, 10) || 0;
+				propertyCountData.multiUnits =
+					parseInt(propertyCountDataQuery[0].multi_units_properties, 10) || 0;
+				propertyCountData.archivedProperties =
+					parseInt(propertyCountDataQuery[0].archived_units, 10) || 0;
+				propertyCountData.draftProperties =
+					parseInt(propertyCountDataQuery[0].draft_units, 10) || 0;
+				propertyCountData.singleUnits =
+					propertyCountData.totalProperties - propertyCountData.multiUnits;
+			}
+
 			return propertyCountData;
 		} catch (err) {
 			this.logger.error(
@@ -649,11 +633,14 @@ export class PropertyRepository extends BaseRepository<Property> {
 					AND l."isDraft" = false;
 			`,
 			);
-			const overdueRents: RentOverdueLeaseDto = {
-				overDueLeaseCount:
-					parseInt(overdueRentsResult[0].overDueLeaseCount, 10) || 0,
-				overDueRentSum: parseFloat(overdueRentsResult[0].overDueRentSum) || 0,
-			};
+			const overdueRents: RentOverdueLeaseDto = overdueRentsResult.length
+				? {
+						overDueLeaseCount:
+							parseInt(overdueRentsResult[0].overdueleasecount, 10) || 0,
+						overDueRentSum:
+							parseFloat(overdueRentsResult[0].overduerentsum) || 0,
+					}
+				: { overDueLeaseCount: 0, overDueRentSum: 0 };
 			return overdueRents;
 		} catch (err) {
 			this.logger.error(
@@ -674,7 +661,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 				organizationUuid,
 			})
 			.andWhere('property.isArchived = false')
-			.andWhere('property.deletedDate IS NULL')
 			.andWhere('property.isMultiUnit = false');
 	}
 }

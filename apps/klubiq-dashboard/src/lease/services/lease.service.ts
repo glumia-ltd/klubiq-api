@@ -1,4 +1,10 @@
-import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	Inject,
+	Injectable,
+	Logger,
+} from '@nestjs/common';
 import { ILeaseService } from '../interfaces/lease.interface';
 import { CreateLeaseDto } from '../dto/requests/create-lease.dto';
 import { LeaseDto } from '../dto/responses/view-lease.dto';
@@ -6,9 +12,11 @@ import { ClsService } from 'nestjs-cls';
 import {
 	CreateTenantDto,
 	ErrorMessages,
+	FileUploadService,
 	Lease,
 	PageDto,
 	PageMetaDto,
+	PaymentFrequency,
 	SharedClsStore,
 	UserRoles,
 } from '@app/common';
@@ -20,6 +28,8 @@ import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { UpdateLeaseDto } from '../dto/requests/update-lease.dto';
 import { GetLeaseDto } from '../dto/requests/get-lease.dto';
+import { ConfigService } from '@nestjs/config';
+import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 @Injectable()
 export class LeaseService implements ILeaseService {
 	private readonly logger = new Logger(LeaseService.name);
@@ -27,11 +37,13 @@ export class LeaseService implements ILeaseService {
 	private readonly cacheTTL = 15000;
 
 	constructor(
+		private readonly configService: ConfigService,
 		private readonly cls: ClsService<SharedClsStore>,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@InjectRepository(LeaseRepository)
 		private readonly leaseRepository: LeaseRepository,
+		private readonly uploadService: FileUploadService,
 	) {}
 	async getOrganizationLeases(
 		getLeaseDto?: GetLeaseDto,
@@ -109,6 +121,12 @@ export class LeaseService implements ILeaseService {
 	}
 
 	async createLease(leaseDto: CreateLeaseDto): Promise<LeaseDto> {
+		if (
+			leaseDto.paymentFrequency === PaymentFrequency.MONTHLY &&
+			(leaseDto.rentDueDay < 1 || leaseDto.rentDueDay > 31)
+		) {
+			throw new BadRequestException('Rent due day must be between 1 and 31');
+		}
 		const lease = await this.leaseRepository.createLease(leaseDto, false);
 		const mappedLease = await this.mapper.mapAsync(lease, Lease, LeaseDto);
 		return mappedLease;
@@ -130,6 +148,25 @@ export class LeaseService implements ILeaseService {
 			);
 			return mappedLease;
 		} catch (error) {
+			throw new Error(error.message);
+		}
+	}
+	async getPreSignedUploadUrlForPropertyImage(
+		data: FileUploadDto,
+	): Promise<string> {
+		try {
+			const bucketName = this.configService.get<string>(
+				'PROPERTY_IMAGE_BUCKET_NAME',
+			);
+			const url = await this.uploadService.generatePresignedUrl(
+				data,
+				bucketName,
+			);
+			return url;
+		} catch (error) {
+			this.logger.error(
+				`Error generating pre-signed URL for property image: ${error.message}`,
+			);
 			throw new Error(error.message);
 		}
 	}

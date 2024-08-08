@@ -26,6 +26,8 @@
     "@automapper/core": "^8.8.1",
     "@automapper/nestjs": "^8.8.1",
     "@aws-sdk/client-cloudwatch-logs": "^3.574.0",
+    "@aws-sdk/client-s3": "^3.627.0",
+    "@aws-sdk/s3-request-presigner": "^3.627.0",
     "@nestjs/axios": "^3.0.2",
     "@nestjs/cache-manager": "^2.2.2",
     "@nestjs/common": "^10.0.0",

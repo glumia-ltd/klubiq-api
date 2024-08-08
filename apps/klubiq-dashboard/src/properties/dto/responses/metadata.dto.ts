@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional } from 'class-validator';
 
 export class MetadataDto {
 	@AutoMap()
@@ -20,4 +20,9 @@ export class MetadataDto {
 	@AutoMap()
 	@IsOptional()
 	fileSize?: number;
+
+	@AutoMap()
+	@IsBoolean()
+	@IsOptional()
+	isMain?: boolean;
 }

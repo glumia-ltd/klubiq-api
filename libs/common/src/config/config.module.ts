@@ -42,6 +42,9 @@ import { createMapper } from '@automapper/core';
 				TRANSACTIONAL_EMAIL_SENDER_NAME: Joi.string().required(),
 				GOOGLE_IDENTITY_ENDPOINT: Joi.string().required(),
 				KLUBIQ_ADMIN_API_KEY: Joi.string().required(),
+				AWS_S3_ACCESS_KEY_ID: Joi.string().required(),
+				AWS_S3_SECRET_ACCESS_KEY: Joi.string().required(),
+				AWS_S3_REGION: Joi.string().required(),
 			}),
 		}),
 		AutomapperModule.forRoot([
