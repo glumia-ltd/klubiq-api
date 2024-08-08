@@ -1,4 +1,10 @@
-import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	Inject,
+	Injectable,
+	Logger,
+} from '@nestjs/common';
 import { ILeaseService } from '../interfaces/lease.interface';
 import { CreateLeaseDto } from '../dto/requests/create-lease.dto';
 import { LeaseDto } from '../dto/responses/view-lease.dto';
@@ -10,6 +16,7 @@ import {
 	Lease,
 	PageDto,
 	PageMetaDto,
+	PaymentFrequency,
 	SharedClsStore,
 	UserRoles,
 } from '@app/common';
@@ -114,6 +121,12 @@ export class LeaseService implements ILeaseService {
 	}
 
 	async createLease(leaseDto: CreateLeaseDto): Promise<LeaseDto> {
+		if (
+			leaseDto.paymentFrequency === PaymentFrequency.MONTHLY &&
+			(leaseDto.rentDueDay < 1 || leaseDto.rentDueDay > 31)
+		) {
+			throw new BadRequestException('Rent due day must be between 1 and 31');
+		}
 		const lease = await this.leaseRepository.createLease(leaseDto, false);
 		const mappedLease = await this.mapper.mapAsync(lease, Lease, LeaseDto);
 		return mappedLease;
