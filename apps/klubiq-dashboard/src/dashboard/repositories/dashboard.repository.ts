@@ -23,7 +23,7 @@ export class DashboardRepository {
 		const rawResult = await this.manager.query(
 			`SELECT 
                 DATE_TRUNC('month', t."transactionDate") as month,
-                t."revenueType",
+                t."revenueType" as revenue_type,
                 SUM(t.amount) as amount
             FROM
                 poo.transaction t
@@ -39,7 +39,7 @@ export class DashboardRepository {
 		);
 		const totalRevenueLast12MonthsResult = await this.manager.query(
 			`SELECT
-                SUM(t.amount) as totalRevenueLast12Months
+                SUM(t.amount) as total_revenue_last12_months
             FROM
                 poo.transaction t
             WHERE
@@ -48,11 +48,11 @@ export class DashboardRepository {
                 AND t."organizationUuid" = '${orgUuid}';`,
 		);
 		const totalRevenueLast12Months = parseFloat(
-			totalRevenueLast12MonthsResult[0].totalRevenueLast12Months || 0,
+			totalRevenueLast12MonthsResult[0].total_revenue_last12_months || 0,
 		);
 		const totalRevenuePrevious12MonthsResult = await this.manager.query(
 			`SELECT
-                SUM(t.amount) as totalRevenuePrevious12Months
+                SUM(t.amount) as total_revenue_previous12_months
             FROM
                 poo.transaction t
             WHERE
@@ -62,7 +62,8 @@ export class DashboardRepository {
                 AND t."transactionDate" < (CURRENT_DATE - INTERVAL '12 months');`,
 		);
 		const totalRevenuePrevious12Months = parseFloat(
-			totalRevenuePrevious12MonthsResult[0].totalRevenuePrevious12Months || 0,
+			totalRevenuePrevious12MonthsResult[0].total_revenue_previous12_months ||
+				0,
 		);
 		const percentageDifference =
 			totalRevenuePrevious12Months > 0 && totalRevenueLast12Months > 0
@@ -87,7 +88,7 @@ export class DashboardRepository {
 		};
 		rawResult.forEach((row: any) => {
 			const month = DateTime.fromSQL(row.month).toFormat('MMM');
-			const revenueType = row.revenueType;
+			const revenueType = row.revenue_type;
 			const totalRevenue = parseFloat(row.amount);
 			if (!monthlyRevenueMap[month]) {
 				monthlyRevenueMap[month] = {};
@@ -140,7 +141,7 @@ export class DashboardRepository {
 				totalRevenuePreviousMTD: number = 0;
 			const todaysRevenuerResult = await this.manager.query(
 				`SELECT
-                SUM(t.amount) as totalRevenue
+                SUM(t.amount) as total_revenue
             FROM
                 poo.transaction t
             WHERE
@@ -150,7 +151,7 @@ export class DashboardRepository {
 			);
 			const yesterdayRevenueResult = await this.manager.query(
 				`SELECT
-                SUM(t.amount) as totalRevenue
+                SUM(t.amount) as total_revenue
             FROM
                 poo.transaction t
             WHERE
@@ -160,8 +161,8 @@ export class DashboardRepository {
 			);
 			const totalTransactionsMTDResult = await this.manager.query(
 				`SELECT
-                t."transactionType",
-                SUM(t.amount) as totalAmount
+                t."transactionType" as transaction_type,
+                SUM(t.amount) as total_amount
             FROM
                 poo.transaction t
             WHERE
@@ -171,8 +172,8 @@ export class DashboardRepository {
 			);
 			const totalTransactionsPreviousMTDResult = await this.manager.query(
 				`SELECT
-                t."transactionType",
-                SUM(t.amount) as totalAmount
+                t."transactionType" as transaction_type,
+                SUM(t.amount) as total_amount
             FROM
                 poo.transaction t
             WHERE
@@ -182,23 +183,23 @@ export class DashboardRepository {
             GROUP BY t."transactionType";`,
 			);
 			const todaysRevenue = parseFloat(
-				todaysRevenuerResult[0].totalRevenue || 0,
+				todaysRevenuerResult[0].total_revenue || 0,
 			);
 			const yesterdayRevenue = parseFloat(
-				yesterdayRevenueResult[0].totalRevenue || 0,
+				yesterdayRevenueResult[0].total_revenue || 0,
 			);
 			totalTransactionsMTDResult.forEach((row: any) => {
-				if (row.transactionType === TransactionType.REVENUE) {
-					totalRevenueMTD = parseFloat(row.totalAmount || 0);
-				} else if (row.transactionType === TransactionType.EXPENSE) {
-					totalExpensesMTD = parseFloat(row.totalAmount || 0);
+				if (row.transaction_type === TransactionType.REVENUE) {
+					totalRevenueMTD = parseFloat(row.total_amount || 0);
+				} else if (row.transaction_type === TransactionType.EXPENSE) {
+					totalExpensesMTD = parseFloat(row.total_amount || 0);
 				}
 			});
 			totalTransactionsPreviousMTDResult.forEach((row: any) => {
-				if (row.transactionType === TransactionType.REVENUE) {
-					totalRevenuePreviousMTD = parseFloat(row.totalAmount || 0);
-				} else if (row.transactionType === TransactionType.EXPENSE) {
-					totalExpensesPreviousMTD = parseFloat(row.totalAmount || 0);
+				if (row.transaction_type === TransactionType.REVENUE) {
+					totalRevenuePreviousMTD = parseFloat(row.total_amount || 0);
+				} else if (row.transaction_type === TransactionType.EXPENSE) {
+					totalExpensesPreviousMTD = parseFloat(row.total_amount || 0);
 				}
 			});
 			const dailyRevenuePercentageDifference =

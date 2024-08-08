@@ -6,6 +6,7 @@ import { ClsService } from 'nestjs-cls';
 import {
 	CreateTenantDto,
 	ErrorMessages,
+	FileUploadService,
 	Lease,
 	PageDto,
 	PageMetaDto,
@@ -20,6 +21,8 @@ import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { UpdateLeaseDto } from '../dto/requests/update-lease.dto';
 import { GetLeaseDto } from '../dto/requests/get-lease.dto';
+import { ConfigService } from '@nestjs/config';
+import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 @Injectable()
 export class LeaseService implements ILeaseService {
 	private readonly logger = new Logger(LeaseService.name);
@@ -27,11 +30,13 @@ export class LeaseService implements ILeaseService {
 	private readonly cacheTTL = 15000;
 
 	constructor(
+		private readonly configService: ConfigService,
 		private readonly cls: ClsService<SharedClsStore>,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@InjectRepository(LeaseRepository)
 		private readonly leaseRepository: LeaseRepository,
+		private readonly uploadService: FileUploadService,
 	) {}
 	async getOrganizationLeases(
 		getLeaseDto?: GetLeaseDto,
@@ -130,6 +135,25 @@ export class LeaseService implements ILeaseService {
 			);
 			return mappedLease;
 		} catch (error) {
+			throw new Error(error.message);
+		}
+	}
+	async getPreSignedUploadUrlForPropertyImage(
+		data: FileUploadDto,
+	): Promise<string> {
+		try {
+			const bucketName = this.configService.get<string>(
+				'PROPERTY_IMAGE_BUCKET_NAME',
+			);
+			const url = await this.uploadService.generatePresignedUrl(
+				data,
+				bucketName,
+			);
+			return url;
+		} catch (error) {
+			this.logger.error(
+				`Error generating pre-signed URL for property image: ${error.message}`,
+			);
 			throw new Error(error.message);
 		}
 	}

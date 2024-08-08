@@ -33,6 +33,7 @@ import { UpdateLeaseDto } from '../dto/requests/update-lease.dto';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { GetLeaseDto } from '../dto/requests/get-lease.dto';
 import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
+import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 
 @ApiTags('leases')
 @ApiBearerAuth()
@@ -137,6 +138,18 @@ export class LeaseController {
 	) {
 		try {
 			const result = await this.leaseService.addTenantToLease(tenantDtos, id);
+			return result;
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	@Post('presigned-url')
+	@Ability(Actions.WRITE)
+	async getPresignedUrlForPropertyImage(@Body() fileData: FileUploadDto) {
+		try {
+			const result =
+				await this.leaseService.getPreSignedUploadUrlForPropertyImage(fileData);
 			return result;
 		} catch (error) {
 			throw error;
