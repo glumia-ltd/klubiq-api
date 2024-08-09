@@ -60,8 +60,10 @@ export interface RevenueResponseDto {
 export interface RevenueChartDto {
 	xAxisData: string[];
 	seriesData: {
-		name: string;
+		label: string;
 		data: number[];
+		color: string;
+		stack: string;
 	}[];
 }
 export interface RentOverdueLeaseDto {

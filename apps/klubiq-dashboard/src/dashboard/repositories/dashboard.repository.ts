@@ -9,11 +9,14 @@ import {
 } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { Util } from '@app/common/helpers/util';
 import { find } from 'lodash';
-import { TransactionType } from '@app/common';
+import { RevenueType, TransactionType } from '@app/common';
 
 @Injectable()
 export class DashboardRepository {
 	protected readonly logger = new Logger(DashboardRepository.name);
+	private readonly salesGraphColor = '#002147';
+	private readonly rentalGraphColor = '#6699CC';
+
 	constructor(
 		private manager: EntityManager,
 		private readonly util: Util,
@@ -22,7 +25,7 @@ export class DashboardRepository {
 	async getMonthlyRevenueData(orgUuid: string): Promise<RevenueResponseDto> {
 		const rawResult = await this.manager.query(
 			`SELECT 
-                DATE_TRUNC('month', t."transactionDate") as month,
+                TO_CHAR(t."transactionDate", 'YYYY-MM-DD') as month,
                 t."revenueType" as revenue_type,
                 SUM(t.amount) as amount
             FROM
@@ -87,7 +90,7 @@ export class DashboardRepository {
 			seriesData: [],
 		};
 		rawResult.forEach((row: any) => {
-			const month = DateTime.fromSQL(row.month).toFormat('MMM');
+			const month = DateTime.fromISO(row.month).monthShort;
 			const revenueType = row.revenue_type;
 			const totalRevenue = parseFloat(row.amount);
 			if (!monthlyRevenueMap[month]) {
@@ -99,12 +102,14 @@ export class DashboardRepository {
 			}
 			revenueChartData.xAxisData.push(month);
 			const seriesData = find(revenueChartData.seriesData, {
-				name: revenueType,
+				label: revenueType,
 			});
 			if (!seriesData) {
 				revenueChartData.seriesData.push({
-					name: revenueType,
+					label: revenueType,
 					data: [totalRevenue],
+					color: this.getGraphColor(revenueType),
+					stack: 'A',
 				});
 			} else {
 				seriesData.data.push(totalRevenue);
@@ -129,6 +134,16 @@ export class DashboardRepository {
 			changeIndicator,
 			revenueChart: revenueChartData,
 		};
+	}
+	getGraphColor(revenueType: any): string {
+		switch (revenueType) {
+			case RevenueType.PROPERTY_RENTAL:
+				return this.rentalGraphColor;
+			case RevenueType.PROPERTY_SALES:
+				return this.salesGraphColor;
+			default:
+				return this.salesGraphColor;
+		}
 	}
 
 	async getTransactionMetricsData(
