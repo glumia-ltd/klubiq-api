@@ -25,11 +25,11 @@ import {
 import { Permission } from '../database/entities/permission.entity';
 import { FeaturePermission } from '../database/entities/feature-permission.entity';
 import { Role } from '../database/entities/role.entity';
-import { UserProfile } from '../database/entities/user-profile.entity';
 import { TenantDto } from '../dto/responses/tenant.dto';
+import { TenantUser } from '../database/entities/tenant.entity';
 
 export const publicProfile: MappingProfile = (mapper) => {
-	createMap(mapper, UserProfile, TenantDto);
+	createMap(mapper, TenantUser, TenantDto);
 };
 export class CommonProfile extends AutomapperProfile {
 	@InjectMapper('MAPPER') customMapper: Mapper;
