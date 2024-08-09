@@ -45,7 +45,10 @@ export class TenantUser {
 	notes?: string;
 
 	@AutoMap(() => UserProfile)
-	@OneToOne(() => UserProfile, { cascade: ['remove', 'update'] })
+	@OneToOne(() => UserProfile, {
+		cascade: ['remove', 'update'],
+		nullable: true,
+	})
 	@JoinColumn({
 		name: 'profileUuid',
 		referencedColumnName: 'profileUuid',

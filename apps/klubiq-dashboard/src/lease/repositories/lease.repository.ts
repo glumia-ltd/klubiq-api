@@ -1,6 +1,6 @@
 import { Lease } from '@app/common/database/entities/lease.entity';
 import { BaseRepository } from '@app/common/repositories/base.repository';
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Brackets, EntityManager, SelectQueryBuilder } from 'typeorm';
 import { DateTime } from 'luxon';
 import { CreateLeaseDto } from '../dto/requests/create-lease.dto';
@@ -14,6 +14,7 @@ import {
 import { indexOf } from 'lodash';
 import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 import { TenantUser } from '@app/common/database/entities/tenant.entity';
+import ShortUniqueId from 'short-unique-id';
 
 @Injectable()
 export class LeaseRepository extends BaseRepository<Lease> {
@@ -27,6 +28,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		'display',
 		'unitType',
 	];
+	private readonly uniqueId = new ShortUniqueId({ length: 10 });
 	constructor(manager: EntityManager) {
 		super(Lease, manager);
 	}
@@ -52,6 +54,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 			return createdLease;
 		} catch (e) {
 			this.logger.error(e);
+			throw new BadRequestException(e.message, `Error creating lease`);
 		}
 	}
 
@@ -86,6 +89,11 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				e,
 				'Lease Repository',
 			);
+			throw new BadRequestException(
+				e.message,
+				`Error getting leases for property: 
+                ${propertyUuId} in Organization: ${organizationUuid}`,
+			);
 		}
 	}
 
@@ -113,6 +121,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 			return lease;
 		} catch (e) {
 			this.logger.error(`Error updating lease: ${id}`, e, 'LeaseRepository');
+			throw new BadRequestException(e.message, `Error updating lease: ${id}`);
 		}
 	}
 
@@ -181,6 +190,10 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				e,
 				'LeaseRepository',
 			);
+			throw new BadRequestException(
+				e.message,
+				'Error getting organization leases',
+			);
 		}
 	}
 
@@ -189,25 +202,31 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		leaseId: number,
 	): Promise<Lease> {
 		try {
-			let lease: Lease;
 			await this.manager.transaction(async (transactionalEntityManager) => {
 				const tenants: TenantUser[] = tenantDtos.map((tenant) => ({
 					...tenant,
 					dateOfBirth: DateTime.fromISO(tenant.dateOfBirth).toJSDate(),
+					// profile: {
+					// 	email: tenant.email,
+					// 	firebaseId: this.uniqueId.rnd()
+					// }
 				}));
+
 				const tenantUsers = await transactionalEntityManager.save(
 					TenantUser,
 					tenants,
 				);
-				const lease = await transactionalEntityManager.preload(Lease, {
-					id: leaseId,
-					tenants: [...tenantUsers],
-				});
-				await transactionalEntityManager.update(Lease, lease.id, lease);
+				await transactionalEntityManager
+					.createQueryBuilder()
+					.relation(Lease, 'tenants')
+					.of(leaseId)
+					.add(tenantUsers);
 			});
-			return lease;
+			const leaseData = await this.findOneBy({ id: leaseId });
+			return leaseData;
 		} catch (e) {
-			this.logger.error(e);
+			this.logger.error(e.message);
+			throw new BadRequestException(e.message, 'Error adding tenant to lease');
 		}
 	}
 }
