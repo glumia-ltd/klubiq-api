@@ -7,6 +7,7 @@ import { PropertiesService } from '../properties/services/properties.service';
 import { PropertyRepository } from '../properties/repositories/properties.repository';
 import { Util } from '@app/common/helpers/util';
 import { DashboardRepository } from './repositories/dashboard.repository';
+import { FileDownloadService } from '@app/common/services/file-download.service';
 
 @Module({
 	imports: [RepositoriesModule],
@@ -20,6 +21,7 @@ import { DashboardRepository } from './repositories/dashboard.repository';
 			useClass: PropertiesService,
 		},
 		PropertyRepository,
+		FileDownloadService,
 	],
 })
 export class DashboardModule {}

@@ -1,5 +1,15 @@
-import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
+import {
+	BadRequestException,
+	Body,
+	Controller,
+	Get,
+	Post,
+	Query,
+	Res,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { v4 as uuidv4 } from 'uuid';
+import { Response } from 'express';
 import { DashboardService } from '../services/dashboard.service';
 import {
 	Actions,
@@ -17,6 +27,7 @@ import {
 	DashboardMetricsDto,
 	RevenueResponseDto,
 } from '@app/common/dto/responses/dashboard-metrics.dto';
+import { DownloadRevenueDataDto } from '../dto/requests/download-dto';
 
 @ApiBearerAuth()
 @ApiTags('dashboard')
@@ -56,6 +67,33 @@ export class DashboardController {
 			const data: RevenueResponseDto =
 				await this.dashboardService.getRevenueBarChartData(startDate, endDate);
 			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Roles(UserRoles.ORG_OWNER, UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+	@Ability(Actions.WRITE, Actions.VIEW)
+	@Post('download-revenue-report')
+	@ApiOkResponse()
+	async downloadRevenueReport(
+		@Body() downloadDto: DownloadRevenueDataDto,
+		@Res() res: Response,
+	) {
+		try {
+			const fileBuffer = await this.dashboardService.getRevenueDataForDownload(
+				downloadDto.startDate,
+				downloadDto.endDate,
+			);
+			res.setHeader(
+				'Content-Type',
+				'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			);
+			res.setHeader(
+				'Content-Disposition',
+				`attachment; filename=${uuidv4()}_revenue_report.xlsx`,
+			);
+			res.send(fileBuffer);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}

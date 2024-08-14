@@ -8,8 +8,9 @@ import {
 	TransactionMetricsDto,
 } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { Util } from '@app/common/helpers/util';
-import { find } from 'lodash';
+import { find, forEach } from 'lodash';
 import { RevenueType, TransactionType } from '@app/common';
+import { XlsxFileDownloadDto } from '@app/common/dto/requests/xlsx-file-download.dto';
 
 @Injectable()
 export class DashboardRepository {
@@ -27,9 +28,6 @@ export class DashboardRepository {
 		startDateStr: string,
 		endDateStr: string,
 	) {
-		// const rangeCondition = (startDateStr != null && endDateStr != null) ?
-		// 	`AND t."transactionDate" BETWEEN '${startDateStr}' AND '${endDateStr}'` :
-		// 	`AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '12 months')`;
 		return `
 			WITH date_series AS (
 				SELECT generate_series(
@@ -49,13 +47,6 @@ export class DashboardRepository {
 				 GROUP BY  ds.month, t."revenueType"
 			    ORDER BY ds.month DESC, t."revenueType";
 			`;
-		//+ `${rangeCondition}` +
-		//`AND t."organizationUuid" = '${orgUuid}'
-		//GROUP BY
-		//month,
-		//t."revenueType"
-		// ORDER BY
-		//    month ASC, t."revenueType"; `;
 	}
 	async getMonthlyRevenueData(
 		orgUuid: string,
@@ -318,6 +309,48 @@ export class DashboardRepository {
 			return transactionMetricsData;
 		} catch (error) {
 			console.error('error in getTransactionMetrics', error.message);
+			throw new Error(error.message);
+		}
+	}
+
+	async getRevenueDataForDownload(
+		orgUuid: string,
+		startDateStr: string,
+		endDateStr: string,
+	): Promise<XlsxFileDownloadDto[]> {
+		try {
+			const xlsxData: XlsxFileDownloadDto[] = [];
+			const rawResult = await this.manager.query(
+				this.getQueryStringForRange(orgUuid, startDateStr, endDateStr),
+			);
+			forEach(rawResult, (row: any) => {
+				const revenueType = row.revenue_type;
+				const monthYear = DateTime.fromISO(row.month).toFormat(`MMM yyyy`);
+				if (revenueType) {
+					const revenueData = find(xlsxData, {
+						sheetName: revenueType,
+					});
+					if (!revenueData) {
+						xlsxData.push({
+							sheetName: revenueType,
+							data: [
+								{
+									'Month and Year': monthYear,
+									Amount: row.amount,
+								},
+							],
+						});
+					} else {
+						revenueData.data.push({
+							'Month and Year': monthYear,
+							Amount: row.amount,
+						});
+					}
+				}
+			});
+			return xlsxData;
+		} catch (error) {
+			console.error('error in getRevenueDataForDownload', error.message);
 			throw new Error(error.message);
 		}
 	}
