@@ -44,7 +44,7 @@ export class DashboardController {
 		}
 	}
 
-	//@Roles(UserRoles.ORG_OWNER, UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+	@Roles(UserRoles.ORG_OWNER, UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Ability(Actions.WRITE, Actions.VIEW)
 	@Get('revenue-report')
 	@ApiOkResponse()
