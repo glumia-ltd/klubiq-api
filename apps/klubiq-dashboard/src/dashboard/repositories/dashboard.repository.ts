@@ -31,7 +31,7 @@ export class DashboardRepository {
 		return `
 			WITH date_series AS (
 				SELECT generate_series(
-					date_trunc('month', DATE ${startDateStr ? `('${startDateStr}')` : `(CURRENT_DATE - INTERVAL '12 months')`}),
+					date_trunc('month', DATE ${startDateStr ? `('${startDateStr}')` : `(CURRENT_DATE - INTERVAL '11 months')`}),
 					date_trunc('month', DATE ${endDateStr ? `('${endDateStr}')` : `(CURRENT_DATE)`}),
 					'1 month'::interval
 				) AS month )
@@ -45,7 +45,7 @@ export class DashboardRepository {
         	    AND t."transactionType" = '${TransactionType.REVENUE}'
 				AND t."organizationUuid" = '${orgUuid}'
 				 GROUP BY  ds.month, t."revenueType"
-			    ORDER BY ds.month DESC, t."revenueType";
+			    ORDER BY ds.month ASC, t."revenueType";
 			`;
 	}
 	async getMonthlyRevenueData(
@@ -67,7 +67,7 @@ export class DashboardRepository {
 				${
 					startDateStr != null && endDateStr != null
 						? `AND t."transactionDate" BETWEEN '${startDateStr}' AND '${endDateStr}'`
-						: `AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '12 months')`
+						: `AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '11 months')`
 				} 
                 AND t."organizationUuid" = '${orgUuid}'; `,
 			);
@@ -84,9 +84,9 @@ export class DashboardRepository {
                 AND t."transactionType" = '${TransactionType.REVENUE}'
 				${
 					startDateStr != null && endDateStr != null
-						? `AND t."transactionDate" BETWEEN ('${startDateStr}'::DATE - INTERVAL '12 months') AND ('${endDateStr}'::DATE - INTERVAL '12 months')`
-						: `AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '24 months')
-                AND t."transactionDate" < (CURRENT_DATE - INTERVAL '12 months')`
+						? `AND t."transactionDate" BETWEEN ('${startDateStr}'::DATE - INTERVAL '11 months') AND ('${endDateStr}'::DATE - INTERVAL '11 months')`
+						: `AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '23 months')
+                AND t."transactionDate" < (CURRENT_DATE - INTERVAL '11 months')`
 				}; `,
 			);
 			const totalRevenuePrevious12Months = parseFloat(
