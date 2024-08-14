@@ -15,6 +15,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CacheKeys } from '@app/common';
 import { DashboardRepository } from '../repositories/dashboard.repository';
+import { DateTime } from 'luxon';
 
 @Injectable()
 export class DashboardService {
@@ -47,18 +48,27 @@ export class DashboardService {
 		return propertyMetrics;
 	}
 
-	async getRevenueBarChartData(): Promise<RevenueResponseDto> {
+	async getRevenueBarChartData(
+		startDateStr?: string,
+		endDateStr?: string,
+	): Promise<RevenueResponseDto> {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const cacheKey = `${this.cacheKeyPrefix}/${CacheKeys.REVENUE_METRICS}/${currentUser.organizationId}`;
+		const cacheKey = `${this.cacheKeyPrefix}/${CacheKeys.REVENUE_METRICS}/${startDateStr}to${endDateStr}/${currentUser.organizationId}`;
 		const cachedRevenueMetrics =
 			await this.cacheManager.get<RevenueResponseDto>(cacheKey);
 		if (cachedRevenueMetrics) {
 			this.logger.log('Retrieving revenue metrics from cache');
 			return cachedRevenueMetrics;
 		}
+		const startDate = startDateStr
+			? DateTime.fromISO(startDateStr).toSQL()
+			: null;
+		const endDate = endDateStr ? DateTime.fromISO(endDateStr).toSQL() : null;
 		const result = await this.dashboardRepository.getMonthlyRevenueData(
 			currentUser.organizationId,
+			startDate,
+			endDate,
 		);
 		await this.cacheManager.set(cacheKey, result, this.cacheTTL);
 		return result;

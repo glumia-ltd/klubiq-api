@@ -22,118 +22,160 @@ export class DashboardRepository {
 		private readonly util: Util,
 	) {}
 
-	async getMonthlyRevenueData(orgUuid: string): Promise<RevenueResponseDto> {
-		const rawResult = await this.manager.query(
-			`SELECT 
-                TO_CHAR(t."transactionDate", 'YYYY-MM-DD') as month,
-                t."revenueType" as revenue_type,
-                SUM(t.amount) as amount
-            FROM
-                poo.transaction t
-            WHERE
-                t."transactionType" = '${TransactionType.REVENUE}'
-                AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '12 months')
-                AND t."organizationUuid" = '${orgUuid}'
-            GROUP BY
-                month,
-                t."revenueType"
-            ORDER BY
-                month ASC, t."revenueType";`,
-		);
-		const totalRevenueLast12MonthsResult = await this.manager.query(
-			`SELECT
-                SUM(t.amount) as total_revenue_last12_months
-            FROM
-                poo.transaction t
-            WHERE
-                t."transactionType" = '${TransactionType.REVENUE}'
-                AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '12 months')
-                AND t."organizationUuid" = '${orgUuid}';`,
-		);
-		const totalRevenueLast12Months = parseFloat(
-			totalRevenueLast12MonthsResult[0].total_revenue_last12_months || 0,
-		);
-		const totalRevenuePrevious12MonthsResult = await this.manager.query(
-			`SELECT
-                SUM(t.amount) as total_revenue_previous12_months
-            FROM
-                poo.transaction t
-            WHERE
-                t."organizationUuid" = '${orgUuid}'
+	private getQueryStringForRange(
+		orgUuid: string,
+		startDateStr: string,
+		endDateStr: string,
+	) {
+		// const rangeCondition = (startDateStr != null && endDateStr != null) ?
+		// 	`AND t."transactionDate" BETWEEN '${startDateStr}' AND '${endDateStr}'` :
+		// 	`AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '12 months')`;
+		return `
+			WITH date_series AS (
+				SELECT generate_series(
+					date_trunc('month', DATE ${startDateStr ? `('${startDateStr}')` : `(CURRENT_DATE - INTERVAL '12 months')`}),
+					date_trunc('month', DATE ${endDateStr ? `('${endDateStr}')` : `(CURRENT_DATE)`}),
+					'1 month'::interval
+				) AS month )
+			SELECT 
+        	        TO_CHAR(ds.month, 'YYYY-MM') as month,
+        	        t."revenueType" as revenue_type,
+					COALESCE(SUM(t.amount), 0) AS amount
+        	    FROM
+					date_series ds
+				LEFT JOIN poo.transaction t ON date_trunc('month', t."transactionDate") = ds.month
+        	    AND t."transactionType" = '${TransactionType.REVENUE}'
+				AND t."organizationUuid" = '${orgUuid}'
+				 GROUP BY  ds.month, t."revenueType"
+			    ORDER BY ds.month DESC, t."revenueType";
+			`;
+		//+ `${rangeCondition}` +
+		//`AND t."organizationUuid" = '${orgUuid}'
+		//GROUP BY
+		//month,
+		//t."revenueType"
+		// ORDER BY
+		//    month ASC, t."revenueType"; `;
+	}
+	async getMonthlyRevenueData(
+		orgUuid: string,
+		startDateStr: string | null,
+		endDateStr: string | null,
+	): Promise<RevenueResponseDto> {
+		try {
+			const rawResult = await this.manager.query(
+				this.getQueryStringForRange(orgUuid, startDateStr, endDateStr),
+			);
+			const totalRevenueLast12MonthsResult = await this.manager.query(
+				`SELECT
+		SUM(t.amount) as total_revenue_last12_months
+		FROM
+		poo.transaction t
+		WHERE
+		t."transactionType" = '${TransactionType.REVENUE}' 
+				${
+					startDateStr != null && endDateStr != null
+						? `AND t."transactionDate" BETWEEN '${startDateStr}' AND '${endDateStr}'`
+						: `AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '12 months')`
+				} 
+                AND t."organizationUuid" = '${orgUuid}'; `,
+			);
+			const totalRevenueLast12Months = parseFloat(
+				totalRevenueLast12MonthsResult[0].total_revenue_last12_months || 0,
+			);
+			const totalRevenuePrevious12MonthsResult = await this.manager.query(
+				`SELECT
+		SUM(t.amount) as total_revenue_previous12_months
+		FROM
+		poo.transaction t
+		WHERE
+		t."organizationUuid" = '${orgUuid}'
                 AND t."transactionType" = '${TransactionType.REVENUE}'
-                AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '24 months')
-                AND t."transactionDate" < (CURRENT_DATE - INTERVAL '12 months');`,
-		);
-		const totalRevenuePrevious12Months = parseFloat(
-			totalRevenuePrevious12MonthsResult[0].total_revenue_previous12_months ||
-				0,
-		);
-		const percentageDifference =
-			totalRevenuePrevious12Months > 0 && totalRevenueLast12Months > 0
-				? this.util.getPercentageIncreaseOrDecrease(
-						totalRevenuePrevious12Months,
-						totalRevenueLast12Months,
-					)
-				: 0;
-		const changeIndicator =
-			percentageDifference > 0
-				? 'positive'
-				: percentageDifference < 0
-					? 'negative'
-					: 'neutral';
-		const monthlyRevenueMap: {
-			[month: string]: { [revenueType: string]: number };
-		} = {};
-		let maxRevenue = 0;
-		const revenueChartData: RevenueChartDto = {
-			xAxisData: [],
-			seriesData: [],
-		};
-		rawResult.forEach((row: any) => {
-			const month = DateTime.fromISO(row.month).monthShort;
-			const revenueType = row.revenue_type;
-			const totalRevenue = parseFloat(row.amount);
-			if (!monthlyRevenueMap[month]) {
-				monthlyRevenueMap[month] = {};
-			}
-			monthlyRevenueMap[month][revenueType] = totalRevenue;
-			if (totalRevenue > maxRevenue) {
-				maxRevenue = totalRevenue;
-			}
-			revenueChartData.xAxisData.push(month);
-			const seriesData = find(revenueChartData.seriesData, {
-				label: revenueType,
-			});
-			if (!seriesData) {
-				revenueChartData.seriesData.push({
-					label: revenueType,
-					data: [totalRevenue],
-					color: this.getGraphColor(revenueType),
-					stack: 'A',
-				});
-			} else {
-				seriesData.data.push(totalRevenue);
-			}
-		});
-
-		const monthlyRevenueData: MonthlyRevenueDto[] = Object.keys(
-			monthlyRevenueMap,
-		).map((month: string) => {
-			const revenueMap = monthlyRevenueMap[month];
-			return {
-				month,
-				revenue: revenueMap,
+				${
+					startDateStr != null && endDateStr != null
+						? `AND t."transactionDate" BETWEEN ('${startDateStr}'::DATE - INTERVAL '12 months') AND ('${endDateStr}'::DATE - INTERVAL '12 months')`
+						: `AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '24 months')
+                AND t."transactionDate" < (CURRENT_DATE - INTERVAL '12 months')`
+				}; `,
+			);
+			const totalRevenuePrevious12Months = parseFloat(
+				totalRevenuePrevious12MonthsResult[0].total_revenue_previous12_months ||
+					0,
+			);
+			const percentageDifference =
+				totalRevenuePrevious12Months > 0 && totalRevenueLast12Months > 0
+					? this.util.getPercentageIncreaseOrDecrease(
+							totalRevenuePrevious12Months,
+							totalRevenueLast12Months,
+						)
+					: 0;
+			const changeIndicator =
+				percentageDifference > 0
+					? 'positive'
+					: percentageDifference < 0
+						? 'negative'
+						: 'neutral';
+			const monthlyRevenueMap: {
+				[month: string]: { [revenueType: string]: number };
+			} = {};
+			let maxRevenue = 0;
+			const revenueChartData: RevenueChartDto = {
+				xAxisData: [],
+				seriesData: [],
 			};
-		});
+			rawResult.forEach((row: any) => {
+				const month = DateTime.fromISO(row.month).monthShort;
+				const revenueType = row.revenue_type ?? RevenueType.PROPERTY_RENTAL;
+				const totalRevenue = parseFloat(row.amount);
+				if (!monthlyRevenueMap[row.month]) {
+					monthlyRevenueMap[row.month] = {};
+				}
+				monthlyRevenueMap[row.month][revenueType] = totalRevenue;
+				if (totalRevenue > maxRevenue) {
+					maxRevenue = totalRevenue;
+				}
+				revenueChartData.xAxisData.push(month);
+				const seriesData = find(revenueChartData.seriesData, {
+					label: revenueType,
+				});
+				if (!seriesData) {
+					revenueChartData.seriesData.push({
+						label: revenueType,
+						data: [totalRevenue],
+						color: this.getGraphColor(revenueType),
+						stack: 'A',
+					});
+				} else {
+					seriesData.data.push(totalRevenue);
+				}
+			});
+			const monthlyRevenueData: MonthlyRevenueDto[] = Object.keys(
+				monthlyRevenueMap,
+			).map((month: string) => {
+				const revenueMap = monthlyRevenueMap[month];
+				return {
+					month,
+					revenue: revenueMap,
+				};
+			});
 
-		return {
-			maxRevenue,
-			monthlyRevenues: monthlyRevenueData,
-			totalRevenueLast12Months,
-			percentageDifference,
-			changeIndicator,
-			revenueChart: revenueChartData,
-		};
+			return {
+				maxRevenue,
+				monthlyRevenues: monthlyRevenueData,
+				totalRevenueLast12Months,
+				percentageDifference,
+				changeIndicator,
+				revenueChart: revenueChartData,
+			};
+		} catch (err) {
+			console.error('error in getTransactionRevenue', err.message);
+			this.logger.error(
+				err,
+				`Error getting monthly revenue data for Org: ${orgUuid}`,
+				err.message,
+			);
+			throw err;
+		}
 	}
 	getGraphColor(revenueType: any): string {
 		switch (revenueType) {
@@ -156,46 +198,46 @@ export class DashboardRepository {
 				totalRevenuePreviousMTD: number = 0;
 			const todaysRevenuerResult = await this.manager.query(
 				`SELECT
-                SUM(t.amount) as total_revenue
-            FROM
-                poo.transaction t
-            WHERE
-                t."transactionType" = '${TransactionType.REVENUE}'
+		SUM(t.amount) as total_revenue
+		FROM
+		poo.transaction t
+		WHERE
+		t."transactionType" = '${TransactionType.REVENUE}'
                 AND t."transactionDate" = CURRENT_DATE
-                AND t."organizationUuid" = '${orgUuid}';`,
+                AND t."organizationUuid" = '${orgUuid}'; `,
 			);
 			const yesterdayRevenueResult = await this.manager.query(
 				`SELECT
-                SUM(t.amount) as total_revenue
-            FROM
-                poo.transaction t
-            WHERE
-                t."transactionType" = '${TransactionType.REVENUE}'
+		SUM(t.amount) as total_revenue
+		FROM
+		poo.transaction t
+		WHERE
+		t."transactionType" = '${TransactionType.REVENUE}'
                 AND t."transactionDate" = (CURRENT_DATE - INTERVAL '1 day')
-                AND t."organizationUuid" = '${orgUuid}';`,
+                AND t."organizationUuid" = '${orgUuid}'; `,
 			);
 			const totalTransactionsMTDResult = await this.manager.query(
 				`SELECT
-                t."transactionType" as transaction_type,
-                SUM(t.amount) as total_amount
-            FROM
-                poo.transaction t
-            WHERE
-                t."transactionDate" >= (CURRENT_DATE - INTERVAL '30 days')
+		t."transactionType" as transaction_type,
+			SUM(t.amount) as total_amount
+		FROM
+		poo.transaction t
+		WHERE
+		t."transactionDate" >= (CURRENT_DATE - INTERVAL '30 days')
                 AND t."organizationUuid" = '${orgUuid}'
-            GROUP BY t."transactionType";`,
+            GROUP BY t."transactionType"; `,
 			);
 			const totalTransactionsPreviousMTDResult = await this.manager.query(
 				`SELECT
-                t."transactionType" as transaction_type,
-                SUM(t.amount) as total_amount
-            FROM
-                poo.transaction t
-            WHERE
-                t."transactionDate" >= (CURRENT_DATE - INTERVAL '60 days')
+		t."transactionType" as transaction_type,
+			SUM(t.amount) as total_amount
+		FROM
+		poo.transaction t
+		WHERE
+		t."transactionDate" >= (CURRENT_DATE - INTERVAL '60 days')
                 AND t."transactionDate" < (CURRENT_DATE - INTERVAL '30 days')
                 AND t."organizationUuid" = '${orgUuid}'
-            GROUP BY t."transactionType";`,
+            GROUP BY t."transactionType"; `,
 			);
 			const todaysRevenue = parseFloat(
 				todaysRevenuerResult[0].total_revenue || 0,
@@ -275,7 +317,8 @@ export class DashboardRepository {
 			};
 			return transactionMetricsData;
 		} catch (error) {
-			throw new Error(error);
+			console.error('error in getTransactionMetrics', error.message);
+			throw new Error(error.message);
 		}
 	}
 }

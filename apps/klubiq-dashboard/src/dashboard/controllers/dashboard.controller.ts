@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { DashboardService } from '../services/dashboard.service';
 import {
@@ -13,7 +13,10 @@ import {
 	Roles,
 } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
-import { DashboardMetricsDto } from '@app/common/dto/responses/dashboard-metrics.dto';
+import {
+	DashboardMetricsDto,
+	RevenueResponseDto,
+} from '@app/common/dto/responses/dashboard-metrics.dto';
 
 @ApiBearerAuth()
 @ApiTags('dashboard')
@@ -35,6 +38,23 @@ export class DashboardController {
 				transactionMetrics:
 					await this.dashboardService.getTransactionMetricsData(),
 			};
+			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	//@Roles(UserRoles.ORG_OWNER, UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+	@Ability(Actions.WRITE, Actions.VIEW)
+	@Get('revenue-report')
+	@ApiOkResponse()
+	async getRevenueReport(
+		@Query('startDate') startDate: string,
+		@Query('endDate') endDate: string,
+	): Promise<RevenueResponseDto> {
+		try {
+			const data: RevenueResponseDto =
+				await this.dashboardService.getRevenueBarChartData(startDate, endDate);
 			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);
