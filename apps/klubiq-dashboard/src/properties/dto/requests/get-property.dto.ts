@@ -4,20 +4,11 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsOptional } from 'class-validator';
 import { IntersectionType } from '@nestjs/swagger';
-
-export enum SortProperties {
-	UPDATED_DATE = 'updatedDate',
-	CREATED_DATE = 'createdDate',
-	PROPERTY_NAME = 'name',
-}
-export enum DisplayOptions {
-	ALL = 'all',
-	ARCHIVED = 'archived',
-}
-export enum UnitType {
-	SINGLE_UNIT = 'single-unit',
-	MULTI_UNIT = 'multi-unit',
-}
+import {
+	DisplayOptions,
+	SortProperties,
+	UnitType,
+} from '@app/common/config/config.constants';
 
 export class PropertyFilterDto {
 	@IsOptional()

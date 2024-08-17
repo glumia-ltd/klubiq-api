@@ -1,3 +1,5 @@
+import { startCase } from 'lodash';
+
 export enum UserRoles {
 	SUPER_ADMIN = 'SuperAdmin',
 	ADMIN = 'Admin',
@@ -134,3 +136,89 @@ export enum ADMIN_DOMAINS {
 	GLUMIA_NG = 'glumia.ng',
 	GLUMIA_COM = 'glumia.com',
 }
+
+export enum SortProperties {
+	UPDATED_DATE = 'updatedDate',
+	CREATED_DATE = 'createdDate',
+	PROPERTY_NAME = 'name',
+}
+export enum DisplayOptions {
+	ALL = 'all',
+	ARCHIVED = 'archived',
+}
+
+export enum UnitType {
+	SINGLE_UNIT = 'single-unit',
+	MULTI_UNIT = 'multi-unit',
+}
+
+export type FilterData = {
+	id: string;
+	title: string;
+	options: {
+		label: string;
+		value: string | number;
+		order?: 'ASC' | 'DESC';
+		Icon?: string;
+	}[];
+};
+export const FILTER_OPTIONS: FilterData[] = [
+	{
+		id: 'display',
+		title: 'Display',
+		options: Object.values(DisplayOptions).map((option) => {
+			return {
+				label: startCase(option),
+				value: option,
+				Icon: '',
+			};
+		}),
+	},
+	{
+		id: 'unitType',
+		title: 'Unit Type',
+		options: Object.values(UnitType).map((option) => {
+			return {
+				label: startCase(option),
+				value: option,
+				Icon: '',
+			};
+		}),
+	},
+	{
+		id: 'sortBy',
+		title: 'Sort Options',
+		options: [
+			{
+				label: 'Recently Updated',
+				value: SortProperties.UPDATED_DATE,
+				order: 'DESC',
+				Icon: 'TopBottom',
+			},
+			{
+				value: SortProperties.CREATED_DATE,
+				order: 'DESC',
+				label: 'Newest',
+				Icon: 'ReverseIcon',
+			},
+			{
+				value: SortProperties.CREATED_DATE,
+				order: 'ASC',
+				label: 'Oldest',
+				Icon: 'AscendIcon',
+			},
+			{
+				value: SortProperties.PROPERTY_NAME,
+				order: 'ASC',
+				label: 'Property name (A -> Z)',
+				Icon: 'AscendIcon',
+			},
+			{
+				value: SortProperties.PROPERTY_NAME,
+				order: 'DESC',
+				label: 'Property name (Z -> A)',
+				Icon: 'ReverseIcon',
+			},
+		],
+	},
+];

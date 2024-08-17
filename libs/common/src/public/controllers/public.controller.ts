@@ -29,7 +29,7 @@ import {
 	UserRoles,
 	ViewFeaturePermissionDto,
 } from '../..';
-
+import { FILTER_OPTIONS, FilterData } from '../../config/config.constants';
 import { ViewFeatureDto } from '../../dto/responses/feature-response.dto';
 import { FeaturesService } from '../../services/features.service';
 import {
@@ -75,13 +75,38 @@ export class PublicController {
 		const purposes = await this.propertyPurposeService.getAllPropertyPurpose();
 		const amenities =
 			await this.propertyAmenityService.getAllPropertyAmenities();
-
+		const filterOptions: FilterData[] = [
+			...FILTER_OPTIONS,
+			{
+				id: 'purposeId',
+				title: 'Purpose',
+				options: purposes.map((option) => {
+					return {
+						label: option.name,
+						value: option.id,
+						Icon: '',
+					};
+				}),
+			},
+			{
+				id: 'typeId',
+				title: 'Property Type',
+				options: types.map((option) => {
+					return {
+						label: option.name,
+						value: option.id,
+						Icon: '',
+					};
+				}),
+			},
+		];
 		return {
 			categories,
 			statuses,
 			types,
 			purposes,
 			amenities,
+			filterOptions,
 		};
 	}
 
