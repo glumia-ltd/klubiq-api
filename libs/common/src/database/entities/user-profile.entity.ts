@@ -16,6 +16,7 @@ import { OrganizationUser } from '../../../../../apps/klubiq-dashboard/src/users
 import { AutoMap } from '@automapper/classes';
 import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
 import { TenantUser } from './tenant.entity';
+import { UserPreferences } from './user-preferences.entity';
 
 @Entity({ schema: 'kdo' })
 export class UserProfile {
@@ -134,4 +135,11 @@ export class UserProfile {
 
 	@UpdateDateColumn()
 	updatedDate?: Date;
+
+	@AutoMap(() => [UserPreferences])
+	@OneToOne(() => UserPreferences, (preferences) => preferences.profile, {
+		eager: true,
+		cascade: ['insert', 'remove'],
+	})
+	preferences: UserPreferences;
 }

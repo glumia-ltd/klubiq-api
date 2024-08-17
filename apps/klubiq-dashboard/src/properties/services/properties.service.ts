@@ -64,15 +64,6 @@ export class PropertiesService implements IPropertyMetrics {
 			this.logger.error('Error getting total properties', error);
 		}
 	}
-	// async getTotalVacantUnits(organizationUuid: string): Promise<number> {
-	// 	try {
-	// 		const vacantProperties =
-	// 			await this.propertyRepository.getTotalVacantUnits(organizationUuid);
-	// 		return vacantProperties;
-	// 	} catch (error) {
-	// 		this.logger.error('Error getting total vacant properties', error);
-	// 	}
-	// }
 	async getTotalOccupiedUnits(
 		organizationUuid: string,
 		days?: number,
@@ -108,7 +99,6 @@ export class PropertiesService implements IPropertyMetrics {
 		daysAgo?: number,
 	): Promise<PropertyMetrics> {
 		try {
-			//const vacantUnits = await this.getTotalVacantUnits(organizationUuid);
 			const occupiedUnits = await this.getTotalOccupiedUnits(organizationUuid);
 			const occupiedUnitsDaysAgo = await this.getTotalOccupiedUnits(
 				organizationUuid,

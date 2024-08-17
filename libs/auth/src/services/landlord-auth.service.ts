@@ -13,6 +13,7 @@ import * as admin from 'firebase-admin';
 import { FirebaseException } from '../exception/firebase.exception';
 import {
 	InviteUserDto,
+	OrganizationCountryDto,
 	OrgUserSignUpDto,
 } from '../dto/requests/user-login.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -46,6 +47,7 @@ import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { AuthService } from './auth.service';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
 import { DateTime } from 'luxon';
+import { OrganizationSettings } from '@app/common/database/entities/organization-settings.entity';
 
 @Injectable()
 export class LandlordAuthService extends AuthService {
@@ -151,12 +153,25 @@ export class LandlordAuthService extends AuthService {
 		name: string,
 		entityManager: EntityManager,
 		createEventType: CreateUserEventTypes,
+		orgCountryDto?: OrganizationCountryDto,
 	): Promise<Organization> {
 		try {
 			const organizationId = this.cls.get('currentUser.organizationId');
 			if (createEventType === CreateUserEventTypes.CREATE_ORG_USER) {
 				const newOrganization = new Organization();
 				newOrganization.name = name;
+				if (orgCountryDto) {
+					newOrganization.country = orgCountryDto.name;
+					newOrganization.countryPhoneCode = orgCountryDto.dialCode;
+					const orgSettings = {
+						currency: orgCountryDto.currency,
+						currencySymbol: orgCountryDto.currencySymbol,
+						countryCode: orgCountryDto.code,
+					};
+					newOrganization.settings = new OrganizationSettings();
+					newOrganization.settings.settings = orgSettings;
+				}
+
 				return entityManager.save(newOrganization);
 			} else if (createEventType === CreateUserEventTypes.INVITE_ORG_USER) {
 				const existingOrganization = await entityManager.findOne(Organization, {
@@ -289,6 +304,7 @@ export class LandlordAuthService extends AuthService {
 				createUserDto.companyName,
 				transactionalEntityManager,
 				createEventType,
+				createUserDto.organizationCountry,
 			);
 
 			const systemRole =

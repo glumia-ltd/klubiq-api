@@ -1,13 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Amenity } from '@app/common/database/entities/property-amenity.entity';
+import { BaseRepository } from '@app/common/repositories/base.repository';
+import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics.dto';
 import {
-	Amenity,
-	BaseRepository,
+	DisplayOptions,
 	LeaseStatus,
+	UnitType,
 	MaintenanceStatus,
-	RentOverdueLeaseDto,
 	RevenueType,
 	TransactionType,
-} from '@app/common';
+} from '@app/common/config/config.constants';
 import { Brackets, EntityManager, SelectQueryBuilder } from 'typeorm';
 import { Property } from '../entities/property.entity';
 import {
@@ -18,10 +20,8 @@ import {
 import { CreateAddressDto } from '../dto/requests/create-address.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
 import {
-	DisplayOptions,
 	GetPropertyDto,
 	PropertyFilterDto,
-	UnitType,
 } from '../dto/requests/get-property.dto';
 import { indexOf } from 'lodash';
 import { DateTime } from 'luxon';

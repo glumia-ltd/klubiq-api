@@ -101,10 +101,6 @@ export class OrganizationRepository extends BaseRepository<Organization> {
 					city: updateDto.city,
 					postalCode: updateDto.postalCode,
 					country: updateDto.country,
-					isMaintenanceRequestNotificationEnabled:
-						updateDto.isMaintenanceRequestNotificationEnabled,
-					isRentDueEmailNotificationEnabled:
-						updateDto.isRentDueEmailNotificationEnabled,
 				},
 			);
 			return updated.affected > 0;
