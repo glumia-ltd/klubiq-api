@@ -8,11 +8,13 @@ import {
 	CreateDateColumn,
 	UpdateDateColumn,
 	Index,
+	OneToOne,
 } from 'typeorm';
 import { OrganizationUser } from '../../users/entities/organization-user.entity';
 import { AutoMap } from '@automapper/classes';
 import { Property } from '../../properties/entities/property.entity';
 import { Transaction } from '@app/common/database/entities/transaction.entity';
+import { OrganizationSettings } from '@app/common/database/entities/organization-settings.entity';
 
 @Entity({ schema: 'poo' })
 export class Organization {
@@ -109,14 +111,6 @@ export class Organization {
 	@Column({ nullable: true })
 	logoUrl?: string;
 
-	@AutoMap()
-	@Column({ default: false })
-	isRentDueEmailNotificationEnabled?: boolean;
-
-	@AutoMap()
-	@Column({ default: false })
-	isMaintenanceRequestNotificationEnabled?: boolean;
-
 	@AutoMap(() => [Property])
 	@OneToMany(() => Property, (property) => property.organization)
 	properties?: Property[];
@@ -124,4 +118,11 @@ export class Organization {
 	@AutoMap(() => [Transaction])
 	@OneToMany(() => Transaction, (transaction) => transaction.organization)
 	transactions?: Transaction[];
+
+	@AutoMap(() => [OrganizationSettings])
+	@OneToOne(() => OrganizationSettings, (settings) => settings.organization, {
+		eager: true,
+		cascade: ['insert', 'remove'],
+	})
+	settings?: OrganizationSettings;
 }

@@ -57,3 +57,5 @@ export * from './dto/responses/tenant.dto';
 export * from './helpers/util';
 export * from './dto/requests/create-tenant.dto';
 export * from './services/file-upload.service';
+export * from './database/entities/user-preferences.entity';
+export * from './database/entities/organization-settings.entity';

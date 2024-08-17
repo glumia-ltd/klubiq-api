@@ -8,6 +8,7 @@ import {
 	IsArray,
 	IsEmail,
 	IsNumber,
+	IsObject,
 	IsOptional,
 	IsPhoneNumber,
 	IsString,
@@ -87,6 +88,43 @@ export class UpdateFirebaseUserDto extends PartialType(UserSignUpDto) {
 	displayName: string;
 }
 
+export class OrganizationCountryDto {
+	@ApiProperty({
+		description: 'Country Name',
+		example: 'Nigeria',
+	})
+	@IsString()
+	name: string;
+
+	@ApiProperty({
+		description: 'Country Code',
+		example: 'NG',
+	})
+	@IsString()
+	code: string;
+
+	@ApiProperty({
+		description: 'Dial Code',
+		example: '+234',
+	})
+	@IsString()
+	dialCode: string;
+
+	@ApiProperty({
+		description: 'Currency',
+		example: 'NGN',
+	})
+	@IsString()
+	currency: string;
+
+	@ApiProperty({
+		description: 'Currency symbol',
+		example: '&#8358;',
+	})
+	@IsString()
+	currencySymbol: string;
+}
+
 /**
  * Represents the data transfer object for signing up an organization user.
  * Extends the partial type of UserSignUpDto.
@@ -98,6 +136,12 @@ export class OrgUserSignUpDto extends PartialType(UserSignUpDto) {
 	})
 	@IsString()
 	companyName: string;
+
+	@ApiProperty({
+		type: OrganizationCountryDto,
+	})
+	@IsObject()
+	organizationCountry: OrganizationCountryDto;
 }
 
 /**
