@@ -45,7 +45,6 @@ export class DashboardController {
 		try {
 			const data: DashboardMetricsDto = {
 				propertyMetrics: await this.dashboardService.getPropertyMetrics(),
-				revenueMetrics: await this.dashboardService.getRevenueBarChartData(),
 				transactionMetrics:
 					await this.dashboardService.getTransactionMetricsData(),
 			};

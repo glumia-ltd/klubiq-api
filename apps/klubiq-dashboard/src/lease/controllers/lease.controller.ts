@@ -144,7 +144,7 @@ export class LeaseController {
 		}
 	}
 
-	@Post('presigned-url')
+	@Post('upload-url')
 	@Ability(Actions.WRITE)
 	async getPresignedUrlForPropertyImage(@Body() fileData: FileUploadDto) {
 		try {

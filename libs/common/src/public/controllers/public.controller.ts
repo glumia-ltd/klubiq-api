@@ -76,7 +76,6 @@ export class PublicController {
 		const amenities =
 			await this.propertyAmenityService.getAllPropertyAmenities();
 		const filterOptions: FilterData[] = [
-			...FILTER_OPTIONS,
 			{
 				id: 'purposeId',
 				title: 'Purpose',
@@ -99,6 +98,7 @@ export class PublicController {
 					};
 				}),
 			},
+			...FILTER_OPTIONS,
 		];
 		return {
 			categories,

@@ -3,7 +3,7 @@ export interface DashboardMetricsDto {
 	leaseMetrics?: LeaseMetricsDto;
 	transactionMetrics?: TransactionMetricsDto;
 	monthlyRevenue?: MonthlyRevenueDto;
-	revenueMetrics?: RevenueResponseDto;
+	//revenueMetrics?: RevenueResponseDto;
 }
 export interface PropertyMetrics {
 	totalUnits?: number;

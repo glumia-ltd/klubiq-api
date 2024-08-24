@@ -13,7 +13,7 @@ import {
 } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { CacheKeys } from '@app/common';
+import { CacheKeys } from '@app/common/config/config.constants';
 import { DashboardRepository } from '../repositories/dashboard.repository';
 import { DateTime } from 'luxon';
 import { FileDownloadService } from '@app/common/services/file-download.service';
