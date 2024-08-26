@@ -34,6 +34,14 @@ export class UpdateUnitDto {
 
 	@IsNumber()
 	@IsOptional()
+	rooms: number;
+
+	@IsNumber()
+	@IsOptional()
+	offices: number;
+
+	@IsNumber()
+	@IsOptional()
 	bathrooms: number;
 
 	@IsNumber()
