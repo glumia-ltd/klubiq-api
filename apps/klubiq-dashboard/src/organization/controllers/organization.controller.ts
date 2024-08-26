@@ -15,13 +15,10 @@ import { OrganizationService } from '../services/organization.service';
 import { CreateOrganizationDto } from '../dto/create-organization.dto';
 import { UpdateOrganizationDto } from '../dto/update-organization.dto';
 import { OrganizationResponseDto } from '../dto/organization-response.dto';
-import {
-	UserRoles,
-	PageDto,
-	PageOptionsDto,
-	AppFeature,
-	Actions,
-} from '@app/common';
+import { UserRoles } from '@app/common/config/config.constants';
+import { PageDto } from '@app/common/dto/pagination/page.dto';
+import { PageOptionsDto } from '@app/common/dto/pagination/page-options.dto';
+import { AppFeature, Actions } from '@app/common/config/config.constants';
 import {
 	Ability,
 	Auth,
@@ -61,8 +58,8 @@ export class OrganizationController {
 	}
 
 	@Get(':uuid')
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN, UserRoles.STAFF)
-	@Ability(Actions.WRITE, Actions.VIEW)
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN, UserRoles.ORG_OWNER)
+	//@Ability(Actions.WRITE, Actions.VIEW)
 	@ApiOkResponse({
 		description: 'Gets a organization by uuid',
 		type: OrganizationResponseDto,
@@ -72,7 +69,12 @@ export class OrganizationController {
 	}
 
 	@Patch(':uuid')
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN, UserRoles.STAFF)
+	@Roles(
+		UserRoles.ADMIN,
+		UserRoles.SUPER_ADMIN,
+		UserRoles.STAFF,
+		UserRoles.ORG_OWNER,
+	)
 	@Ability(Actions.WRITE)
 	@ApiOkResponse({
 		description: 'Updates an organization',

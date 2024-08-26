@@ -15,6 +15,7 @@ import { indexOf } from 'lodash';
 import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 import { TenantUser } from '@app/common/database/entities/tenant.entity';
 import ShortUniqueId from 'short-unique-id';
+import { PropertyLeaseMetrics } from '../dto/responses/view-lease.dto';
 
 @Injectable()
 export class LeaseRepository extends BaseRepository<Lease> {
@@ -228,5 +229,69 @@ export class LeaseRepository extends BaseRepository<Lease> {
 			this.logger.error(e.message);
 			throw new BadRequestException(e.message, 'Error adding tenant to lease');
 		}
+	}
+
+	async getPropertyLeaseMetrics(
+		propertyUuid: string,
+	): Promise<PropertyLeaseMetrics> {
+		const query = `
+    		WITH filtered_leases AS (
+    		    SELECT 
+    		        l.id,
+    		        l."propertyUuid",
+    		        l."unitId",
+    		        l."rentAmount",
+    		        lt."rentAmount"
+    		    FROM poo.lease l
+    		    LEFT JOIN (
+    		        SELECT lt."leaseId", COUNT(DISTINCT lt."tenantId") AS "rentAmount"
+    		        FROM poo.lease_tenants lt
+    		        GROUP BY lt."leaseId"
+    		    ) lt ON lt."leaseId" = l.id
+    		    WHERE (l."propertyUuid" = :uuid OR l."unitId" IN (SELECT id FROM poo.unit WHERE "propertyUuid" = :uuid))
+    		      AND l."endDate" > NOW() AT TIME ZONE 'UTC'
+    		)
+    		SELECT 
+    		    -- Property-level metrics
+    		    COALESCE(SUM(CASE WHEN fl."propertyUuid" = :uuid THEN 1 ELSE 0 END), 0) AS propertyLeaseCount,
+    		    COALESCE(SUM(CASE WHEN fl."propertyUuid" = :uuid THEN fl."rentAmount" ELSE 0 END), 0) AS totalPropertyRent,
+    		    COALESCE(SUM(CASE WHEN fl."propertyUuid" = :uuid THEN fl."rentAmount" ELSE 0 END), 0) AS totalPropertyTenants,
+
+    		    -- Unit-level metrics
+    		    COALESCE(SUM(CASE WHEN u."propertyUuid" = :uuid THEN 1 ELSE 0 END), 0) AS unitLeaseCount,
+    		    COALESCE(SUM(CASE WHEN u."propertyUuid" = :uuid THEN fl."rentAmount" ELSE 0 END), 0) AS totalUnitRent,
+    		    COUNT(DISTINCT CASE WHEN u."propertyUuid" = :uuid THEN u.id ELSE NULL END) AS occupiedUnitCount,
+    		    COALESCE(SUM(CASE WHEN u."propertyUuid" = :uuid THEN fl."rentAmount" ELSE 0 END), 0) AS totalUnitTenants,
+
+    		    -- Combined metrics
+    		    GREATEST(
+    		        COALESCE(SUM(CASE WHEN fl."propertyUuid" = :uuid THEN 1 ELSE 0 END), 0),
+    		        COALESCE(SUM(CASE WHEN u."propertyUuid" = :uuid THEN 1 ELSE 0 END), 0)
+    		    ) AS finalPropertyLeaseCount,
+    		    COALESCE(
+    		        SUM(CASE WHEN fl."propertyUuid" = :uuid THEN fl."rentAmount" ELSE 0 END), 0
+    		    ) + COALESCE(
+    		        SUM(CASE WHEN u."propertyUuid" = :uuid THEN fl."rentAmount" ELSE 0 END), 0
+    		    ) AS finalTotalRent,
+    		    COALESCE(
+    		        SUM(CASE WHEN fl."propertyUuid" = :uuid THEN fl."rentAmount" ELSE 0 END), 0
+    		    ) + COALESCE(
+    		        SUM(CASE WHEN u."propertyUuid" = :uuid THEN fl."rentAmount" ELSE 0 END), 0
+    		    ) AS finalTotalTenants
+
+    		FROM filtered_leases fl
+    		LEFT JOIN unit u ON fl."unitId" = u.id
+    		WHERE fl."propertyUuid" = :uuid OR u."propertyUuid" = :uuid`;
+		const queryResult = await this.manager.query(query, [
+			{ uuid: propertyUuid },
+		]);
+		const propertyLeaseMetrics: PropertyLeaseMetrics = {
+			propertyLeaseCount: queryResult[0].finalpropertyleasecount,
+			unitLeaseCount: queryResult[0].unitleasecount,
+			occupiedUnitCount: queryResult[0].occupiedunitcount,
+			totalRent: queryResult[0].finaltotalrent,
+			totalTenants: queryResult[0].finaltotaltenants,
+		};
+		return propertyLeaseMetrics;
 	}
 }

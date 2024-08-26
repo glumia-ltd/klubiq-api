@@ -18,20 +18,19 @@ import {
 	OneToOne,
 	ManyToMany,
 	PrimaryGeneratedColumn,
-	Tree,
-	TreeChildren,
-	TreeParent,
 	UpdateDateColumn,
 	JoinTable,
 } from 'typeorm';
 import { PropertyAddress } from './property-address.entity';
 import { Organization } from '../../organization/entities/organization.entity';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
-import { Lease } from '@app/common/database/entities/lease.entity';
+//import { Lease } from '@app/common/database/entities/lease.entity';
 import { Maintenance } from '@app/common/database/entities/maintenance.entity';
+import { Unit } from './unit.entity';
 
 @Entity({ schema: 'poo' })
-@Tree('closure-table', { closureTableName: 'property_unit' })
+@Index('IDX_PROPERTY_TYPE_STATUS', ['type', 'status'])
+@Index('IDX_PROPERTY_FILTER', ['name', 'purpose', 'type', 'status'])
 export class Property {
 	@AutoMap()
 	@PrimaryGeneratedColumn('uuid')
@@ -40,7 +39,7 @@ export class Property {
 	@AutoMap()
 	@Index()
 	@Generated('increment')
-	@Column({ unique: true })
+	@Column({ unique: true, type: 'bigint' })
 	id?: number;
 
 	@AutoMap()
@@ -63,18 +62,6 @@ export class Property {
 	@AutoMap()
 	@Column({ default: false })
 	isMultiUnit?: boolean;
-
-	@AutoMap()
-	@Column({ type: 'decimal', nullable: true })
-	bedroom?: number;
-
-	@AutoMap()
-	@Column({ type: 'decimal', nullable: true })
-	bathroom?: number;
-
-	@AutoMap()
-	@Column({ type: 'decimal', nullable: true })
-	toilet?: number;
 
 	@AutoMap()
 	@Column({ type: 'json', nullable: true })
@@ -105,6 +92,7 @@ export class Property {
 		name: 'categoryId',
 		referencedColumnName: 'id',
 	})
+	@Index('IDX_CATEGORY', ['categoryId'])
 	category?: PropertyCategory;
 
 	@AutoMap(() => PropertyType)
@@ -113,6 +101,7 @@ export class Property {
 		name: 'typeId',
 		referencedColumnName: 'id',
 	})
+	@Index('IDX_TYPE', ['typeId'])
 	type?: PropertyType;
 
 	@AutoMap(() => PropertyPurpose)
@@ -121,6 +110,7 @@ export class Property {
 		name: 'purposeId',
 		referencedColumnName: 'id',
 	})
+	@Index('IDX_PURPOSE', ['purposeId'])
 	purpose?: PropertyPurpose;
 
 	@AutoMap(() => PropertyStatus)
@@ -129,6 +119,7 @@ export class Property {
 		name: 'statusId',
 		referencedColumnName: 'id',
 	})
+	@Index('IDX_STATUS', ['statusId'])
 	status?: PropertyStatus;
 
 	@AutoMap(() => PropertyAddress)
@@ -141,20 +132,26 @@ export class Property {
 	address?: PropertyAddress;
 
 	@AutoMap(() => Organization)
-	@Index()
-	@ManyToOne(() => Organization, { eager: true })
+	@Index('IDX_ORGANIZATION', ['organizationUuid'])
+	@ManyToOne(() => Organization, {
+		eager: true,
+		onDelete: 'SET NULL',
+		onUpdate: 'CASCADE',
+	})
 	@JoinColumn({
 		name: 'organizationUuid',
 		referencedColumnName: 'organizationUuid',
 	})
 	organization?: Organization;
 
-	@TreeParent()
-	parentProperty?: Property;
-
-	@AutoMap(() => [Property])
-	@TreeChildren({ cascade: true })
-	units?: Property[];
+	@AutoMap(() => [Unit])
+	@OneToMany(() => Unit, (unit) => unit.property, {
+		cascade: true,
+		onDelete: 'CASCADE',
+		onUpdate: 'CASCADE',
+		lazy: true,
+	})
+	units?: Promise<Unit[]>;
 
 	@AutoMap()
 	@Column({ default: 1 })
@@ -184,18 +181,25 @@ export class Property {
 	@AutoMap(() => [PropertyImage])
 	@OneToMany(() => PropertyImage, (image) => image.property, {
 		cascade: true,
+		lazy: true,
 	})
-	images?: PropertyImage[];
+	images?: Promise<PropertyImage[]>;
 
 	@AutoMap(() => UserProfile)
-	@Index()
-	@ManyToOne(() => UserProfile, (user) => user.propertiesOwned)
+	@Index('IDX_OWNER', ['ownerUid'])
+	@ManyToOne(() => UserProfile, (user) => user.propertiesOwned, {
+		onDelete: 'SET NULL',
+		onUpdate: 'CASCADE',
+	})
 	@JoinColumn({ name: 'ownerUid', referencedColumnName: 'firebaseId' })
 	owner?: UserProfile;
 
 	@AutoMap(() => UserProfile)
-	@Index()
-	@ManyToOne(() => UserProfile, (user) => user.propertiesManaged)
+	@Index('IDX_MANAGER', ['managerUid'])
+	@ManyToOne(() => UserProfile, (user) => user.propertiesManaged, {
+		onDelete: 'SET NULL',
+		onUpdate: 'CASCADE',
+	})
 	@JoinColumn({ name: 'managerUid', referencedColumnName: 'firebaseId' })
 	manager?: UserProfile;
 
@@ -203,26 +207,11 @@ export class Property {
 	@Column({ default: false })
 	isListingPublished?: boolean;
 
-	@AutoMap(() => [Lease])
-	@OneToMany(() => Lease, (lease) => lease.property)
-	leases?: Lease[];
+	// @AutoMap(() => [Lease])
+	// @OneToMany(() => Lease, (lease) => lease.property)
+	// leases?: Lease[];
 
 	@AutoMap(() => [Maintenance])
 	@OneToMany(() => Maintenance, (maintenance) => maintenance.property)
 	maintenances?: Maintenance[];
-
-	@AutoMap(() => PropertyImage)
-	mainPhoto?: PropertyImage;
-
-	@AutoMap()
-	occupiedUnits?: number;
-
-	@AutoMap()
-	totalTenants?: number;
-
-	@AutoMap()
-	totalRent?: number;
-
-	@AutoMap()
-	availableUnits?: number;
 }

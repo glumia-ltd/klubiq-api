@@ -13,12 +13,15 @@ import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
 } from 'typeorm';
-import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
+//import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
 import { Transaction } from './transaction.entity';
 import { LeaseStatus, PaymentFrequency } from '../../config/config.constants';
 import { TenantUser } from './tenant.entity';
+import { Unit } from '../../../../../apps/klubiq-dashboard/src/properties/entities/unit.entity';
 
 @Entity({ schema: 'poo' })
+@Index('idx_lease_dates_status', ['startDate', 'endDate', 'status'])
+@Index('idx_lease_dates', ['startDate', 'endDate'])
 export class Lease {
 	@AutoMap()
 	@PrimaryGeneratedColumn()
@@ -35,6 +38,7 @@ export class Lease {
 		enum: PaymentFrequency,
 		default: PaymentFrequency.ANNUALLY,
 	})
+	@Index('idx_lease_payment_frequency')
 	paymentFrequency: PaymentFrequency;
 
 	@AutoMap()
@@ -43,22 +47,27 @@ export class Lease {
 		enum: LeaseStatus,
 		default: LeaseStatus.NEW,
 	})
+	@Index('idx_lease_status')
 	status?: LeaseStatus;
 
 	@AutoMap()
 	@Column({ default: 0 })
+	@Index('idx_lease_custom_payment_frequency')
 	customPaymentFrequency?: number;
 
 	@AutoMap()
 	@Column({ type: 'date' })
+	@Index('idx_lease_start_date')
 	startDate?: Date;
 
 	@AutoMap()
 	@Column({ type: 'date' })
+	@Index('idx_lease_end_date')
 	endDate?: Date;
 
 	@AutoMap()
 	@Column({ type: 'int', nullable: true })
+	@Index('idx_lease_rent_due_day')
 	rentDueDay?: number;
 
 	@AutoMap()
@@ -101,11 +110,14 @@ export class Lease {
 	})
 	tenants?: TenantUser[];
 
-	@AutoMap(() => Property)
-	@Index()
-	@ManyToOne(() => Property, (property) => property.leases)
-	@JoinColumn({ name: 'propertyUuId', referencedColumnName: 'uuid' })
-	property?: Property;
+	@AutoMap(() => Unit)
+	@Index('IDX_UNIT_UUID')
+	@ManyToOne(() => Unit, (unit) => unit.leases, {
+		onDelete: 'CASCADE',
+		onUpdate: 'CASCADE',
+	})
+	@JoinColumn({ name: 'unitId' })
+	unit: Unit;
 
 	@AutoMap(() => [Transaction])
 	@OneToMany(() => Transaction, (transaction) => transaction.lease)

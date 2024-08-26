@@ -7,4 +7,6 @@ export class OrganizationResponseDto extends MapperOmitType(Organization, [
 	'deletedDate',
 	'isDeleted',
 	'updatedDate',
-]) {}
+]) {
+	organizationSettings?: Record<string, any>;
+}

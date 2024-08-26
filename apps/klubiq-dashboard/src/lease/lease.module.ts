@@ -25,6 +25,6 @@ import { ConfigModule } from '@app/common/config/config.module';
 	],
 	imports: [RepositoriesModule, ConfigModule],
 	controllers: [LeaseController],
-	exports: [LEASE_SERVICE_INTERFACE],
+	exports: [LEASE_SERVICE_INTERFACE, LeaseRepository],
 })
 export class LeaseModule {}

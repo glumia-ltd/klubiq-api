@@ -1,7 +1,36 @@
-import { TenantUser } from '@app/common/database/entities/tenant.entity';
-import { MapperOmitType } from '@automapper/classes/mapped-types';
+import { Expose } from 'class-transformer';
+import { IsDate, IsNumber, IsString } from 'class-validator';
 
-export class TenantDto extends MapperOmitType(TenantUser, [
-	'updatedDate',
-	'createdDate',
-]) {}
+export class TenantDto {
+	@Expose()
+	@IsNumber()
+	id?: number;
+
+	@Expose()
+	@IsString()
+	title?: string;
+
+	@Expose()
+	@IsString()
+	email: string;
+
+	@Expose()
+	@IsString()
+	firstName?: string;
+
+	@Expose()
+	@IsString()
+	lastName?: string;
+
+	@Expose()
+	@IsString()
+	companyName?: string;
+
+	@Expose()
+	@IsString()
+	notes?: string;
+
+	@Expose()
+	@IsDate()
+	dateOfBirth?: Date;
+}
