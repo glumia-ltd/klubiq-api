@@ -3,12 +3,17 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsDateString,
 	IsEmail,
+	IsNumber,
 	IsOptional,
 	IsPhoneNumber,
 	IsString,
 } from 'class-validator';
 
 export class CreateTenantDto {
+	@IsOptional()
+	@IsNumber()
+	id?: number;
+
 	@AutoMap()
 	@ApiProperty()
 	@IsOptional()
@@ -25,7 +30,8 @@ export class CreateTenantDto {
 	@ApiProperty()
 	@IsEmail()
 	@IsString()
-	email: string;
+	@IsOptional()
+	email?: string;
 
 	@AutoMap()
 	@ApiProperty()

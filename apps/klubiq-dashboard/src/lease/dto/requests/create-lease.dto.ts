@@ -29,11 +29,15 @@ export class CreateLeaseDto {
 	@AutoMap()
 	@IsArray()
 	@IsOptional()
-	tenants?: CreateTenantDto[];
+	newTenants?: CreateTenantDto[];
+
+	@IsArray()
+	@IsOptional()
+	tenantsIds?: number[];
 
 	@AutoMap()
-	@IsString()
-	propertyUuId: string;
+	@IsNumber()
+	unitId: number;
 
 	@AutoMap()
 	@IsNumber()

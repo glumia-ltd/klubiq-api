@@ -204,8 +204,9 @@ export class PropertiesService implements IPropertyMetrics {
 	private async mapPlainPropertyDetailToDto(
 		property: Property,
 	): Promise<PropertyDetailsDto> {
+		const units = await property.units;
 		const totalRent = reduce(
-			await property.units,
+			units,
 			(sum, unit) =>
 				sum +
 				(unit.leases.reduce(
@@ -217,7 +218,7 @@ export class PropertiesService implements IPropertyMetrics {
 
 		// Calculate occupied unit count
 		const occupiedUnitCount = filter(
-			await property.units,
+			units,
 			(unit) => unit.leases.length > 0,
 		).length;
 
@@ -229,10 +230,15 @@ export class PropertiesService implements IPropertyMetrics {
 				totalRent,
 				occupiedUnitCount,
 				vacantUnitCount,
-				bedrooms: property.isMultiUnit ? property.units?.[0]?.bedrooms : null,
-				bathrooms: property.isMultiUnit ? property.units?.[0]?.bathrooms : null,
-				toilets: property.isMultiUnit ? property.units?.[0]?.toilets : null,
-				units: property.units,
+				bedrooms: !property.isMultiUnit ? units?.[0]?.bedrooms : null,
+				bathrooms: !property.isMultiUnit ? units?.[0]?.bathrooms : null,
+				toilets: !property.isMultiUnit ? units?.[0]?.toilets : null,
+				units: units,
+				area: !property.area
+					? !property.isMultiUnit
+						? units?.[0]?.area
+						: null
+					: property.area,
 				//leases: !property.isMultiUnit ? property.leases : undefined,
 			},
 			{ excludeExtraneousValues: true },
