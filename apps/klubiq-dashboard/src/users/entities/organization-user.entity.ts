@@ -58,6 +58,7 @@ export class OrganizationUser {
 		name: 'profileUuid',
 		referencedColumnName: 'profileUuid',
 	})
+	@Index('IDX_PROFILE_ORG_USER')
 	profile?: UserProfile;
 
 	@AutoMap(() => OrganizationRole)

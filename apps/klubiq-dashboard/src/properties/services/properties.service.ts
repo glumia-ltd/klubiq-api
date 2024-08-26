@@ -13,7 +13,7 @@ import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
-import { PropertyDto } from '../dto/responses/property-response.dto';
+import { PropertyListDto } from '../dto/responses/property-list-response.dto';
 import { ClsService } from 'nestjs-cls';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -28,8 +28,12 @@ import {
 } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { UserRoles } from '@app/common/config/config.constants';
 import { Util } from '@app/common/helpers/util';
-import { forEach, map } from 'lodash';
 import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
+import { CreateUnitDto } from '../dto/requests/create-unit.dto';
+import { Unit } from '../entities/unit.entity';
+import { plainToInstance } from 'class-transformer';
+import { filter, find, reduce } from 'lodash';
+import { PropertyDetailsDto } from '../dto/responses/property-details.dto';
 
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
@@ -52,7 +56,11 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.propertyRepository.getTotalOverdueRents(organizationUuid);
 			return totalOverdueRents;
 		} catch (error) {
-			this.logger.error('Error getting total overdue rents', error);
+			this.logger.error(
+				error.message,
+				error.stack,
+				'Error getting total overdue rents',
+			);
 		}
 	}
 	async getTotalUnits(organizationUuid: string): Promise<number> {
@@ -76,7 +84,11 @@ export class PropertiesService implements IPropertyMetrics {
 				);
 			return vacantProperties;
 		} catch (error) {
-			this.logger.error('Error getting total occupied properties', error);
+			this.logger.error(
+				error.message,
+				error.stack,
+				'Error getting total occupied properties',
+			);
 		}
 	}
 	async getTotalMaintenanceUnits(
@@ -168,7 +180,11 @@ export class PropertiesService implements IPropertyMetrics {
 			};
 			return propertyMetrics;
 		} catch (err) {
-			this.logger.error(err, `Error getting property metrics by organization`);
+			this.logger.error(
+				err.message,
+				err.stack,
+				`Error getting property metrics by organization`,
+			);
 			throw err;
 		}
 	}
@@ -184,6 +200,44 @@ export class PropertiesService implements IPropertyMetrics {
 			this.logger.error('Error getting occupancy rate', error);
 		}
 	}
+
+	private async mapPlainPropertyDetailToDto(
+		property: Property,
+	): Promise<PropertyDetailsDto> {
+		const totalRent = reduce(
+			await property.units,
+			(sum, unit) =>
+				sum +
+				(unit.leases.reduce(
+					(leaseSum, lease) => leaseSum + lease.rentAmount,
+					0,
+				) || 0),
+			0,
+		);
+
+		// Calculate occupied unit count
+		const occupiedUnitCount = filter(
+			await property.units,
+			(unit) => unit.leases.length > 0,
+		).length;
+
+		const vacantUnitCount = property.unitCount - occupiedUnitCount;
+		return plainToInstance(
+			PropertyDetailsDto,
+			{
+				...property,
+				totalRent,
+				occupiedUnitCount,
+				vacantUnitCount,
+				bedrooms: property.isMultiUnit ? property.units?.[0]?.bedrooms : null,
+				bathrooms: property.isMultiUnit ? property.units?.[0]?.bathrooms : null,
+				toilets: property.isMultiUnit ? property.units?.[0]?.toilets : null,
+				units: property.units,
+				//leases: !property.isMultiUnit ? property.leases : undefined,
+			},
+			{ excludeExtraneousValues: true },
+		);
+	}
 	/**
 	 * Retrieves a property by its UUID from the current organization.
 	 *
@@ -193,12 +247,13 @@ export class PropertiesService implements IPropertyMetrics {
 	 * @throws {NotFoundException} If the property with the given UUID is not found.
 	 * @throws {Error} If there is an error retrieving the property data.
 	 */
-	async getPropertyById(uuid: string): Promise<PropertyDto> {
+	async getPropertyById(uuid: string): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			const cacheKey = `${currentUser.uid}/${this.cacheKeyPrefix}.${uuid}`;
-			const cachedProperty = await this.cacheManager.get<PropertyDto>(cacheKey);
+			const cachedProperty =
+				await this.cacheManager.get<PropertyDetailsDto>(cacheKey);
 			if (cachedProperty) return cachedProperty;
 			const property =
 				await this.propertyRepository.getAPropertyInAnOrganization(
@@ -207,9 +262,9 @@ export class PropertiesService implements IPropertyMetrics {
 					currentUser.organizationRole === UserRoles.ORG_OWNER,
 					uuid,
 				);
-			await this.calculatePropertyMetrics(property);
-			await this.cacheManager.set(cacheKey, property, this.cacheTTL);
-			return await this.mapper.mapAsync(property, Property, PropertyDto);
+			const propertyDetails = await this.mapPlainPropertyDetailToDto(property);
+			await this.cacheManager.set(cacheKey, propertyDetails, this.cacheTTL);
+			return propertyDetails;
 		} catch (error) {
 			this.logger.error('Error getting Property Data', error);
 			throw new Error(`Error getting Property Data. Error: ${error}`);
@@ -228,7 +283,7 @@ export class PropertiesService implements IPropertyMetrics {
 	async updateProperty(
 		uuid: string,
 		updateData: UpdatePropertyDto,
-	): Promise<PropertyDto> {
+	): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
@@ -239,7 +294,7 @@ export class PropertiesService implements IPropertyMetrics {
 				updateData,
 				currentUser.organizationRole === UserRoles.ORG_OWNER,
 			);
-			return this.mapper.map(property, Property, PropertyDto);
+			return await this.mapPlainPropertyDetailToDto(property);
 		} catch (error) {
 			this.logger.error('Error updating Property Data', error);
 			throw new Error(`Error updating Property Data. Error: ${error}`);
@@ -297,17 +352,21 @@ export class PropertiesService implements IPropertyMetrics {
 	 * @param {CreatePropertyDto} createDto - The data for creating the property.
 	 * @return {Promise<PropertyDto>} The created property.
 	 */
-	async createProperty(createDto: CreatePropertyDto): Promise<PropertyDto> {
+	async createProperty(
+		createDto: CreatePropertyDto,
+	): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser)
 				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
-			createDto.isMultiUnit = createDto.units?.length > 0;
+			if (createDto.orgUuid && createDto.orgUuid !== currentUser.organizationId)
+				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
+			createDto.isMultiUnit = createDto.units?.length > 1;
 			createDto.orgUuid = currentUser.organizationId;
 			//createDto.ownerUid = currentUser.uid;
 			const createdProperty =
 				await this.propertyRepository.createProperty(createDto);
-			return this.mapper.map(createdProperty, Property, PropertyDto);
+			return await this.mapPlainPropertyDetailToDto(createdProperty);
 		} catch (error) {
 			this.logger.error('Error creating Property Data', error.message);
 			throw new BadRequestException(`Error creating New Property.`, {
@@ -325,13 +384,13 @@ export class PropertiesService implements IPropertyMetrics {
 	 */
 	async getOrganizationProperties(
 		getPropertyDto?: GetPropertyDto,
-	): Promise<PageDto<PropertyDto>> {
+	): Promise<PageDto<PropertyListDto>> {
 		try {
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			const cacheKey = `${this.cacheKeyPrefix}/${currentUser.organizationId}${this.cls.get('requestUrl')}`;
 			const cachedProperties =
-				await this.cacheManager.get<PageDto<PropertyDto>>(cacheKey);
+				await this.cacheManager.get<PageDto<PropertyListDto>>(cacheKey);
 			if (cachedProperties) return cachedProperties;
 			const [entities, count] =
 				await this.propertyRepository.getOrganizationProperties(
@@ -344,11 +403,8 @@ export class PropertiesService implements IPropertyMetrics {
 				itemCount: count,
 				pageOptionsDto: getPropertyDto,
 			});
-			const mappedEntities = await this.mapper.mapArrayAsync(
-				entities,
-				Property,
-				PropertyDto,
-			);
+			const mappedEntities =
+				await this.mapPlainPropertyToPropertyListDto(entities);
 			const propertiesPageData = new PageDto(mappedEntities, pageMetaDto);
 			await this.cacheManager.set(cacheKey, propertiesPageData, this.cacheTTL);
 			return propertiesPageData;
@@ -358,6 +414,36 @@ export class PropertiesService implements IPropertyMetrics {
 				`Error retrieving organization properties. Error: ${error}`,
 			);
 		}
+	}
+
+	private async mapPlainPropertyToPropertyListDto(
+		plainProperty: Property[],
+	): Promise<PropertyListDto[]> {
+		return plainToInstance(
+			PropertyListDto,
+			plainProperty.map((property) => {
+				const mainImage = property.images
+					? find(property.images, { isMain: true })
+					: null;
+				const bedrooms = property.isMultiUnit
+					? null
+					: property?.units?.[0]?.bedrooms;
+				const bathrooms = property.isMultiUnit
+					? null
+					: property?.units?.[0]?.bathrooms;
+				const toilets = property.isMultiUnit
+					? null
+					: property?.units?.[0]?.toilets;
+				return {
+					...property,
+					mainImage,
+					bedrooms,
+					bathrooms,
+					toilets,
+				};
+			}),
+			{ excludeExtraneousValues: true },
+		);
 	}
 
 	/**
@@ -370,7 +456,7 @@ export class PropertiesService implements IPropertyMetrics {
 	 */
 	async createDraftProperty(
 		createDto: CreatePropertyDto,
-	): Promise<PropertyDto> {
+	): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser)
@@ -382,7 +468,7 @@ export class PropertiesService implements IPropertyMetrics {
 				createDto,
 				true,
 			);
-			return this.mapper.map(draftProperty, Property, PropertyDto);
+			return await this.mapPlainPropertyDetailToDto(draftProperty);
 		} catch (error) {
 			this.logger.error('Error creating draft Property Data', error.message);
 			throw new BadRequestException(`Error creating draft Property.`, {
@@ -429,17 +515,17 @@ export class PropertiesService implements IPropertyMetrics {
 	 */
 	async addUnitsToProperty(
 		propertyUuid: string,
-		unitsDto: CreatePropertyDto[],
-	): Promise<PropertyDto[]> {
+		unitsDto: CreateUnitDto[],
+	): Promise<Unit[]> {
 		try {
 			const orgId = this.cls.get('currentUser').organizationId;
 			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			const units = await this.propertyRepository.addUnitsToAProperty(
 				propertyUuid,
-				orgId,
 				unitsDto,
 			);
-			return await this.mapper.mapArrayAsync(units, Property, PropertyDto);
+			return units;
+			//return await this.mapper.mapArrayAsync(units, Property, PropertyDto);
 		} catch (error) {
 			this.logger.error('Error adding Unit to Property', error);
 			throw new BadRequestException(`Error adding Unit to Property.`, {
@@ -469,30 +555,6 @@ export class PropertiesService implements IPropertyMetrics {
 			throw new BadRequestException(logMessage, {
 				cause: new Error(),
 				description: error.message,
-			});
-		}
-	}
-
-	private async calculatePropertyMetrics(property: Property): Promise<void> {
-		if (property.units && property.units.length > 0) {
-			forEach(property.units, (unit) => {
-				if (unit.leases && unit.leases.length > 0) {
-					property.occupiedUnits += 1;
-					unit.occupiedUnits = 1;
-					unit.totalRent = 0;
-					map(unit.leases, (lease) => {
-						property.totalRent += Number(lease.rentAmount);
-						property.totalTenants += lease.tenants?.length;
-						unit.totalTenants = lease.tenants?.length;
-						unit.totalRent += Number(lease.rentAmount);
-					});
-				}
-			});
-		} else {
-			property.occupiedUnits = property.leases?.length > 0 ? 1 : 0;
-			map(property.leases, (lease) => {
-				property.totalRent += Number(lease.rentAmount);
-				property.totalTenants = lease.tenants?.length;
 			});
 		}
 	}

@@ -24,6 +24,7 @@ import { PropertiesModule } from './properties/properties.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PermissionsGuard } from '@app/auth/guards/permissions.guard';
 import { LeaseModule } from './lease/lease.module';
+import { LeaseRepository } from './lease/repositories/lease.repository';
 
 @Module({
 	imports: [
@@ -44,6 +45,7 @@ import { LeaseModule } from './lease/lease.module';
 		UsersRepository,
 		UserProfilesRepository,
 		RolesRepository,
+		LeaseRepository,
 		FirebaseAuthGuard,
 		ApikeyGuard,
 		{

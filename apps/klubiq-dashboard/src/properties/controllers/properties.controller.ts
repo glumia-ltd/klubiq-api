@@ -11,11 +11,15 @@ import {
 	HttpCode,
 	HttpStatus,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiCreatedResponse,
+	ApiOkResponse,
+	ApiTags,
+} from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
-import { Actions, AppFeature, UserRoles } from '@app/common';
+import { Actions, AppFeature, PageDto, UserRoles } from '@app/common';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
-import { PropertyDto } from '../dto/responses/property-response.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
 import {
 	Auth,
@@ -26,6 +30,9 @@ import {
 import { AuthType } from '@app/auth/types/firebase.types';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
 import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
+import { PropertyDetailsDto } from '../dto/responses/property-details.dto';
+import { CreateUnitDto } from '../dto/requests/create-unit.dto';
+import { PropertyListDto } from '../dto/responses/property-list-response.dto';
 
 @ApiTags('properties')
 @ApiBearerAuth()
@@ -38,9 +45,9 @@ export class PropertiesController {
 
 	@Ability(Actions.WRITE)
 	@Post()
-	@ApiOkResponse({
+	@ApiCreatedResponse({
 		description: 'Creates a new property',
-		type: PropertyDto,
+		type: PropertyDetailsDto,
 	})
 	async createProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
@@ -55,7 +62,7 @@ export class PropertiesController {
 	@Post('draft')
 	@ApiOkResponse({
 		description: 'Creates a draft property',
-		type: PropertyDto,
+		type: PropertyDetailsDto,
 	})
 	async createDraftProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
@@ -83,7 +90,9 @@ export class PropertiesController {
 	@Ability(Actions.WRITE, Actions.VIEW)
 	@Get()
 	@ApiOkResponse({
-		description: 'Returns all properties under an organization',
+		description:
+			'Returns paginated list of properties in an organization based on query params',
+		type: PageDto<PropertyListDto>,
 	})
 	async getOrganizationProperties(@Query() getPropertyDto: GetPropertyDto) {
 		try {
@@ -99,11 +108,11 @@ export class PropertiesController {
 	@Get(':propertyUuid')
 	@ApiOkResponse({
 		description: "Returns a property by it's property uuid",
-		type: PropertyDto,
+		type: PropertyDetailsDto,
 	})
 	async getPropertyById(
 		@Param('propertyUuid') propertyUuid: string,
-	): Promise<PropertyDto> {
+	): Promise<PropertyDetailsDto> {
 		try {
 			const data = await this.propertyService.getPropertyById(propertyUuid);
 			return data;
@@ -117,7 +126,7 @@ export class PropertiesController {
 	@Put(':propertyUuid')
 	@ApiOkResponse({
 		description: "Updates a property found by it's property id",
-		type: PropertyDto,
+		type: PropertyDetailsDto,
 	})
 	async updateProperty(
 		@Param('propertyUuid') propertyUuid: string,
@@ -172,7 +181,7 @@ export class PropertiesController {
 	})
 	async addUnitsToProperty(
 		@Param('propertyUuid') propertyUuid: string,
-		@Body() unitsDto: CreatePropertyDto[],
+		@Body() unitsDto: CreateUnitDto[],
 	) {
 		try {
 			const data = await this.propertyService.addUnitsToProperty(

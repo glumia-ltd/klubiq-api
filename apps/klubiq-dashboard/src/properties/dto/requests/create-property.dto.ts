@@ -7,28 +7,11 @@ import {
 	IsString,
 	IsNotEmpty,
 	IsUrl,
+	ValidateNested,
 } from 'class-validator';
 import { CreateAddressDto } from './create-address.dto';
-
-export class CreatePropertyUnitDto {
-	@IsOptional()
-	area?: { value?: number; unit?: string };
-
-	@IsOptional()
-	@IsNumber()
-	bathroom?: number;
-
-	@IsOptional()
-	@IsNumber()
-	bedroom?: number;
-
-	@IsString()
-	name?: string;
-
-	@IsOptional()
-	@IsNumber()
-	toilet?: number;
-}
+import { CreateUnitDto } from './create-unit.dto';
+import { Type } from 'class-transformer';
 
 export class AmenityDto {
 	@AutoMap()
@@ -42,7 +25,7 @@ export class AmenityDto {
 	name?: string;
 }
 
-export class ImageDto {
+export class PropertyImageDto {
 	@AutoMap()
 	@IsBoolean()
 	@IsNotEmpty()
@@ -57,6 +40,11 @@ export class ImageDto {
 	@IsUrl()
 	@IsNotEmpty()
 	url: string;
+
+	@AutoMap()
+	@IsString()
+	@IsOptional()
+	unitNumber?: string;
 }
 
 export class CreatePropertyDto {
@@ -66,8 +54,8 @@ export class CreatePropertyDto {
 	@AutoMap(() => [AmenityDto])
 	amenities?: AmenityDto[];
 
-	@IsNotEmpty()
-	@AutoMap(() => CreateAddressDto)
+	@ValidateNested()
+	@Type(() => CreateAddressDto)
 	address: CreateAddressDto;
 
 	@AutoMap()
@@ -75,29 +63,20 @@ export class CreatePropertyDto {
 	area?: { value?: number; unit?: string };
 
 	@AutoMap()
-	@IsOptional()
+	@IsNotEmpty()
 	@IsNumber()
-	bathroom?: number;
-
-	@AutoMap()
-	@IsOptional()
-	@IsNumber()
-	bedroom?: number;
-
-	@AutoMap()
-	@IsOptional()
-	@IsNumber()
-	categoryId?: number;
+	categoryId: number;
 
 	@AutoMap()
 	@IsOptional()
 	@IsString()
 	description?: string;
 
-	@IsOptional()
 	@IsArray()
-	@AutoMap(() => [ImageDto])
-	images?: ImageDto[];
+	@IsOptional()
+	@ValidateNested({ each: true })
+	@Type(() => PropertyImageDto)
+	images?: PropertyImageDto[];
 
 	@AutoMap()
 	@IsOptional()
@@ -109,9 +88,9 @@ export class CreatePropertyDto {
 	managerUid?: string;
 
 	@AutoMap()
-	@IsOptional()
+	@IsNotEmpty()
 	@IsString()
-	name?: string;
+	name: string;
 
 	@AutoMap()
 	@IsOptional()
@@ -123,9 +102,9 @@ export class CreatePropertyDto {
 	ownerUid?: string;
 
 	@AutoMap()
-	@IsOptional()
+	@IsNotEmpty()
 	@IsNumber()
-	purposeId?: number;
+	purposeId: number;
 
 	@AutoMap()
 	@IsOptional()
@@ -138,19 +117,16 @@ export class CreatePropertyDto {
 	tags?: string[];
 
 	@AutoMap()
-	@IsOptional()
+	@IsNotEmpty()
 	@IsNumber()
-	toilet?: number;
+	typeId: number;
 
-	@AutoMap()
+	@IsArray()
 	@IsOptional()
-	@IsNumber()
-	typeId?: number;
+	@ValidateNested({ each: true })
+	@Type(() => CreateUnitDto)
+	units: CreateUnitDto[];
 
-	@IsOptional()
-	units?: CreatePropertyUnitDto[];
-
-	@IsOptional()
 	@IsString()
 	orgUuid: string;
 }

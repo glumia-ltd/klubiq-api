@@ -142,6 +142,11 @@ export enum SortProperties {
 	CREATED_DATE = 'createdDate',
 	PROPERTY_NAME = 'name',
 }
+
+export enum UnitStatus {
+	OCCUPIED = 'Occupied',
+	VACANT = 'Vacant',
+}
 export enum DisplayOptions {
 	ALL = 'all',
 	ARCHIVED = 'archived',

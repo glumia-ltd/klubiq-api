@@ -1,25 +1,72 @@
-import { Lease } from '@app/common/database/entities/lease.entity';
-import { MapperOmitType } from '@automapper/classes/mapped-types';
-import { AutoMap } from '@automapper/classes';
 import { TenantDto } from '@app/common/dto/responses/tenant.dto';
+import {
+	IsBoolean,
+	IsDate,
+	IsEnum,
+	IsNumber,
+	IsString,
+	ValidateNested,
+} from 'class-validator';
+import { Expose, Type } from 'class-transformer';
+import {
+	LeaseStatus,
+	PaymentFrequency,
+} from '@app/common/config/config.constants';
 
-export class LeaseDto extends MapperOmitType(Lease, [
-	'createdDate',
-	'updatedDate',
-	'deletedAt',
-	'tenants',
-	'property',
-	'transactions',
-]) {
-	@AutoMap()
-	startDate: Date;
+export class PropertyLeaseMetrics {
+	totalRent: number;
+	totalTenants: number;
+	unitLeaseCount: number;
+	occupiedUnitCount: number;
+	propertyLeaseCount: number;
+}
+export class LeaseDto {
+	@Expose()
+	@IsNumber()
+	id: number;
 
-	@AutoMap()
-	endDate: Date;
+	@Expose()
+	@IsString()
+	name?: string;
 
-	@AutoMap(() => [TenantDto])
+	@Expose()
+	@IsEnum(() => PaymentFrequency)
+	paymentFrequency: PaymentFrequency;
+
+	@Expose()
+	@IsEnum(() => LeaseStatus)
+	status?: LeaseStatus;
+
+	@Expose()
+	@IsNumber()
+	rentAmount: number;
+
+	@Expose()
+	@IsDate()
+	startDate?: Date;
+
+	@Expose()
+	@IsDate()
+	endDate?: Date;
+
+	@Expose()
+	@IsNumber()
+	rentDueDay?: number;
+
+	@Expose()
+	@IsNumber()
+	securityDeposit?: number;
+
+	@Expose()
+	@ValidateNested({ each: true })
+	@Type(() => TenantDto)
 	tenants: TenantDto[];
 
-	@AutoMap()
-	propertyUuid: string;
+	@Expose()
+	@IsBoolean()
+	isDraft?: boolean;
+
+	@Expose()
+	@IsBoolean()
+	isArchived?: boolean;
 }

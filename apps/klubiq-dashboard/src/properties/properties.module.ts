@@ -11,6 +11,8 @@ import { PROPERTY_METRICS } from './interfaces/property-metrics.service.interfac
 import { Util } from '@app/common/helpers/util';
 import { LeaseProfile } from '../lease/profiles/lease.profile';
 
+import { Unit } from './entities/unit.entity';
+
 @Module({
 	providers: [
 		PropertyProfile,
@@ -25,7 +27,7 @@ import { LeaseProfile } from '../lease/profiles/lease.profile';
 	],
 	controllers: [PropertiesController],
 	imports: [
-		TypeOrmModule.forFeature([Property, PropertyAddress]),
+		TypeOrmModule.forFeature([Property, PropertyAddress, Unit]),
 		RepositoriesModule,
 	],
 	exports: [PROPERTY_METRICS, PropertyRepository],

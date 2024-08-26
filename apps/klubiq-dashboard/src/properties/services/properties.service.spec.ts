@@ -5,7 +5,7 @@ import { BaseRepository } from '@app/common';
 import { Mapper, createMap, createMapper } from '@automapper/core';
 import { Property } from '../entities/property.entity';
 import { PropertyRepository } from '../repositories/properties.repository';
-import { PropertyDto } from '../dto/responses/property-response.dto';
+import { PropertyDto } from '../dto/responses/property-list-response.dto';
 import { getMapperToken } from '@automapper/nestjs';
 import { classes } from '@automapper/classes';
 import { EntityManager } from 'typeorm';

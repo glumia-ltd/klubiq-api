@@ -10,10 +10,6 @@ import {
 import { AutomapperProfile, InjectMapper } from '@automapper/nestjs';
 import { LeaseDto } from '../dto/responses/view-lease.dto';
 import { publicProfile } from '@app/common/profiles/common-profile';
-import {
-	unitsProfile,
-	propertyProfile,
-} from '../../properties/profiles/property.profile';
 
 export class LeaseProfile extends AutomapperProfile {
 	constructor(@InjectMapper('MAPPER') mapper: Mapper) {
@@ -29,8 +25,6 @@ export class LeaseProfile extends AutomapperProfile {
 				namingConventions(new CamelCaseNamingConvention()),
 			);
 			addProfile(mapper, publicProfile);
-			addProfile(mapper, unitsProfile);
-			addProfile(mapper, propertyProfile);
 		};
 	}
 }
