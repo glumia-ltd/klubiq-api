@@ -1,10 +1,9 @@
 import { Lease } from '@app/common/database/entities/lease.entity';
 import { BaseRepository } from '@app/common/repositories/base.repository';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { Brackets, EntityManager, SelectQueryBuilder } from 'typeorm';
+import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm';
 import { DateTime } from 'luxon';
 import { CreateLeaseDto } from '../dto/requests/create-lease.dto';
-import { LeaseStatus } from '@app/common/config/config.constants';
 import { UpdateLeaseDto } from '../dto/requests/update-lease.dto';
 import {
 	DisplayOptions,
@@ -16,6 +15,7 @@ import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 import { TenantUser } from '@app/common/database/entities/tenant.entity';
 import ShortUniqueId from 'short-unique-id';
 import { PropertyLeaseMetrics } from '../dto/responses/view-lease.dto';
+import { Unit } from '../../properties/entities/unit.entity';
 
 @Injectable()
 export class LeaseRepository extends BaseRepository<Lease> {
@@ -34,29 +34,40 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		super(Lease, manager);
 	}
 
-	async createLease(lease: CreateLeaseDto, isDraft: boolean): Promise<Lease> {
-		try {
-			let createdLease: Lease;
-			await this.manager.transaction(async (transactionalEntityManager) => {
-				createdLease = await transactionalEntityManager.save(Lease, {
-					name: lease.name,
-					rentDueDay: lease.rentDueDay,
-					rentAmount: lease.rentAmount,
-					securityDeposit: lease.securityDeposit ?? null,
-					isDraft: isDraft,
-					startDate: DateTime.fromISO(lease.startDate).toSQL(),
-					endDate: DateTime.fromISO(lease.endDate).toSQL(),
-					property: { uuid: lease.propertyUuId },
-					status: lease.status ?? LeaseStatus.NEW,
-					tenants: lease.tenants ?? null,
-					paymentFrequency: lease.paymentFrequency,
+	async createLease(
+		leaseDto: CreateLeaseDto,
+		isDraft: boolean,
+	): Promise<Lease> {
+		const { unitId, newTenants, tenantsIds, ...leaseData } = leaseDto;
+		return await this.manager.transaction(
+			async (transactionalEntityManager) => {
+				const unit = await transactionalEntityManager.findOneBy(Unit, {
+					id: unitId,
 				});
-			});
-			return createdLease;
-		} catch (e) {
-			this.logger.error(e);
-			throw new BadRequestException(e.message, `Error creating lease`);
-		}
+				const tenantsData = tenantsIds.length
+					? await transactionalEntityManager.findBy(TenantUser, {
+							id: In(tenantsIds),
+						})
+					: [];
+				if (newTenants.length) {
+					const newTenantsData = await transactionalEntityManager.save(
+						TenantUser,
+						newTenants,
+					);
+					tenantsData.push(...newTenantsData);
+				}
+				const lease = await transactionalEntityManager.create(Lease, {
+					startDate: DateTime.fromISO(leaseData.startDate).toSQL(),
+					endDate: DateTime.fromISO(leaseData.endDate).toSQL(),
+					unit,
+					tenants: tenantsData,
+					isDraft,
+					...leaseData,
+				});
+				const savedLease = await transactionalEntityManager.save(lease);
+				return savedLease;
+			},
+		);
 	}
 
 	async getPropertyLeases(

@@ -26,7 +26,7 @@ export class TenantUser {
 	@AutoMap()
 	@Index()
 	@Column({ unique: true })
-	email: string;
+	email?: string;
 
 	@AutoMap()
 	@Column({ type: 'varchar', length: 255, nullable: true })
