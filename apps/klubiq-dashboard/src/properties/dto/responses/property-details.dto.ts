@@ -20,6 +20,16 @@ export class UnitDto {
 	id: number;
 
 	@Expose()
+	@IsNumber()
+	@IsOptional()
+	rooms?: number;
+
+	@Expose()
+	@IsNumber()
+	@IsOptional()
+	offices?: number;
+
+	@Expose()
 	@IsString()
 	unitNumber: string;
 

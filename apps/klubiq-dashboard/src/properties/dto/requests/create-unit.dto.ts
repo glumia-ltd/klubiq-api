@@ -29,4 +29,10 @@ export class CreateUnitDto {
 
 	@IsString()
 	status: UnitStatus;
+
+	@IsNumber()
+	rooms: number;
+
+	@IsNumber()
+	offices: number;
 }

@@ -8,7 +8,7 @@ import {
 	TransactionMetricsDto,
 } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { Util } from '@app/common/helpers/util';
-import { find, forEach } from 'lodash';
+import { find, forEach, reduce } from 'lodash';
 import { RevenueType, TransactionType } from '@app/common';
 import { XlsxFileDownloadDto } from '@app/common/dto/requests/xlsx-file-download.dto';
 
@@ -27,12 +27,13 @@ export class DashboardRepository {
 		orgUuid: string,
 		startDateStr: string,
 		endDateStr: string,
+		interval: number,
 	) {
 		return `
 			WITH date_series AS (
 				SELECT generate_series(
-					date_trunc('month', DATE ${startDateStr ? `('${startDateStr}')` : `(CURRENT_DATE - INTERVAL '11 months')`}),
-					date_trunc('month', DATE ${endDateStr ? `('${endDateStr}')` : `(CURRENT_DATE)`}),
+					date_trunc('month', DATE ${interval < 1 ? `('${startDateStr}')` : `('${startDateStr}'::DATE - INTERVAL '${interval} months')`}),
+					date_trunc('month', DATE ${interval < 1 ? `('${endDateStr}')` : `('${endDateStr}'::DATE - INTERVAL '${interval} months')`}),
 					'1 month'::interval
 				) AS month )
 			SELECT 
@@ -44,7 +45,7 @@ export class DashboardRepository {
 				LEFT JOIN poo.transaction t ON date_trunc('month', t."transactionDate") = ds.month
         	    AND t."transactionType" = '${TransactionType.REVENUE}'
 				AND t."organizationUuid" = '${orgUuid}'
-				 GROUP BY  ds.month, t."revenueType"
+				GROUP BY  ds.month, t."revenueType"
 			    ORDER BY ds.month ASC, t."revenueType";
 			`;
 	}
@@ -55,39 +56,20 @@ export class DashboardRepository {
 	): Promise<RevenueResponseDto> {
 		try {
 			const rawResult = await this.manager.query(
-				this.getQueryStringForRange(orgUuid, startDateStr, endDateStr),
+				this.getQueryStringForRange(orgUuid, startDateStr, endDateStr, 0),
 			);
-			const totalRevenueLast12MonthsResult = await this.manager.query(
-				`SELECT
-		SUM(t.amount) as total_revenue_last12_months
-		FROM
-		poo.transaction t
-		WHERE
-		t."transactionType" = '${TransactionType.REVENUE}' 
-				${
-					startDateStr != null && endDateStr != null
-						? `AND t."transactionDate" BETWEEN '${startDateStr}' AND '${endDateStr}'`
-						: `AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '11 months')`
-				} 
-                AND t."organizationUuid" = '${orgUuid}'; `,
-			);
-			const totalRevenueLast12Months = parseFloat(
-				totalRevenueLast12MonthsResult[0].total_revenue_last12_months || 0,
-			);
+
+			const totalRevenueLast12Months =
+				reduce(
+					rawResult,
+					(sum, revenue) => sum + parseFloat(revenue.amount),
+					0,
+				) || 0;
+
 			const totalRevenuePrevious12MonthsResult = await this.manager.query(
-				`SELECT
-		SUM(t.amount) as total_revenue_previous12_months
-		FROM
-		poo.transaction t
-		WHERE
-		t."organizationUuid" = '${orgUuid}'
-                AND t."transactionType" = '${TransactionType.REVENUE}'
-				${
-					startDateStr != null && endDateStr != null
-						? `AND t."transactionDate" BETWEEN ('${startDateStr}'::DATE - INTERVAL '11 months') AND ('${endDateStr}'::DATE - INTERVAL '11 months')`
-						: `AND t."transactionDate" >= (CURRENT_DATE - INTERVAL '23 months')
-                AND t."transactionDate" < (CURRENT_DATE - INTERVAL '11 months')`
-				}; `,
+				`WITH monthly_total_revenue AS (
+					${this.getQueryStringForRange(orgUuid, startDateStr, endDateStr, 11)}
+				) SELECT SUM(amount) as total_revenue_previous12_months FROM monthly_total_revenue;`,
 			);
 			const totalRevenuePrevious12Months = parseFloat(
 				totalRevenuePrevious12MonthsResult[0].total_revenue_previous12_months ||
@@ -321,7 +303,7 @@ export class DashboardRepository {
 		try {
 			const xlsxData: XlsxFileDownloadDto[] = [];
 			const rawResult = await this.manager.query(
-				this.getQueryStringForRange(orgUuid, startDateStr, endDateStr),
+				this.getQueryStringForRange(orgUuid, startDateStr, endDateStr, 0),
 			);
 			forEach(rawResult, (row: any) => {
 				const revenueType = row.revenue_type;
