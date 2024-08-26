@@ -27,13 +27,12 @@ export class DashboardRepository {
 		orgUuid: string,
 		startDateStr: string,
 		endDateStr: string,
-		interval: number,
 	) {
 		return `
 			WITH date_series AS (
 				SELECT generate_series(
-					date_trunc('month', DATE ${interval < 1 ? `('${startDateStr}')` : `('${startDateStr}'::DATE - INTERVAL '${interval} months')`}),
-					date_trunc('month', DATE ${interval < 1 ? `('${endDateStr}')` : `('${endDateStr}'::DATE - INTERVAL '${interval} months')`}),
+					date_trunc('month', DATE ('${startDateStr}')),
+					date_trunc('month', DATE ('${endDateStr}')),
 					'1 month'::interval
 				) AS month )
 			SELECT 
@@ -56,7 +55,7 @@ export class DashboardRepository {
 	): Promise<RevenueResponseDto> {
 		try {
 			const rawResult = await this.manager.query(
-				this.getQueryStringForRange(orgUuid, startDateStr, endDateStr, 0),
+				this.getQueryStringForRange(orgUuid, startDateStr, endDateStr),
 			);
 
 			const totalRevenueLast12Months =
@@ -68,8 +67,15 @@ export class DashboardRepository {
 
 			const totalRevenuePrevious12MonthsResult = await this.manager.query(
 				`WITH monthly_total_revenue AS (
-					${this.getQueryStringForRange(orgUuid, startDateStr, endDateStr, 11)}
-				) SELECT SUM(amount) as total_revenue_previous12_months FROM monthly_total_revenue;`,
+					SELECT COALESCE(SUM(t.amount), 0) AS total_amount
+					FROM generate_series(date_trunc('month', ('${startDateStr}'::DATE - INTERVAL '11 months')),
+                        date_trunc('month', ('${endDateStr}'::DATE - INTERVAL '11 months')),
+                        '1 month') AS month
+					LEFT JOIN poo.transaction t ON date_trunc('month', t."transactionDate") = month
+					AND t."transactionType" = '${TransactionType.REVENUE}'
+					AND t."organizationUuid" = '${orgUuid}'
+    				GROUP BY month
+				) SELECT SUM(total_amount) as total_revenue_previous12_months FROM monthly_total_revenue;`,
 			);
 			const totalRevenuePrevious12Months = parseFloat(
 				totalRevenuePrevious12MonthsResult[0].total_revenue_previous12_months ||
@@ -303,7 +309,7 @@ export class DashboardRepository {
 		try {
 			const xlsxData: XlsxFileDownloadDto[] = [];
 			const rawResult = await this.manager.query(
-				this.getQueryStringForRange(orgUuid, startDateStr, endDateStr, 0),
+				this.getQueryStringForRange(orgUuid, startDateStr, endDateStr),
 			);
 			forEach(rawResult, (row: any) => {
 				const revenueType = row.revenue_type;
