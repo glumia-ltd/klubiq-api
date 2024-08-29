@@ -107,13 +107,10 @@ export enum MaintenanceStatus {
 }
 
 export enum LeaseStatus {
-	NEW = 'New',
-	SIGNED = 'Signed',
 	ACTIVE = 'Active',
 	IN_ACTIVE = 'In Active',
 	CANCELLED = 'Cancelled',
 	EXPIRED = 'Expired',
-	ON_HOLD = 'On Hold',
 	EXPIRING = 'Expiring',
 	TERMINATED = 'Terminated',
 }

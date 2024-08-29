@@ -41,12 +41,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		const newLeaseStartDate = DateTime.fromISO(startDate).toSQL({
 			includeOffset: false,
 		});
-		const activeStatuses = [
-			`${LeaseStatus.ACTIVE}`,
-			`${LeaseStatus.EXPIRING}`,
-			`${LeaseStatus.NEW}`,
-			`${LeaseStatus.SIGNED}`,
-		];
+		const activeStatuses = [`${LeaseStatus.ACTIVE}`, `${LeaseStatus.EXPIRING}`];
 		return await this.manager.transaction(
 			async (transactionalEntityManager) => {
 				const overlappingLease = await transactionalEntityManager

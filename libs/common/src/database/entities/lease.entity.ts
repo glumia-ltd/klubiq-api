@@ -45,7 +45,7 @@ export class Lease {
 	@Column({
 		type: 'enum',
 		enum: LeaseStatus,
-		default: LeaseStatus.NEW,
+		default: LeaseStatus.ACTIVE,
 	})
 	@Index('idx_lease_status')
 	status?: LeaseStatus;
