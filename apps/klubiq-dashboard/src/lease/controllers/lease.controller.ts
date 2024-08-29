@@ -1,7 +1,10 @@
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Get,
+	HttpCode,
+	HttpStatus,
 	Param,
 	Patch,
 	Post,
@@ -13,6 +16,7 @@ import {
 	ApiBody,
 	ApiCreatedResponse,
 	ApiOkResponse,
+	ApiParam,
 	ApiTags,
 } from '@nestjs/swagger';
 import {
@@ -28,7 +32,7 @@ import {
 	UserRoles,
 } from '@app/common/config/config.constants';
 import { CreateLeaseDto } from '../dto/requests/create-lease.dto';
-import { LeaseDto } from '../dto/responses/view-lease.dto';
+import { LeaseDetailsDto, LeaseDto } from '../dto/responses/view-lease.dto';
 import { UpdateLeaseDto } from '../dto/requests/update-lease.dto';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { GetLeaseDto } from '../dto/requests/get-lease.dto';
@@ -49,19 +53,24 @@ import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 export class LeaseController {
 	constructor(private readonly leaseService: LeaseService) {}
 
-	@Get('property/:propertyUuid')
+	@Get('unit/:unitId')
 	@Ability(Actions.VIEW, Actions.WRITE)
 	@ApiOkResponse({
-		description: 'Gets a property leases',
+		description: 'Gets a property unit leases',
 		type: () => LeaseDto,
 		isArray: true,
+		schema: {
+			type: 'array',
+			items: { $ref: '#/components/schemas/LeaseDto' },
+		},
 	})
-	async getPropertyLeases(@Param('propertyUuid') propertyUuid: string) {
+	@ApiParam({ description: 'Unit Id', name: 'unitId', type: Number })
+	async getPropertyLeases(@Param('unitId') unitId: number) {
 		try {
-			const result = await this.leaseService.getAllPropertyLeases(propertyUuid);
+			const result = await this.leaseService.getAllUnitLeases(unitId);
 			return result;
 		} catch (error) {
-			throw error;
+			throw new BadRequestException(error.message);
 		}
 	}
 
@@ -73,15 +82,15 @@ export class LeaseController {
 	})
 	async createLease(@Body() leaseDto: CreateLeaseDto) {
 		try {
-			const result = await this.leaseService.createLease(leaseDto);
-			return result;
+			await this.leaseService.createLease(leaseDto);
 		} catch (error) {
-			throw error;
+			throw new BadRequestException(error.message);
 		}
 	}
 
 	@Patch(':id')
 	@Ability(Actions.WRITE)
+	@HttpCode(HttpStatus.OK)
 	@ApiOkResponse({
 		description: 'Updates a lease',
 		type: () => LeaseDto,
@@ -91,7 +100,7 @@ export class LeaseController {
 			const result = await this.leaseService.updateLeaseById(id, leaseDto);
 			return result;
 		} catch (error) {
-			throw error;
+			throw new BadRequestException(error.message);
 		}
 	}
 
@@ -99,14 +108,15 @@ export class LeaseController {
 	@Ability(Actions.VIEW, Actions.WRITE)
 	@ApiOkResponse({
 		description: 'Gets a lease by Id',
-		type: () => LeaseDto,
+		type: () => LeaseDetailsDto,
 	})
+	@ApiParam({ description: 'Lease Id', name: 'id', type: Number })
 	async getLeaseById(@Param('id') id: number) {
 		try {
 			const result = await this.leaseService.getLeaseById(id);
 			return result;
 		} catch (error) {
-			throw error;
+			throw new BadRequestException(error.message);
 		}
 	}
 
@@ -114,24 +124,41 @@ export class LeaseController {
 	@Ability(Actions.VIEW, Actions.WRITE)
 	@ApiOkResponse({
 		description: 'Gets an organization leases',
-		type: () => PageDto<LeaseDto>,
+		schema: {
+			type: 'object',
+			properties: {
+				data: {
+					type: 'array',
+					items: { $ref: '#/components/schemas/LeaseDto' },
+				},
+				pagination: { $ref: '#/components/schemas/PageDto' },
+			},
+		},
+		type: () => PageDto<LeaseDto[]>,
 	})
 	async getLeases(@Query() getLeaseDto: GetLeaseDto) {
 		try {
 			const result = await this.leaseService.getOrganizationLeases(getLeaseDto);
 			return result;
 		} catch (error) {
-			throw error;
+			throw new BadRequestException(error.message);
 		}
 	}
 
 	@Post(':id/addTenants')
 	@Ability(Actions.WRITE)
-	@ApiOkResponse({
+	@ApiCreatedResponse({
 		description: 'add tenants to lease',
 		type: () => LeaseDto,
 	})
-	@ApiBody({ type: () => [CreateTenantDto] })
+	@ApiBody({
+		description: 'add tenants to lease',
+		schema: {
+			type: 'array',
+			items: { $ref: '#/components/schemas/CreateTenantDto' },
+		},
+		type: () => [CreateTenantDto],
+	})
 	async addTenants(
 		@Param('id') id: number,
 		@Body() tenantDtos: CreateTenantDto[],
@@ -140,7 +167,7 @@ export class LeaseController {
 			const result = await this.leaseService.addTenantToLease(tenantDtos, id);
 			return result;
 		} catch (error) {
-			throw error;
+			throw new BadRequestException(error.message);
 		}
 	}
 
@@ -152,7 +179,37 @@ export class LeaseController {
 				await this.leaseService.getPreSignedUploadUrlForPropertyImage(fileData);
 			return result;
 		} catch (error) {
-			throw error;
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Patch('terminate/:id')
+	@Ability(Actions.WRITE)
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@ApiOkResponse({
+		description: 'Terminates a lease',
+	})
+	async terminateLease(@Param('id') id: number) {
+		try {
+			const result = await this.leaseService.terminateLease(id);
+			return result;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Patch('renew/:id')
+	@Ability(Actions.WRITE)
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@ApiOkResponse({
+		description: 'Renews a lease',
+	})
+	async renewLease(@Param('id') id: number) {
+		try {
+			const result = await this.leaseService.renewLease(id);
+			return result;
+		} catch (error) {
+			throw new BadRequestException(error.message);
 		}
 	}
 }

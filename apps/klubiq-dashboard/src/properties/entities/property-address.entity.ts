@@ -12,8 +12,8 @@ import { Exclude } from 'class-transformer';
 @Entity({ schema: 'poo' })
 export class PropertyAddress {
 	@AutoMap()
-	@PrimaryGeneratedColumn()
-	public id?: number;
+	@PrimaryGeneratedColumn({ type: 'bigint' })
+	id?: number;
 
 	@CreateDateColumn({ select: false })
 	@Exclude()

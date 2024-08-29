@@ -1,5 +1,5 @@
-import { TenantDto } from '@app/common/dto/responses/tenant.dto';
 import {
+	IsArray,
 	IsBoolean,
 	IsDate,
 	IsEnum,
@@ -20,6 +20,28 @@ export class PropertyLeaseMetrics {
 	occupiedUnitCount: number;
 	propertyLeaseCount: number;
 }
+export class LeaseListTenantDto {
+	@Expose()
+	@IsString()
+	firstName: string;
+
+	@Expose()
+	@IsString()
+	lastName: string;
+}
+export class LeaseListPropertyDto {
+	@Expose()
+	@IsString()
+	name: string;
+
+	@Expose()
+	@IsString()
+	managerUid: string;
+
+	@Expose()
+	@IsString()
+	ownerUid: string;
+}
 export class LeaseDto {
 	@Expose()
 	@IsNumber()
@@ -27,11 +49,7 @@ export class LeaseDto {
 
 	@Expose()
 	@IsString()
-	name?: string;
-
-	@Expose()
-	@IsEnum(() => PaymentFrequency)
-	paymentFrequency: PaymentFrequency;
+	unitNumber: string;
 
 	@Expose()
 	@IsEnum(() => LeaseStatus)
@@ -50,23 +68,79 @@ export class LeaseDto {
 	endDate?: Date;
 
 	@Expose()
-	@IsNumber()
-	rentDueDay?: number;
-
-	@Expose()
-	@IsNumber()
-	securityDeposit?: number;
-
-	@Expose()
 	@ValidateNested({ each: true })
-	@Type(() => TenantDto)
-	tenants: TenantDto[];
+	@Type(() => LeaseListTenantDto)
+	tenants: LeaseListTenantDto[];
+
+	@Expose()
+	@ValidateNested()
+	@Type(() => LeaseListPropertyDto)
+	property: LeaseListPropertyDto;
+}
+
+export class LeaseDetailsDto {
+	@Expose()
+	@IsString()
+	id: number;
+
+	@Expose()
+	@IsString()
+	unitNumber: string;
+
+	@Expose()
+	@IsString()
+	propertyName: string;
+
+	@Expose()
+	@IsString()
+	propertyAddress: string;
+
+	@Expose()
+	@IsString()
+	propertyType: string;
 
 	@Expose()
 	@IsBoolean()
-	isDraft?: boolean;
+	isMultiUnitProperty: boolean;
 
 	@Expose()
-	@IsBoolean()
-	isArchived?: boolean;
+	@IsNumber()
+	rentAmount: number;
+
+	@Expose()
+	@IsEnum(() => PaymentFrequency)
+	paymentFrequency: PaymentFrequency;
+
+	@Expose()
+	@IsNumber()
+	rentDueDay: number;
+
+	@Expose()
+	@IsDate()
+	rentDueOn: Date;
+
+	@Expose()
+	@IsDate()
+	nextPaymentDate: Date;
+
+	@Expose()
+	@IsDate()
+	startDate?: Date;
+
+	@Expose()
+	@IsDate()
+	endDate?: Date;
+
+	@Expose()
+	@IsEnum(() => LeaseStatus)
+	status?: LeaseStatus;
+
+	@Expose()
+	@IsArray()
+	@Type(() => LeaseListTenantDto)
+	tenants: LeaseListTenantDto[];
+
+	@Expose()
+	@IsNumber()
+	daysToLeaseExpires: number;
 }

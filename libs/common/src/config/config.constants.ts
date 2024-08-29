@@ -1,4 +1,5 @@
 import { startCase } from 'lodash';
+import { DateTime } from 'luxon';
 
 export enum UserRoles {
 	SUPER_ADMIN = 'SuperAdmin',
@@ -227,3 +228,21 @@ export const FILTER_OPTIONS: FilterData[] = [
 		],
 	},
 ];
+
+export const RENT_DUE_ON = (
+	rentDueDay: number,
+	startDate: string,
+): Record<PaymentFrequency, string> => {
+	const startDayAndMonth = DateTime.fromISO(startDate).toFormat('dd LLL');
+	const day: string = DateTime.fromISO(startDate).weekdayLong;
+	return {
+		[PaymentFrequency.WEEKLY]: `${day} every week`,
+		[PaymentFrequency.BI_WEEKLY]: `${day} Bi-Weekly`,
+		[PaymentFrequency.MONTHLY]: `${rentDueDay} every month`,
+		[PaymentFrequency.ANNUALLY]: `${startDayAndMonth} every year`,
+		[PaymentFrequency.ONE_TIME]: `Once on ${startDayAndMonth}`,
+		[PaymentFrequency.BI_MONTHLY]: `${rentDueDay} Bi-Monthly`,
+		[PaymentFrequency.QUARTERLY]: `Quarterly on ${day}`,
+		[PaymentFrequency.CUSTOM]: `See lease agreement`,
+	};
+};

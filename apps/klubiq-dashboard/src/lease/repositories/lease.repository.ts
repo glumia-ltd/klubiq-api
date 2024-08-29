@@ -16,6 +16,7 @@ import { TenantUser } from '@app/common/database/entities/tenant.entity';
 import ShortUniqueId from 'short-unique-id';
 import { PropertyLeaseMetrics } from '../dto/responses/view-lease.dto';
 import { Unit } from '../../properties/entities/unit.entity';
+import { LeaseStatus } from '@app/common';
 
 @Injectable()
 export class LeaseRepository extends BaseRepository<Lease> {
@@ -34,107 +35,140 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		super(Lease, manager);
 	}
 
-	async createLease(
-		leaseDto: CreateLeaseDto,
-		isDraft: boolean,
-	): Promise<Lease> {
-		const { unitId, newTenants, tenantsIds, ...leaseData } = leaseDto;
+	async createLease(leaseDto: CreateLeaseDto, isDraft: boolean) {
+		const { unitId, newTenants, tenantsIds, startDate, ...leaseData } =
+			leaseDto;
+		const newLeaseStartDate = DateTime.fromISO(startDate).toSQL({
+			includeOffset: false,
+		});
+		const activeStatuses = [
+			`${LeaseStatus.ACTIVE}`,
+			`${LeaseStatus.EXPIRING}`,
+			`${LeaseStatus.NEW}`,
+			`${LeaseStatus.SIGNED}`,
+		];
 		return await this.manager.transaction(
 			async (transactionalEntityManager) => {
+				const overlappingLease = await transactionalEntityManager
+					.createQueryBuilder(Lease, 'lease')
+					.where('lease."unitId" = :unitId', { unitId })
+					.andWhere(
+						':startDate BETWEEN lease."startDate" AND lease."endDate"',
+						{ newLeaseStartDate },
+					)
+					.andWhere('lease.status IN (:...statuses)', {
+						statuses: activeStatuses,
+					})
+					.getOne();
+				if (overlappingLease) {
+					throw new BadRequestException(
+						'The unit already has an active lease during the specified period.',
+					);
+				}
 				const unit = await transactionalEntityManager.findOneBy(Unit, {
 					id: unitId,
 				});
-				const tenantsData = tenantsIds.length
+				if (!unit) {
+					throw new BadRequestException('Invalid unit ID.');
+				}
+				const tenantsData = tenantsIds?.length
 					? await transactionalEntityManager.findBy(TenantUser, {
 							id: In(tenantsIds),
 						})
 					: [];
-				if (newTenants.length) {
+				if (newTenants?.length) {
 					const newTenantsData = await transactionalEntityManager.save(
 						TenantUser,
 						newTenants,
 					);
 					tenantsData.push(...newTenantsData);
 				}
-				const lease = await transactionalEntityManager.create(Lease, {
-					startDate: DateTime.fromISO(leaseData.startDate).toSQL(),
-					endDate: DateTime.fromISO(leaseData.endDate).toSQL(),
+				const lease = transactionalEntityManager.create(Lease, {
+					startDate: newLeaseStartDate,
+					endDate: DateTime.fromISO(leaseData.endDate).toSQL({
+						includeOffset: false,
+					}),
 					unit,
 					tenants: tenantsData,
 					isDraft,
 					...leaseData,
 				});
-				const savedLease = await transactionalEntityManager.save(lease);
-				return savedLease;
+				await transactionalEntityManager.save(lease);
 			},
 		);
 	}
 
-	async getPropertyLeases(
-		propertyUuId: string,
-		organizationUuid: string,
-		includeArchived: boolean = false,
-	): Promise<Lease[]> {
-		try {
-			const queryBuilder = this.createQueryBuilder('lease')
-				.where('lease.propertyUuId = :propertyUuId', { propertyUuId })
-				.leftJoinAndSelect(
-					'lease.property',
-					'p',
-					'p.organizationUuid = :organizationUuid',
-					{ organizationUuid },
-				)
-				.leftJoinAndSelect('lease.transactions', 'ltr')
-				.leftJoinAndSelect('lease.tenants', 'lte');
-
-			if (!includeArchived) {
-				queryBuilder.andWhere('lease.isArchived = :includeArchived', {
-					includeArchived,
-				});
-			}
-			const result = await queryBuilder.getMany();
-			return result;
-		} catch (e) {
-			this.logger.error(
-				`Error getting leases for property: 
-                ${propertyUuId} in Organization: ${organizationUuid}`,
-				e,
-				'Lease Repository',
-			);
-			throw new BadRequestException(
-				e.message,
-				`Error getting leases for property: 
-                ${propertyUuId} in Organization: ${organizationUuid}`,
-			);
+	async getUnitLeases(unitId: number, includeArchived: boolean = false) {
+		const queryBuilder = this.createQueryBuilder('lease')
+			.leftJoinAndSelect('lease.tenants', 'tenant')
+			.leftJoinAndSelect('lease.unit', 'unit')
+			.leftJoinAndSelect('unit.property', 'property')
+			.select([
+				'lease.id as id',
+				'lease.startDate AS startDate',
+				'lease.endDate AS endDate',
+				'lease.rentAmount AS rentAmount',
+				'lease.status AS status',
+				'tenant.firstName AS tenant_firstName',
+				'tenant.lastName AS tenant_lastName',
+				'property.name AS property_name',
+				'property.organizationUuid AS property_organizationUuid',
+				'property.managerUid AS property_managerUid',
+				'property.ownerUid AS property_ownerUid',
+				'unit.unitNumber AS unit_unitNumber',
+			])
+			.where('lease.unitId = :unitId', { unitId });
+		if (!includeArchived) {
+			queryBuilder.andWhere('lease.isArchived = :includeArchived', {
+				includeArchived,
+			});
 		}
+		const result = await queryBuilder.getRawMany();
+		return result;
 	}
 
-	async getLeaseById(id: number): Promise<Lease> {
-		try {
-			const lease = await this.createQueryBuilder('lease')
-				.where('lease.id = :id', { id })
-				.leftJoinAndSelect('lease.tenants', 'lte')
-				.leftJoinAndSelect('lease.transactions', 'ltr')
-				.getOne();
-			return lease;
-		} catch (e) {
-			this.logger.error(`Error getting lease: ${id}`, e, 'LeaseRepository');
-		}
+	async getLeaseById(id: number) {
+		const lease = await this.createQueryBuilder('lease')
+			.innerJoin('lease.unit', 'unit')
+			.innerJoin('unit.property', 'property')
+			.leftJoin('property.address', 'address')
+			.innerJoin('property.type', 'type')
+			.leftJoin('lease.tenants', 'tenant')
+			.select([
+				'lease.id AS id',
+				'lease.status AS status',
+				'TO_CHAR(lease."startDate"::DATE, \'YYYY-MM-DD\') AS start_date',
+				'TO_CHAR(lease."endDate"::DATE, \'YYYY-MM-DD\') AS end_date',
+				'lease.rentAmount AS rent_amount',
+				'lease.paymentFrequency AS payment_frequency',
+				'lease.rentDueDay AS rent_due_day',
+				'property.name AS property_name',
+				`CONCAT(address."addressLine1", ' ', address."addressLine2", ', ', address.city, ', ', address.state, ', ', address."postalCode", ', ', address.country) AS property_address`,
+				'type.name AS property_type',
+				'unit.unitNumber AS unit_number',
+				'property.isMultiUnit AS is_multi_unit_property',
+				`EXTRACT(DAY FROM AGE(lease.endDate, CURRENT_DATE)) AS days_to_lease_expires`,
+				"TO_CHAR(public.calculate_next_due_date(lease.startDate, lease.paymentFrequency, lease.customPaymentFrequency, lease.rentDueDay)::DATE, 'YYYY-MM-DD') AS next_payment_date",
+				'tenant.firstName AS tenant_first_name',
+				'tenant.lastName AS tenant_last_name',
+			])
+			.where('lease.id = :id', { id })
+			.getRawOne();
+		return lease;
 	}
 
 	async updateLease(id: number, leaseDto: UpdateLeaseDto): Promise<Lease> {
-		try {
-			if (leaseDto.startDate)
-				leaseDto.startDate = DateTime.fromSQL(leaseDto.startDate).toSQL();
-			if (leaseDto.endDate)
-				leaseDto.endDate = DateTime.fromSQL(leaseDto.endDate).toSQL();
-			const lease = await this.preload({ id, ...leaseDto });
-			await this.update(id, lease);
-			return lease;
-		} catch (e) {
-			this.logger.error(`Error updating lease: ${id}`, e, 'LeaseRepository');
-			throw new BadRequestException(e.message, `Error updating lease: ${id}`);
-		}
+		if (leaseDto.startDate)
+			leaseDto.startDate = DateTime.fromISO(leaseDto.startDate).toSQL({
+				includeOffset: false,
+			});
+		if (leaseDto.endDate)
+			leaseDto.endDate = DateTime.fromISO(leaseDto.endDate).toSQL({
+				includeOffset: false,
+			});
+		const lease = await this.preload({ id, ...leaseDto });
+		await this.update(id, lease);
+		return lease;
 	}
 
 	private async getLeaseFilterQueryString(
@@ -172,74 +206,66 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		getLeaseDto?: GetLeaseDto,
 		isOrgOwner: boolean = false,
 	): Promise<[Lease[], number]> {
-		try {
-			const queryBuilder = this.createQueryBuilder('lease');
-			queryBuilder
-				.leftJoinAndSelect('lease.property', 'p')
-				.leftJoinAndSelect('lease.tenants', 'lte')
-				.leftJoinAndSelect('lease.transactions', 'ltr')
-				.where('p.organizationUuid = :orgUuid', { orgUuid });
-			if (!isOrgOwner) {
-				queryBuilder.andWhere(
-					new Brackets((qb) => {
-						qb.where('p.ownerUid = :ownerUid', {
-							ownerUid: userId,
-						}).orWhere('p.managerUid = :managerUid', {
-							managerUid: userId,
-						});
-					}),
-				);
-			}
-			await this.getLeaseFilterQueryString(getLeaseDto, queryBuilder);
-			queryBuilder
-				.orderBy(`lease.${getLeaseDto.sortBy}`, getLeaseDto.order)
-				.skip(getLeaseDto.skip)
-				.take(getLeaseDto.take);
-			return await queryBuilder.getManyAndCount();
-		} catch (e) {
-			this.logger.error(
-				'Error getting organization leases',
-				e,
-				'LeaseRepository',
-			);
-			throw new BadRequestException(
-				e.message,
-				'Error getting organization leases',
+		const queryBuilder = this.createQueryBuilder('lease')
+			.leftJoinAndSelect('lease.tenants', 'tenant')
+			.leftJoinAndSelect('lease.unit', 'unit')
+			.leftJoinAndSelect('unit.property', 'property')
+			.select([
+				'lease.id',
+				'lease.name',
+				'lease.isArchived',
+				'lease.isDraft',
+				'lease.createdDate',
+				'lease.startDate',
+				'lease.endDate',
+				'lease.rentAmount',
+				'lease.status',
+				'tenant.firstName',
+				'tenant.lastName',
+				'property.name',
+				'property.organizationUuid',
+				'property.managerUid',
+				'property.ownerUid',
+				'unit.unitNumber',
+			])
+			.where('property.organizationUuid = :orgUuid', { orgUuid });
+		if (!isOrgOwner) {
+			queryBuilder.andWhere(
+				new Brackets((qb) => {
+					qb.where('property.ownerUid = :ownerUid', {
+						ownerUid: userId,
+					}).orWhere('property.managerUid = :managerUid', {
+						managerUid: userId,
+					});
+				}),
 			);
 		}
+		await this.getLeaseFilterQueryString(getLeaseDto, queryBuilder);
+		queryBuilder
+			.orderBy(`lease.${getLeaseDto.sortBy}`, getLeaseDto.order)
+			.skip(getLeaseDto.skip)
+			.take(getLeaseDto.take);
+		return await queryBuilder.getManyAndCount();
 	}
 
-	async addTenantToLease(
-		tenantDtos: CreateTenantDto[],
-		leaseId: number,
-	): Promise<Lease> {
-		try {
-			await this.manager.transaction(async (transactionalEntityManager) => {
-				const tenants: TenantUser[] = tenantDtos.map((tenant) => ({
-					...tenant,
-					dateOfBirth: DateTime.fromISO(tenant.dateOfBirth).toJSDate(),
-					// profile: {
-					// 	email: tenant.email,
-					// 	firebaseId: this.uniqueId.rnd()
-					// }
-				}));
+	async addTenantToLease(tenantDtos: CreateTenantDto[], leaseId: number) {
+		await this.manager.transaction(async (transactionalEntityManager) => {
+			const tenants: TenantUser[] = tenantDtos.map((tenant) => ({
+				...tenant,
+				dateOfBirth: DateTime.fromISO(tenant.dateOfBirth).toJSDate(),
+			}));
 
-				const tenantUsers = await transactionalEntityManager.save(
-					TenantUser,
-					tenants,
-				);
-				await transactionalEntityManager
-					.createQueryBuilder()
-					.relation(Lease, 'tenants')
-					.of(leaseId)
-					.add(tenantUsers);
-			});
-			const leaseData = await this.findOneBy({ id: leaseId });
-			return leaseData;
-		} catch (e) {
-			this.logger.error(e.message);
-			throw new BadRequestException(e.message, 'Error adding tenant to lease');
-		}
+			const tenantUsers = await transactionalEntityManager.save(
+				TenantUser,
+				tenants,
+			);
+			await transactionalEntityManager
+				.createQueryBuilder()
+				.relation(Lease, 'tenants')
+				.of(leaseId)
+				.add(tenantUsers);
+		});
+		return await this.getLeaseById(leaseId);
 	}
 
 	async getPropertyLeaseMetrics(

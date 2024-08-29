@@ -215,7 +215,16 @@ export class PropertiesService implements IPropertyMetrics {
 				) || 0),
 			0,
 		);
-
+		const totalTenants = reduce(
+			units,
+			(sum, unit) =>
+				sum +
+				(unit.leases.reduce(
+					(leaseSum, lease) => leaseSum + lease.tenants.length,
+					0,
+				) || 0),
+			0,
+		);
 		// Calculate occupied unit count
 		const occupiedUnitCount = filter(
 			units,
@@ -230,6 +239,7 @@ export class PropertiesService implements IPropertyMetrics {
 				totalRent,
 				occupiedUnitCount,
 				vacantUnitCount,
+				totalTenants,
 				bedrooms: !property.isMultiUnit ? units?.[0]?.bedrooms : null,
 				bathrooms: !property.isMultiUnit ? units?.[0]?.bathrooms : null,
 				toilets: !property.isMultiUnit ? units?.[0]?.toilets : null,
