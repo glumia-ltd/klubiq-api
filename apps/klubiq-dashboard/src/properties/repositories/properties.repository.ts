@@ -427,7 +427,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 			async (transactionalEntityManager) => {
 				const property = await transactionalEntityManager.findOne(Property, {
 					where: { uuid: propertyUuid },
-					relations: ['address', 'amenities'],
+					relations: ['organization'],
 				});
 				if (!property) {
 					throw new Error('Property not found');
@@ -436,10 +436,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 					throw new Error('You are not authorized to update this property');
 				}
 				if (
-					(!isOrgOwner &&
-						(!property.owner || property.owner.firebaseId !== userId)) ||
-					!property.manager ||
-					property.manager.firebaseId !== userId
+					!isOrgOwner &&
+					(property.owner?.firebaseId !== userId ||
+						property.manager?.firebaseId !== userId)
 				) {
 					throw new Error('You are not authorized to update this property');
 				}
