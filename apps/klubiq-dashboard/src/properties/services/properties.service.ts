@@ -32,7 +32,7 @@ import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 import { Unit } from '../entities/unit.entity';
 import { plainToInstance } from 'class-transformer';
-import { filter, find, reduce } from 'lodash';
+import { filter, reduce } from 'lodash';
 import { PropertyDetailsDto } from '../dto/responses/property-details.dto';
 
 @Injectable()
@@ -438,18 +438,16 @@ export class PropertiesService implements IPropertyMetrics {
 		return plainToInstance(
 			PropertyListDto,
 			plainProperty.map((property) => {
-				const mainImage = property.images
-					? find(property.images, { isMain: true })
-					: null;
+				const mainImage = property.mainPhoto;
 				const bedrooms = property.isMultiUnit
 					? null
-					: property?.units?.[0]?.bedrooms;
+					: property.mainUnit?.bedrooms;
 				const bathrooms = property.isMultiUnit
 					? null
-					: property?.units?.[0]?.bathrooms;
+					: property.mainUnit?.bathrooms;
 				const toilets = property.isMultiUnit
 					? null
-					: property?.units?.[0]?.toilets;
+					: property.mainUnit?.toilets;
 				return {
 					...property,
 					mainImage,

@@ -214,4 +214,7 @@ export class Property {
 	@AutoMap(() => [Maintenance])
 	@OneToMany(() => Maintenance, (maintenance) => maintenance.property)
 	maintenances?: Maintenance[];
+
+	mainUnit?: Unit;
+	mainPhoto?: PropertyImage;
 }
