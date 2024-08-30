@@ -64,9 +64,11 @@ export class DashboardService {
 			return cachedRevenueMetrics;
 		}
 		const startDate = startDateStr
-			? DateTime.fromISO(startDateStr).toSQL()
+			? DateTime.fromISO(startDateStr).toSQL({ includeOffset: false })
 			: null;
-		const endDate = endDateStr ? DateTime.fromISO(endDateStr).toSQL() : null;
+		const endDate = endDateStr
+			? DateTime.fromISO(endDateStr).toSQL({ includeOffset: false })
+			: null;
 		const result = await this.dashboardRepository.getMonthlyRevenueData(
 			currentUser.organizationId,
 			startDate,
@@ -101,8 +103,12 @@ export class DashboardService {
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 
-			const startDate = DateTime.fromISO(startDateStr).toSQL();
-			const endDate = DateTime.fromISO(endDateStr).toSQL();
+			const startDate = DateTime.fromISO(startDateStr).toSQL({
+				includeOffset: false,
+			});
+			const endDate = DateTime.fromISO(endDateStr).toSQL({
+				includeOffset: false,
+			});
 
 			const result = await this.dashboardRepository.getRevenueDataForDownload(
 				currentUser.organizationId,

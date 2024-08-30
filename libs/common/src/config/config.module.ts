@@ -74,7 +74,7 @@ import { createMapper } from '@automapper/core';
 				host: 'localhost',
 				port: 6379,
 				max: 10,
-				ttl: 60,
+				ttl: 300,
 			}),
 		}),
 	],

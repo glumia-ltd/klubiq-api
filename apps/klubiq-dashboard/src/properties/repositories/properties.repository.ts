@@ -282,8 +282,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 			.leftJoinAndSelect('property.amenities', 'pf')
 			.leftJoinAndSelect('property.manager', 'pm')
 			.leftJoinAndSelect('property.owner', 'po')
-			// .leftJoinAndSelect('property.leases', 'pl', 'pl.endDate >= NOW()')
-			// .leftJoinAndSelect('pl.tenants', 'property_tenants')
 			.leftJoinAndSelect('property.units', 'units')
 			.leftJoinAndSelect('units.images', 'unitImages')
 			.leftJoinAndSelect(
@@ -437,9 +435,10 @@ export class PropertyRepository extends BaseRepository<Property> {
 					throw new Error('You are not authorized to update this property');
 				}
 				if (
-					!isOrgOwner &&
-					(!property.owner || property.owner.firebaseId !== userId) &&
-					(!property.manager || property.manager.firebaseId !== userId)
+					(!isOrgOwner &&
+						(!property.owner || property.owner.firebaseId !== userId)) ||
+					!property.manager ||
+					property.manager.firebaseId !== userId
 				) {
 					throw new Error('You are not authorized to update this property');
 				}

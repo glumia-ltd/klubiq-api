@@ -129,6 +129,10 @@ export class PropertyDetailsDto {
 
 	@Expose()
 	@IsNumber()
+	totalTenants: number;
+
+	@Expose()
+	@IsNumber()
 	unitCount: number;
 
 	@Expose()

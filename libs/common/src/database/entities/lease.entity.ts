@@ -45,7 +45,7 @@ export class Lease {
 	@Column({
 		type: 'enum',
 		enum: LeaseStatus,
-		default: LeaseStatus.NEW,
+		default: LeaseStatus.ACTIVE,
 	})
 	@Index('idx_lease_status')
 	status?: LeaseStatus;
@@ -122,4 +122,12 @@ export class Lease {
 	@AutoMap(() => [Transaction])
 	@OneToMany(() => Transaction, (transaction) => transaction.lease)
 	transactions?: Transaction[];
+
+	tenant_firstname?: string;
+	tenant_lastname?: string;
+	property_name?: string;
+	property_organizationuuid?: string;
+	property_manageruid?: string;
+	property_owneruid?: string;
+	unit_unitnumber?: string;
 }
