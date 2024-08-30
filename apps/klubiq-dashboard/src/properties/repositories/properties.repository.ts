@@ -208,6 +208,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 		queryBuilder
 			.leftJoinAndSelect('property.purpose', 'pp')
 			.leftJoinAndSelect('property.type', 'pt')
+			.leftJoinAndMapOne('property.mainUnit', 'property.units', 'pu')
 			.leftJoinAndMapOne(
 				'property.mainPhoto',
 				'property.images',
