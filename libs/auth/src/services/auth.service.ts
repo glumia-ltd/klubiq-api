@@ -16,6 +16,7 @@ import {
 } from '../dto/requests/user-login.dto';
 import {
 	AuthUserResponseDto,
+	LandlordUserDetailsResponseDto,
 	TokenResponseDto,
 } from '../dto/responses/auth-response.dto';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
@@ -33,14 +34,23 @@ import { AxiosError } from 'axios';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { createHmac } from 'crypto';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
-import { RolesAndEntitlements } from '../types/firebase.types';
+import { ActiveUserData, RolesAndEntitlements } from '../types/firebase.types';
+import { plainToInstance } from 'class-transformer';
+import { map } from 'lodash';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { CacheService } from '@app/common/services/cache.service';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
 	private readonly adminIdentityTenantId: string;
+	private readonly cacheKeyPrefix = 'auth';
+	private readonly cacheTTL = 500;
+	protected readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		@Inject('FIREBASE_ADMIN') protected firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
+		@Inject(CACHE_MANAGER) protected cacheManager: Cache,
 		private readonly userProfilesRepository: UserProfilesRepository,
 		protected readonly errorMessageHelper: FirebaseErrorMessageHelper,
 		protected readonly configService: ConfigService,
@@ -55,6 +65,10 @@ export abstract class AuthService {
 	get auth(): auth.Auth {
 		return this.firebaseAdminApp.auth();
 	}
+	/**
+	 *
+	 * FUTURE: MULTITENANT LOGIC
+	 */
 	// get adminAuth(): auth.TenantAwareAuth {
 	// 	const tAuth = this.firebaseAdminApp
 	// 		.auth()
@@ -111,6 +125,7 @@ export abstract class AuthService {
 		}
 	}
 
+	// GETS FIREBASE USER
 	async getUser(uid: string) {
 		try {
 			const userRecord = await this.auth.getUser(uid);
@@ -124,6 +139,7 @@ export abstract class AuthService {
 		}
 	}
 
+	// UPDATES FIREBASE USER
 	async updateUser(
 		uid: string,
 		updateData: { email?: string; password?: string },
@@ -154,6 +170,7 @@ export abstract class AuthService {
 		}
 	}
 
+	// RESET FIREBASE USER PASSWORD
 	async resetPassword(resetPassword: ResetPasswordDto) {
 		try {
 			const body = {
@@ -187,6 +204,7 @@ export abstract class AuthService {
 		}
 	}
 
+	// ACCEPTS INVITATION
 	async acceptInvitation(resetPassword: ResetPasswordDto) {
 		try {
 			const body = {
@@ -336,14 +354,84 @@ export abstract class AuthService {
 		}
 	}
 
-	async getUserInfo(): Promise<AuthUserResponseDto> {
-		const user_id = this.cls.get('currentUser')?.uid;
-		if (!user_id) {
-			throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
+	async getUserInfo(): Promise<any> {
+		try {
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser.uid) {
+				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
+			}
+			switch (currentUser.systemRole) {
+				case UserRoles.LANDLORD:
+					return await this.getLandlordUser(currentUser.uid);
+				case UserRoles.ADMIN:
+					break;
+			}
+			const user = await this.userProfilesRepository.getUserLoginInfo(
+				currentUser.uid,
+			);
+			const userData = this.mapper.map(user, UserProfile, AuthUserResponseDto);
+			return userData;
+		} catch (err) {
+			console.log(err.message);
+			throw err;
 		}
-		const user = await this.userProfilesRepository.getUserLoginInfo(user_id);
-		const userData = this.mapper.map(user, UserProfile, AuthUserResponseDto);
+	}
+
+	private async getLandlordUser(
+		userId: string,
+	): Promise<LandlordUserDetailsResponseDto> {
+		const cacheKey = `${this.cacheKeyPrefix}-landlord/user/${userId}`;
+		const cachedUser =
+			await this.cacheManager.get<LandlordUserDetailsResponseDto>(cacheKey);
+		if (cachedUser) return cachedUser;
+		const user = await this.userProfilesRepository.getLandLordUserInfo(userId);
+		const userData = await this.mapLandlordUserToDto(
+			user,
+			this.cls.get('currentUser'),
+		);
+		await this.cacheManager.set(cacheKey, userData, 3600);
 		return userData;
+	}
+
+	private async mapLandlordUserToDto(
+		user: any,
+		currentUser: ActiveUserData,
+	): Promise<LandlordUserDetailsResponseDto> {
+		const entitlementsResolve = (data: string[]): Record<string, string> => {
+			const resolved = map(data, (item) => {
+				const entitlements = item.split(':');
+				return {
+					[entitlements[0]]: entitlements[1],
+				};
+			});
+			return resolved ? Object.assign({}, ...resolved) : {};
+		};
+		return plainToInstance(LandlordUserDetailsResponseDto, {
+			email: user.email,
+			entitlements: entitlementsResolve(currentUser.entitlements),
+			firstName: user.first_name
+				? user.first_name
+				: user.profile_first_name
+					? user.profile_first_name
+					: '',
+			id: user.id,
+			isAccountVerified: user.is_account_verified,
+			isPrivacyPolicyAgreed: user.is_privacy_policy_agreed,
+			isTermsAndConditionAccepted: user.is_terms_and_condition_accepted,
+			lastName: user.last_name
+				? user.last_name
+				: user.profile_last_name
+					? user.profile_last_name
+					: '',
+			organization: user.organization,
+			organizationId: user.org_id,
+			organizationUuid: user.org_uuid,
+			phone: user.phone,
+			preferences: user.user_preferences,
+			profilePicUrl: user.profile_pic_url,
+			roleName: currentUser.organizationRole,
+			uuid: user.uuid,
+		});
 	}
 
 	async createInvitedUser(invitedUserDto: InviteUserDto): Promise<any> {

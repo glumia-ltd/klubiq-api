@@ -38,7 +38,7 @@ import { Mapper } from '@automapper/core';
 import { FirebaseErrorMessageHelper } from '../helpers/firebase-error-helper';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { CacheService } from '@app/common/services/cache.service';
+//import { CacheService } from '@app/common/services/cache.service';
 import {
 	OrgRoleResponseDto,
 	ViewSystemRoleDto,
@@ -55,9 +55,9 @@ export class LandlordAuthService extends AuthService {
 	private readonly emailAuthContinueUrl: string;
 	private readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	protected readonly logger = new Logger(LandlordAuthService.name);
-	private readonly cacheService = new CacheService(this.cacheManager);
+	//private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
-		@Inject(CACHE_MANAGER) private cacheManager: Cache,
+		@Inject(CACHE_MANAGER) protected cacheManager: Cache,
 		@Inject('FIREBASE_ADMIN') firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') mapper: Mapper,
 		private emailService: MailerSendService,
@@ -71,6 +71,7 @@ export class LandlordAuthService extends AuthService {
 		super(
 			firebaseAdminApp,
 			mapper,
+			cacheManager,
 			userProfilesRepository,
 			errorMessageHelper,
 			configService,

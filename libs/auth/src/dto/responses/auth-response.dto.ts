@@ -1,6 +1,14 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsJWT } from 'class-validator';
+import { Expose } from 'class-transformer';
+import {
+	IsBoolean,
+	IsJSON,
+	IsJWT,
+	IsNumber,
+	IsOptional,
+	IsString,
+} from 'class-validator';
 
 export class SignUpResponseDto {
 	@ApiProperty({
@@ -149,4 +157,73 @@ export class TokenResponseDto {
 	id_token: string;
 	user_id: string;
 	project_id: string;
+}
+
+export class LandlordUserDetailsResponseDto {
+	@Expose()
+	@IsString()
+	uuid: string;
+
+	@Expose()
+	@IsNumber()
+	id: number;
+
+	@Expose()
+	@IsString()
+	organization: string;
+
+	@Expose()
+	@IsNumber()
+	organizationId: number;
+
+	@Expose()
+	@IsString()
+	organizationUuid: string;
+
+	@Expose()
+	@IsString()
+	email: string;
+
+	@Expose()
+	@IsJSON()
+	entitlements: Record<string, string>;
+
+	@Expose()
+	@IsString()
+	firstName: string;
+
+	@Expose()
+	@IsString()
+	lastName: string;
+
+	@Expose()
+	@IsBoolean()
+	isAccountVerified: boolean;
+
+	@Expose()
+	@IsBoolean()
+	isPrivacyPolicyAgreed: boolean;
+
+	@Expose()
+	@IsBoolean()
+	isTermsAndConditionAccepted: boolean;
+
+	@Expose()
+	@IsString()
+	@IsOptional()
+	phone?: string;
+
+	@Expose()
+	@IsString()
+	@IsOptional()
+	profilePicUrl?: string;
+
+	@Expose()
+	@IsString()
+	roleName: string;
+
+	@Expose()
+	@IsJSON()
+	@IsOptional()
+	preferences?: Record<string, any>;
 }

@@ -541,7 +541,6 @@ export class PropertiesService implements IPropertyMetrics {
 				unitsDto,
 			);
 			return units;
-			//return await this.mapper.mapArrayAsync(units, Property, PropertyDto);
 		} catch (error) {
 			this.logger.error('Error adding Unit to Property', error);
 			throw new BadRequestException(`Error adding Unit to Property.`, {

@@ -34,6 +34,11 @@ export class CacheService {
 			return cachedList.find((f) => f[key] == identifier);
 	}
 
+	// gets a cached data by Id or identifier
+	async getCacheByKey<T>(cacheKey: string): Promise<T> {
+		return await this.cacheManager.get<T>(cacheKey);
+	}
+
 	// This updates cache after create
 	async updateCacheAfterCreate<T>(
 		cacheKey: string,

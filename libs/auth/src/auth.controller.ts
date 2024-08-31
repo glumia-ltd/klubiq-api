@@ -20,13 +20,8 @@ import {
 	ResetPasswordDto,
 	ResetPasswordLinkDto,
 	SendVerifyEmailDto,
-	// UpdateFirebaseUserDto,
-	// UpdatePasswordDto,
 	VerifyEmailDto,
 } from './dto/requests/user-login.dto';
-// import {
-// 	SignUpResponseDto,
-// } from './dto/responses/auth-response.dto';
 import { AuthType } from './types/firebase.types';
 import { UserRoles } from '@app/common';
 import { LandlordAuthService } from './services/landlord-auth.service';
