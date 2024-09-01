@@ -22,7 +22,7 @@ export class UserPreferences extends AbstractEntity {
 	updatedAt?: Date;
 
 	@OneToOne(() => UserProfile, (profile) => profile.preferences)
-	@Index()
+	@Index('IDX_USER_PREFERENCES_PROFILE')
 	@JoinColumn({ name: 'userId', referencedColumnName: 'firebaseId' })
 	profile?: UserProfile;
 }

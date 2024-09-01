@@ -23,18 +23,19 @@ export class OrganizationUser {
 	organizationUserUuid?: string;
 
 	@AutoMap()
-	@Index()
+	@Index('IDX_ORG_USER_ID')
 	@Generated('increment')
 	@Column({ unique: true })
 	organizationUserId?: number;
 
 	@AutoMap()
-	@Index()
+	@Index('IDX_ORG_USER_FIREBASE_ID')
 	@Column({ unique: true })
 	firebaseId: string;
 
 	@AutoMap()
 	@Column({ default: true })
+	@Index('IDX_ORG_USER_ACTIVE')
 	isActive?: boolean;
 
 	@AutoMap()
@@ -75,6 +76,7 @@ export class OrganizationUser {
 		name: 'organizationUuid',
 		referencedColumnName: 'organizationUuid',
 	})
+	@Index('IDX_ORG_USER_ORGANIZATION')
 	organization?: Organization;
 
 	@DeleteDateColumn()

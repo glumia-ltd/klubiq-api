@@ -19,7 +19,6 @@ import { UnitStatus } from '@app/common/config/config.constants';
 export class Unit {
 	@AutoMap()
 	@PrimaryGeneratedColumn({ type: 'bigint' })
-	@Index('IDX_UNIT_ID', { unique: true })
 	id: number;
 
 	@AutoMap()
