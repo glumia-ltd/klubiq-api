@@ -5,7 +5,6 @@ import { BaseRepository } from '@app/common';
 import { Mapper, createMap, createMapper } from '@automapper/core';
 import { Property } from '../entities/property.entity';
 import { PropertyRepository } from '../repositories/properties.repository';
-import { PropertyDto } from '../dto/responses/property-list-response.dto';
 import { getMapperToken } from '@automapper/nestjs';
 import { classes } from '@automapper/classes';
 import { EntityManager } from 'typeorm';
@@ -88,7 +87,6 @@ describe('PropertiesService', () => {
 		// propertyRepository = module.get<MockRepository>(PropertyRepository);
 		service = module.get<PropertiesService>(PropertiesService);
 		cls = module.get<ClsService>(ClsService);
-		createMap(mapper, Property, PropertyDto);
 	});
 
 	it('should be defined', () => {

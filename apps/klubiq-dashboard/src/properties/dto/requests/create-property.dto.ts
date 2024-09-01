@@ -14,41 +14,38 @@ import { CreateUnitDto } from './create-unit.dto';
 import { Type } from 'class-transformer';
 
 export class AmenityDto {
-	@AutoMap()
 	@IsOptional()
 	@IsNumber()
 	id?: number;
 
-	@AutoMap()
 	@IsOptional()
 	@IsString()
 	name?: string;
 }
 
 export class PropertyImageDto {
-	@AutoMap()
 	@IsBoolean()
 	@IsNotEmpty()
 	isMain: boolean;
 
-	@AutoMap()
 	@IsNumber()
 	@IsNotEmpty()
 	fileSize: number;
 
-	@AutoMap()
 	@IsUrl()
 	@IsNotEmpty()
 	url: string;
 
-	@AutoMap()
 	@IsString()
 	@IsOptional()
 	unitNumber?: string;
+
+	@IsNumber()
+	@IsOptional()
+	id?: number;
 }
 
 export class CreatePropertyDto {
-	@AutoMap()
 	@IsOptional()
 	@IsArray()
 	@AutoMap(() => [AmenityDto])
@@ -58,16 +55,13 @@ export class CreatePropertyDto {
 	@Type(() => CreateAddressDto)
 	address: CreateAddressDto;
 
-	@AutoMap()
 	@IsOptional()
 	area?: { value?: number; unit?: string };
 
-	@AutoMap()
 	@IsNotEmpty()
 	@IsNumber()
 	categoryId: number;
 
-	@AutoMap()
 	@IsOptional()
 	@IsString()
 	description?: string;
@@ -78,7 +72,6 @@ export class CreatePropertyDto {
 	@Type(() => PropertyImageDto)
 	images?: PropertyImageDto[];
 
-	@AutoMap()
 	@IsOptional()
 	@IsBoolean()
 	isMultiUnit?: boolean;
@@ -87,12 +80,10 @@ export class CreatePropertyDto {
 	@IsString()
 	managerUid?: string;
 
-	@AutoMap()
 	@IsNotEmpty()
 	@IsString()
 	name: string;
 
-	@AutoMap()
 	@IsOptional()
 	@IsString()
 	note?: string;
@@ -101,22 +92,18 @@ export class CreatePropertyDto {
 	@IsString()
 	ownerUid?: string;
 
-	@AutoMap()
 	@IsNotEmpty()
 	@IsNumber()
 	purposeId: number;
 
-	@AutoMap()
 	@IsOptional()
 	@IsNumber()
 	statusId?: number;
 
-	@AutoMap()
 	@IsOptional()
 	@IsArray()
 	tags?: string[];
 
-	@AutoMap()
 	@IsNotEmpty()
 	@IsNumber()
 	typeId: number;

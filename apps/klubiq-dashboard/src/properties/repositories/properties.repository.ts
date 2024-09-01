@@ -155,6 +155,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 						...unit,
 						property: savedProperty,
 					});
+					if (unit.images && unit.images.length > 0) {
+						this.upsertUnitImages(newUnit, unit.images);
+					}
 					return transactionalEntityManager.save(newUnit);
 				});
 				const savedUnits = await Promise.all(unitsToCreate);
@@ -378,15 +381,38 @@ export class PropertyRepository extends BaseRepository<Property> {
 			.execute();
 	}
 
-	async updateUnit(id: number, data: UpdateUnitDto): Promise<Unit> {
+	//UPDATE UNIT AND IT'S IMAGES
+	async updateUnit(id: number, data: UpdateUnitDto) {
 		await this.manager.update(Unit, id, data);
-		return await this.manager.findOne(Unit, {
+		const updatedUnit = await this.manager.findOne(Unit, {
 			where: { id },
-			relations: ['property', 'images'],
 		});
+		if (data.images && data.images.length > 0) {
+			await this.upsertUnitImages(updatedUnit, data.images);
+		}
 	}
 
 	// 5. Updating property images
+	private async upsertUnitImages(
+		unit: Unit,
+		images: PropertyImageDto[],
+	): Promise<void> {
+		// Save new images
+		await Promise.all(
+			images.map((image) => {
+				this.manager.upsert(
+					PropertyImage,
+					{
+						...image,
+						unit,
+					},
+					['id'],
+				);
+			}),
+		);
+	}
+
+	// 5. Updating and saving property images
 	private async updatePropertyImages(
 		property: Property,
 		images: PropertyImageDto[],
