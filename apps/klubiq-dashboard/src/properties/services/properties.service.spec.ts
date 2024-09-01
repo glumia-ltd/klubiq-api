@@ -5,8 +5,6 @@ import { BaseRepository } from '@app/common';
 import { Mapper, createMap, createMapper } from '@automapper/core';
 import { Property } from '../entities/property.entity';
 import { PropertyRepository } from '../repositories/properties.repository';
-import { getMapperToken } from '@automapper/nestjs';
-import { classes } from '@automapper/classes';
 import { EntityManager } from 'typeorm';
 import { ClsService } from 'nestjs-cls';
 import { AsyncLocalStorage } from 'async_hooks';
@@ -63,12 +61,6 @@ describe('PropertiesService', () => {
 					useValue: createMockRepository(),
 				},
 				{
-					provide: getMapperToken('MAPPER'),
-					useValue: createMapper({
-						strategyInitializer: classes(),
-					}),
-				},
-				{
 					provide: ClsService,
 					useFactory: () => new ClsService(new AsyncLocalStorage()),
 				},
@@ -82,8 +74,6 @@ describe('PropertiesService', () => {
 				},
 			],
 		}).compile();
-
-		mapper = module.get<Mapper>(getMapperToken('MAPPER'));
 		// propertyRepository = module.get<MockRepository>(PropertyRepository);
 		service = module.get<PropertiesService>(PropertiesService);
 		cls = module.get<ClsService>(ClsService);

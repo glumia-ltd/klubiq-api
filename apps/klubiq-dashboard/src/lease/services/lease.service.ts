@@ -26,8 +26,6 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { LeaseRepository } from '../repositories/lease.repository';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Mapper } from '@automapper/core';
-import { InjectMapper } from '@automapper/nestjs';
 import { UpdateLeaseDto } from '../dto/requests/update-lease.dto';
 import { GetLeaseDto } from '../dto/requests/get-lease.dto';
 import { ConfigService } from '@nestjs/config';
@@ -45,7 +43,6 @@ export class LeaseService implements ILeaseService {
 		private readonly configService: ConfigService,
 		private readonly cls: ClsService<SharedClsStore>,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
-		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@InjectRepository(LeaseRepository)
 		private readonly leaseRepository: LeaseRepository,
 		private readonly uploadService: FileUploadService,

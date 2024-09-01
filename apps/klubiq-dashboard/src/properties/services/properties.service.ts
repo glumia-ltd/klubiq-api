@@ -11,8 +11,6 @@ import { Property } from '../entities/property.entity';
 import { ErrorMessages } from '@app/common/config/error.constant';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
-import { InjectMapper } from '@automapper/nestjs';
-import { Mapper } from '@automapper/core';
 import { PropertyListDto } from '../dto/responses/property-list-response.dto';
 import { ClsService } from 'nestjs-cls';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
@@ -44,7 +42,6 @@ export class PropertiesService implements IPropertyMetrics {
 		@InjectRepository(PropertyRepository)
 		private readonly propertyRepository: PropertyRepository,
 		private readonly cls: ClsService<SharedClsStore>,
-		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly util: Util,
 	) {}
