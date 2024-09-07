@@ -1,5 +1,14 @@
 import { UnitStatus } from '@app/common/config/config.constants';
-import { IsString, IsNumber, IsJSON, IsOptional } from 'class-validator';
+import {
+	IsString,
+	IsNumber,
+	IsJSON,
+	IsOptional,
+	IsArray,
+	ValidateNested,
+} from 'class-validator';
+import { PropertyImageDto } from './create-property.dto';
+import { Type } from 'class-transformer';
 
 export class CreateUnitDto {
 	@IsNumber()
@@ -35,4 +44,14 @@ export class CreateUnitDto {
 
 	@IsNumber()
 	offices: number;
+
+	@IsArray()
+	@IsOptional()
+	@ValidateNested({ each: true })
+	@Type(() => PropertyImageDto)
+	images?: PropertyImageDto[];
+
+	@IsArray()
+	@IsOptional()
+	amenities?: string[];
 }

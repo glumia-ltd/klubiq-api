@@ -23,7 +23,7 @@ export class Organization {
 	organizationUuid?: string;
 
 	@AutoMap()
-	@Index()
+	@Index('idx_organization_id')
 	@Generated('increment')
 	@Column({ unique: true })
 	organizationId?: number;
@@ -95,6 +95,7 @@ export class Organization {
 	users?: OrganizationUser[];
 
 	@DeleteDateColumn()
+	@Index('idx_deleted_date')
 	deletedDate?: Date;
 
 	@CreateDateColumn()

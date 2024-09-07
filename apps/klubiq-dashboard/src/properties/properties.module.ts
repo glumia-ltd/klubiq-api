@@ -4,19 +4,14 @@ import { PropertiesController } from './controllers/properties.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Property } from './entities/property.entity';
 import { PropertyAddress } from './entities/property-address.entity';
-import { PropertyProfile } from './profiles/property.profile';
 import { RepositoriesModule } from '@app/common';
 import { PropertyRepository } from './repositories/properties.repository';
 import { PROPERTY_METRICS } from './interfaces/property-metrics.service.interface';
 import { Util } from '@app/common/helpers/util';
-import { LeaseProfile } from '../lease/profiles/lease.profile';
-
 import { Unit } from './entities/unit.entity';
 
 @Module({
 	providers: [
-		PropertyProfile,
-		LeaseProfile,
 		PropertiesService,
 		PropertyRepository,
 		Util,

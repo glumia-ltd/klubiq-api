@@ -21,7 +21,7 @@ import { Mapper } from '@automapper/core';
 import { FirebaseErrorMessageHelper } from '../helpers/firebase-error-helper';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { CacheService } from '@app/common/services/cache.service';
+//import { CacheService } from '@app/common/services/cache.service';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { AuthService } from './auth.service';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
@@ -39,11 +39,11 @@ export class AdminAuthService extends AuthService {
 	private readonly emailAuthContinueUrl: string;
 	private readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	protected readonly logger = new Logger(AdminAuthService.name);
-	private readonly cacheService = new CacheService(this.cacheManager);
+	//private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
-		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		@Inject('FIREBASE_ADMIN') firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') mapper: Mapper,
+		@Inject(CACHE_MANAGER) protected cacheManager: Cache,
 		private emailService: MailerSendService,
 		private readonly organizationRepository: OrganizationRepository,
 		userProfilesRepository: UserProfilesRepository,
@@ -55,6 +55,7 @@ export class AdminAuthService extends AuthService {
 		super(
 			firebaseAdminApp,
 			mapper,
+			cacheManager,
 			userProfilesRepository,
 			errorMessageHelper,
 			configService,

@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
-import { CreatePropertyDto } from './create-property.dto';
+import { CreatePropertyDto, PropertyImageDto } from './create-property.dto';
 import {
 	IsString,
 	IsNumber,
@@ -55,6 +55,16 @@ export class UpdateUnitDto {
 	@IsString()
 	@IsOptional()
 	status: UnitStatus;
+
+	@IsArray()
+	@IsOptional()
+	@ValidateNested({ each: true })
+	@Type(() => PropertyImageDto)
+	images?: PropertyImageDto[];
+
+	@IsArray()
+	@IsOptional()
+	amenities?: string[];
 }
 export class UpdatePropertyDto extends PartialType(CreatePropertyDto) {
 	@IsOptional()

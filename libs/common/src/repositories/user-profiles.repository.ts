@@ -3,6 +3,7 @@ import { BaseRepository, UserInvitation } from '@app/common';
 import { UserProfile } from '../database/entities/user-profile.entity';
 import { EntityManager } from 'typeorm';
 import { DateTime } from 'luxon';
+import { OrganizationUser } from 'apps/klubiq-dashboard/src/users/entities/organization-user.entity';
 
 @Injectable()
 export class UserProfilesRepository extends BaseRepository<UserProfile> {
@@ -21,6 +22,38 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 			throw new NotFoundException('No data found');
 		}
 		return data;
+	}
+
+	async getLandLordUserInfo(uid: string) {
+		console.time('getLandLordUserInfo');
+		const userData = await this.manager
+			.createQueryBuilder(OrganizationUser, 'user')
+			.leftJoin('user.profile', 'profile')
+			.leftJoin('user.organization', 'organization')
+			.leftJoin('profile.preferences', 'preferences')
+			.select([
+				'user.organizationUserUuid AS uuid',
+				'user.firebaseId AS firebase_id',
+				'user.organizationUserId AS id',
+				'user.firstName AS first_name',
+				'user.lastName AS last_name',
+				'user.isAccountVerified AS is_account_verified',
+				'profile.firstName AS profile_first_name',
+				'profile.lastName AS profile_last_name',
+				'profile.email AS email',
+				'profile.phoneNumber AS phone',
+				'profile.profilePicUrl AS profile_pic_url',
+				'profile.isPrivacyPolicyAgreed AS is_privacy_policy_agreed',
+				'profile.isTermsAndConditionAccepted AS is_terms_and_condition_accepted',
+				'organization.organizationUuid AS org_uuid',
+				'organization.organizationId AS org_id',
+				'organization.name AS organization',
+				'preferences.preferences AS user_preferences',
+			])
+			.where('user.firebaseId = :uid', { uid })
+			.andWhere('user.isActive = :isActive', { isActive: true })
+			.getRawOne();
+		return userData;
 	}
 
 	async checkUerExist(email: string): Promise<boolean> {

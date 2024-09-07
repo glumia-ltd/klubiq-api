@@ -20,13 +20,8 @@ import {
 	ResetPasswordDto,
 	ResetPasswordLinkDto,
 	SendVerifyEmailDto,
-	// UpdateFirebaseUserDto,
-	// UpdatePasswordDto,
 	VerifyEmailDto,
 } from './dto/requests/user-login.dto';
-// import {
-// 	SignUpResponseDto,
-// } from './dto/responses/auth-response.dto';
 import { AuthType } from './types/firebase.types';
 import { UserRoles } from '@app/common';
 import { LandlordAuthService } from './services/landlord-auth.service';
@@ -51,8 +46,8 @@ export class AuthController {
 	})
 	async verifyEmail(@Body() data: VerifyEmailDto): Promise<any> {
 		try {
-			await this.landlordAuthService.verifyEmail(data.oobCode);
-			return { message: 'Email verification successful!' };
+			const response = await this.landlordAuthService.verifyEmail(data.oobCode);
+			return response;
 		} catch (err) {
 			throw err;
 		}
@@ -159,4 +154,12 @@ export class AuthController {
 	async acceptInvitation(@Body() resetPasswordDto: ResetPasswordDto) {
 		return await this.landlordAuthService.acceptInvitation(resetPasswordDto);
 	}
+
+	// @Auth(AuthType.ApiKey)
+	// @HttpCode(HttpStatus.OK)
+	// @Post('upadte-config')
+	// @ApiOkResponse()
+	// async updateFBAppConfig() {
+	// 	return await this.landlordAuthService.enableTOTPMFA();
+	// }
 }

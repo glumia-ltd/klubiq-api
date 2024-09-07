@@ -25,18 +25,26 @@ export class UserProfile {
 	profileUuid?: string;
 
 	@AutoMap()
-	@Index()
+	@Index('IDX_PROFILE_ID')
 	@Generated('increment')
 	@Column({ unique: true })
 	profileId?: number;
 
 	@AutoMap()
-	@Index()
+	@Column({ length: 100, nullable: true })
+	firstName?: string;
+
+	@AutoMap()
+	@Column({ length: 100, nullable: true })
+	lastName?: string;
+
+	@AutoMap()
+	@Index('IDX_FIREBASE_ID')
 	@Column({ unique: true })
 	firebaseId: string;
 
 	@AutoMap()
-	@Index()
+	@Index('IDX_EMAIL')
 	@Column({ unique: true })
 	email: string;
 
