@@ -46,8 +46,8 @@ export class AuthController {
 	})
 	async verifyEmail(@Body() data: VerifyEmailDto): Promise<any> {
 		try {
-			await this.landlordAuthService.verifyEmail(data.oobCode);
-			return { message: 'Email verification successful!' };
+			const response = await this.landlordAuthService.verifyEmail(data.oobCode);
+			return response;
 		} catch (err) {
 			throw err;
 		}
@@ -154,4 +154,12 @@ export class AuthController {
 	async acceptInvitation(@Body() resetPasswordDto: ResetPasswordDto) {
 		return await this.landlordAuthService.acceptInvitation(resetPasswordDto);
 	}
+
+	// @Auth(AuthType.ApiKey)
+	// @HttpCode(HttpStatus.OK)
+	// @Post('upadte-config')
+	// @ApiOkResponse()
+	// async updateFBAppConfig() {
+	// 	return await this.landlordAuthService.enableTOTPMFA();
+	// }
 }

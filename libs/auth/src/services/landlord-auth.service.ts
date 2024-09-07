@@ -256,6 +256,8 @@ export class LandlordAuthService extends AuthService {
 			/// USER PROFILE DATA
 			const userProfile = new UserProfile();
 			userProfile.email = invitedUserDto.email;
+			userProfile.firstName = invitedUserDto.firstName;
+			userProfile.lastName = invitedUserDto.lastName;
 			userProfile.firebaseId = fireUser.uid;
 			userProfile.organizationUser = user;
 			userProfile.systemRole = systemRole;
@@ -290,6 +292,7 @@ export class LandlordAuthService extends AuthService {
 				systemRole: systemRole.name,
 				organizationRole: invitation.orgRole.name,
 				organizationId: organization.organizationUuid,
+				entitlements: await this.getRolesPermission(invitation.orgRole),
 			});
 			return invitation;
 		});

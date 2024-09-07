@@ -17,23 +17,18 @@ import { UnitStatus } from '@app/common/config/config.constants';
 
 @Entity({ schema: 'poo' })
 export class Unit {
-	@AutoMap()
 	@PrimaryGeneratedColumn({ type: 'bigint' })
 	id: number;
 
-	@AutoMap()
 	@Column({ type: 'varchar', length: 50 })
 	unitNumber: string;
 
-	@AutoMap()
 	@Column('int', { nullable: true })
 	floor: number;
 
-	@AutoMap()
 	@Column('int', { nullable: true })
 	rooms: number;
 
-	@AutoMap()
 	@Column('int', { nullable: true })
 	offices: number;
 
@@ -45,19 +40,15 @@ export class Unit {
 	@Column({ type: 'int', nullable: true })
 	bathrooms: number;
 
-	@AutoMap()
 	@Column({ type: 'int', nullable: true })
 	toilets: number;
 
-	@AutoMap()
 	@Column({ type: 'json', nullable: true })
 	area: { value: number; unit: string };
 
-	@AutoMap()
 	@Column('decimal', { precision: 10, scale: 2 })
 	rentAmount?: number;
 
-	@AutoMap()
 	@Column({
 		type: 'enum',
 		enum: UnitStatus,
@@ -79,10 +70,12 @@ export class Unit {
 	@UpdateDateColumn()
 	updatedAt: Date;
 
-	@AutoMap(() => [Lease])
 	@OneToMany(() => Lease, (lease) => lease.unit)
 	leases?: Lease[];
 
 	@OneToMany(() => PropertyImage, (image) => image.unit, { cascade: true })
 	images: PropertyImage[];
+
+	@Column({ type: 'simple-array', nullable: true })
+	amenities?: string[];
 }

@@ -50,4 +50,8 @@ export class CreateUnitDto {
 	@ValidateNested({ each: true })
 	@Type(() => PropertyImageDto)
 	images?: PropertyImageDto[];
+
+	@IsArray()
+	@IsOptional()
+	amenities?: string[];
 }

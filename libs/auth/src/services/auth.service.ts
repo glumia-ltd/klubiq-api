@@ -77,6 +77,33 @@ export abstract class AuthService {
 	// 	return tAuth;
 	// }
 
+	async enableTOTPMFA() {
+		try {
+			auth
+				.getAuth()
+				.projectConfigManager()
+				.updateProjectConfig({
+					multiFactorConfig: {
+						providerConfigs: [
+							{
+								state: 'ENABLED',
+								totpProviderConfig: {
+									adjacentIntervals: 5,
+								},
+							},
+						],
+						state: 'ENABLED',
+					},
+				});
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(
+				firebaseErrorMessage ? firebaseErrorMessage : err.message,
+			);
+		}
+	}
+
 	async setCustomClaims(uuid: string, claims: any) {
 		try {
 			await this.auth.setCustomUserClaims(uuid, claims);
@@ -316,7 +343,8 @@ export abstract class AuthService {
 						}),
 					),
 			);
-			return data;
+			const jwtToken = await this.auth.createCustomToken(data.localId);
+			return jwtToken;
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
@@ -480,3 +508,19 @@ export abstract class AuthService {
 		invitation: UserInvitation,
 	): any;
 }
+
+// {
+// 	"email": "vinadeyems@gmail.com",
+// 		"password": "Test-Password1234",
+// 			"firstName": "Olumide",
+// 				"lastName": "Vincent",
+// 					"companyName": "Sonyc LLC",
+// 						"organizationCountry": {
+// 		"name": "Nigeria",
+// 			"code": "NG",
+// 				"dialCode": "+234",
+// 					"currency": "NGN",
+// 						"currencySymbol": "&#8358;"
+// 	}
+// }
+//http://localhost:5173/verify-email?mode=verifyEmail&oobCode=8CZFHLiOjcKYZ0-_bDdJK68vLf83AoQ6RZaIfJ5S6pwAAAGRsx4e0Q&apiKey=AIzaSyApubJIUACo_IMOVsQbiKfYOgVmGNjfvyg&continueUrl=http%3A%2F%2Flocalhost%3A5173%2Flogin&lang=en

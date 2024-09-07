@@ -61,6 +61,10 @@ export class UpdateUnitDto {
 	@ValidateNested({ each: true })
 	@Type(() => PropertyImageDto)
 	images?: PropertyImageDto[];
+
+	@IsArray()
+	@IsOptional()
+	amenities?: string[];
 }
 export class UpdatePropertyDto extends PartialType(CreatePropertyDto) {
 	@IsOptional()

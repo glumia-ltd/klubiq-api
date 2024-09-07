@@ -6,6 +6,7 @@ import {
 	IsBoolean,
 	ValidateNested,
 	IsJSON,
+	IsArray,
 } from 'class-validator';
 import {
 	PropertyAddressDto,
@@ -72,6 +73,11 @@ export class UnitDto {
 	@ValidateNested({ each: true })
 	@Type(() => PropertyImageResponseDto)
 	images?: PropertyImageResponseDto[];
+
+	@Expose()
+	@IsArray()
+	@IsOptional()
+	amenities?: string[];
 }
 
 export class PropertyManagerDto {
