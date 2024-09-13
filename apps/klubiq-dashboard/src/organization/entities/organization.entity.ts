@@ -15,6 +15,7 @@ import { AutoMap } from '@automapper/classes';
 import { Property } from '../../properties/entities/property.entity';
 import { Transaction } from '@app/common/database/entities/transaction.entity';
 import { OrganizationSettings } from '@app/common/database/entities/organization-settings.entity';
+import { OrganizationSubscriptions } from '@app/common/database/entities/organization-subscriptions.entity';
 
 @Entity({ schema: 'poo' })
 export class Organization {
@@ -126,4 +127,14 @@ export class Organization {
 		cascade: ['insert', 'remove'],
 	})
 	settings?: OrganizationSettings;
+
+	@OneToMany(
+		() => OrganizationSubscriptions,
+		(subscription) => subscription.organization,
+		{
+			eager: true,
+			cascade: ['insert', 'remove'],
+		},
+	)
+	subscriptions?: OrganizationSubscriptions[];
 }

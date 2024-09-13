@@ -21,6 +21,9 @@ import { UserInvitation } from './entities/user-invitation.entity';
 import { TenantUser } from './entities/tenant.entity';
 import { UserPreferences } from './entities/user-preferences.entity';
 import { OrganizationSettings } from './entities/organization-settings.entity';
+import { OrganizationSubscriptions } from './entities/organization-subscriptions.entity';
+import { SubscriptionPlan } from './entities/subscription-plan.entity';
+import { OrganizationCounter } from './entities/organization-counter.entity';
 
 /// WE HAVE 2 SCHEMA TYPES. => KDO and POO
 /// KDO = Klubiq Data Object
@@ -47,11 +50,15 @@ import { OrganizationSettings } from './entities/organization-settings.entity';
 			TenantUser,
 			UserPreferences,
 			OrganizationSettings,
+			SubscriptionPlan,
+			OrganizationSubscriptions,
+			OrganizationCounter,
 		]),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],
 			useFactory: (configService: ConfigService) => ({
 				type: 'postgres',
+				timezone: 'UTC',
 				host: configService.get<string>('DATABASE_HOST'),
 				port: configService.get<number>('DATABASE_PORT'),
 				username: configService.get<string>('DATABASE_USERNAME'),

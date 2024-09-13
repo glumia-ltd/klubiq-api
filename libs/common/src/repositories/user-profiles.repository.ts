@@ -25,7 +25,6 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 	}
 
 	async getLandLordUserInfo(uid: string) {
-		console.time('getLandLordUserInfo');
 		const userData = await this.manager
 			.createQueryBuilder(OrganizationUser, 'user')
 			.leftJoin('user.profile', 'profile')
