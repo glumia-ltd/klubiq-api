@@ -9,4 +9,5 @@ export enum ErrorMessages {
 	FORBIDDEN = 'You do not have the necessary permissions to perform this action.',
 	USER_NOT_CREATED = 'User not created',
 	NO_ORG_CREATE_PROPERTY = 'Creating a property without an Organization is not allowed',
+	PROPERTY_LIMIT_REACHED = 'Property limit reached for your current subscription',
 }

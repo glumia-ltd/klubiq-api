@@ -23,6 +23,8 @@ import { RolesService } from '../permissions/roles.service';
 import { RolesRepository } from '../repositories/roles.repository';
 import { PropertyAmenityRepository } from '../repositories/property-amenity.repository';
 import { PropertiesAmenityService } from '../services/properties-amenity.service';
+import { SubscriptionPlanService } from '../services/subscription-plan.service';
+import { OrganizationSubscriptionService } from '../services/organization-subscription.service';
 
 @Module({
 	controllers: [PublicController, PropertyMetadataController],
@@ -48,6 +50,8 @@ import { PropertiesAmenityService } from '../services/properties-amenity.service
 		RolesRepository,
 		PropertiesAmenityService,
 		PropertyAmenityRepository,
+		SubscriptionPlanService,
+		OrganizationSubscriptionService,
 		{
 			provide: CacheService,
 			useFactory: () => new CacheService(null, 60 * 60 * 24),

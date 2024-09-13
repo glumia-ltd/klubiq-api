@@ -20,7 +20,7 @@ export class PropertyImage extends AbstractEntity {
 	uploadDate?: Date;
 
 	@AutoMap()
-	@Column({ type: 'decimal', nullable: true })
+	@Column({ type: 'decimal', nullable: false, default: 0 })
 	fileSize?: number;
 
 	@AutoMap()
