@@ -95,26 +95,27 @@ export class PropertyRepository extends BaseRepository<Property> {
 			categoryId,
 			statusId,
 			address,
+			orgUuid,
 			...propertyData
 		} = createData;
 		return await this.manager.transaction(
 			async (transactionalEntityManager) => {
 				// Find the related entities using transactionalEntityManager
-				const category = await transactionalEntityManager.findOneBy(
-					PropertyCategory,
-					{ id: categoryId },
-				);
-				const purpose = await transactionalEntityManager.findOneBy(
-					PropertyPurpose,
-					{ id: purposeId },
-				);
-				const type = await transactionalEntityManager.findOneBy(PropertyType, {
-					id: typeId,
-				});
-				const status = await transactionalEntityManager.findOneBy(
-					PropertyStatus,
-					{ id: statusId },
-				);
+				// const category = await transactionalEntityManager.findOneBy(
+				// 	PropertyCategory,
+				// 	{ id: categoryId },
+				// );
+				// const purpose = await transactionalEntityManager.findOneBy(
+				// 	PropertyPurpose,
+				// 	{ id: purposeId },
+				// );
+				// const type = await transactionalEntityManager.findOneBy(PropertyType, {
+				// 	id: typeId,
+				// });
+				// const status = await transactionalEntityManager.findOneBy(
+				// 	PropertyStatus,
+				// 	{ id: statusId },
+				// );
 				const amenitiesData = await transactionalEntityManager.findBy(Amenity, {
 					id: In(amenities.map((a) => a.id)),
 				});
@@ -140,12 +141,13 @@ export class PropertyRepository extends BaseRepository<Property> {
 				// create the property
 				const property = transactionalEntityManager.create(Property, {
 					...propertyData,
-					category,
-					purpose,
-					type,
-					status,
+					category: { id: categoryId },
+					purpose: { id: purposeId },
+					type: { id: typeId },
+					status: { id: statusId },
 					amenities: amenitiesData,
 					address: savedAddress,
+					organization: { organizationUuid: orgUuid },
 					isDraft,
 				});
 				const savedProperty = await transactionalEntityManager.save(property);
@@ -155,9 +157,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 						...unit,
 						property: savedProperty,
 					});
-					if (unit.images && unit.images.length > 0) {
-						this.upsertUnitImages(newUnit, unit.images);
-					}
+					// if (unit.images && unit.images.length > 0) {
+					// 	this.upsertUnitImages(newUnit, unit.images);
+					// }
 					return transactionalEntityManager.save(newUnit);
 				});
 				const savedUnits = await Promise.all(unitsToCreate);
@@ -168,6 +170,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 						const newImage = transactionalEntityManager.create(PropertyImage, {
 							...image,
 							property: savedProperty,
+							organization: { organizationUuid: orgUuid },
 							unit: image.unitNumber
 								? find(savedUnits, { unitNumber: image.unitNumber })
 								: null,

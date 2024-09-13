@@ -16,6 +16,7 @@ import { Property } from '../../properties/entities/property.entity';
 import { Transaction } from '@app/common/database/entities/transaction.entity';
 import { OrganizationSettings } from '@app/common/database/entities/organization-settings.entity';
 import { OrganizationSubscriptions } from '@app/common/database/entities/organization-subscriptions.entity';
+import { PropertyImage } from '@app/common/database/entities/property-image.entity';
 
 @Entity({ schema: 'poo' })
 export class Organization {
@@ -137,4 +138,9 @@ export class Organization {
 		},
 	)
 	subscriptions?: OrganizationSubscriptions[];
+
+	@OneToMany(() => PropertyImage, (image) => image.organization, {
+		cascade: true,
+	})
+	propertyImages?: PropertyImage[];
 }

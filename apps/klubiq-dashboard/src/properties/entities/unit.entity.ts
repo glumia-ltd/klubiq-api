@@ -74,7 +74,7 @@ export class Unit {
 	leases?: Lease[];
 
 	@OneToMany(() => PropertyImage, (image) => image.unit, { cascade: true })
-	images: PropertyImage[];
+	images?: PropertyImage[];
 
 	@Column({ type: 'simple-array', nullable: true })
 	amenities?: string[];
