@@ -1,6 +1,4 @@
-import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from '@nestjs/common/decorators/modules';
 import { ConfigModule } from '../config/config.module';
 import { Role } from './entities/role.entity';
 import { UserProfile } from './entities/user-profile.entity';
@@ -24,6 +22,8 @@ import { OrganizationSettings } from './entities/organization-settings.entity';
 import { OrganizationSubscriptions } from './entities/organization-subscriptions.entity';
 import { SubscriptionPlan } from './entities/subscription-plan.entity';
 import { OrganizationCounter } from './entities/organization-counter.entity';
+import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
+import { ConfigService } from '@nestjs/config/dist/config.service';
 
 /// WE HAVE 2 SCHEMA TYPES. => KDO and POO
 /// KDO = Klubiq Data Object
