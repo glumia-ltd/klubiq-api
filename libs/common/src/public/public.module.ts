@@ -25,11 +25,26 @@ import { PropertyAmenityRepository } from '../repositories/property-amenity.repo
 import { PropertiesAmenityService } from '../services/properties-amenity.service';
 import { SubscriptionPlanService } from '../services/subscription-plan.service';
 import { OrganizationSubscriptionService } from '../services/organization-subscription.service';
+import {
+	OrganizationCounterRepository,
+	OrganizationSubscriptionRepository,
+	SubscriptionPlanRepository,
+} from '../repositories/subscription.repository';
+import { SubscriptionPlanController } from './controllers/subscription-plan.controller';
+import { SubscriptionController } from './controllers/subscription.controller';
 
 @Module({
-	controllers: [PublicController, PropertyMetadataController],
+	controllers: [
+		PublicController,
+		PropertyMetadataController,
+		SubscriptionPlanController,
+		SubscriptionController,
+	],
 	imports: [PermissionsModule],
 	providers: [
+		SubscriptionPlanRepository,
+		OrganizationSubscriptionRepository,
+		OrganizationCounterRepository,
 		PropertyMetaDataProfile,
 		PermissionsService,
 		PermissionsRepository,

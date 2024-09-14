@@ -46,7 +46,6 @@ export class PropertyImage extends AbstractEntity {
 		(organization) => organization.propertyImages,
 		{
 			onDelete: 'CASCADE',
-			nullable: true,
 		},
 	)
 	@JoinColumn({ name: 'organizationUuid' })

@@ -5,9 +5,9 @@ import { CacheService } from './cache.service';
 import { CacheKeys } from '../config/config.constants';
 import { SubscriptionPlan } from '../database/entities/subscription-plan.entity';
 import { CreatePlanDto } from '../dto/requests/create-plan.dto';
-import { BaseRepository } from '../repositories/base.repository';
 import { SubscriptionPlanDto } from '../dto/responses/subscription-plan.dto';
 import { plainToInstance } from 'class-transformer';
+import { SubscriptionPlanRepository } from '../repositories/subscription.repository';
 
 @Injectable()
 export class SubscriptionPlanService {
@@ -16,7 +16,7 @@ export class SubscriptionPlanService {
 	private readonly cacheService = new CacheService(this.cacheManager);
 	private readonly cacheTTL = 60000;
 	constructor(
-		private readonly subscriptionPlanRepository: BaseRepository<SubscriptionPlan>,
+		private readonly subscriptionPlanRepository: SubscriptionPlanRepository,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 	async createPlan(

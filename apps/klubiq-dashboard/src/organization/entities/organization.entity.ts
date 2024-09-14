@@ -140,7 +140,7 @@ export class Organization {
 	subscriptions?: OrganizationSubscriptions[];
 
 	@OneToMany(() => PropertyImage, (image) => image.organization, {
-		cascade: true,
+		cascade: ['remove'],
 	})
 	propertyImages?: PropertyImage[];
 }

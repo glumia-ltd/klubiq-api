@@ -1,8 +1,8 @@
 import {
 	CanActivate,
 	ExecutionContext,
-	ForbiddenException,
 	Injectable,
+	PreconditionFailedException,
 } from '@nestjs/common';
 import { OrganizationSubscriptionService } from '../services/organization-subscription.service';
 import { Reflector } from '@nestjs/core/services/reflector.service';
@@ -35,7 +35,9 @@ export class SubscriptionLimitGuard implements CanActivate {
 					organizationUuId,
 				);
 			if (!canAddProperty) {
-				throw new ForbiddenException(ErrorMessages.PROPERTY_LIMIT_REACHED);
+				throw new PreconditionFailedException(
+					ErrorMessages.PROPERTY_LIMIT_REACHED,
+				);
 			}
 			return canAddProperty;
 		}

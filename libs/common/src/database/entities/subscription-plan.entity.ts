@@ -43,10 +43,10 @@ export class SubscriptionPlan {
 
 	// Feature-specific limits and flags
 	@Column({ default: false })
-	custom_branding: boolean;
+	custom_branding?: boolean;
 
 	@Column({ default: false })
-	api_access: boolean;
+	api_access?: boolean;
 
 	@Column({ nullable: true })
 	document_storage_limit: number; // In MB

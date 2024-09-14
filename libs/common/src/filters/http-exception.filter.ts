@@ -4,10 +4,10 @@ import {
 	ExceptionFilter,
 	HttpException,
 	Logger,
-	HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ClsServiceManager } from 'nestjs-cls';
+import { StatusCodeToKlubiqErrorCode } from '../config/error.constant';
 
 @Catch(HttpException)
 export class HttpExceptionFilter<T extends HttpException>
@@ -20,8 +20,7 @@ export class HttpExceptionFilter<T extends HttpException>
 		const response = ctx.getResponse<Response>();
 		const status = exception.getStatus();
 		const exceptionResponse = exception.getResponse();
-		const errCustomCode =
-			status == HttpStatus.FAILED_DEPENDENCY ? 'K600' : 'K100';
+		const errCustomCode = StatusCodeToKlubiqErrorCode[status] ?? 'K30000';
 		const error =
 			typeof exceptionResponse === 'string'
 				? { message: exceptionResponse }
