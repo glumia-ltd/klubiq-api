@@ -18,6 +18,8 @@ import {
 } from '../repositories/subscription.repository';
 import { SubscribeToPlanDto } from '../dto/requests/plan-subscriptions.dto';
 import { SubscriptionPlan } from '../database/entities/subscription-plan.entity';
+import { OrganizationSubscriptionDto } from '../dto/responses/organization-subscription.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class OrganizationSubscriptionService {
@@ -32,11 +34,24 @@ export class OrganizationSubscriptionService {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 
+	private mapPlainToDto(
+		subscription: OrganizationSubscriptions,
+	): OrganizationSubscriptionDto {
+		return plainToInstance(
+			OrganizationSubscriptionDto,
+			{
+				start_date: DateTime.fromJSDate(subscription.start_date).toISO(),
+				end_date: DateTime.fromJSDate(subscription.end_date).toISO(),
+				...subscription,
+			},
+			{ excludeExtraneousValues: true },
+		);
+	}
 	async subscribeToPlan(
 		organizationUuId: string,
 		planId: number,
 		duration: 'monthly' | 'annual',
-	): Promise<OrganizationSubscriptions> {
+	): Promise<OrganizationSubscriptionDto> {
 		const plan = await this.subscriptionPlanService.getPlan(planId);
 		if (!plan) {
 			throw new BadRequestException(`Plan with id ${planId} not found`);
@@ -59,14 +74,19 @@ export class OrganizationSubscriptionService {
 			payment_status: 'pending',
 			price,
 		});
-		return subscription;
+		const mappedSubscription = this.mapPlainToDto(subscription);
+		await this.cacheService.setCache(
+			mappedSubscription,
+			`${this.cacheKey}-${organizationUuId}`,
+		);
+		return mappedSubscription;
 	}
 
 	async getSubscription(
 		organizationUuId: string,
-	): Promise<OrganizationSubscriptions> {
+	): Promise<OrganizationSubscriptionDto> {
 		const cachedSubscription =
-			await this.cacheService.getCacheByKey<OrganizationSubscriptions>(
+			await this.cacheService.getCacheByKey<OrganizationSubscriptionDto>(
 				`${this.cacheKey}-${organizationUuId}`,
 			);
 		if (!cachedSubscription) {
@@ -76,11 +96,12 @@ export class OrganizationSubscriptionService {
 					is_active: true,
 				},
 			);
+			const mappedSubscription = this.mapPlainToDto(subscription);
 			await this.cacheService.setCache(
-				subscription,
+				mappedSubscription,
 				`${this.cacheKey}-${organizationUuId}`,
 			);
-			return subscription;
+			return mappedSubscription;
 		}
 		return cachedSubscription;
 	}

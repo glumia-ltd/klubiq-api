@@ -49,7 +49,9 @@ export class PropertiesAmenityService {
 			const cachedPropertyAmenityList =
 				await this.cacheService.getCache<ViewDataDto>(this.cacheKey);
 			if (!cachedPropertyAmenityList) {
-				const amenities = await this.propertyAmenityRepository.findAll();
+				const amenities = await this.propertyAmenityRepository.findByCondition({
+					isPrivate: false,
+				});
 				await this.cacheService.setCache<ViewDataDto[]>(
 					amenities,
 					this.cacheKey,
@@ -66,6 +68,23 @@ export class PropertiesAmenityService {
 		}
 	}
 
+	async updateAmenityVisibility(
+		id: number,
+		visibility: 'public' | 'private',
+	): Promise<void> {
+		try {
+			await this.propertyAmenityRepository.update(
+				{ id },
+				{ isPrivate: visibility === 'private' },
+			);
+		} catch (err) {
+			this.logger.error('Error updating amenity visibility', err);
+			throw new BadRequestException('Error updating amenity visibility', {
+				cause: new Error(),
+				description: err.message,
+			});
+		}
+	}
 	async deletePropertyType(id: number): Promise<void> {
 		try {
 			await this.cacheService.updateCacheAfterdelete<ViewDataDto>(

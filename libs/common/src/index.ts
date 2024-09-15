@@ -59,3 +59,6 @@ export * from './dto/requests/create-tenant.dto';
 export * from './services/file-upload.service';
 export * from './database/entities/user-preferences.entity';
 export * from './database/entities/organization-settings.entity';
+export * from './database/entities/subscription-plan.entity';
+export * from './database/entities/organization-subscriptions.entity';
+export * from './database/entities/organization-counter.entity';
