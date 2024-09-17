@@ -43,9 +43,6 @@ export class CreatePropertyDto {
 	@Type(() => CreateAddressDto)
 	address: CreateAddressDto;
 
-	@IsOptional()
-	area?: { value?: number; unit?: string };
-
 	@IsNotEmpty()
 	@IsNumber()
 	categoryId: number;
