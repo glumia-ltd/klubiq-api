@@ -3,6 +3,7 @@ import { AutoMap } from '@automapper/classes';
 import { AbstractEntity } from './abstract-entity';
 import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
 import { Unit } from '../../../../../apps/klubiq-dashboard/src/properties/entities/unit.entity';
+import { Organization } from '../../../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
 
 @Entity({ schema: 'kdo' })
 export class PropertyImage extends AbstractEntity {
@@ -19,7 +20,7 @@ export class PropertyImage extends AbstractEntity {
 	uploadDate?: Date;
 
 	@AutoMap()
-	@Column({ type: 'decimal', nullable: true })
+	@Column({ type: 'decimal', nullable: false, default: 0 })
 	fileSize?: number;
 
 	@AutoMap()
@@ -38,5 +39,16 @@ export class PropertyImage extends AbstractEntity {
 	})
 	@JoinColumn({ name: 'unitId' })
 	@Index('IDX_PROPERTY_IMAGES_UNIT_ID')
-	unit: Unit;
+	unit?: Unit;
+
+	@ManyToOne(
+		() => Organization,
+		(organization) => organization.propertyImages,
+		{
+			onDelete: 'CASCADE',
+		},
+	)
+	@JoinColumn({ name: 'organizationUuid' })
+	@Index('IDX_ORGANIZATION_IMAGES_ORGANIZATION_ID')
+	organization: Organization;
 }

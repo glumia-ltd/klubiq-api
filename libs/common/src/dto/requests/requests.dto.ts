@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsBoolean, IsString } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
 
 export class CreateDto {
@@ -7,4 +7,7 @@ export class CreateDto {
 	@ApiProperty()
 	@IsString()
 	name: string;
+
+	@IsBoolean()
+	isPrivate: boolean;
 }

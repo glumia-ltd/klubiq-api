@@ -1,8 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserProfilesRepository } from '@app/common';
-import { OrganizationRepository } from '../../../../apps/klubiq-dashboard/src/organization/organization.repository';
+
 import { MailerSendService } from '@app/common/email/email.service';
-import { MailerSendSMTPService } from '@app/common/email/smtp-email.service';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { Mapper, createMapper } from '@automapper/core';
 import { classes } from '@automapper/classes';
@@ -11,6 +10,7 @@ import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
 import firebaseAdmin from 'firebase-admin';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { LandlordAuthService } from './landlord-auth.service';
+import { OrganizationRepository } from 'apps/klubiq-dashboard/src/organization/repositories/organization.repository';
 
 const moduleMocker = new ModuleMocker(global);
 
@@ -20,10 +20,14 @@ const mockCreateUserPayload = {
 	firstName: 'Test User',
 	lastName: 'Test User',
 	companyName: 'XXXXXXXXXXXXX',
+	organizationCountry: {
+		code: 'NGA',
+		name: 'Nigeria',
+		dialCode: '234',
+		currency: 'NGN',
+		currencySymbol: '₦',
+	}, // Adjust this according to the actual structure of OrganizationCountryDto
 };
-
-jest.mock('firebase/auth');
-jest.mock('firebase/app');
 jest.mock('firebase-admin');
 
 describe('AuthService', () => {
@@ -40,7 +44,6 @@ describe('AuthService', () => {
 				UserProfilesRepository,
 				OrganizationRepository,
 				MailerSendService,
-				MailerSendSMTPService,
 				LandlordAuthService,
 				{
 					provide: getMapperToken('MAPPER'),

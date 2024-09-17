@@ -95,12 +95,6 @@ export class PropertyManagerDto {
 	firebaseId: string;
 }
 
-export class PropertyAmenityDto {
-	@Expose()
-	@IsString()
-	name: string;
-}
-
 export class PropertyDetailsDto {
 	@Expose()
 	@IsString()
@@ -172,9 +166,8 @@ export class PropertyDetailsDto {
 	owner: PropertyManagerDto;
 
 	@Expose()
-	@ValidateNested({ each: true })
-	@Type(() => PropertyAmenityDto)
-	amenities: PropertyAmenityDto[];
+	@IsArray()
+	amenities: string[];
 
 	@Expose()
 	@IsOptional()

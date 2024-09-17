@@ -13,7 +13,7 @@ import {
 	RevenueType,
 	TransactionType,
 } from '@app/common/config/config.constants';
-import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm';
+import { Brackets, EntityManager, SelectQueryBuilder } from 'typeorm';
 import { Property } from '../entities/property.entity';
 import {
 	CreatePropertyDto,
@@ -27,7 +27,7 @@ import {
 	GetPropertyDto,
 	PropertyFilterDto,
 } from '../dto/requests/get-property.dto';
-import { filter, find, indexOf } from 'lodash';
+import { find, indexOf, map } from 'lodash';
 import { DateTime } from 'luxon';
 import { PropertyCountData } from '../dto/responses/property-count.dto';
 import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
@@ -89,44 +89,43 @@ export class PropertyRepository extends BaseRepository<Property> {
 		const {
 			units,
 			images,
-			amenities,
+			customAmenities,
 			typeId,
 			purposeId,
 			categoryId,
 			statusId,
 			address,
+			orgUuid,
 			...propertyData
 		} = createData;
 		return await this.manager.transaction(
 			async (transactionalEntityManager) => {
 				// Find the related entities using transactionalEntityManager
-				const category = await transactionalEntityManager.findOneBy(
-					PropertyCategory,
-					{ id: categoryId },
-				);
-				const purpose = await transactionalEntityManager.findOneBy(
-					PropertyPurpose,
-					{ id: purposeId },
-				);
-				const type = await transactionalEntityManager.findOneBy(PropertyType, {
-					id: typeId,
-				});
-				const status = await transactionalEntityManager.findOneBy(
-					PropertyStatus,
-					{ id: statusId },
-				);
-				const amenitiesData = await transactionalEntityManager.findBy(Amenity, {
-					id: In(amenities.map((a) => a.id)),
-				});
+				// const category = await transactionalEntityManager.findOneBy(
+				// 	PropertyCategory,
+				// 	{ id: categoryId },
+				// );
+				// const purpose = await transactionalEntityManager.findOneBy(
+				// 	PropertyPurpose,
+				// 	{ id: purposeId },
+				// );
+				// const type = await transactionalEntityManager.findOneBy(PropertyType, {
+				// 	id: typeId,
+				// });
+				// const status = await transactionalEntityManager.findOneBy(
+				// 	PropertyStatus,
+				// 	{ id: statusId },
+				// );
 
 				// create new amenities
-				const amenitiesToCreate = filter(amenities, (a) => !a.id);
-				if (amenitiesToCreate.length > 0) {
-					const createdAmenities = await transactionalEntityManager.save(
-						Amenity,
-						amenitiesToCreate,
-					);
-					amenitiesData.push(...createdAmenities);
+				if (customAmenities && customAmenities.length > 0) {
+					const newAmenities = map(customAmenities, (amenity) => {
+						return transactionalEntityManager.create(Amenity, {
+							name: amenity,
+							isPrivate: true,
+						});
+					});
+					await transactionalEntityManager.save(Amenity, newAmenities);
 				}
 
 				// create the property address
@@ -140,12 +139,12 @@ export class PropertyRepository extends BaseRepository<Property> {
 				// create the property
 				const property = transactionalEntityManager.create(Property, {
 					...propertyData,
-					category,
-					purpose,
-					type,
-					status,
-					amenities: amenitiesData,
+					category: { id: categoryId },
+					purpose: { id: purposeId },
+					type: { id: typeId },
+					status: { id: statusId },
 					address: savedAddress,
+					organization: { organizationUuid: orgUuid },
 					isDraft,
 				});
 				const savedProperty = await transactionalEntityManager.save(property);
@@ -155,9 +154,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 						...unit,
 						property: savedProperty,
 					});
-					if (unit.images && unit.images.length > 0) {
-						this.upsertUnitImages(newUnit, unit.images);
-					}
+					// if (unit.images && unit.images.length > 0) {
+					// 	this.upsertUnitImages(newUnit, unit.images);
+					// }
 					return transactionalEntityManager.save(newUnit);
 				});
 				const savedUnits = await Promise.all(unitsToCreate);
@@ -168,6 +167,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 						const newImage = transactionalEntityManager.create(PropertyImage, {
 							...image,
 							property: savedProperty,
+							organization: { organizationUuid: orgUuid },
 							unit: image.unitNumber
 								? find(savedUnits, { unitNumber: image.unitNumber })
 								: null,
@@ -283,7 +283,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 			.leftJoinAndSelect('property.category', 'pc')
 			.leftJoinAndSelect('property.images', 'pi')
 			.leftJoinAndSelect('property.address', 'pa')
-			.leftJoinAndSelect('property.amenities', 'pf')
 			.leftJoinAndSelect('property.manager', 'pm')
 			.leftJoinAndSelect('property.owner', 'po')
 			.leftJoinAndSelect('property.units', 'units')
@@ -441,12 +440,12 @@ export class PropertyRepository extends BaseRepository<Property> {
 		const {
 			units,
 			images,
-			amenities,
 			typeId,
 			categoryId,
 			purposeId,
 			statusId,
 			address,
+			customAmenities,
 			...propertyData
 		} = data;
 		return await this.manager.transaction(
@@ -499,21 +498,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 						address,
 					);
 				}
-				if (amenities) {
-					const amenityList = await transactionalEntityManager.findBy(Amenity, {
-						id: In(amenities.map((a) => a.id)),
-					});
-					property.amenities = amenityList;
-				}
-				// create new amenities
-				const amenitiesToCreate = filter(amenities, (a) => !a.id);
-				if (amenitiesToCreate.length > 0) {
-					const createdAmenities = await transactionalEntityManager.save(
-						Amenity,
-						amenitiesToCreate,
-					);
-					property.amenities.push(...createdAmenities);
-				}
+
 				await transactionalEntityManager.update(
 					Property,
 					propertyUuid,
@@ -527,6 +512,16 @@ export class PropertyRepository extends BaseRepository<Property> {
 				if (images && images.length > 0) {
 					await this.updatePropertyImages(property, images);
 				}
+				// create new amenities
+				if (customAmenities && customAmenities.length > 0) {
+					const newAmenities = map(customAmenities, (amenity) => {
+						return transactionalEntityManager.create(Amenity, {
+							name: amenity,
+							isPrivate: true,
+						});
+					});
+					await transactionalEntityManager.save(Amenity, newAmenities);
+				}
 				return transactionalEntityManager.findOne(Property, {
 					where: { uuid: propertyUuid },
 					relations: [
@@ -536,7 +531,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 						'status',
 						'address',
 						'units',
-						'amenities',
 						'images',
 					],
 				});

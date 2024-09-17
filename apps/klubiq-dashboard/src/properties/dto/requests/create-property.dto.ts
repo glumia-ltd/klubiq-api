@@ -1,4 +1,3 @@
-import { AutoMap } from '@automapper/classes';
 import {
 	IsOptional,
 	IsArray,
@@ -12,16 +11,6 @@ import {
 import { CreateAddressDto } from './create-address.dto';
 import { CreateUnitDto } from './create-unit.dto';
 import { Type } from 'class-transformer';
-
-export class AmenityDto {
-	@IsOptional()
-	@IsNumber()
-	id?: number;
-
-	@IsOptional()
-	@IsString()
-	name?: string;
-}
 
 export class PropertyImageDto {
 	@IsBoolean()
@@ -48,15 +37,11 @@ export class PropertyImageDto {
 export class CreatePropertyDto {
 	@IsOptional()
 	@IsArray()
-	@AutoMap(() => [AmenityDto])
-	amenities?: AmenityDto[];
+	customAmenities?: string[];
 
 	@ValidateNested()
 	@Type(() => CreateAddressDto)
 	address: CreateAddressDto;
-
-	@IsOptional()
-	area?: { value?: number; unit?: string };
 
 	@IsNotEmpty()
 	@IsNumber()

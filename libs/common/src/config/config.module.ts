@@ -5,7 +5,6 @@ import {
 } from '@nestjs/config';
 import * as Joi from 'joi';
 import { MailerSendService } from '../email/email.service';
-import { MailerSendSMTPService } from '../email/smtp-email.service';
 import { AutomapperModule } from '@automapper/nestjs';
 import { classes } from '@automapper/classes';
 import { ClsModule } from 'nestjs-cls';
@@ -81,7 +80,6 @@ import { createMapper } from '@automapper/core';
 	providers: [
 		ConfigService,
 		MailerSendService,
-		MailerSendSMTPService,
 		{
 			provide: 'MAPPER',
 			useFactory: () => {
@@ -90,6 +88,6 @@ import { createMapper } from '@automapper/core';
 			},
 		},
 	],
-	exports: [ConfigService, MailerSendService, MailerSendSMTPService],
+	exports: [ConfigService, MailerSendService],
 })
 export class ConfigModule {}

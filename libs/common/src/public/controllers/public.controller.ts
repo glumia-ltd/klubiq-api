@@ -112,7 +112,7 @@ export class PublicController {
 
 	//#region FEATURES
 	@Get('features')
-	@ApiOkResponse({ description: 'Get all features' })
+	@ApiOkResponse({ description: 'Get all features', type: [ViewFeatureDto] })
 	async getAppFeatures(): Promise<ViewFeatureDto[]> {
 		try {
 			const features = await this.featuresService.getAppFeatures();
@@ -123,7 +123,7 @@ export class PublicController {
 	}
 
 	@Get('features/:id')
-	@ApiOkResponse({ description: 'Get feature by id' })
+	@ApiOkResponse({ description: 'Get feature by id', type: ViewFeatureDto })
 	async getFeature(@Param('id') id: number): Promise<ViewFeatureDto> {
 		try {
 			const featureData = await this.featuresService.getFeatureById(id);
@@ -135,7 +135,10 @@ export class PublicController {
 
 	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Post('features')
-	@ApiCreatedResponse({ description: 'Creates a new feature for the app' })
+	@ApiCreatedResponse({
+		description: 'Creates a new feature for the app',
+		type: ViewFeatureDto,
+	})
 	async createFeature(
 		@Body() createFeatureDto: CreateFeatureDto,
 	): Promise<ViewFeatureDto> {

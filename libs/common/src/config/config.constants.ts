@@ -72,6 +72,8 @@ export enum CacheKeys {
 	REVENUE_METRICS = 'revenue-metrics',
 	USER_PREFERENCES = 'user-preferences',
 	ORGANIZATION_SETTINGS = 'organization-settings',
+	SUBSCRIPTION_PLANS = 'subscription-plans',
+	ORGANIZATION_SUBSCRIPTIONS = 'organization-subscriptions',
 }
 
 export enum TransactionType {

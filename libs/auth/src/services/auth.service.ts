@@ -508,19 +508,3 @@ export abstract class AuthService {
 		invitation: UserInvitation,
 	): any;
 }
-
-// {
-// 	"email": "vinadeyems@gmail.com",
-// 		"password": "Test-Password1234",
-// 			"firstName": "Olumide",
-// 				"lastName": "Vincent",
-// 					"companyName": "Sonyc LLC",
-// 						"organizationCountry": {
-// 		"name": "Nigeria",
-// 			"code": "NG",
-// 				"dialCode": "+234",
-// 					"currency": "NGN",
-// 						"currencySymbol": "&#8358;"
-// 	}
-// }
-//http://localhost:5173/verify-email?mode=verifyEmail&oobCode=8CZFHLiOjcKYZ0-_bDdJK68vLf83AoQ6RZaIfJ5S6pwAAAGRsx4e0Q&apiKey=AIzaSyApubJIUACo_IMOVsQbiKfYOgVmGNjfvyg&continueUrl=http%3A%2F%2Flocalhost%3A5173%2Flogin&lang=en

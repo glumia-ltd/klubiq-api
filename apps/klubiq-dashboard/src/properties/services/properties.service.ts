@@ -243,12 +243,7 @@ export class PropertiesService implements IPropertyMetrics {
 				toilets: !property.isMultiUnit ? units?.[0]?.toilets : null,
 				units: units,
 				images: images,
-				area: !property.area
-					? !property.isMultiUnit
-						? units?.[0]?.area
-						: null
-					: property.area,
-				//leases: !property.isMultiUnit ? property.leases : undefined,
+				area: !property.isMultiUnit ? units?.[0]?.area : null,
 			},
 			{ excludeExtraneousValues: true },
 		);

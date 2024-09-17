@@ -46,7 +46,7 @@ export class Unit {
 	@Column({ type: 'json', nullable: true })
 	area: { value: number; unit: string };
 
-	@Column('decimal', { precision: 10, scale: 2 })
+	@Column({ type: 'decimal', precision: 10, scale: 2 })
 	rentAmount?: number;
 
 	@Column({
@@ -74,7 +74,7 @@ export class Unit {
 	leases?: Lease[];
 
 	@OneToMany(() => PropertyImage, (image) => image.unit, { cascade: true })
-	images: PropertyImage[];
+	images?: PropertyImage[];
 
 	@Column({ type: 'simple-array', nullable: true })
 	amenities?: string[];
