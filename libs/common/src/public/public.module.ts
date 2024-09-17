@@ -72,5 +72,6 @@ import { SubscriptionController } from './controllers/subscription.controller';
 			useFactory: () => new CacheService(null, 60 * 60 * 24),
 		},
 	],
+	exports: [OrganizationSubscriptionService, SubscriptionPlanService],
 })
 export class PublicModule {}

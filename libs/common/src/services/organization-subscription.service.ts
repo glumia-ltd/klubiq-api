@@ -64,6 +64,7 @@ export class OrganizationSubscriptionService {
 			duration,
 			is_active: true,
 			auto_renew: true,
+			is_free_trial: false,
 			start_date: DateTime.utc().toJSDate(),
 			end_date: DateTime.utc()
 				.plus({

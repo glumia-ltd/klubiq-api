@@ -19,10 +19,10 @@ export class SubscriptionPlan {
 	@Index('subscription_plan_name', { unique: true })
 	name: string;
 
-	@Column('decimal', { precision: 10, scale: 2 })
+	@Column({ type: 'decimal', precision: 10, scale: 2 })
 	monthly_price: number;
 
-	@Column('decimal', { precision: 10, scale: 2 })
+	@Column({ type: 'decimal', precision: 10, scale: 2 })
 	annual_price: number;
 
 	@Column()

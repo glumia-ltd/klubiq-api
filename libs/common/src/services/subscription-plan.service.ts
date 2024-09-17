@@ -11,10 +11,13 @@ import { SubscriptionPlanRepository } from '../repositories/subscription.reposit
 
 @Injectable()
 export class SubscriptionPlanService {
+	private readonly cacheTTL = 60000;
 	private readonly logger = new Logger(SubscriptionPlanService.name);
 	private readonly cacheKey = CacheKeys.SUBSCRIPTION_PLANS;
-	private readonly cacheService = new CacheService(this.cacheManager);
-	private readonly cacheTTL = 60000;
+	private readonly cacheService = new CacheService(
+		this.cacheManager,
+		this.cacheTTL,
+	);
 	constructor(
 		private readonly subscriptionPlanRepository: SubscriptionPlanRepository,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -68,18 +71,44 @@ export class SubscriptionPlanService {
 		return cachedPlan;
 	}
 
+	async getPlanByName(name: string): Promise<SubscriptionPlanDto> {
+		const cachedPlan =
+			await this.cacheService.getCacheByIdentifier<SubscriptionPlanDto>(
+				this.cacheKey,
+				'name',
+				name,
+			);
+		if (!cachedPlan) {
+			const plan = await this.subscriptionPlanRepository.findOneByCondition({
+				name,
+			});
+			const mappedPlan = await this.mapPlanToPlanDto(plan);
+			await this.cacheService.updateCacheAfterUpsert<SubscriptionPlanDto>(
+				this.cacheKey,
+				'name',
+				name,
+				mappedPlan,
+			);
+			return mappedPlan;
+		}
+		return cachedPlan;
+	}
+
 	private async mapPlansToPlanListDto(
 		plans: SubscriptionPlan[],
 	): Promise<SubscriptionPlanDto[]> {
 		return plainToInstance(
 			SubscriptionPlanDto,
 			plans.map((plan) => {
-				const totalMonthlyCost = plan.monthly_price * 12;
+				const totalMonthlyCost = Number(plan.monthly_price) * 12;
 				const percentageDifference =
-					((totalMonthlyCost - plan.annual_price) / totalMonthlyCost) * 100;
+					((totalMonthlyCost - Number(plan.annual_price)) / totalMonthlyCost) *
+					100;
 				return {
 					...plan,
-					percentageDifference: percentageDifference.toFixed(2),
+					annual_price: Number(plan.annual_price),
+					monthly_price: Number(plan.monthly_price),
+					percentage_savings_on_annual_price: percentageDifference.toFixed(0),
 				};
 			}),
 			{ excludeExtraneousValues: true },
@@ -89,14 +118,16 @@ export class SubscriptionPlanService {
 	private async mapPlanToPlanDto(
 		plan: SubscriptionPlan,
 	): Promise<SubscriptionPlanDto> {
-		const totalMonthlyCost = plan.monthly_price * 12;
+		const totalMonthlyCost = Number(plan.monthly_price) * 12;
 		const percentageDifference =
-			((totalMonthlyCost - plan.annual_price) / totalMonthlyCost) * 100;
+			((totalMonthlyCost - Number(plan.annual_price)) / totalMonthlyCost) * 100;
 		return plainToInstance(
 			SubscriptionPlanDto,
 			{
 				...plan,
-				percentageDifference: percentageDifference.toFixed(2),
+				annual_price: Number(plan.annual_price),
+				monthly_price: Number(plan.monthly_price),
+				percentage_savings_on_annual_price: percentageDifference.toFixed(0),
 			},
 			{ excludeExtraneousValues: true },
 		);

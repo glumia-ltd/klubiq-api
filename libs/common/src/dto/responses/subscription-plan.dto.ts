@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsString, IsDecimal, IsInt, IsBoolean } from 'class-validator';
+import { IsString, IsInt, IsBoolean } from 'class-validator';
 
 export class SubscriptionPlanDto {
 	@Expose()
@@ -10,16 +10,13 @@ export class SubscriptionPlanDto {
 	name: string;
 
 	@Expose()
-	@IsDecimal()
 	monthly_price: number;
 
 	@Expose()
-	@IsDecimal()
 	annual_price: number;
 
 	@Expose()
-	@IsDecimal()
-	percentage_savings_on_annual_price: number;
+	percentage_savings_on_annual_price: string;
 
 	@Expose()
 	@IsString()

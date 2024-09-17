@@ -9,6 +9,11 @@ import { PropertyCategoryRepository } from './properties-category.repository';
 import { PropertyStatusRepository } from './properties-status.repository';
 import { PropertyTypeRepository } from './properties-type.repository';
 import { PropertyPurposeRepository } from './properties-purpose.repository';
+import {
+	OrganizationCounterRepository,
+	OrganizationSubscriptionRepository,
+	SubscriptionPlanRepository,
+} from './subscription.repository';
 
 @Module({
 	providers: [
@@ -57,6 +62,22 @@ import { PropertyPurposeRepository } from './properties-purpose.repository';
 			useFactory: (em: EntityManager) => new PropertyPurposeRepository(em),
 			inject: [EntityManager],
 		},
+		{
+			provide: OrganizationSubscriptionRepository,
+			useFactory: (em: EntityManager) =>
+				new OrganizationSubscriptionRepository(em),
+			inject: [EntityManager],
+		},
+		{
+			provide: OrganizationCounterRepository,
+			useFactory: (em: EntityManager) => new OrganizationCounterRepository(em),
+			inject: [EntityManager],
+		},
+		{
+			provide: SubscriptionPlanRepository,
+			useFactory: (em: EntityManager) => new SubscriptionPlanRepository(em),
+			inject: [EntityManager],
+		},
 	],
 	exports: [
 		UserProfilesRepository,
@@ -68,6 +89,9 @@ import { PropertyPurposeRepository } from './properties-purpose.repository';
 		PropertyStatusRepository,
 		PropertyTypeRepository,
 		PropertyPurposeRepository,
+		OrganizationSubscriptionRepository,
+		OrganizationCounterRepository,
+		SubscriptionPlanRepository,
 	],
 })
 export class RepositoriesModule {}

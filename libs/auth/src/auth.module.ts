@@ -15,6 +15,8 @@ import { LandlordAuthService } from './services/landlord-auth.service';
 
 import _firebaseConfig from '../../../config.json';
 import { AdminAuthService } from './services/admin-auth.service';
+import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
+import { SubscriptionPlanService } from '@app/common/services/subscription-plan.service';
 const apps = admin.apps;
 
 interface FirebaseConfig {
@@ -70,6 +72,8 @@ const firebaseAdminProvider = {
 		},
 		LandlordAuthService,
 		AdminAuthService,
+		SubscriptionPlanService,
+		OrganizationSubscriptionService,
 	],
 	exports: [LandlordAuthService],
 	imports: [DatabaseModule, ConfigModule, RepositoriesModule, HttpModule],

@@ -6,6 +6,7 @@ import {
 	CreateDateColumn,
 	Index,
 	Entity,
+	JoinColumn,
 } from 'typeorm';
 import { SubscriptionPlan } from './subscription-plan.entity';
 
@@ -16,16 +17,16 @@ export class OrganizationSubscriptions {
 
 	@Column()
 	@Index('idx_organization_uuid')
-	organizationUuid: string;
+	organizationUuid?: string;
 
 	@Column()
-	subscription_plan_id: number;
+	subscription_plan_id?: number;
 
 	@CreateDateColumn({ type: 'timestamp without time zone' })
-	start_date: Date;
+	start_date?: Date;
 
 	@Column({ type: 'timestamp without time zone' })
-	end_date: Date;
+	end_date?: Date;
 
 	@Column()
 	duration: string;
@@ -39,15 +40,20 @@ export class OrganizationSubscriptions {
 	@Column()
 	is_active: boolean;
 
+	@Column()
+	is_free_trial: boolean;
+
 	@Column({ default: 'pending' })
 	payment_status: string;
 
 	@ManyToOne(() => Organization, (organization) => organization.subscriptions)
+	@JoinColumn({ name: 'organizationUuid' })
 	organization?: Organization;
 
 	@ManyToOne(
 		() => SubscriptionPlan,
 		(subscriptionPlan) => subscriptionPlan.organizations,
 	)
+	@JoinColumn({ name: 'subscription_plan_id' })
 	subscription_plan?: SubscriptionPlan;
 }

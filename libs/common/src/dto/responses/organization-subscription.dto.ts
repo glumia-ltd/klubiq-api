@@ -1,7 +1,6 @@
 import { Expose, Type } from 'class-transformer';
 import {
 	IsString,
-	IsDecimal,
 	IsBoolean,
 	IsNumber,
 	IsUUID,
@@ -35,13 +34,16 @@ export class OrganizationSubscriptionDto {
 	@Expose()
 	duration: string;
 
-	@IsDecimal()
+	@IsNumber({ maxDecimalPlaces: 2 })
 	@Expose()
 	price: number;
 
 	@IsBoolean()
 	@Expose()
 	auto_renew: boolean;
+
+	@Expose()
+	is_free_trial: boolean;
 
 	@IsBoolean()
 	@Expose()

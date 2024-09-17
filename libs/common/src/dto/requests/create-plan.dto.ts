@@ -1,22 +1,26 @@
 import {
 	IsString,
-	IsDecimal,
 	IsOptional,
 	IsInt,
 	IsBoolean,
+	IsNumber,
+	IsNotEmpty,
 } from 'class-validator';
 
 export class CreatePlanDto {
 	@IsString()
 	name: string;
 
-	@IsDecimal()
+	@IsNumber()
+	@IsNotEmpty()
 	monthly_price: number;
 
-	@IsDecimal()
+	@IsNumber()
+	@IsNotEmpty()
 	annual_price: number;
 
 	@IsString()
+	@IsNotEmpty()
 	currency: string;
 
 	@IsOptional()

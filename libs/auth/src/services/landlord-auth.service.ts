@@ -48,6 +48,8 @@ import { AuthService } from './auth.service';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
 import { DateTime } from 'luxon';
 import { OrganizationSettings } from '@app/common/database/entities/organization-settings.entity';
+import { OrganizationSubscriptions, SubscriptionPlan } from '@app/common';
+import { SubscriptionPlanDto } from '@app/common/dto/responses/subscription-plan.dto';
 
 @Injectable()
 export class LandlordAuthService extends AuthService {
@@ -85,6 +87,7 @@ export class LandlordAuthService extends AuthService {
 			this.configService.get<string>('CONTINUE_URL_PATH');
 	}
 
+	// STEP 1
 	async createOrgOwner(
 		createUserDto: OrgUserSignUpDto,
 	): Promise<SignUpResponseDto> {
@@ -141,6 +144,14 @@ export class LandlordAuthService extends AuthService {
 		});
 	}
 
+	private async getBasicSubscription(
+		entityManager: EntityManager,
+	): Promise<SubscriptionPlan> {
+		return await entityManager.findOne(SubscriptionPlan, {
+			where: { name: 'Basic' },
+		});
+	}
+
 	private async getOrgRole(
 		entityManager: EntityManager,
 		roleName: UserRoles,
@@ -150,6 +161,7 @@ export class LandlordAuthService extends AuthService {
 		});
 	}
 
+	// Finds or creates organization
 	private async findOrCreateOrganization(
 		name: string,
 		entityManager: EntityManager,
@@ -172,7 +184,10 @@ export class LandlordAuthService extends AuthService {
 					newOrganization.settings = new OrganizationSettings();
 					newOrganization.settings.settings = orgSettings;
 				}
-
+				const basicSubscription = await this.getBasicPlanInfo(entityManager);
+				if (basicSubscription) {
+					newOrganization.subscriptions = [basicSubscription];
+				}
 				return entityManager.save(newOrganization);
 			} else if (createEventType === CreateUserEventTypes.INVITE_ORG_USER) {
 				const existingOrganization = await entityManager.findOne(Organization, {
@@ -192,6 +207,7 @@ export class LandlordAuthService extends AuthService {
 	}
 
 	//CREATES OR INVITE USER TO AN ORGANIZATION
+	// STEP 2
 	private async createUserWithOrganization(
 		createEventType: CreateUserEventTypes,
 		fireUser: any,
@@ -200,20 +216,43 @@ export class LandlordAuthService extends AuthService {
 	): Promise<any> {
 		switch (createEventType) {
 			case CreateUserEventTypes.CREATE_ORG_USER:
-				this.logger.log('Creating new organization owner');
-				return await this.createOrganizationOwner(
+				const userProfile = await this.createOrganizationOwner(
 					fireUser,
 					createUserDto,
 					createEventType,
 				);
+				return userProfile;
 			case CreateUserEventTypes.INVITE_ORG_USER:
-				this.logger.log('Inviting new organization user');
 				return await this.inviteOrganizationUser(
 					fireUser,
 					invitedUserDto,
 					createEventType,
 				);
 		}
+	}
+	private async getBasicPlanInfo(
+		entityManager: EntityManager,
+	): Promise<OrganizationSubscriptions> {
+		const basicPlan =
+			(await this.cacheService.getCacheByIdentifier<SubscriptionPlanDto>(
+				CacheKeys.SUBSCRIPTION_PLANS,
+				'name',
+				'Basic',
+			)) ?? (await this.getBasicSubscription(entityManager));
+		if (basicPlan) {
+			const subscriptionInfo = new OrganizationSubscriptions();
+			subscriptionInfo.subscription_plan_id = basicPlan.id;
+			subscriptionInfo.duration = 'monthly';
+			subscriptionInfo.is_active = true;
+			subscriptionInfo.auto_renew = true;
+			subscriptionInfo.is_free_trial = true;
+			subscriptionInfo.start_date = DateTime.utc().toJSDate();
+			subscriptionInfo.end_date = DateTime.utc().plus({ months: 1 }).toJSDate();
+			subscriptionInfo.payment_status = 'pending';
+			subscriptionInfo.price = basicPlan.monthly_price;
+			return subscriptionInfo;
+		}
+		return null;
 	}
 	private async getRolesPermission(
 		orgRole: OrganizationRole,
@@ -297,6 +336,9 @@ export class LandlordAuthService extends AuthService {
 			return invitation;
 		});
 	}
+
+	// CREATES THE ORGANIZATION OWNER
+	// STEP 3
 	private async createOrganizationOwner(
 		fireUser: any,
 		createUserDto: OrgUserSignUpDto,
@@ -330,6 +372,7 @@ export class LandlordAuthService extends AuthService {
 						UserRoles.ORG_OWNER,
 					);
 
+			/// CREATE ORGANIZATION USER
 			const user = new OrganizationUser();
 			user.firstName = createUserDto.firstName;
 			user.lastName = createUserDto.lastName;
@@ -337,6 +380,7 @@ export class LandlordAuthService extends AuthService {
 			user.organization = organization;
 			user.orgRole = organizationRole;
 
+			///CREATE NEW USER PROFILE
 			const userProfile = new UserProfile();
 			userProfile.email = createUserDto.email;
 			userProfile.firebaseId = fireUser.uid;
@@ -347,6 +391,7 @@ export class LandlordAuthService extends AuthService {
 
 			await transactionalEntityManager.save(user);
 			await transactionalEntityManager.save(userProfile);
+			// await this.subscribeOrgToBasicPlan(organization, transactionalEntityManager);
 			await this.setCustomClaims(userProfile.firebaseId, {
 				systemRole: systemRole.name,
 				organizationRole: organizationRole.name,
