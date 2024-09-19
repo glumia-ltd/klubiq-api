@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, repl } from '@nestjs/core';
 import { WinstonModule } from 'nest-winston';
 import helmet from 'helmet';
 import {
@@ -16,6 +16,7 @@ import { ConfigService } from '@nestjs/config';
 declare const module: any;
 
 async function bootstrap() {
+	await repl(KlubiqDashboardModule);
 	const customLogger = new CustomLogging(new ConfigService()); // Create an instance of ConfigService
 
 	const app = await NestFactory.create(KlubiqDashboardModule, {
@@ -32,7 +33,7 @@ async function bootstrap() {
 		.setTitle('Klubiq PMS')
 		.setDescription('Klubiq PMS API')
 		.setVersion('1.0')
-		.addTag('Klubiq')
+		//.addTag('Klubiq')
 		.setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
 		.setLicense('MIT', 'https://mit-license.org/')
 		.addBearerAuth()

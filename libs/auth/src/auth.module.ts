@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Module } from '@nestjs/common';
-import { DatabaseModule, ConfigModule } from '@app/common';
+import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
-import { RepositoriesModule } from '@app/common';
 import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/repositories/organization.repository';
 import { OrgUserProfile } from './profiles/org-user-profile';
 import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
@@ -15,9 +14,8 @@ import { LandlordAuthService } from './services/landlord-auth.service';
 
 import _firebaseConfig from '../../../config.json';
 import { AdminAuthService } from './services/admin-auth.service';
-import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
-import { SubscriptionPlanService } from '@app/common/services/subscription-plan.service';
-const apps = admin.apps;
+import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
+import { MailerSendService } from '@app/common/email/email.service';
 
 interface FirebaseConfig {
 	type: string;
@@ -49,34 +47,39 @@ const firebase_params = {
 const firebaseAdminProvider = {
 	provide: 'FIREBASE_ADMIN',
 	useFactory: () => {
+		const apps = admin.apps;
 		if (apps.length > 0) {
 			return apps[0];
+		} else {
+			return admin.initializeApp(
+				{
+					credential: admin.credential.cert(firebase_params),
+				},
+				'klubiq',
+			);
 		}
-		return admin.initializeApp({
-			credential: admin.credential.cert(firebase_params),
-		});
 	},
 };
 
 @Module({
+	imports: [HttpModule, SubscriptionModule],
 	providers: [
+		AdminAuthService,
 		ConfigService,
 		firebaseAdminProvider,
-		OrgUserProfile,
 		FirebaseErrorMessageHelper,
 		JwtService,
+		LandlordAuthService,
+		MailerSendService,
+		OrgUserProfile,
 		OrganizationRepository,
 		{
 			provide: CacheService,
 			useFactory: () => new CacheService(null, 60000),
 		},
-		LandlordAuthService,
-		AdminAuthService,
-		SubscriptionPlanService,
-		OrganizationSubscriptionService,
+		UserProfilesRepository,
 	],
 	exports: [LandlordAuthService],
-	imports: [DatabaseModule, ConfigModule, RepositoriesModule, HttpModule],
 	controllers: [AuthController],
 })
 export class AuthModule {}

@@ -39,7 +39,6 @@ export class AdminAuthService extends AuthService {
 	private readonly emailAuthContinueUrl: string;
 	private readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	protected readonly logger = new Logger(AdminAuthService.name);
-	//private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		@Inject('FIREBASE_ADMIN') firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') mapper: Mapper,

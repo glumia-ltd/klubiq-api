@@ -10,6 +10,9 @@ export enum ErrorMessages {
 	USER_NOT_CREATED = 'User not created',
 	NO_ORG_CREATE_PROPERTY = 'Creating a property without an Organization is not allowed',
 	PROPERTY_LIMIT_REACHED = 'Property limit reached for your current subscription. Upgrade your subscription to add more properties.',
+	UNIT_LIMIT_REACHED = 'Unit limit reached for your current subscription. Upgrade your subscription to add more units.',
+	USER_LIMIT_REACHED = 'User limit reached for your current subscription. Upgrade your subscription to add more users.',
+	STORAGE_LIMIT_REACHED = 'Storage limit reached for your current subscription. Upgrade your subscription to add more storage.',
 }
 
 export const StatusCodeToKlubiqErrorCode: Record<number, string> = {

@@ -3,9 +3,10 @@ import {
 	Logger,
 	NotFoundException,
 	UnauthorizedException,
+	Inject,
+	BadRequestException,
 } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
-import { Inject } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import * as auth from 'firebase-admin/auth';
 import { FirebaseException } from '../exception/firebase.exception';
@@ -23,7 +24,6 @@ import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { UserRoles } from '@app/common/config/config.constants';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
 import { ErrorMessages } from '@app/common/config/error.constant';
-
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { FirebaseErrorMessageHelper } from '../helpers/firebase-error-helper';
@@ -40,6 +40,8 @@ import { map } from 'lodash';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CacheService } from '@app/common/services/cache.service';
+import ShortUniqueId from 'short-unique-id';
+import { DateTime } from 'luxon';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
@@ -47,6 +49,7 @@ export abstract class AuthService {
 	private readonly cacheKeyPrefix = 'auth';
 	private readonly cacheTTL = 500;
 	protected readonly cacheService = new CacheService(this.cacheManager);
+	protected readonly suid = new ShortUniqueId();
 	constructor(
 		@Inject('FIREBASE_ADMIN') protected firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
@@ -231,9 +234,24 @@ export abstract class AuthService {
 		}
 	}
 
+	private async validateInvitation(invitationToken: string) {
+		const invitationTimeStamp = DateTime.fromJSDate(
+			this.suid.parseStamp(invitationToken),
+		);
+		const end = DateTime.utc();
+		return (
+			invitationTimeStamp && end.diff(invitationTimeStamp, 'hours').hours < 72
+		);
+	}
 	// ACCEPTS INVITATION
-	async acceptInvitation(resetPassword: ResetPasswordDto) {
+	async acceptInvitation(
+		resetPassword: ResetPasswordDto,
+		invitationToken: string,
+	) {
 		try {
+			if (!(await this.validateInvitation(invitationToken))) {
+				throw new BadRequestException('Invitation link has expired');
+			}
 			const body = {
 				oobCode: resetPassword.oobCode,
 				password: resetPassword.password,

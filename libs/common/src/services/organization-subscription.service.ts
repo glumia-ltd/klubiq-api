@@ -26,7 +26,6 @@ export class OrganizationSubscriptionService {
 	private readonly logger = new Logger(OrganizationSubscriptionService.name);
 	private readonly cacheKey = CacheKeys.ORGANIZATION_SUBSCRIPTIONS;
 	private readonly cacheService = new CacheService(this.cacheManager);
-	private readonly cacheTTL = 60000;
 	constructor(
 		private readonly subscriptionRepository: OrganizationSubscriptionRepository,
 		private readonly organizationCounterRepository: OrganizationCounterRepository,

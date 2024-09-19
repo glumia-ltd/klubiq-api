@@ -4,6 +4,7 @@ import {
 	Injectable,
 	Logger,
 	NotFoundException,
+	PreconditionFailedException,
 } from '@nestjs/common';
 import { map, replace, split } from 'lodash';
 import { ClsService } from 'nestjs-cls';
@@ -48,8 +49,11 @@ import { AuthService } from './auth.service';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
 import { DateTime } from 'luxon';
 import { OrganizationSettings } from '@app/common/database/entities/organization-settings.entity';
-import { OrganizationSubscriptions, SubscriptionPlan } from '@app/common';
+import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
+import { OrganizationSubscriptions } from '@app/common/database/entities/organization-subscriptions.entity';
+import { SubscriptionPlan } from '@app/common/database/entities/subscription-plan.entity';
 import { SubscriptionPlanDto } from '@app/common/dto/responses/subscription-plan.dto';
+import ShortUniqueId from 'short-unique-id';
 
 @Injectable()
 export class LandlordAuthService extends AuthService {
@@ -57,7 +61,7 @@ export class LandlordAuthService extends AuthService {
 	private readonly emailAuthContinueUrl: string;
 	private readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	protected readonly logger = new Logger(LandlordAuthService.name);
-	//private readonly cacheService = new CacheService(this.cacheManager);
+	protected readonly suid = new ShortUniqueId();
 	constructor(
 		@Inject(CACHE_MANAGER) protected cacheManager: Cache,
 		@Inject('FIREBASE_ADMIN') firebaseAdminApp: admin.app.App,
@@ -69,6 +73,7 @@ export class LandlordAuthService extends AuthService {
 		protected readonly configService: ConfigService,
 		httpService: HttpService,
 		protected readonly cls: ClsService<SharedClsStore>,
+		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
 	) {
 		super(
 			firebaseAdminApp,
@@ -102,12 +107,12 @@ export class LandlordAuthService extends AuthService {
 
 			if (fireUser) {
 				fbid = fireUser.uid;
-				const userProfile = await this.createUserWithOrganization(
+				const userProfile = (await this.createUserWithOrganization(
 					CreateUserEventTypes.CREATE_ORG_USER,
 					fireUser,
 					createUserDto,
 					null,
-				);
+				)) as UserProfile;
 
 				await this.sendVerificationEmail(
 					createUserDto.email,
@@ -213,7 +218,7 @@ export class LandlordAuthService extends AuthService {
 		fireUser: any,
 		createUserDto?: OrgUserSignUpDto,
 		invitedUserDto?: InviteUserDto,
-	): Promise<any> {
+	): Promise<UserInvitation | UserProfile> {
 		switch (createEventType) {
 			case CreateUserEventTypes.CREATE_ORG_USER:
 				const userProfile = await this.createOrganizationOwner(
@@ -322,6 +327,7 @@ export class LandlordAuthService extends AuthService {
 			invitation.propertyToOwnIds = !!invitedUserDto.propertiesToOwn
 				? map(invitedUserDto.propertiesToOwn, 'uuid')
 				: null;
+			invitation.token = this.suid.stamp(20, DateTime.utc().toJSDate());
 
 			/// TRANSACTION SAVES DATA
 			await transactionalEntityManager.save(user);
@@ -480,6 +486,7 @@ export class LandlordAuthService extends AuthService {
 		}
 	}
 
+	// THIS IS TO SEND INVITATION EMAIL TO A USER ADDED TO AN ORGANIZATION
 	override async sendInvitationEmail(
 		invitedUserDto: InviteUserDto,
 		invitation: UserInvitation,
@@ -492,7 +499,7 @@ export class LandlordAuthService extends AuthService {
 					this.emailAuthContinueUrl,
 				),
 			);
-			resetPasswordLink += `&email=${invitedUserDto.email}&type=user-invitation&invited_as=${invitation.orgRole.name}`;
+			resetPasswordLink += `&email=${invitedUserDto.email}&type=user-invitation&invited_as=${invitation.orgRole.name}&token=${invitation.token}`;
 			const actionUrl = replace(resetPasswordLink, '_auth_', 'reset-password');
 			const emailTemplate = EmailTemplates['org-user-invite'];
 			await this.emailService.sendTransactionalEmail(
@@ -516,18 +523,24 @@ export class LandlordAuthService extends AuthService {
 			);
 		}
 	}
+
+	// THIS CREATES THE INVITED USER IN FIREBASE, ADDS AN INVITATION RECORD IN THE INVITATION TABLE & OUR DB
 	override async inviteUser(invitedUserDto: InviteUserDto): Promise<any> {
 		let fbid: string;
 		try {
+			const organizationId = this.cls.get('currentUser.organizationId');
+			if (!this.organizationSubscriptionService.canAddUser(organizationId, 1)) {
+				throw new PreconditionFailedException(ErrorMessages.USER_LIMIT_REACHED);
+			}
 			const fireUser = await this.createInvitedUser(invitedUserDto);
 			if (fireUser) {
 				fbid = fireUser.uid;
-				const userInvitation = await this.createUserWithOrganization(
+				const userInvitation = (await this.createUserWithOrganization(
 					CreateUserEventTypes.INVITE_ORG_USER,
 					fireUser,
 					null,
 					invitedUserDto,
-				);
+				)) as UserInvitation;
 				await this.sendInvitationEmail(invitedUserDto, userInvitation);
 				fbid = null;
 			} else {

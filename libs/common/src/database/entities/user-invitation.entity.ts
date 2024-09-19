@@ -52,4 +52,8 @@ export class UserInvitation {
 
 	@Column({ type: 'simple-array', nullable: true })
 	propertyToManageIds?: string[];
+
+	@Index('idx_invitation_token')
+	@Column({ type: 'text' })
+	token: string;
 }

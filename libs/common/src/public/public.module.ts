@@ -18,33 +18,14 @@ import { CacheService } from '../services/cache.service';
 import { FeaturePermissionService } from '../permissions/feature-permission.service';
 import { FeaturesPermissionRepository } from '../repositories/features-permission.repository';
 import { PropertyMetaDataProfile } from '../profiles/property-metadata-profile';
-import { PermissionsModule } from '../permissions/permissions.module';
 import { RolesService } from '../permissions/roles.service';
 import { RolesRepository } from '../repositories/roles.repository';
 import { PropertyAmenityRepository } from '../repositories/property-amenity.repository';
 import { PropertiesAmenityService } from '../services/properties-amenity.service';
-import { SubscriptionPlanService } from '../services/subscription-plan.service';
-import { OrganizationSubscriptionService } from '../services/organization-subscription.service';
-import {
-	OrganizationCounterRepository,
-	OrganizationSubscriptionRepository,
-	SubscriptionPlanRepository,
-} from '../repositories/subscription.repository';
-import { SubscriptionPlanController } from './controllers/subscription-plan.controller';
-import { SubscriptionController } from './controllers/subscription.controller';
 
 @Module({
-	controllers: [
-		PublicController,
-		PropertyMetadataController,
-		SubscriptionPlanController,
-		SubscriptionController,
-	],
-	imports: [PermissionsModule],
+	controllers: [PublicController, PropertyMetadataController],
 	providers: [
-		SubscriptionPlanRepository,
-		OrganizationSubscriptionRepository,
-		OrganizationCounterRepository,
 		PropertyMetaDataProfile,
 		PermissionsService,
 		PermissionsRepository,
@@ -65,13 +46,10 @@ import { SubscriptionController } from './controllers/subscription.controller';
 		RolesRepository,
 		PropertiesAmenityService,
 		PropertyAmenityRepository,
-		SubscriptionPlanService,
-		OrganizationSubscriptionService,
 		{
 			provide: CacheService,
 			useFactory: () => new CacheService(null, 60 * 60 * 24),
 		},
 	],
-	exports: [OrganizationSubscriptionService, SubscriptionPlanService],
 })
 export class PublicModule {}

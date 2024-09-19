@@ -4,6 +4,7 @@ import {
 	Inject,
 	Injectable,
 	Logger,
+	PreconditionFailedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyRepository } from '../repositories/properties.repository';
@@ -32,6 +33,7 @@ import { Unit } from '../entities/unit.entity';
 import { plainToInstance } from 'class-transformer';
 import { filter, reduce } from 'lodash';
 import { PropertyDetailsDto } from '../dto/responses/property-details.dto';
+import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
 
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
@@ -44,6 +46,7 @@ export class PropertiesService implements IPropertyMetrics {
 		private readonly cls: ClsService<SharedClsStore>,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly util: Util,
+		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
 	) {}
 	async getTotalOverdueRents(
 		organizationUuid: string,
@@ -364,6 +367,7 @@ export class PropertiesService implements IPropertyMetrics {
 	 */
 	async createProperty(
 		createDto: CreatePropertyDto,
+		isDraft = false,
 	): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
@@ -371,11 +375,20 @@ export class PropertiesService implements IPropertyMetrics {
 				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
 			if (createDto.orgUuid && createDto.orgUuid !== currentUser.organizationId)
 				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
-			createDto.isMultiUnit = createDto.units?.length > 1;
+			if (
+				!this.organizationSubscriptionService.canAddUnit(
+					currentUser.organizationId,
+					createDto.units?.length,
+				)
+			)
+				throw new PreconditionFailedException(ErrorMessages.UNIT_LIMIT_REACHED);
+			createDto.isMultiUnit =
+				createDto?.isMultiUnit ?? createDto.units?.length > 1;
 			createDto.orgUuid = currentUser.organizationId;
-			//createDto.ownerUid = currentUser.uid;
-			const createdProperty =
-				await this.propertyRepository.createProperty(createDto);
+			const createdProperty = await this.propertyRepository.createProperty(
+				createDto,
+				isDraft,
+			);
 			return await this.mapPlainPropertyDetailToDto(createdProperty);
 		} catch (error) {
 			this.logger.error('Error creating Property Data', error.message);
@@ -466,17 +479,8 @@ export class PropertiesService implements IPropertyMetrics {
 		createDto: CreatePropertyDto,
 	): Promise<PropertyDetailsDto> {
 		try {
-			const currentUser = this.cls.get('currentUser');
-			if (!currentUser)
-				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
-			createDto.isMultiUnit = createDto.units?.length > 0;
-			createDto.orgUuid = currentUser.organizationId;
-			createDto.ownerUid = currentUser.uid;
-			const draftProperty = await this.propertyRepository.createProperty(
-				createDto,
-				true,
-			);
-			return await this.mapPlainPropertyDetailToDto(draftProperty);
+			const draftProperty = await this.createProperty(createDto, true);
+			return draftProperty;
 		} catch (error) {
 			this.logger.error('Error creating draft Property Data', error.message);
 			throw new BadRequestException(`Error creating draft Property.`, {
@@ -528,6 +532,10 @@ export class PropertiesService implements IPropertyMetrics {
 		try {
 			const orgId = this.cls.get('currentUser').organizationId;
 			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			if (
+				!this.organizationSubscriptionService.canAddUnit(orgId, unitsDto.length)
+			)
+				throw new PreconditionFailedException(ErrorMessages.UNIT_LIMIT_REACHED);
 			const units = await this.propertyRepository.addUnitsToAProperty(
 				propertyUuid,
 				unitsDto,
