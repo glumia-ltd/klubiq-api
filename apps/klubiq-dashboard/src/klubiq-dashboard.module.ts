@@ -1,13 +1,10 @@
 import { Module } from '@nestjs/common';
-import {
-	DatabaseModule,
-	RolesRepository,
-	UserProfilesRepository,
-	PermissionsModule,
-	HealthModule,
-	ConfigModule,
-	PublicModule,
-} from '@app/common';
+import { DatabaseModule } from '@app/common/database/database.module';
+import { RepositoriesModule } from '@app/common/repositories/repositories.module';
+import { PermissionsModule } from '@app/common/permissions/permissions.module';
+import { HealthModule } from '@app/common/health/health.module';
+import { ConfigModule } from '@app/common/config/config.module';
+import { PublicModule } from '@app/common/public/public.module';
 import {
 	ApikeyGuard,
 	AuthenticationGuard,
@@ -25,40 +22,44 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { PermissionsGuard } from '@app/auth/guards/permissions.guard';
 import { LeaseModule } from './lease/lease.module';
 import { LeaseRepository } from './lease/repositories/lease.repository';
+import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
 
 @Module({
 	imports: [
-		DatabaseModule,
-		ConfigModule,
 		AuthModule,
+		ConfigModule,
 		DashboardModule,
+		DatabaseModule,
 		HealthModule,
+		LeaseModule,
 		OrganizationModule,
 		PermissionsModule,
 		PropertiesModule,
 		PublicModule,
+		RepositoriesModule,
+		SubscriptionModule,
 		UsersModule,
-		LeaseModule,
 	],
 	providers: [
-		UsersService,
-		UsersRepository,
-		UserProfilesRepository,
-		RolesRepository,
-		LeaseRepository,
-		FirebaseAuthGuard,
 		ApikeyGuard,
+		AuthenticationGuard,
+		FirebaseAuthGuard,
+		LeaseRepository,
+		PermissionsGuard,
+		RolesGuard,
+		UsersRepository,
+		UsersService,
 		{
 			provide: APP_GUARD,
 			useClass: AuthenticationGuard,
 		},
 		{
 			provide: APP_GUARD,
-			useClass: RolesGuard,
+			useClass: PermissionsGuard,
 		},
 		{
 			provide: APP_GUARD,
-			useClass: PermissionsGuard,
+			useClass: RolesGuard,
 		},
 	],
 	exports: [UsersModule],

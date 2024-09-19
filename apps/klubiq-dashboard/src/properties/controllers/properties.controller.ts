@@ -10,6 +10,7 @@ import {
 	BadRequestException,
 	HttpCode,
 	HttpStatus,
+	UseGuards,
 } from '@nestjs/common';
 import {
 	ApiBearerAuth,
@@ -33,6 +34,7 @@ import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
 import { PropertyDetailsDto } from '../dto/responses/property-details.dto';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 import { PropertyListDto } from '../dto/responses/property-list-response.dto';
+import { SubscriptionLimitGuard } from '@app/common/guards/subscription-limit.guard';
 
 @ApiTags('properties')
 @ApiBearerAuth()
@@ -44,6 +46,7 @@ export class PropertiesController {
 	constructor(private readonly propertyService: PropertiesService) {}
 
 	@Ability(Actions.WRITE)
+	@UseGuards(SubscriptionLimitGuard)
 	@Post()
 	@ApiCreatedResponse({
 		description: 'Creates a new property',
@@ -59,6 +62,7 @@ export class PropertiesController {
 	}
 
 	@Ability(Actions.WRITE)
+	@UseGuards(SubscriptionLimitGuard)
 	@Post('draft')
 	@ApiOkResponse({
 		description: 'Creates a draft property',

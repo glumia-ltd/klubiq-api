@@ -41,6 +41,6 @@ export class SubscriptionLimitGuard implements CanActivate {
 			}
 			return canAddProperty;
 		}
-		return true;
+		return false;
 	}
 }

@@ -14,6 +14,8 @@ import {
 	OrganizationSubscriptionRepository,
 	SubscriptionPlanRepository,
 } from './subscription.repository';
+import { FeaturesPermissionRepository } from './features-permission.repository';
+import { PropertyAmenityRepository } from './property-amenity.repository';
 
 @Module({
 	providers: [
@@ -78,6 +80,16 @@ import {
 			useFactory: (em: EntityManager) => new SubscriptionPlanRepository(em),
 			inject: [EntityManager],
 		},
+		{
+			provide: FeaturesPermissionRepository,
+			useFactory: (em: EntityManager) => new FeaturesPermissionRepository(em),
+			inject: [EntityManager],
+		},
+		{
+			provide: PropertyAmenityRepository,
+			useFactory: (em: EntityManager) => new PropertyAmenityRepository(em),
+			inject: [EntityManager],
+		},
 	],
 	exports: [
 		UserProfilesRepository,
@@ -92,6 +104,8 @@ import {
 		OrganizationSubscriptionRepository,
 		OrganizationCounterRepository,
 		SubscriptionPlanRepository,
+		FeaturesPermissionRepository,
+		PropertyAmenityRepository,
 	],
 })
 export class RepositoriesModule {}

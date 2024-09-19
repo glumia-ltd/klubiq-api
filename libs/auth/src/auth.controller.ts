@@ -5,6 +5,7 @@ import {
 	HttpStatus,
 	HttpCode,
 	Get,
+	Query,
 } from '@nestjs/common';
 import {
 	ApiBearerAuth,
@@ -151,8 +152,14 @@ export class AuthController {
 	@HttpCode(HttpStatus.OK)
 	@Post('accept-invitation')
 	@ApiOkResponse()
-	async acceptInvitation(@Body() resetPasswordDto: ResetPasswordDto) {
-		return await this.landlordAuthService.acceptInvitation(resetPasswordDto);
+	async acceptInvitation(
+		@Query('token') token: string,
+		@Body() resetPasswordDto: ResetPasswordDto,
+	) {
+		return await this.landlordAuthService.acceptInvitation(
+			resetPasswordDto,
+			token,
+		);
 	}
 
 	// @Auth(AuthType.ApiKey)
