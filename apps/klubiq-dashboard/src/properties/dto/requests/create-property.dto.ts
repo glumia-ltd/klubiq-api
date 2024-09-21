@@ -100,5 +100,6 @@ export class CreatePropertyDto {
 	units: CreateUnitDto[];
 
 	@IsString()
-	orgUuid: string;
+	@IsOptional()
+	orgUuid?: string;
 }

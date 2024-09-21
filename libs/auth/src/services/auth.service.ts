@@ -431,6 +431,9 @@ export abstract class AuthService {
 			await this.cacheManager.get<LandlordUserDetailsResponseDto>(cacheKey);
 		if (cachedUser) return cachedUser;
 		const user = await this.userProfilesRepository.getLandLordUserInfo(userId);
+		if (!user) {
+			throw new NotFoundException('User not found');
+		}
 		const userData = await this.mapLandlordUserToDto(
 			user,
 			this.cls.get('currentUser'),

@@ -5,8 +5,8 @@ import {
 	IsNumber,
 	IsBoolean,
 	ValidateNested,
-	IsJSON,
 	IsArray,
+	IsObject,
 } from 'class-validator';
 import {
 	PropertyAddressDto,
@@ -56,7 +56,7 @@ export class UnitDto {
 
 	@Expose()
 	@IsOptional()
-	@IsJSON()
+	@IsObject()
 	area: { value: number; unit: string };
 
 	@Expose()
@@ -115,7 +115,7 @@ export class PropertyDetailsDto {
 
 	@Expose()
 	@IsOptional()
-	@IsJSON()
+	@IsObject()
 	area?: { value: number; unit: string };
 
 	@Expose()

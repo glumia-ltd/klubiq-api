@@ -34,12 +34,16 @@ import { plainToInstance } from 'class-transformer';
 import { filter, reduce } from 'lodash';
 import { PropertyDetailsDto } from '../dto/responses/property-details.dto';
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CreatePropertyEvent } from '../../event-listeners/event-models/property-event';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
 	private readonly logger = new Logger(PropertiesService.name);
 	private readonly cacheKeyPrefix = 'properties';
 	private readonly cacheTTL = 60000;
+	private readonly appEnvironment: string;
 	constructor(
 		@InjectRepository(PropertyRepository)
 		private readonly propertyRepository: PropertyRepository,
@@ -47,7 +51,17 @@ export class PropertiesService implements IPropertyMetrics {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly util: Util,
 		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
-	) {}
+		private eventEmitter: EventEmitter2,
+		private readonly configService: ConfigService,
+	) {
+		this.appEnvironment = this.configService.get<string>('NODE_ENV');
+	}
+
+	private isNotProdEnv() {
+		return ['local', 'test', 'development', 'staging', 'dev'].includes(
+			this.appEnvironment,
+		);
+	}
 	async getTotalOverdueRents(
 		organizationUuid: string,
 	): Promise<RentOverdueLeaseDto> {
@@ -376,6 +390,7 @@ export class PropertiesService implements IPropertyMetrics {
 			if (createDto.orgUuid && createDto.orgUuid !== currentUser.organizationId)
 				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
 			if (
+				!this.isNotProdEnv() &&
 				!this.organizationSubscriptionService.canAddUnit(
 					currentUser.organizationId,
 					createDto.units?.length,
@@ -389,6 +404,11 @@ export class PropertiesService implements IPropertyMetrics {
 				createDto,
 				isDraft,
 			);
+			this.eventEmitter.emit('property.created', {
+				organizationId: currentUser.organizationId,
+				name: createdProperty.name,
+				totalUnits: createdProperty.unitCount,
+			} as CreatePropertyEvent);
 			return await this.mapPlainPropertyDetailToDto(createdProperty);
 		} catch (error) {
 			this.logger.error('Error creating Property Data', error.message);
@@ -533,6 +553,7 @@ export class PropertiesService implements IPropertyMetrics {
 			const orgId = this.cls.get('currentUser').organizationId;
 			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			if (
+				!this.isNotProdEnv() &&
 				!this.organizationSubscriptionService.canAddUnit(orgId, unitsDto.length)
 			)
 				throw new PreconditionFailedException(ErrorMessages.UNIT_LIMIT_REACHED);
