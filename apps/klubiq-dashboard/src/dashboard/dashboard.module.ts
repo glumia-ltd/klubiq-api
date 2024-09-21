@@ -9,6 +9,7 @@ import { Util } from '@app/common/helpers/util';
 import { DashboardRepository } from './repositories/dashboard.repository';
 import { FileDownloadService } from '@app/common/services/file-download.service';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
 	imports: [RepositoriesModule, SubscriptionModule],
@@ -17,12 +18,18 @@ import { SubscriptionModule } from '@app/common/public/subscription/subscription
 		DashboardRepository,
 		DashboardService,
 		Util,
-		// OrganizationSubscriptionService,
-		// SubscriptionPlanService,
+		ConfigService,
 		{
 			provide: PROPERTY_METRICS,
 			useClass: PropertiesService,
 		},
+		PropertyRepository,
+		FileDownloadService,
+	],
+	exports: [
+		DashboardService,
+		DashboardRepository,
+		PROPERTY_METRICS,
 		PropertyRepository,
 		FileDownloadService,
 	],

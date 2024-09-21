@@ -46,7 +46,7 @@ export class Unit {
 	@Column({ type: 'json', nullable: true })
 	area: { value: number; unit: string };
 
-	@Column({ type: 'decimal', precision: 10, scale: 2 })
+	@Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
 	rentAmount?: number;
 
 	@Column({

@@ -3,10 +3,10 @@ import { CreatePropertyDto, PropertyImageDto } from './create-property.dto';
 import {
 	IsString,
 	IsNumber,
-	IsJSON,
 	IsOptional,
 	IsArray,
 	ValidateNested,
+	IsObject,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { UnitStatus } from '@app/common/config/config.constants';
@@ -48,7 +48,7 @@ export class UpdateUnitDto {
 	@IsOptional()
 	toilets: number;
 
-	@IsJSON()
+	@IsObject()
 	@IsOptional()
 	area: { value: number; unit: string };
 

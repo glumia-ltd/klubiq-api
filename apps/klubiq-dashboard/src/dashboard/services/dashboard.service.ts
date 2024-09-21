@@ -31,10 +31,16 @@ export class DashboardService {
 		private readonly dashboardRepository: DashboardRepository,
 		private readonly fileDownloadService: FileDownloadService,
 	) {}
-	async getPropertyMetrics(): Promise<PropertyMetrics> {
+	async getPropertyMetrics(
+		invalidateCache: boolean = false,
+	): Promise<PropertyMetrics> {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+
 		const cacheKey = `${this.cacheKeyPrefix}/${CacheKeys.PROPERTY_METRICS}/${currentUser.organizationId}`;
+		if (invalidateCache) {
+			await this.cacheManager.del(cacheKey);
+		}
 		const cachedPropertyMetrics =
 			await this.cacheManager.get<PropertyMetrics>(cacheKey);
 		if (cachedPropertyMetrics) {

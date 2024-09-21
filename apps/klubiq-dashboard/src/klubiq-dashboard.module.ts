@@ -23,13 +23,20 @@ import { PermissionsGuard } from '@app/auth/guards/permissions.guard';
 import { LeaseModule } from './lease/lease.module';
 import { LeaseRepository } from './lease/repositories/lease.repository';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { EventListenersModule } from './event-listeners/event-listeners.module';
 
 @Module({
 	imports: [
+		// Common modules
+		EventEmitterModule.forRoot(),
+
+		// CUSTOM MODULES
 		AuthModule,
 		ConfigModule,
 		DashboardModule,
 		DatabaseModule,
+		EventListenersModule,
 		HealthModule,
 		LeaseModule,
 		OrganizationModule,

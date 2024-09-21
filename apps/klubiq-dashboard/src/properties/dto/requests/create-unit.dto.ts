@@ -2,10 +2,10 @@ import { UnitStatus } from '@app/common/config/config.constants';
 import {
 	IsString,
 	IsNumber,
-	IsJSON,
 	IsOptional,
 	IsArray,
 	ValidateNested,
+	IsObject,
 } from 'class-validator';
 import { PropertyImageDto } from './create-property.dto';
 import { Type } from 'class-transformer';
@@ -19,31 +19,39 @@ export class CreateUnitDto {
 	unitNumber: string;
 
 	@IsNumber()
-	rentAmount: number;
+	@IsOptional()
+	rentAmount?: number;
 
 	@IsNumber()
-	floor: number;
+	@IsOptional()
+	floor?: number;
 
 	@IsNumber()
-	bedrooms: number;
+	@IsOptional()
+	bedrooms?: number;
 
 	@IsNumber()
-	bathrooms: number;
+	@IsOptional()
+	bathrooms?: number;
 
 	@IsNumber()
-	toilets: number;
+	@IsOptional()
+	toilets?: number;
 
-	@IsJSON()
+	@IsObject()
 	area: { value: number; unit: string };
 
 	@IsString()
-	status: UnitStatus;
+	@IsOptional()
+	status?: UnitStatus;
 
 	@IsNumber()
-	rooms: number;
+	@IsOptional()
+	rooms?: number;
 
 	@IsNumber()
-	offices: number;
+	@IsOptional()
+	offices?: number;
 
 	@IsArray()
 	@IsOptional()
