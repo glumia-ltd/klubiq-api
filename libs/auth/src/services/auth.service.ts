@@ -80,6 +80,10 @@ export abstract class AuthService {
 	// 	return tAuth;
 	// }
 
+	async verifyToken(): Promise<any> {
+		const token = this.cls.get('jwtToken');
+		return this.auth.verifyIdToken(token);
+	}
 	async enableTOTPMFA() {
 		try {
 			auth

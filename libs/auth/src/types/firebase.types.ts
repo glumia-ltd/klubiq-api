@@ -34,6 +34,7 @@ export enum AuthType {
 	Bearer,
 	None,
 	ApiKey,
+	QueryParams,
 }
 
 export interface ActiveUserData {

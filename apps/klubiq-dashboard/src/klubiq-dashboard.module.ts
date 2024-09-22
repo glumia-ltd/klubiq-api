@@ -25,6 +25,7 @@ import { LeaseRepository } from './lease/repositories/lease.repository';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { EventListenersModule } from './event-listeners/event-listeners.module';
+import { SSEAuthGuard } from '@app/auth/guards/sse-auth.guard';
 
 @Module({
 	imports: [
@@ -54,6 +55,7 @@ import { EventListenersModule } from './event-listeners/event-listeners.module';
 		LeaseRepository,
 		PermissionsGuard,
 		RolesGuard,
+		SSEAuthGuard,
 		UsersRepository,
 		UsersService,
 		{
