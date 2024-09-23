@@ -94,7 +94,6 @@ export class CreatePropertyDto {
 	typeId: number;
 
 	@IsArray()
-	@IsOptional()
 	@ValidateNested({ each: true })
 	@Type(() => CreateUnitDto)
 	units: CreateUnitDto[];

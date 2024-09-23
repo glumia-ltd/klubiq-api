@@ -4,8 +4,8 @@ import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { OrganizationRepository } from '../repositories/organization.repository';
-import { CreateOrganizationDto } from '../dto/create-organization.dto';
-import { UpdateOrganizationDto } from '../dto/update-organization.dto';
+import { CreateOrganizationDto } from '../dto/requests/create-organization.dto';
+import { UpdateOrganizationDto } from '../dto/requests/update-organization.dto';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import {
@@ -14,11 +14,12 @@ import {
 	PageMetaDto,
 	ErrorMessages,
 } from '@app/common';
-import { OrganizationResponseDto } from '../dto/organization-response.dto';
+import { OrganizationResponseDto } from '../dto/responses/organization-response.dto';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { ClsService } from 'nestjs-cls';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class OrganizationService {
@@ -32,20 +33,46 @@ export class OrganizationService {
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 	) {}
 
+	private async mapPlainToClass(
+		plainData: Organization,
+	): Promise<OrganizationResponseDto> {
+		const orgSettings = plainData.settings.settings;
+		return plainToInstance(
+			OrganizationResponseDto,
+			{
+				...plainData,
+				settings: orgSettings,
+			},
+			{ excludeExtraneousValues: true },
+		);
+	}
+
+	private async mapPlainToClassList(
+		plainData: Organization[],
+	): Promise<OrganizationResponseDto[]> {
+		return plainToInstance(
+			OrganizationResponseDto,
+			plainData.map((org) => {
+				const orgSettings = org.settings.settings;
+				return {
+					...org,
+					settings: orgSettings,
+				};
+			}),
+			{ excludeExtraneousValues: true },
+		);
+	}
 	// This gets the organization by uuid
-	async getOrganizationByUuId(uuid?: string) {
+	async getOrganizationByUuId(uuid: string) {
 		try {
-			if (!uuid) {
-				console.log('NO UUID PASSED IN');
-				const currentUser = this.cls.get('currentUser');
-				if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-				uuid = currentUser.organizationId;
-			}
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			uuid = currentUser.organizationId;
+
 			this.logger.verbose(`Getting organization by id: ${uuid}`);
-			const org = await this.organizationRepository.findOneByCondition({
-				organizationUuid: uuid,
-			});
-			return this.mapper.map(org, Organization, OrganizationResponseDto);
+			const org = await this.organizationRepository.getOrganizationByUUID(uuid);
+			const orgDetails = await this.mapPlainToClass(org);
+			return orgDetails;
 		} catch (err) {
 			this.logger.error('Error getting organization', err);
 			throw new Error(`Error getting organization. Error: ${err}`);
@@ -59,7 +86,8 @@ export class OrganizationService {
 			const org = await this.organizationRepository.findOneWithId({
 				organizationId: id,
 			});
-			return this.mapper.map(org, Organization, OrganizationResponseDto);
+			const orgDetails = await this.mapPlainToClass(org);
+			return orgDetails;
 		} catch (err) {
 			this.logger.error('Error getting organization', err);
 			throw new Error(`Error getting organization. Error: ${err}`);
@@ -72,10 +100,7 @@ export class OrganizationService {
 			this.logger.verbose(
 				`Creating new Organization. Name: ${createOrganizationDto.name}`,
 			);
-			const org = await this.organizationRepository.createEntity(
-				createOrganizationDto,
-			);
-			return this.mapper.map(org, Organization, OrganizationResponseDto);
+			await this.organizationRepository.createEntity(createOrganizationDto);
 		} catch (err) {
 			this.logger.error('Error creating organization', err);
 			throw new Error(`Error creating organization. Error: ${err}`);
@@ -97,10 +122,8 @@ export class OrganizationService {
 			const itemCount = await queryBuilder.getCount();
 			const { entities } = await queryBuilder.getRawAndEntities();
 			const pageMetaDto = new PageMetaDto({ itemCount, pageOptionsDto });
-			return new PageDto(
-				this.mapper.mapArray(entities, Organization, OrganizationResponseDto),
-				pageMetaDto,
-			);
+			const mappedOrgList = await this.mapPlainToClassList(entities);
+			return new PageDto(mappedOrgList, pageMetaDto);
 		} catch (err) {
 			this.logger.error('Error getting organizations', err);
 			throw new Error(`Error getting organizations. Error: ${err}`);
@@ -116,11 +139,10 @@ export class OrganizationService {
 				UpdateOrganizationDto,
 				Organization,
 			);
-			const updatedOrg = await this.organizationRepository.updateEntity(
+			await this.organizationRepository.updateEntity(
 				{ organizationUuid: uuid },
 				orgData,
 			);
-			return this.mapper.map(updatedOrg, Organization, OrganizationResponseDto);
 		} catch (err) {
 			this.logger.error('Error updating organization', err);
 			throw new Error(`Error updating organization. Error: ${err}`);

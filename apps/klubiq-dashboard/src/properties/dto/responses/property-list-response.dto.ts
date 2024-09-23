@@ -9,6 +9,10 @@ import { Expose, Type } from 'class-transformer';
 
 export class PropertyListMetadataDto {
 	@Expose()
+	@IsNumber()
+	id: number;
+
+	@Expose()
 	@IsString()
 	name: string;
 
@@ -94,6 +98,21 @@ export class PropertyListDto {
 	@IsOptional()
 	@IsNumber()
 	bedrooms?: number;
+
+	@Expose()
+	@IsNumber()
+	@IsOptional()
+	rooms?: number;
+
+	@Expose()
+	@IsNumber()
+	@IsOptional()
+	offices?: number;
+
+	@Expose()
+	@IsNumber()
+	@IsOptional()
+	floor?: number;
 
 	@Expose()
 	@IsOptional()

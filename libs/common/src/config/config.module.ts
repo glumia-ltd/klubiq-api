@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CacheModule } from '@nestjs/cache-manager';
 import * as redis from 'cache-manager-redis-store';
 import { createMapper } from '@automapper/core';
+import { CommonConfigService } from './common-config';
 
 @Module({
 	imports: [
@@ -78,6 +79,7 @@ import { createMapper } from '@automapper/core';
 		}),
 	],
 	providers: [
+		CommonConfigService,
 		ConfigService,
 		MailerSendService,
 		{
@@ -88,6 +90,6 @@ import { createMapper } from '@automapper/core';
 			},
 		},
 	],
-	exports: [ConfigService, MailerSendService],
+	exports: [ConfigService, MailerSendService, CommonConfigService],
 })
 export class ConfigModule {}

@@ -10,6 +10,7 @@ import { PROPERTY_METRICS } from './interfaces/property-metrics.service.interfac
 import { Util } from '@app/common/helpers/util';
 import { Unit } from './entities/unit.entity';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
+import { CommonConfigService } from '@app/common/config/common-config';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
@@ -18,6 +19,7 @@ import { ConfigService } from '@nestjs/config';
 		PropertyRepository,
 		Util,
 		ConfigService,
+		CommonConfigService,
 		{
 			provide: PROPERTY_METRICS,
 			useClass: PropertiesService,

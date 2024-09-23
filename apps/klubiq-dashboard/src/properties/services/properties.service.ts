@@ -31,19 +31,18 @@ import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 import { Unit } from '../entities/unit.entity';
 import { plainToInstance } from 'class-transformer';
-import { filter, reduce } from 'lodash';
+import { filter, padEnd, reduce } from 'lodash';
 import { PropertyDetailsDto } from '../dto/responses/property-details.dto';
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreatePropertyEvent } from '../../event-listeners/event-models/property-event';
-import { ConfigService } from '@nestjs/config';
+import { CommonConfigService } from '@app/common/config/common-config';
 
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
 	private readonly logger = new Logger(PropertiesService.name);
 	private readonly cacheKeyPrefix = 'properties';
 	private readonly cacheTTL = 60000;
-	private readonly appEnvironment: string;
 	constructor(
 		@InjectRepository(PropertyRepository)
 		private readonly propertyRepository: PropertyRepository,
@@ -52,16 +51,9 @@ export class PropertiesService implements IPropertyMetrics {
 		private readonly util: Util,
 		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		private eventEmitter: EventEmitter2,
-		private readonly configService: ConfigService,
-	) {
-		this.appEnvironment = this.configService.get<string>('NODE_ENV');
-	}
+		private readonly commonConfigService: CommonConfigService,
+	) {}
 
-	private isNotProdEnv() {
-		return ['local', 'test', 'development', 'staging', 'dev'].includes(
-			this.appEnvironment,
-		);
-	}
 	async getTotalOverdueRents(
 		organizationUuid: string,
 	): Promise<RentOverdueLeaseDto> {
@@ -251,7 +243,7 @@ export class PropertiesService implements IPropertyMetrics {
 			PropertyDetailsDto,
 			{
 				...property,
-				totalRent,
+				totalRent: Number(totalRent.toFixed(2)),
 				occupiedUnitCount,
 				vacantUnitCount,
 				totalTenants,
@@ -390,7 +382,7 @@ export class PropertiesService implements IPropertyMetrics {
 			if (createDto.orgUuid && createDto.orgUuid !== currentUser.organizationId)
 				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
 			if (
-				!this.isNotProdEnv() &&
+				!this.commonConfigService.isDevelopmentEnvironment() &&
 				!this.organizationSubscriptionService.canAddUnit(
 					currentUser.organizationId,
 					createDto.units?.length,
@@ -400,6 +392,9 @@ export class PropertiesService implements IPropertyMetrics {
 			createDto.isMultiUnit =
 				createDto?.isMultiUnit ?? createDto.units?.length > 1;
 			createDto.orgUuid = currentUser.organizationId;
+			createDto.units[0].unitNumber = createDto.isMultiUnit
+				? createDto.units[0].unitNumber
+				: padEnd(createDto.name, 4, '-1');
 			const createdProperty = await this.propertyRepository.createProperty(
 				createDto,
 				isDraft,
@@ -465,6 +460,11 @@ export class PropertiesService implements IPropertyMetrics {
 		return plainToInstance(
 			PropertyListDto,
 			plainProperty.map((property) => {
+				const rooms = property.isMultiUnit ? null : property.mainUnit?.rooms;
+				const offices = property.isMultiUnit
+					? null
+					: property.mainUnit?.offices;
+				const floor = property.isMultiUnit ? null : property.mainUnit?.floor;
 				const mainImage = property.mainPhoto;
 				const bedrooms = property.isMultiUnit
 					? null
@@ -481,6 +481,9 @@ export class PropertiesService implements IPropertyMetrics {
 					bedrooms,
 					bathrooms,
 					toilets,
+					rooms,
+					offices,
+					floor,
 				};
 			}),
 			{ excludeExtraneousValues: true },
@@ -553,7 +556,7 @@ export class PropertiesService implements IPropertyMetrics {
 			const orgId = this.cls.get('currentUser').organizationId;
 			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			if (
-				!this.isNotProdEnv() &&
+				!this.commonConfigService.isDevelopmentEnvironment() &&
 				!this.organizationSubscriptionService.canAddUnit(orgId, unitsDto.length)
 			)
 				throw new PreconditionFailedException(ErrorMessages.UNIT_LIMIT_REACHED);

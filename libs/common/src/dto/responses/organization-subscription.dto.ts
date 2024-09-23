@@ -14,7 +14,7 @@ export class OrganizationSubscriptionDto {
 	@Expose()
 	id?: number;
 
-	@Expose()
+	@Expose({ groups: ['admin'] })
 	@IsUUID()
 	organizationUuid: string;
 
@@ -53,7 +53,7 @@ export class OrganizationSubscriptionDto {
 	@Expose()
 	payment_status: string;
 
-	@Expose()
+	@Expose({ groups: ['public', 'admin'] })
 	@ValidateNested()
 	@Type(() => SubscriptionPlanDto)
 	subscription_plan: SubscriptionPlanDto;

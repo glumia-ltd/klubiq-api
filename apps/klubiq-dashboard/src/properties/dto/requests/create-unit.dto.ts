@@ -16,7 +16,8 @@ export class CreateUnitDto {
 	id?: number;
 
 	@IsString()
-	unitNumber: string;
+	@IsOptional()
+	unitNumber?: string;
 
 	@IsNumber()
 	@IsOptional()

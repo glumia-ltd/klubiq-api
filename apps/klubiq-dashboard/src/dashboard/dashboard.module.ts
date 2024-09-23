@@ -10,6 +10,7 @@ import { DashboardRepository } from './repositories/dashboard.repository';
 import { FileDownloadService } from '@app/common/services/file-download.service';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
 import { ConfigService } from '@nestjs/config';
+import { CommonConfigService } from '@app/common/config/common-config';
 
 @Module({
 	imports: [RepositoriesModule, SubscriptionModule],
@@ -19,6 +20,7 @@ import { ConfigService } from '@nestjs/config';
 		DashboardService,
 		Util,
 		ConfigService,
+		CommonConfigService,
 		{
 			provide: PROPERTY_METRICS,
 			useClass: PropertiesService,
