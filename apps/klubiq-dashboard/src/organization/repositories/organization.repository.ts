@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { BaseRepository, UserRoles } from '@app/common';
 import { EntityManager } from 'typeorm';
-import { UpdateOrganizationDto } from '../dto/update-organization.dto';
+import { UpdateOrganizationDto } from '../dto/requests/update-organization.dto';
 import { OrganizationUser } from '../../users/entities/organization-user.entity';
 
 @Injectable()
@@ -119,5 +119,14 @@ export class OrganizationRepository extends BaseRepository<Organization> {
 			);
 			await transactionManager.delete(Organization, { organizationUuid: uuid });
 		});
+	}
+
+	async getOrganizationByUUID(uuid: string): Promise<Organization> {
+		const organization = await this.createQueryBuilder('organization')
+			.leftJoinAndSelect('organization.settings', 'settings')
+			.leftJoinAndSelect('organization.subscriptions', 'subscriptions')
+			.where('organization.organizationUuid = :uuid', { uuid })
+			.getOne();
+		return organization;
 	}
 }

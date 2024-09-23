@@ -10,6 +10,7 @@ import { AUTH_TYPE_KEY } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 import { FirebaseAuthGuard } from './firebase-auth.guard';
 import { ApikeyGuard } from './apikey.guard';
+import { SSEAuthGuard } from './sse-auth.guard';
 
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
@@ -21,11 +22,13 @@ export class AuthenticationGuard implements CanActivate {
 		[AuthType.Bearer]: this.firebaseAuthGuard,
 		[AuthType.None]: { canActivate: () => true },
 		[AuthType.ApiKey]: this.apiKeyGuard,
+		[AuthType.QueryParams]: this.sseAuthGuard,
 	};
 	constructor(
 		private readonly reflector: Reflector,
 		private readonly firebaseAuthGuard: FirebaseAuthGuard,
 		private readonly apiKeyGuard: ApikeyGuard,
+		private readonly sseAuthGuard: SSEAuthGuard,
 	) {}
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const authTypes = this.reflector.getAllAndOverride<AuthType[]>(

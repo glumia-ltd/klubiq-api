@@ -12,9 +12,9 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationService } from '../services/organization.service';
-import { CreateOrganizationDto } from '../dto/create-organization.dto';
-import { UpdateOrganizationDto } from '../dto/update-organization.dto';
-import { OrganizationResponseDto } from '../dto/organization-response.dto';
+import { CreateOrganizationDto } from '../dto/requests/create-organization.dto';
+import { UpdateOrganizationDto } from '../dto/requests/update-organization.dto';
+import { OrganizationResponseDto } from '../dto/responses/organization-response.dto';
 import { UserRoles } from '@app/common/config/config.constants';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { PageOptionsDto } from '@app/common/dto/pagination/page-options.dto';
@@ -58,7 +58,7 @@ export class OrganizationController {
 	}
 
 	@Get(':uuid')
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN, UserRoles.ORG_OWNER)
+	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN, UserRoles.LANDLORD)
 	//@Ability(Actions.WRITE, Actions.VIEW)
 	@ApiOkResponse({
 		description: 'Gets a organization by uuid',

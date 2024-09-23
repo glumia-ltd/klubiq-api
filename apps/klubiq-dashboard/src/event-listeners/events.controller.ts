@@ -7,7 +7,7 @@ import {
 	// Inject,
 	Req,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { UserRoles } from '@app/common/config/config.constants';
 
@@ -25,8 +25,7 @@ import { CreatePropertyEvent } from './event-models/property-event';
 import { Request } from 'express';
 
 @ApiTags('events')
-@ApiBearerAuth()
-@Auth(AuthType.Bearer)
+@Auth(AuthType.QueryParams)
 @Roles(UserRoles.LANDLORD)
 @Controller('events')
 export class EventsController {
@@ -40,13 +39,7 @@ export class EventsController {
 		private readonly dashboardService: DashboardService,
 		// private eventEmitter: EventEmitter2,
 		// @Inject(CACHE_MANAGER) private cacheManager: Cache,
-	) {
-		// this.eventEmitter.on('property.created', async (payload) => {
-		//     this.orgPayloadId = payload.organizationId;
-		//     const data = await this.dashboardService.getPropertyMetrics();
-		//     this.events$.next({ data } as MessageEvent);
-		// });
-	}
+	) {}
 
 	@Sse('sse/properties')
 	sse(@Req() req: Request): Observable<MessageEvent> {

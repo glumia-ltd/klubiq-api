@@ -43,7 +43,7 @@ export class OrganizationSubscriptionService {
 				end_date: DateTime.fromJSDate(subscription.end_date).toISO(),
 				...subscription,
 			},
-			{ excludeExtraneousValues: true },
+			{ excludeExtraneousValues: true, groups: ['admin'] },
 		);
 	}
 	async subscribeToPlan(

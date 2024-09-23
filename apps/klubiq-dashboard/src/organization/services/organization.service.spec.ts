@@ -9,7 +9,7 @@ import {
 	BaseRepository,
 	//Order
 } from '@app/common';
-import { OrganizationResponseDto } from '../dto/organization-response.dto';
+import { OrganizationResponseDto } from '../dto/responses/organization-response.dto';
 import { Organization } from '../entities/organization.entity';
 
 type MockRepository<T = any> = Partial<

@@ -74,6 +74,23 @@ export class AuthController {
 		}
 	}
 
+	@Auth(AuthType.Bearer)
+	@Roles(
+		UserRoles.ADMIN,
+		UserRoles.STAFF,
+		UserRoles.SUPER_ADMIN,
+		UserRoles.TENANT,
+		UserRoles.LANDLORD,
+	)
+	@Get('verify-token')
+	async verifyToken(): Promise<any> {
+		try {
+			return this.landlordAuthService.verifyToken();
+		} catch (err) {
+			throw err;
+		}
+	}
+
 	@HttpCode(HttpStatus.OK)
 	@Post('reset-password')
 	@ApiOkResponse()
