@@ -15,7 +15,7 @@ import { SubscriptionPlanService } from '@app/common/services/subscription-plan.
 	providers: [
 		{
 			provide: CacheService,
-			useFactory: () => new CacheService(null, 60 * 60 * 24),
+			useFactory: () => new CacheService(null),
 		},
 		OrganizationSubscriptionRepository,
 		OrganizationCounterRepository,

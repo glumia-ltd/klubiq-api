@@ -24,7 +24,7 @@ import { plainToInstance } from 'class-transformer';
 @Injectable()
 export class OrganizationService {
 	private readonly logger = new Logger(OrganizationService.name);
-	private readonly cacheTTL = 100;
+	private readonly cacheTTL = 600;
 	private readonly cacheKeyPrefix = 'organizations';
 	constructor(
 		private readonly cls: ClsService<SharedClsStore>,

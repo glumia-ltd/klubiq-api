@@ -47,7 +47,7 @@ export abstract class AuthService {
 	protected abstract readonly logger: Logger;
 	private readonly adminIdentityTenantId: string;
 	private readonly cacheKeyPrefix = 'auth';
-	private readonly cacheTTL = 500;
+	private readonly cacheTTL = 90;
 	protected readonly cacheService = new CacheService(this.cacheManager);
 	protected readonly suid = new ShortUniqueId();
 	constructor(

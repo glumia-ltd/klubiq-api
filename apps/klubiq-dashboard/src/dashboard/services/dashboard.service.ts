@@ -21,7 +21,7 @@ import { FileDownloadService } from '@app/common/services/file-download.service'
 @Injectable()
 export class DashboardService {
 	private readonly logger = new Logger(DashboardService.name);
-	private readonly cacheTTL = 60000;
+	private readonly cacheTTL = 3600;
 	private readonly cacheKeyPrefix = 'dashboard';
 	constructor(
 		private readonly cls: ClsService<SharedClsStore>,

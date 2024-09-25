@@ -31,7 +31,7 @@ import { Request } from 'express';
 export class EventsController {
 	private propertyEvents$: Map<string, Subject<MessageEvent>> = new Map();
 	private readonly cacheKeyPrefix = 'properties';
-	private readonly cacheTTL = 60000;
+	private readonly cacheTTL = 3600;
 	private readonly logger = new Logger(EventsController.name);
 	//private connectionCount: number = 0;
 	constructor(

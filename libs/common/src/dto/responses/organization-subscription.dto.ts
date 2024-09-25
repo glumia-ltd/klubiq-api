@@ -58,3 +58,21 @@ export class OrganizationSubscriptionDto {
 	@Type(() => SubscriptionPlanDto)
 	subscription_plan: SubscriptionPlanDto;
 }
+
+export class AssetCount {
+	@Expose()
+	@IsNumber()
+	property_count: number;
+
+	@Expose()
+	@IsNumber()
+	unit_count: number;
+
+	@Expose()
+	@IsNumber()
+	user_count: number;
+
+	@Expose()
+	@IsNumber()
+	document_storage_size: number;
+}

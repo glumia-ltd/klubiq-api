@@ -48,7 +48,7 @@ import { PropertiesAmenityService } from '../services/properties-amenity.service
 		PropertyAmenityRepository,
 		{
 			provide: CacheService,
-			useFactory: () => new CacheService(null, 60 * 60 * 24),
+			useFactory: () => new CacheService(null),
 		},
 	],
 })

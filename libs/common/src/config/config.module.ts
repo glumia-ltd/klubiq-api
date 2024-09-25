@@ -74,7 +74,7 @@ import { CommonConfigService } from './common-config';
 				host: 'localhost',
 				port: 6379,
 				max: 10,
-				ttl: 300,
+				// ttl: 300,
 			}),
 		}),
 	],

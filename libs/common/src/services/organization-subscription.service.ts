@@ -18,15 +18,24 @@ import {
 } from '../repositories/subscription.repository';
 import { SubscribeToPlanDto } from '../dto/requests/plan-subscriptions.dto';
 import { SubscriptionPlan } from '../database/entities/subscription-plan.entity';
-import { OrganizationSubscriptionDto } from '../dto/responses/organization-subscription.dto';
+import {
+	AssetCount,
+	OrganizationSubscriptionDto,
+} from '../dto/responses/organization-subscription.dto';
 import { plainToInstance } from 'class-transformer';
+import { ClsService } from 'nestjs-cls';
+import { SharedClsStore } from '../dto/public/shared-clsstore';
+import { ActiveUserData } from '@app/auth';
+import { OrganizationCounter } from '../database/entities/organization-counter.entity';
 
 @Injectable()
 export class OrganizationSubscriptionService {
 	private readonly logger = new Logger(OrganizationSubscriptionService.name);
 	private readonly cacheKey = CacheKeys.ORGANIZATION_SUBSCRIPTIONS;
 	private readonly cacheService = new CacheService(this.cacheManager);
+	private currentUser: ActiveUserData;
 	constructor(
+		private readonly cls: ClsService<SharedClsStore>,
 		private readonly subscriptionRepository: OrganizationSubscriptionRepository,
 		private readonly organizationCounterRepository: OrganizationCounterRepository,
 		private readonly subscriptionPlanService: SubscriptionPlanService,
@@ -46,11 +55,40 @@ export class OrganizationSubscriptionService {
 			{ excludeExtraneousValues: true, groups: ['admin'] },
 		);
 	}
+
+	private mapPlainAssetCountToDto(count: OrganizationCounter): AssetCount {
+		return plainToInstance(AssetCount, count, {
+			excludeExtraneousValues: true,
+		});
+	}
+
+	async getOrganizationAssetCount(orgId: string) {
+		const cachedAssetCount = await this.cacheService.getCacheByKey<AssetCount>(
+			`${this.cacheKey}/asset-count:${orgId}`,
+		);
+		if (!cachedAssetCount) {
+			const assetCount =
+				await this.organizationCounterRepository.findOneByCondition({
+					organization_uuid: orgId,
+				});
+			const mappedAssetCount = this.mapPlainAssetCountToDto(assetCount);
+			await this.cacheService.setCache(
+				mappedAssetCount,
+				`${this.cacheKey}/asset-count:${orgId}`,
+			);
+		}
+	}
 	async subscribeToPlan(
 		organizationUuId: string,
 		planId: number,
 		duration: 'monthly' | 'annual',
 	): Promise<OrganizationSubscriptionDto> {
+		this.currentUser = this.cls.get('currentUser');
+		if (this.currentUser.organizationId !== organizationUuId) {
+			throw new BadRequestException(
+				'You are not authorized to perform this action',
+			);
+		}
 		const plan = await this.subscriptionPlanService.getPlan(planId);
 		if (!plan) {
 			throw new BadRequestException(`Plan with id ${planId} not found`);
@@ -77,7 +115,7 @@ export class OrganizationSubscriptionService {
 		const mappedSubscription = this.mapPlainToDto(subscription);
 		await this.cacheService.setCache(
 			mappedSubscription,
-			`${this.cacheKey}-${organizationUuId}`,
+			`${this.cacheKey}:${organizationUuId}`,
 		);
 		return mappedSubscription;
 	}
@@ -87,7 +125,7 @@ export class OrganizationSubscriptionService {
 	): Promise<OrganizationSubscriptionDto> {
 		const cachedSubscription =
 			await this.cacheService.getCacheByKey<OrganizationSubscriptionDto>(
-				`${this.cacheKey}-${organizationUuId}`,
+				`${this.cacheKey}:${organizationUuId}`,
 			);
 		if (!cachedSubscription) {
 			const subscription = await this.subscriptionRepository.findOneByCondition(
@@ -110,7 +148,7 @@ export class OrganizationSubscriptionService {
 	): Promise<SubscriptionLimitsDto> {
 		const cachedPlanLimits =
 			await this.cacheService.getCacheByKey<SubscriptionLimitsDto>(
-				`${this.cacheKey}-limits-${organizationUuId}`,
+				`${this.cacheKey}/limits:${organizationUuId}`,
 			);
 		if (cachedPlanLimits) {
 			return cachedPlanLimits;

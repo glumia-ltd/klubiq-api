@@ -42,7 +42,7 @@ import { CommonConfigService } from '@app/common/config/common-config';
 export class PropertiesService implements IPropertyMetrics {
 	private readonly logger = new Logger(PropertiesService.name);
 	private readonly cacheKeyPrefix = 'properties';
-	private readonly cacheTTL = 60000;
+	private readonly cacheTTL = 90;
 	constructor(
 		@InjectRepository(PropertyRepository)
 		private readonly propertyRepository: PropertyRepository,
@@ -243,7 +243,7 @@ export class PropertiesService implements IPropertyMetrics {
 			PropertyDetailsDto,
 			{
 				...property,
-				totalRent: Number(totalRent.toFixed(2)),
+				totalRent: Number(totalRent?.toFixed(2)),
 				occupiedUnitCount,
 				vacantUnitCount,
 				totalTenants,

@@ -75,7 +75,7 @@ const firebaseAdminProvider = {
 		OrganizationRepository,
 		{
 			provide: CacheService,
-			useFactory: () => new CacheService(null, 60000),
+			useFactory: () => new CacheService(null),
 		},
 		UserProfilesRepository,
 	],
