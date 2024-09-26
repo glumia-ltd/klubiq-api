@@ -76,7 +76,9 @@ export class OrganizationSubscriptionService {
 				mappedAssetCount,
 				`${this.cacheKey}/asset-count:${orgId}`,
 			);
+			return mappedAssetCount;
 		}
+		return cachedAssetCount;
 	}
 	async subscribeToPlan(
 		organizationUuId: string,

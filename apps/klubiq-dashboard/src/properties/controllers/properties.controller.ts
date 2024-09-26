@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import {
 	ApiBearerAuth,
+	ApiBody,
 	ApiCreatedResponse,
 	ApiOkResponse,
 	ApiTags,
@@ -35,6 +36,8 @@ import { PropertyDetailsDto } from '../dto/responses/property-details.dto';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 import { PropertyListDto } from '../dto/responses/property-list-response.dto';
 import { SubscriptionLimitGuard } from '@app/common/guards/subscription-limit.guard';
+import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
+import { FileUploadService } from '@app/common/services/file-upload.service';
 
 @ApiTags('properties')
 @ApiBearerAuth()
@@ -43,14 +46,21 @@ import { SubscriptionLimitGuard } from '@app/common/guards/subscription-limit.gu
 @Controller('properties')
 @Feature(AppFeature.PROPERTY)
 export class PropertiesController {
-	constructor(private readonly propertyService: PropertiesService) {}
+	constructor(
+		private readonly propertyService: PropertiesService,
+		private readonly fileUploadService: FileUploadService,
+	) {}
 
 	@Ability(Actions.WRITE)
 	@UseGuards(SubscriptionLimitGuard)
 	@Post()
 	@ApiCreatedResponse({
-		description: 'Creates a new property',
+		description: 'Returns details of the created property',
 		type: PropertyDetailsDto,
+	})
+	@ApiBody({
+		description: 'Property details to create',
+		type: CreatePropertyDto,
 	})
 	async createProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
@@ -65,8 +75,12 @@ export class PropertiesController {
 	@UseGuards(SubscriptionLimitGuard)
 	@Post('draft')
 	@ApiOkResponse({
-		description: 'Creates a draft property',
+		description: 'Returns details of the draft property',
 		type: PropertyDetailsDto,
+	})
+	@ApiBody({
+		description: 'Property details to save as draft',
+		type: CreatePropertyDto,
 	})
 	async createDraftProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
@@ -81,7 +95,7 @@ export class PropertiesController {
 	@HttpCode(HttpStatus.OK)
 	@Post(':propertyUuid/draft')
 	@ApiOkResponse({
-		description: 'Saves a draft property',
+		description: 'Returns success if draft property is saved successfully',
 	})
 	async saveDraftProperty(@Param('propertyUuid') propertyUuid: string) {
 		try {
@@ -129,8 +143,12 @@ export class PropertiesController {
 	@HttpCode(HttpStatus.OK)
 	@Put(':propertyUuid')
 	@ApiOkResponse({
-		description: "Updates a property found by it's property id",
+		description: "Returns the updated property if it's updated successfully",
 		type: PropertyDetailsDto,
+	})
+	@ApiBody({
+		description: 'Property data to update',
+		type: UpdatePropertyDto,
 	})
 	async updateProperty(
 		@Param('propertyUuid') propertyUuid: string,
@@ -151,7 +169,7 @@ export class PropertiesController {
 	@HttpCode(HttpStatus.OK)
 	@Delete(':propertyUuid')
 	@ApiOkResponse({
-		description: "Deletes a property found by it's propertyUuid",
+		description: 'Returns as success if property is deleted',
 	})
 	async deleteProperty(
 		@Param('propertyUuid') propertyUuid: string,
@@ -165,9 +183,38 @@ export class PropertiesController {
 
 	@Ability(Actions.WRITE)
 	@HttpCode(HttpStatus.OK)
+	@Delete(':propertyUuid/units')
+	@ApiOkResponse({
+		description: 'Returns as success if units are deleted',
+	})
+	@ApiBody({
+		description: 'Id of units to delete from property',
+		schema: {
+			type: 'array',
+			items: {
+				type: 'number',
+			},
+		},
+	})
+	async deletePropertyUnits(
+		@Param('propertyUuid') propertyUuid: string,
+		@Body() unitsIds: number[],
+	): Promise<void> {
+		try {
+			await this.propertyService.deleteUnitsFromProperty(
+				unitsIds,
+				propertyUuid,
+			);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Ability(Actions.WRITE)
+	@HttpCode(HttpStatus.OK)
 	@Put(':propertyUuid/archive')
 	@ApiOkResponse({
-		description: "Archive a property found by it's propertyUuid",
+		description: 'Returns as success if property is archived',
 	})
 	async archiveProperty(@Param('propertyUuid') propertyUuid: string) {
 		try {
@@ -181,7 +228,15 @@ export class PropertiesController {
 	@HttpCode(HttpStatus.OK)
 	@Post(':propertyUuid/units')
 	@ApiOkResponse({
-		description: 'Adds units to a property',
+		description: 'Returns the added units in a property',
+	})
+	@ApiBody({
+		description: 'Units to add to property',
+		schema: {
+			type: 'array',
+			items: { $ref: '#/components/schemas/CreateUnitDto' },
+		},
+		type: () => [CreateUnitDto],
 	})
 	async addUnitsToProperty(
 		@Param('propertyUuid') propertyUuid: string,
@@ -202,7 +257,11 @@ export class PropertiesController {
 	@HttpCode(HttpStatus.OK)
 	@Post(':propertyUuid/assignToManagerOrOwner')
 	@ApiOkResponse({
-		description: 'Assign a property to a manager or owner',
+		description: 'Returns true if property was assigned successfully',
+	})
+	@ApiBody({
+		description: 'Manager or Owner to assign to property',
+		type: PropertyManagerDto,
 	})
 	async assignToManager(
 		@Param('propertyUuid') propertyUuid: string,
@@ -214,6 +273,25 @@ export class PropertiesController {
 				managerDto,
 			);
 			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Ability(Actions.WRITE)
+	@HttpCode(HttpStatus.OK)
+	@Post('signed-url')
+	@ApiOkResponse({
+		description: 'Returns authenticated signature for image upload',
+	})
+	@ApiBody({
+		description: 'Data need to get authenticated signature for image upload',
+		type: FileUploadDto,
+	})
+	async getPresignedUrlForPropertyImage(@Body() fileData: FileUploadDto) {
+		try {
+			const result = await this.fileUploadService.getUploadSignature(fileData);
+			return result;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}

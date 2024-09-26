@@ -211,15 +211,9 @@ export class LeaseService implements ILeaseService {
 	}
 	async getPreSignedUploadUrlForPropertyImage(
 		data: FileUploadDto,
-	): Promise<string> {
+	): Promise<any> {
 		try {
-			const bucketName = this.configService.get<string>(
-				'PROPERTY_IMAGE_BUCKET_NAME',
-			);
-			const url = await this.uploadService.generatePresignedUrl(
-				data,
-				bucketName,
-			);
+			const url = await this.uploadService.getUploadSignature(data);
 			return url;
 		} catch (error) {
 			this.logger.error(

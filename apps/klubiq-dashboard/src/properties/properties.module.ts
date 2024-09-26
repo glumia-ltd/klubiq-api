@@ -12,6 +12,7 @@ import { Unit } from './entities/unit.entity';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
 import { CommonConfigService } from '@app/common/config/common-config';
 import { ConfigService } from '@nestjs/config';
+import { FileUploadService } from '@app/common/services/file-upload.service';
 
 @Module({
 	providers: [
@@ -20,6 +21,7 @@ import { ConfigService } from '@nestjs/config';
 		Util,
 		ConfigService,
 		CommonConfigService,
+		FileUploadService,
 		{
 			provide: PROPERTY_METRICS,
 			useClass: PropertiesService,

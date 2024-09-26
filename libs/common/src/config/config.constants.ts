@@ -245,3 +245,11 @@ export const RENT_DUE_ON = (
 		[PaymentFrequency.CUSTOM]: `See lease agreement`,
 	};
 };
+
+export enum PaymentStatus {
+	PENDING = 'Pending',
+	PAID = 'Paid',
+	UNPAID = 'Unpaid',
+	OVERDUE = 'Overdue',
+	PARTIAL = 'Partial',
+}

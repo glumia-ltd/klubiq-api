@@ -1,16 +1,27 @@
 import { AutoMap } from '@automapper/classes';
-import { IsString } from 'class-validator';
+import { Expose } from 'class-transformer';
+import { IsString, IsUrl } from 'class-validator';
 
 export class FileUploadDto {
 	@AutoMap()
 	@IsString()
-	fileName: string;
-
-	@AutoMap()
-	@IsString()
-	fileType: string;
+	folder: string;
 
 	@AutoMap()
 	@IsString()
 	organization: string;
+
+	@IsString()
+	organizationUuid: string;
+}
+export class PresignedUrlDto {
+	@Expose()
+	@IsUrl()
+	signature: string;
+
+	@Expose()
+	storageLimit: number;
+
+	@Expose()
+	storageUsed: number;
 }

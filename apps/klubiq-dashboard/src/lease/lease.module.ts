@@ -7,6 +7,7 @@ import { RepositoriesModule } from '@app/common/repositories/repositories.module
 import { CommonProfile } from '@app/common/profiles/common-profile';
 import { FileUploadService } from '@app/common/services/file-upload.service';
 import { ConfigModule } from '@app/common/config/config.module';
+import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
 
 @Module({
 	providers: [
@@ -19,7 +20,7 @@ import { ConfigModule } from '@app/common/config/config.module';
 		},
 		FileUploadService,
 	],
-	imports: [RepositoriesModule, ConfigModule],
+	imports: [RepositoriesModule, ConfigModule, SubscriptionModule],
 	controllers: [LeaseController],
 	exports: [LEASE_SERVICE_INTERFACE, LeaseRepository],
 })

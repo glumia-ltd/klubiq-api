@@ -597,4 +597,28 @@ export class PropertiesService implements IPropertyMetrics {
 			});
 		}
 	}
+
+	async deleteUnitsFromProperty(
+		unitIds: number[],
+		propertyUuid: string,
+	): Promise<void> {
+		try {
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser.organizationId)
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			await this.propertyRepository.deleteUnits(
+				unitIds,
+				currentUser.organizationId,
+				propertyUuid,
+				currentUser.uid,
+				currentUser.organizationRole === UserRoles.ORG_OWNER,
+			);
+		} catch (error) {
+			this.logger.error('Error deleting Units from Property', error);
+			throw new BadRequestException(`Error deleting Units from Property.`, {
+				cause: new Error(),
+				description: error.message,
+			});
+		}
+	}
 }

@@ -1,4 +1,3 @@
-import { AutoMap } from '@automapper/classes';
 import {
 	Column,
 	CreateDateColumn,
@@ -10,33 +9,31 @@ import {
 	PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Lease } from './lease.entity';
-import { RevenueType, TransactionType } from '../../config/config.constants';
+import {
+	PaymentStatus,
+	RevenueType,
+	TransactionType,
+} from '../../config/config.constants';
 import { Organization } from '../../../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
 
 @Entity({ schema: 'poo' })
 export class Transaction {
-	@AutoMap()
 	@PrimaryGeneratedColumn('uuid')
 	uuid?: string;
 
-	@AutoMap()
 	@Index()
 	@Column({ unique: true })
 	code: string;
 
-	@AutoMap()
-	@Column({ type: 'timestamp' })
+	@Column({ type: 'date' })
 	transactionDate?: Date;
 
-	@AutoMap()
 	@Column({ type: 'decimal', precision: 18, scale: 2 })
 	amount: number;
 
-	@AutoMap()
 	@Column({ type: 'enum', enum: TransactionType })
 	transactionType: TransactionType;
 
-	@AutoMap()
 	@Column({ type: 'enum', enum: RevenueType })
 	revenueType: RevenueType;
 
@@ -46,13 +43,11 @@ export class Transaction {
 	@DeleteDateColumn({ nullable: true })
 	deletedAt?: Date;
 
-	@AutoMap(() => Lease)
 	@Index()
 	@ManyToOne(() => Lease, (lease) => lease.transactions)
 	@JoinColumn({ name: 'leaseId', referencedColumnName: 'id' })
 	lease?: Lease;
 
-	@AutoMap(() => Organization)
 	@Index()
 	@ManyToOne(() => Organization, (organization) => organization.transactions)
 	@JoinColumn({
@@ -60,4 +55,10 @@ export class Transaction {
 		referencedColumnName: 'organizationUuid',
 	})
 	organization?: Organization;
+
+	@Column({ type: 'text', nullable: true })
+	description?: string;
+
+	@Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
+	status: PaymentStatus;
 }
