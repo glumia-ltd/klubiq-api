@@ -5,13 +5,18 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Actions, AppFeature, ErrorMessages, UserRoles } from '@app/common';
+import {
+	Actions,
+	AppFeature,
+	UserRoles,
+} from '@app/common/config/config.constants';
 import { LandlordAuthService } from '../services/landlord-auth.service';
 import {
 	FEATURES_KEY,
 	ABILITY_KEY,
 	ROLES_KEY,
 } from '../decorators/auth.decorator';
+import { ErrorMessages } from '@app/common/config/error.constant';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {

@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserProfilesRepository } from '@app/common';
-
+import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
 import { MailerSendService } from '@app/common/email/email.service';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { Mapper, createMapper } from '@automapper/core';

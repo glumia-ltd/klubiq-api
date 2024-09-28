@@ -1,5 +1,9 @@
 import { SetMetadata } from '@nestjs/common';
-import { UserRoles, AppFeature, Actions } from '@app/common';
+import {
+	UserRoles,
+	AppFeature,
+	Actions,
+} from '@app/common/config/config.constants';
 import { AuthType } from '../types/firebase.types';
 
 export const FEATURES_KEY = 'features';

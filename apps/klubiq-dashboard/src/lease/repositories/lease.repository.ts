@@ -16,7 +16,7 @@ import { TenantUser } from '@app/common/database/entities/tenant.entity';
 import ShortUniqueId from 'short-unique-id';
 import { PropertyLeaseMetrics } from '../dto/responses/view-lease.dto';
 import { Unit } from '@app/common/database/entities/unit.entity';
-import { LeaseStatus } from '@app/common';
+import { LeaseStatus } from '@app/common/config/config.constants';
 
 @Injectable()
 export class LeaseRepository extends BaseRepository<Lease> {

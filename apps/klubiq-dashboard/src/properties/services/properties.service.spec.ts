@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PropertiesService } from './properties.service';
-import { BaseRepository } from '@app/common';
+import { BaseRepository } from '@app/common/repositories/base.repository';
 import { Mapper, createMap, createMapper } from '@automapper/core';
 import { Property } from '@app/common/database/entities/property.entity';
 import { PropertyRepository } from '../repositories/properties.repository';

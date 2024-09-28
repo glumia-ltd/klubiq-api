@@ -7,7 +7,7 @@ import {
 	mapFrom,
 } from '@automapper/core';
 import { AutomapperProfile, InjectMapper } from '@automapper/nestjs';
-import { UserProfile } from '@app/common';
+import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { AuthUserResponseDto } from '../dto/responses/auth-response.dto';
 
 export const featurePermissionResolver: Resolver<

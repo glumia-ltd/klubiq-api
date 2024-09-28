@@ -18,18 +18,13 @@ import {
 	OrgRoleResponseDto,
 	ViewSystemRoleDto,
 } from '../../dto/responses/org-role.dto';
-import { Ability, Auth, AuthType, Feature, Roles } from '@app/auth';
 import {
 	Actions,
 	AppFeature,
-	PropertiesCategoryService,
-	PropertiesPurposeService,
-	PropertiesStatusService,
-	PropertiesTypeService,
+	FILTER_OPTIONS,
+	FilterData,
 	UserRoles,
-	ViewFeaturePermissionDto,
-} from '../..';
-import { FILTER_OPTIONS, FilterData } from '../../config/config.constants';
+} from '../../config/config.constants';
 import { ViewFeatureDto } from '../../dto/responses/feature-response.dto';
 import { FeaturesService } from '../../services/features.service';
 import {
@@ -48,6 +43,18 @@ import {
 	UpdateRoleFeaturePermissionDto,
 } from '../../dto/requests/role.dto';
 import { PropertiesAmenityService } from '@app/common/services/properties-amenity.service';
+import { PropertiesCategoryService } from '@app/common/services/properties-category.service';
+import { PropertiesStatusService } from '@app/common/services/properties-status.service';
+import { PropertiesTypeService } from '@app/common/services/properties-type.service';
+import { PropertiesPurposeService } from '@app/common/services/properties-purpose.service';
+import { ViewFeaturePermissionDto } from '@app/common/dto/responses/feature-permission.dto';
+import { AuthType } from '@app/auth/types/firebase.types';
+import {
+	Ability,
+	Auth,
+	Feature,
+	Roles,
+} from '@app/auth/decorators/auth.decorator';
 
 @ApiTags('public')
 @ApiBearerAuth()

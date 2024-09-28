@@ -20,7 +20,11 @@ import {
 	ApiTags,
 } from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
-import { Actions, AppFeature, PageDto, UserRoles } from '@app/common';
+import {
+	Actions,
+	AppFeature,
+	UserRoles,
+} from '@app/common/config/config.constants';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
 import {
@@ -38,6 +42,7 @@ import { PropertyListDto } from '../dto/responses/property-list-response.dto';
 import { SubscriptionLimitGuard } from '@app/common/guards/subscription-limit.guard';
 import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 import { FileUploadService } from '@app/common/services/file-upload.service';
+import { PageDto } from '@app/common/dto/pagination/page.dto';
 
 @ApiTags('properties')
 @ApiBearerAuth()

@@ -7,9 +7,9 @@ import {
 	SwaggerDocumentOptions,
 } from '@nestjs/swagger';
 import { KlubiqDashboardModule } from './klubiq-dashboard.module';
-import { HttpExceptionFilter } from '@app/common';
-import { HttpResponseInterceptor } from '@app/common';
-import { CustomLogging } from '@app/common';
+import { HttpExceptionFilter } from '@app/common/filters/http-exception.filter';
+import { HttpResponseInterceptor } from '@app/common/interceptors/http-response.interceptor';
+import { CustomLogging } from '@app/common/config/custom-logging';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 

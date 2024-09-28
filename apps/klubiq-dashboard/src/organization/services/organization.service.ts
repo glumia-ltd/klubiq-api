@@ -8,18 +8,16 @@ import { CreateOrganizationDto } from '../dto/requests/create-organization.dto';
 import { UpdateOrganizationDto } from '../dto/requests/update-organization.dto';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import {
-	PageOptionsDto,
-	PageDto,
-	PageMetaDto,
-	ErrorMessages,
-} from '@app/common';
+import { ErrorMessages } from '@app/common/config/error.constant';
 import { OrganizationResponseDto } from '../dto/responses/organization-response.dto';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { ClsService } from 'nestjs-cls';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { plainToInstance } from 'class-transformer';
+import { PageOptionsDto } from '@app/common/dto/pagination/page-options.dto';
+import { PageMetaDto } from '@app/common/dto/pagination/page-meta.dto';
+import { PageDto } from '@app/common/dto/pagination/page.dto';
 
 @Injectable()
 export class OrganizationService {

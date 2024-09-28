@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { BaseRepository, UserInvitation } from '@app/common';
+import { BaseRepository } from '@app/common/repositories/base.repository';
+import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
 import { UserProfile } from '../database/entities/user-profile.entity';
 import { EntityManager } from 'typeorm';
 import { DateTime } from 'luxon';

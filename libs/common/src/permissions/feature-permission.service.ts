@@ -6,11 +6,12 @@ import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { FeaturePermission } from '../database/entities/feature-permission.entity';
 import { FeaturesPermissionRepository } from '../repositories/features-permission.repository';
-import { CacheKeys, ViewFeaturePermissionDto } from '..';
+import { ViewFeaturePermissionDto } from '../dto/responses/feature-permission.dto';
 import {
 	CreateFeaturePermissionDto,
 	UpdateFeaturePermissionDto,
 } from '../dto/requests/permission-requests.dto';
+import { CacheKeys } from '../config/config.constants';
 
 @Injectable()
 export class FeaturePermissionService {

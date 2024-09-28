@@ -1,4 +1,4 @@
-import { CreateTenantDto } from '@app/common';
+import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 import {
 	LeaseStatus,
 	PaymentFrequency,
