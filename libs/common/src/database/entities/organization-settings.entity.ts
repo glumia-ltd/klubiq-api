@@ -8,7 +8,7 @@ import {
 	OneToOne,
 	UpdateDateColumn,
 } from 'typeorm';
-import { Organization } from '../../../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
+import { Organization } from './organization.entity';
 
 @Entity({ schema: 'kdo' })
 export class OrganizationSettings extends AbstractEntity {

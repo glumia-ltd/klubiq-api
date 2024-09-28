@@ -3,7 +3,7 @@ import { BaseRepository, UserInvitation } from '@app/common';
 import { UserProfile } from '../database/entities/user-profile.entity';
 import { EntityManager } from 'typeorm';
 import { DateTime } from 'luxon';
-import { OrganizationUser } from 'apps/klubiq-dashboard/src/users/entities/organization-user.entity';
+import { OrganizationUser } from '@app/common/database/entities/organization-user.entity';
 
 @Injectable()
 export class UserProfilesRepository extends BaseRepository<UserProfile> {

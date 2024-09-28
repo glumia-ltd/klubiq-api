@@ -1,4 +1,4 @@
-import { Organization } from 'apps/klubiq-dashboard/src/organization/entities/organization.entity';
+import { Organization } from '@app/common/database/entities/organization.entity';
 import {
 	Column,
 	CreateDateColumn,

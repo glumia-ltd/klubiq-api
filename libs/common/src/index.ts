@@ -65,3 +65,7 @@ export * from './database/entities/organization-counter.entity';
 export * from './services/subscription-plan.service';
 export * from './services/organization-settings.service';
 export * from './services/organization-subscription.service';
+export * from './database/entities/organization-user.entity';
+export * from './database/entities/unit.entity';
+export * from './database/entities/property.entity';
+export * from './database/entities/property-address.entity';

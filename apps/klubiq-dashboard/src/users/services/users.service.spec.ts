@@ -12,7 +12,7 @@ import { classes } from '@automapper/classes';
 import { createMapper, Mapper } from '@automapper/core';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { BaseRepository } from '@app/common';
-import { OrganizationUser } from '../entities/organization-user.entity';
+import { OrganizationUser } from '@app/common/database/entities/organization-user.entity';
 import { NotFoundException } from '@nestjs/common';
 import { object } from 'joi';
 

@@ -10,9 +10,9 @@ import {
 	Index,
 	OneToOne,
 } from 'typeorm';
-import { OrganizationUser } from '../../users/entities/organization-user.entity';
+import { OrganizationUser } from './organization-user.entity';
 import { AutoMap } from '@automapper/classes';
-import { Property } from '../../properties/entities/property.entity';
+import { Property } from './property.entity';
 import { Transaction } from '@app/common/database/entities/transaction.entity';
 import { OrganizationSettings } from '@app/common/database/entities/organization-settings.entity';
 import { OrganizationSubscriptions } from '@app/common/database/entities/organization-subscriptions.entity';

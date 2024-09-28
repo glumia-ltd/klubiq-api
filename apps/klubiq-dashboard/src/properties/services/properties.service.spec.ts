@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PropertiesService } from './properties.service';
 import { BaseRepository } from '@app/common';
 import { Mapper, createMap, createMapper } from '@automapper/core';
-import { Property } from '../entities/property.entity';
+import { Property } from '@app/common/database/entities/property.entity';
 import { PropertyRepository } from '../repositories/properties.repository';
 import { EntityManager } from 'typeorm';
 import { ClsService } from 'nestjs-cls';

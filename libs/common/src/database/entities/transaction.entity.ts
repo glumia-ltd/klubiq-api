@@ -14,7 +14,7 @@ import {
 	RevenueType,
 	TransactionType,
 } from '../../config/config.constants';
-import { Organization } from '../../../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
+import { Organization } from './organization.entity';
 
 @Entity({ schema: 'poo' })
 export class Transaction {

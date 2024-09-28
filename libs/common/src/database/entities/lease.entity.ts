@@ -12,11 +12,10 @@ import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
 } from 'typeorm';
-//import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
 import { Transaction } from './transaction.entity';
 import { LeaseStatus, PaymentFrequency } from '../../config/config.constants';
 import { TenantUser } from './tenant.entity';
-import { Unit } from '../../../../../apps/klubiq-dashboard/src/properties/entities/unit.entity';
+import { Unit } from './unit.entity';
 
 @Entity({ schema: 'poo' })
 @Index('idx_lease_dates_status', ['startDate', 'endDate', 'status'])

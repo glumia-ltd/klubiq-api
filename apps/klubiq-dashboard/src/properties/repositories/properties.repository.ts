@@ -14,7 +14,7 @@ import {
 	TransactionType,
 } from '@app/common/config/config.constants';
 import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm';
-import { Property } from '../entities/property.entity';
+import { Property } from '@app/common/database/entities/property.entity';
 import {
 	CreatePropertyDto,
 	PropertyImageDto,
@@ -35,8 +35,8 @@ import { PropertyCategory } from '@app/common/database/entities/property-categor
 import { PropertyPurpose } from '@app/common/database/entities/property-purpose.entity';
 import { PropertyType } from '@app/common/database/entities/property-type.entity';
 import { PropertyStatus } from '@app/common/database/entities/property-status.entity';
-import { PropertyAddress } from '../entities/property-address.entity';
-import { Unit } from '../entities/unit.entity';
+import { PropertyAddress } from '@app/common/database/entities/property-address.entity';
+import { Unit } from '@app/common/database/entities/unit.entity';
 import { PropertyImage } from '@app/common/database/entities/property-image.entity';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 

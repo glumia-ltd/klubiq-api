@@ -1,9 +1,9 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { AutoMap } from '@automapper/classes';
 import { AbstractEntity } from './abstract-entity';
-import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
-import { Unit } from '../../../../../apps/klubiq-dashboard/src/properties/entities/unit.entity';
-import { Organization } from '../../../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
+import { Property } from './property.entity';
+import { Unit } from './unit.entity';
+import { Organization } from './organization.entity';
 
 @Entity({ schema: 'kdo' })
 export class PropertyImage extends AbstractEntity {

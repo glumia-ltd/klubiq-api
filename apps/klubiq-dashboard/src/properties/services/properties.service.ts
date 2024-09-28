@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyRepository } from '../repositories/properties.repository';
-import { Property } from '../entities/property.entity';
+import { Property } from '@app/common/database/entities/property.entity';
 import { ErrorMessages } from '@app/common/config/error.constant';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
@@ -29,7 +29,7 @@ import { UserRoles } from '@app/common/config/config.constants';
 import { Util } from '@app/common/helpers/util';
 import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
-import { Unit } from '../entities/unit.entity';
+import { Unit } from '@app/common/database/entities/unit.entity';
 import { plainToInstance } from 'class-transformer';
 import { filter, padEnd, reduce } from 'lodash';
 import { PropertyDetailsDto } from '../dto/responses/property-details.dto';

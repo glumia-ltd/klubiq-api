@@ -9,7 +9,7 @@ import {
 	RolesRepository,
 	UserProfile,
 } from '@app/common';
-import { OrganizationUser } from '../entities/organization-user.entity';
+import { OrganizationUser } from '@app/common/database/entities/organization-user.entity';
 import { UpdateUserDto } from '../dto/update-organization-user.dto';
 import { AuthUserResponseDto } from '@app/auth';
 import { UserResponseDto } from '../dto/create-organization-user.dto';

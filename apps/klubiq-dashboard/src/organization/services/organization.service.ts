@@ -1,4 +1,4 @@
-import { Organization } from '../entities/organization.entity';
+import { Organization } from '@app/common/database/entities/organization.entity';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';

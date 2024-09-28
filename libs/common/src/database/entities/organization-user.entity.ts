@@ -11,9 +11,9 @@ import {
 	UpdateDateColumn,
 	Index,
 } from 'typeorm';
-import { UserProfile } from '@app/common';
-import { OrganizationRole } from '@app/common';
-import { Organization } from '../../organization/entities/organization.entity';
+import { UserProfile } from './user-profile.entity';
+import { OrganizationRole } from './organization-role.entity';
+import { Organization } from './organization.entity';
 import { AutoMap } from '@automapper/classes';
 
 @Entity({ schema: 'poo' })

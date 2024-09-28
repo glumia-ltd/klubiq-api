@@ -12,9 +12,9 @@ import {
 	OneToMany,
 } from 'typeorm';
 import { Role } from './role.entity';
-import { OrganizationUser } from '../../../../../apps/klubiq-dashboard/src/users/entities/organization-user.entity';
+import { OrganizationUser } from './organization-user.entity';
 import { AutoMap } from '@automapper/classes';
-import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
+import { Property } from './property.entity';
 import { TenantUser } from './tenant.entity';
 import { UserPreferences } from './user-preferences.entity';
 

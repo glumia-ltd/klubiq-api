@@ -10,7 +10,7 @@ import {
 	//Order
 } from '@app/common';
 import { OrganizationResponseDto } from '../dto/responses/organization-response.dto';
-import { Organization } from '../entities/organization.entity';
+import { Organization } from '@app/common/database/entities/organization.entity';
 
 type MockRepository<T = any> = Partial<
 	Record<keyof BaseRepository<T>, jest.Mock>

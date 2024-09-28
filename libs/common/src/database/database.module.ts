@@ -24,6 +24,11 @@ import { SubscriptionPlan } from './entities/subscription-plan.entity';
 import { OrganizationCounter } from './entities/organization-counter.entity';
 import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
 import { ConfigService } from '@nestjs/config/dist/config.service';
+import { OrganizationUser } from './entities/organization-user.entity';
+import { Organization } from './entities/organization.entity';
+import { Unit } from './entities/unit.entity';
+import { Property } from './entities/property.entity';
+import { PropertyAddress } from './entities/property-address.entity';
 
 /// WE HAVE 2 SCHEMA TYPES. => KDO and POO
 /// KDO = Klubiq Data Object
@@ -53,6 +58,11 @@ import { ConfigService } from '@nestjs/config/dist/config.service';
 			SubscriptionPlan,
 			OrganizationSubscriptions,
 			OrganizationCounter,
+			OrganizationUser,
+			Organization,
+			Unit,
+			Property,
+			PropertyAddress,
 		]),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],
