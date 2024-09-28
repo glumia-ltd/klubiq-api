@@ -70,6 +70,9 @@ export class Lease {
 	@Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
 	securityDeposit?: number;
 
+	@Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
+	lateFeeAmount?: number;
+
 	@CreateDateColumn()
 	createdDate?: Date;
 
