@@ -34,7 +34,7 @@ export class Transaction {
 	@Column({ type: 'enum', enum: TransactionType })
 	transactionType: TransactionType;
 
-	@Column({ type: 'enum', enum: RevenueType })
+	@Column({ type: 'enum', enum: RevenueType, nullable: true })
 	revenueType: RevenueType;
 
 	@CreateDateColumn({ select: false })
