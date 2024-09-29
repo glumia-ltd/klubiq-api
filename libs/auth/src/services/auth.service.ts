@@ -422,7 +422,6 @@ export abstract class AuthService {
 			const userData = this.mapper.map(user, UserProfile, AuthUserResponseDto);
 			return userData;
 		} catch (err) {
-			console.log(err.message);
 			throw err;
 		}
 	}
