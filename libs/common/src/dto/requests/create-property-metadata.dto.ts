@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsJSON, IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsObject, IsString } from 'class-validator';
 
 export class CreatePropertyMetadataDto {
 	@AutoMap()
@@ -16,7 +16,7 @@ export class CreatePropertyMetadataDto {
 	displayText: string;
 
 	@ApiProperty({
-		type: 'json',
+		type: 'object',
 		example: {
 			iconName: 'value',
 			hasRooms: true,
@@ -27,7 +27,7 @@ export class CreatePropertyMetadataDto {
 		},
 	})
 	@IsNotEmpty()
-	@IsJSON()
+	@IsObject()
 	metaData: Record<string, any>;
 }
 

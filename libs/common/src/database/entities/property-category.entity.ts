@@ -16,6 +16,7 @@ export class PropertyCategory extends AbstractEntity {
 	@OneToMany(() => Property, (property) => property.category)
 	properties?: Property[];
 
+	@AutoMap()
 	@Column('jsonb', { nullable: true })
 	metaData?: Record<string, any>;
 }

@@ -22,6 +22,8 @@ export class PropertyMetadataDto {
 	@IsString()
 	displayText: string;
 
+	@AutoMap()
+	@ApiProperty()
 	@Expose()
 	metaData: Record<string, any>;
 }

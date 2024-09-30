@@ -130,7 +130,7 @@ export class PropertiesCategoryService {
 				this.cacheKey,
 				'id',
 				id,
-				updatePropertyCategoryDto,
+				updatedCategory,
 			);
 			return this.mapper.map(
 				updatedCategory,
