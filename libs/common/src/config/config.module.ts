@@ -45,6 +45,9 @@ import { CommonConfigService } from './common-config';
 				AWS_S3_ACCESS_KEY_ID: Joi.string().required(),
 				AWS_S3_SECRET_ACCESS_KEY: Joi.string().required(),
 				AWS_S3_REGION: Joi.string().required(),
+				CLOUDINARY_CLOUD_NAME: Joi.string().required(),
+				CLOUDINARY_API_KEY: Joi.string().required(),
+				CLOUDINARY_API_SECRET: Joi.string().required(),
 			}),
 		}),
 		AutomapperModule.forRoot([
@@ -74,7 +77,7 @@ import { CommonConfigService } from './common-config';
 				host: 'localhost',
 				port: 6379,
 				max: 10,
-				ttl: 300,
+				// ttl: 300,
 			}),
 		}),
 	],

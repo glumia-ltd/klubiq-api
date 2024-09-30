@@ -3,16 +3,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { EntityManager } from 'typeorm';
 import { UsersRepository } from '../repositories/users.repository';
-import {
-	RolesRepository,
-	UserProfile,
-	UserProfilesRepository,
-} from '@app/common';
+import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
+import { RolesRepository } from '@app/common/repositories/roles.repository';
+import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { classes } from '@automapper/classes';
 import { createMapper, Mapper } from '@automapper/core';
 import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
-import { BaseRepository } from '@app/common';
-import { OrganizationUser } from '../entities/organization-user.entity';
+import { BaseRepository } from '@app/common/repositories/base.repository';
+import { OrganizationUser } from '@app/common/database/entities/organization-user.entity';
 import { NotFoundException } from '@nestjs/common';
 import { object } from 'joi';
 

@@ -4,10 +4,8 @@ import { Cache } from 'cache-manager';
 
 @Injectable()
 export class CacheService {
-	constructor(
-		@Inject(CACHE_MANAGER) private cacheManager: Cache,
-		private readonly cacheTTL?: number,
-	) {}
+	private readonly cacheTTL: number = 86400;
+	constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
 	// gets all data by cache key
 	async getCache<T>(cacheKey: string): Promise<T[]> {
@@ -19,8 +17,12 @@ export class CacheService {
 	}
 
 	// sets all cache data
-	async setCache<T>(data: T, cacheKey: string): Promise<void> {
-		await this.cacheManager.set(cacheKey, data, this.cacheTTL);
+	async setCache<T>(
+		data: T,
+		cacheKey: string,
+		ttl: number = this.cacheTTL,
+	): Promise<void> {
+		await this.cacheManager.set(cacheKey, data, ttl);
 	}
 
 	// gets a cached data by Id or identifier

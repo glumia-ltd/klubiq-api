@@ -5,12 +5,9 @@ import { AutomapperModule, getMapperToken } from '@automapper/nestjs';
 import { createMap, createMapper, Mapper } from '@automapper/core';
 import { classes } from '@automapper/classes';
 import { EntityManager } from 'typeorm';
-import {
-	BaseRepository,
-	//Order
-} from '@app/common';
+import { BaseRepository } from '@app/common/repositories/base.repository';
 import { OrganizationResponseDto } from '../dto/responses/organization-response.dto';
-import { Organization } from '../entities/organization.entity';
+import { Organization } from '@app/common/database/entities/organization.entity';
 
 type MockRepository<T = any> = Partial<
 	Record<keyof BaseRepository<T>, jest.Mock>

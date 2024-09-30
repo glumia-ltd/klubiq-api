@@ -1,4 +1,4 @@
-import { Organization } from '../../../../../apps/klubiq-dashboard/src/organization/entities/organization.entity';
+import { Organization } from './organization.entity';
 import {
 	Column,
 	Entity,

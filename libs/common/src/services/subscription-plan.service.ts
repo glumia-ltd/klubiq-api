@@ -14,10 +14,7 @@ export class SubscriptionPlanService {
 	private readonly cacheTTL = 60000;
 	private readonly logger = new Logger(SubscriptionPlanService.name);
 	private readonly cacheKey = CacheKeys.SUBSCRIPTION_PLANS;
-	private readonly cacheService = new CacheService(
-		this.cacheManager,
-		this.cacheTTL,
-	);
+	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		private readonly subscriptionPlanRepository: SubscriptionPlanRepository,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,

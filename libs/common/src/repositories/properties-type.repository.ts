@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BaseRepository, PropertyType } from '@app/common';
+import { BaseRepository } from './base.repository';
+import { PropertyType } from '../database/entities/property-type.entity';
 import { EntityManager } from 'typeorm';
 
 @Injectable()

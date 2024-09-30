@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BaseRepository } from '@app/common';
+import { BaseRepository } from '@app/common/repositories/base.repository';
 import { EntityManager } from 'typeorm';
 import { SubscriptionPlan } from '../database/entities/subscription-plan.entity';
 import { OrganizationSubscriptions } from '../database/entities/organization-subscriptions.entity';

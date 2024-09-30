@@ -11,7 +11,7 @@ import {
 	CreatePermissionDto,
 	UpdatePermissionDto,
 } from '../dto/requests/permission-requests.dto';
-import { CacheKeys } from '..';
+import { CacheKeys } from '@app/common/config/config.constants';
 
 @Injectable()
 export class PermissionsService {

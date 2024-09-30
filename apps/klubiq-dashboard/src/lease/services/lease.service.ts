@@ -37,7 +37,7 @@ import { DateTime } from 'luxon';
 export class LeaseService implements ILeaseService {
 	private readonly logger = new Logger(LeaseService.name);
 	private readonly cacheKeyPrefix = 'leases';
-	private readonly cacheTTL = 500;
+	private readonly cacheTTL = 180;
 
 	constructor(
 		private readonly configService: ConfigService,
@@ -211,15 +211,9 @@ export class LeaseService implements ILeaseService {
 	}
 	async getPreSignedUploadUrlForPropertyImage(
 		data: FileUploadDto,
-	): Promise<string> {
+	): Promise<any> {
 		try {
-			const bucketName = this.configService.get<string>(
-				'PROPERTY_IMAGE_BUCKET_NAME',
-			);
-			const url = await this.uploadService.generatePresignedUrl(
-				data,
-				bucketName,
-			);
+			const url = await this.uploadService.getUploadSignature(data);
 			return url;
 		} catch (error) {
 			this.logger.error(

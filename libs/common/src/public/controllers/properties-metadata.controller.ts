@@ -11,7 +11,6 @@ import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PropertiesPurposeService } from '@app/common/services/properties-purpose.service';
 import { PropertiesStatusService } from '@app/common/services/properties-status.service';
 import { PropertiesTypeService } from '@app/common/services/properties-type.service';
-import { PropertyCategory } from '@app/common/database/entities/property-category.entity';
 import { PropertyPurpose } from '@app/common/database/entities/property-purpose.entity';
 import { PropertyStatus } from '@app/common/database/entities/property-status.entity';
 import { PropertyType } from '@app/common/database/entities/property-type.entity';
@@ -50,7 +49,7 @@ export class PropertyMetadataController {
 	})
 	async createPropertyCategory(
 		@Body() createPropertyCategoryDto: CreatePropertyMetadataDto,
-	): Promise<PropertyCategory> {
+	): Promise<PropertyMetadataDto> {
 		return this.propertyCategoryService.createPropertyCategory(
 			createPropertyCategoryDto,
 		);
@@ -63,7 +62,7 @@ export class PropertyMetadataController {
 	})
 	async getPropertyCategoryById(
 		@Param('id') id: number,
-	): Promise<PropertyCategory> {
+	): Promise<PropertyMetadataDto> {
 		return this.propertyCategoryService.getPropertyCategoryById(id);
 	}
 
@@ -87,7 +86,7 @@ export class PropertyMetadataController {
 	async updatePropertyCategory(
 		@Param('id') id: number,
 		@Body() updatePropertyCategoryDto: UpdatePropertyMetadataDto,
-	): Promise<PropertyCategory> {
+	): Promise<PropertyMetadataDto> {
 		return this.propertyCategoryService.updatePropertyCategory(
 			id,
 			updatePropertyCategoryDto,

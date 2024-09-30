@@ -9,7 +9,10 @@ import {
 } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { Util } from '@app/common/helpers/util';
 import { find, forEach, reduce } from 'lodash';
-import { RevenueType, TransactionType } from '@app/common';
+import {
+	RevenueType,
+	TransactionType,
+} from '@app/common/config/config.constants';
 import { XlsxFileDownloadDto } from '@app/common/dto/requests/xlsx-file-download.dto';
 
 @Injectable()

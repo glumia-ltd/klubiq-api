@@ -7,9 +7,9 @@ import {
 	mapFrom,
 } from '@automapper/core';
 import { AutomapperProfile, InjectMapper } from '@automapper/nestjs';
-import { UserProfile } from '@app/common';
+import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { UserResponseDto } from '../dto/create-organization-user.dto';
-import { OrganizationUser } from '../entities/organization-user.entity';
+import { OrganizationUser } from '@app/common/database/entities/organization-user.entity';
 
 export class OrgUserMapProfile extends AutomapperProfile {
 	constructor(@InjectMapper('MAPPER') mapper: Mapper) {

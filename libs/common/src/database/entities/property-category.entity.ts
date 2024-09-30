@@ -1,7 +1,7 @@
 import { Entity, Column, OneToMany } from 'typeorm';
 import { AutoMap } from '@automapper/classes';
 import { AbstractEntity } from './abstract-entity';
-import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
+import { Property } from './property.entity';
 
 @Entity({ schema: 'kdo' })
 export class PropertyCategory extends AbstractEntity {
@@ -15,4 +15,8 @@ export class PropertyCategory extends AbstractEntity {
 
 	@OneToMany(() => Property, (property) => property.category)
 	properties?: Property[];
+
+	@AutoMap()
+	@Column('jsonb', { nullable: true })
+	metaData?: Record<string, any>;
 }

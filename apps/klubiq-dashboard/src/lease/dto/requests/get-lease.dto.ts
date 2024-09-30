@@ -1,4 +1,4 @@
-import { PageOptionsDto } from '@app/common';
+import { PageOptionsDto } from '@app/common/dto/pagination/page-options.dto';
 import {
 	LeaseStatus,
 	PaymentFrequency,

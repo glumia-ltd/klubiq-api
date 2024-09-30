@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyRepository } from '../repositories/properties.repository';
-import { Property } from '../entities/property.entity';
+import { Property } from '@app/common/database/entities/property.entity';
 import { ErrorMessages } from '@app/common/config/error.constant';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
@@ -29,7 +29,7 @@ import { UserRoles } from '@app/common/config/config.constants';
 import { Util } from '@app/common/helpers/util';
 import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
-import { Unit } from '../entities/unit.entity';
+import { Unit } from '@app/common/database/entities/unit.entity';
 import { plainToInstance } from 'class-transformer';
 import { filter, padEnd, reduce } from 'lodash';
 import { PropertyDetailsDto } from '../dto/responses/property-details.dto';
@@ -42,7 +42,7 @@ import { CommonConfigService } from '@app/common/config/common-config';
 export class PropertiesService implements IPropertyMetrics {
 	private readonly logger = new Logger(PropertiesService.name);
 	private readonly cacheKeyPrefix = 'properties';
-	private readonly cacheTTL = 60000;
+	private readonly cacheTTL = 90;
 	constructor(
 		@InjectRepository(PropertyRepository)
 		private readonly propertyRepository: PropertyRepository,
@@ -243,7 +243,7 @@ export class PropertiesService implements IPropertyMetrics {
 			PropertyDetailsDto,
 			{
 				...property,
-				totalRent: Number(totalRent.toFixed(2)),
+				totalRent: Number(totalRent?.toFixed(2)),
 				occupiedUnitCount,
 				vacantUnitCount,
 				totalTenants,
@@ -592,6 +592,30 @@ export class PropertiesService implements IPropertyMetrics {
 			const logMessage = `Error assigning property ${propertyUuid} to ${managerDto.isPropertyOwner ? 'owner' : 'manager'}`;
 			this.logger.error(error.message, logMessage, error);
 			throw new BadRequestException(logMessage, {
+				cause: new Error(),
+				description: error.message,
+			});
+		}
+	}
+
+	async deleteUnitsFromProperty(
+		unitIds: number[],
+		propertyUuid: string,
+	): Promise<void> {
+		try {
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser.organizationId)
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			await this.propertyRepository.deleteUnits(
+				unitIds,
+				currentUser.organizationId,
+				propertyUuid,
+				currentUser.uid,
+				currentUser.organizationRole === UserRoles.ORG_OWNER,
+			);
+		} catch (error) {
+			this.logger.error('Error deleting Units from Property', error);
+			throw new BadRequestException(`Error deleting Units from Property.`, {
 				cause: new Error(),
 				description: error.message,
 			});

@@ -9,7 +9,7 @@ import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
 import { JwtService } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { HttpModule } from '@nestjs/axios';
-import { CacheService } from '@app/common/services/cache.service';
+// import { CacheService } from '@app/common/services/cache.service';
 import { LandlordAuthService } from './services/landlord-auth.service';
 
 import _firebaseConfig from '../../../config.json';
@@ -73,10 +73,10 @@ const firebaseAdminProvider = {
 		MailerSendService,
 		OrgUserProfile,
 		OrganizationRepository,
-		{
-			provide: CacheService,
-			useFactory: () => new CacheService(null, 60000),
-		},
+		// {
+		// 	provide: CacheService,
+		// 	useFactory: () => new CacheService(null),
+		// },
 		UserProfilesRepository,
 	],
 	exports: [LandlordAuthService],

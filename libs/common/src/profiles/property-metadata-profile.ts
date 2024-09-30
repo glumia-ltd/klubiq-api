@@ -1,4 +1,10 @@
-import { Mapper, MappingProfile, createMap } from '@automapper/core';
+import {
+	Mapper,
+	MappingProfile,
+	createMap,
+	forMember,
+	mapFrom,
+} from '@automapper/core';
 import { AutomapperProfile, InjectMapper } from '@automapper/nestjs';
 import { PropertyCategory } from '../database/entities/property-category.entity';
 import {
@@ -19,7 +25,15 @@ export class PropertyMetaDataProfile extends AutomapperProfile {
 		return (mapper) => {
 			createMap(mapper, PropertyCategory, CreatePropertyMetadataDto);
 			createMap(mapper, PropertyCategory, UpdatePropertyMetadataDto);
-			createMap(mapper, PropertyCategory, PropertyMetadataDto);
+			createMap(
+				mapper,
+				PropertyCategory,
+				PropertyMetadataDto,
+				forMember(
+					(d) => d.metaData,
+					mapFrom((s) => s.metaData),
+				),
+			);
 
 			createMap(mapper, PropertyType, CreatePropertyMetadataDto);
 			createMap(mapper, PropertyType, UpdatePropertyMetadataDto);

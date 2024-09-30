@@ -1,14 +1,15 @@
-import { Organization } from '../entities/organization.entity';
+import { Organization } from '@app/common/database/entities/organization.entity';
 import {
 	Injectable,
 	Logger,
 	NotFoundException,
 	UnauthorizedException,
 } from '@nestjs/common';
-import { BaseRepository, UserRoles } from '@app/common';
+import { UserRoles } from '@app/common/config/config.constants';
+import { BaseRepository } from '@app/common/repositories/base.repository';
 import { EntityManager } from 'typeorm';
 import { UpdateOrganizationDto } from '../dto/requests/update-organization.dto';
-import { OrganizationUser } from '../../users/entities/organization-user.entity';
+import { OrganizationUser } from '@app/common/database/entities/organization-user.entity';
 
 @Injectable()
 export class OrganizationRepository extends BaseRepository<Organization> {

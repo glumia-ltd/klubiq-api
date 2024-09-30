@@ -26,6 +26,8 @@ import { SubscriptionModule } from '@app/common/public/subscription/subscription
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { EventListenersModule } from './event-listeners/event-listeners.module';
 import { SSEAuthGuard } from '@app/auth/guards/sse-auth.guard';
+import { CacheService } from '@app/common/services/cache.service';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
 	imports: [
@@ -47,6 +49,7 @@ import { SSEAuthGuard } from '@app/auth/guards/sse-auth.guard';
 		RepositoriesModule,
 		SubscriptionModule,
 		UsersModule,
+		TransactionsModule,
 	],
 	providers: [
 		ApikeyGuard,
@@ -69,6 +72,10 @@ import { SSEAuthGuard } from '@app/auth/guards/sse-auth.guard';
 		{
 			provide: APP_GUARD,
 			useClass: RolesGuard,
+		},
+		{
+			provide: CacheService,
+			useFactory: () => new CacheService(null),
 		},
 	],
 	exports: [UsersModule],

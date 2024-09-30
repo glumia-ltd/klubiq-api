@@ -24,7 +24,7 @@ import {
 	VerifyEmailDto,
 } from './dto/requests/user-login.dto';
 import { AuthType } from './types/firebase.types';
-import { UserRoles } from '@app/common';
+import { UserRoles } from '@app/common/config/config.constants';
 import { LandlordAuthService } from './services/landlord-auth.service';
 import { AdminAuthService } from './services/admin-auth.service';
 import { CreateSuperAdminDTO } from './dto/requests/admin-user.dto';

@@ -115,16 +115,22 @@ export class PropertiesCategoryService {
 	): Promise<PropertyMetadataDto> {
 		try {
 			const propertyCategory = await this.getPropertyCategoryById(id);
-			Object.assign(propertyCategory, updatePropertyCategoryDto);
-			const updatedCategory = await this.propertyCategoryRepository.save({
-				...propertyCategory,
-				...updatePropertyCategoryDto,
-			});
+			if (!propertyCategory) {
+				throw new NotFoundException('Property category not found');
+			}
+			propertyCategory.name = updatePropertyCategoryDto.name;
+			propertyCategory.displayText = updatePropertyCategoryDto.displayText;
+			propertyCategory.metaData = {
+				...propertyCategory.metaData,
+				...updatePropertyCategoryDto.metaData,
+			};
+			const updatedCategory =
+				await this.propertyCategoryRepository.save(propertyCategory);
 			await this.cacheService.updateCacheAfterUpsert<PropertyMetadataDto>(
 				this.cacheKey,
 				'id',
 				id,
-				updatePropertyCategoryDto,
+				updatedCategory,
 			);
 			return this.mapper.map(
 				updatedCategory,

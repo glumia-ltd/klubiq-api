@@ -4,7 +4,7 @@ import {
 	MaintenanceType,
 } from '../../config/config.constants';
 import { AutoMap } from '@automapper/classes';
-import { Property } from '../../../../../apps/klubiq-dashboard/src/properties/entities/property.entity';
+import { Property } from './property.entity';
 import {
 	Column,
 	CreateDateColumn,

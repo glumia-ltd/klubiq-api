@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import {
 	ApiBearerAuth,
+	ApiBody,
 	ApiCreatedResponse,
 	ApiOkResponse,
 	ApiTags,
@@ -18,18 +19,13 @@ import {
 	OrgRoleResponseDto,
 	ViewSystemRoleDto,
 } from '../../dto/responses/org-role.dto';
-import { Ability, Auth, AuthType, Feature, Roles } from '@app/auth';
 import {
 	Actions,
 	AppFeature,
-	PropertiesCategoryService,
-	PropertiesPurposeService,
-	PropertiesStatusService,
-	PropertiesTypeService,
+	FILTER_OPTIONS,
+	FilterData,
 	UserRoles,
-	ViewFeaturePermissionDto,
-} from '../..';
-import { FILTER_OPTIONS, FilterData } from '../../config/config.constants';
+} from '../../config/config.constants';
 import { ViewFeatureDto } from '../../dto/responses/feature-response.dto';
 import { FeaturesService } from '../../services/features.service';
 import {
@@ -44,10 +40,27 @@ import {
 import { RolesService } from '../../permissions/roles.service';
 import {
 	CreateRoleDto,
+	CreateRoleFeaturePermission,
 	UpdateRoleDto,
 	UpdateRoleFeaturePermissionDto,
 } from '../../dto/requests/role.dto';
 import { PropertiesAmenityService } from '@app/common/services/properties-amenity.service';
+import { PropertiesCategoryService } from '@app/common/services/properties-category.service';
+import { PropertiesStatusService } from '@app/common/services/properties-status.service';
+import { PropertiesTypeService } from '@app/common/services/properties-type.service';
+import { PropertiesPurposeService } from '@app/common/services/properties-purpose.service';
+import {
+	ViewFeaturePermissionDto,
+	ViewPermissionDto,
+} from '@app/common/dto/responses/feature-permission.dto';
+import { AuthType } from '@app/auth/types/firebase.types';
+import {
+	Ability,
+	Auth,
+	Feature,
+	Roles,
+} from '@app/auth/decorators/auth.decorator';
+import { PermissionsService } from '@app/common/permissions/permissions.service';
 
 @ApiTags('public')
 @ApiBearerAuth()
@@ -64,6 +77,7 @@ export class PublicController {
 		private readonly featurePermissionService: FeaturePermissionService,
 		private readonly roleService: RolesService,
 		private readonly propertyAmenityService: PropertiesAmenityService,
+		private readonly permissionService: PermissionsService,
 	) {}
 
 	@Get('property-metadata')
@@ -110,6 +124,20 @@ export class PublicController {
 		};
 	}
 
+	//#region PERMISSIONS
+	@Get('permissions')
+	@ApiOkResponse({
+		description: 'Get all permissions',
+		type: [ViewPermissionDto],
+	})
+	async getPermissions(): Promise<ViewPermissionDto[]> {
+		try {
+			const permissions = await this.permissionService.getPermissions();
+			return permissions;
+		} catch (error) {
+			throw error;
+		}
+	}
 	//#region FEATURES
 	@Get('features')
 	@ApiOkResponse({ description: 'Get all features', type: [ViewFeatureDto] })
@@ -367,11 +395,15 @@ export class PublicController {
 	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Ability(Actions.WRITE)
 	@Post('organization-roles')
+	@ApiBody({
+		description: 'Creates a new organization role for the app',
+		type: CreateRoleFeaturePermission,
+	})
 	@ApiCreatedResponse({
 		description: 'Creates a new organization role for the app',
 	})
 	async createOrgRole(
-		@Body() createOrgRoleDto: CreateRoleDto,
+		@Body() createOrgRoleDto: CreateRoleFeaturePermission,
 	): Promise<OrgRoleResponseDto> {
 		try {
 			return await this.roleService.createOrgRole(createOrgRoleDto);

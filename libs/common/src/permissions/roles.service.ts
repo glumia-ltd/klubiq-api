@@ -15,12 +15,10 @@ import {
 	UpdateRoleDto,
 	UpdateRoleFeaturePermissionDto,
 } from '../dto/requests/role.dto';
-import {
-	CacheKeys,
-	OrganizationRole,
-	OrganizationRolesRepository,
-	RolesRepository,
-} from '..';
+import { RolesRepository } from '../repositories/roles.repository';
+import { OrganizationRolesRepository } from '../repositories/organization-roles.repository';
+import { CacheKeys } from '../config/config.constants';
+import { OrganizationRole } from '../database/entities/organization-role.entity';
 
 @Injectable()
 export class RolesService {

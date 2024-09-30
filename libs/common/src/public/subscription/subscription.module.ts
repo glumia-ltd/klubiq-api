@@ -1,4 +1,3 @@
-import { CacheService } from '@app/common/services/cache.service';
 import { Module } from '@nestjs/common';
 import { SubscriptionController } from './subscription.controller';
 import { SubscriptionPlanController } from './subscription-plan.controller';
@@ -13,10 +12,6 @@ import { SubscriptionPlanService } from '@app/common/services/subscription-plan.
 @Module({
 	controllers: [SubscriptionPlanController, SubscriptionController],
 	providers: [
-		{
-			provide: CacheService,
-			useFactory: () => new CacheService(null, 60 * 60 * 24),
-		},
 		OrganizationSubscriptionRepository,
 		OrganizationCounterRepository,
 		SubscriptionPlanRepository,

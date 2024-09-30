@@ -13,8 +13,8 @@ import {
 	RevenueType,
 	TransactionType,
 } from '@app/common/config/config.constants';
-import { Brackets, EntityManager, SelectQueryBuilder } from 'typeorm';
-import { Property } from '../entities/property.entity';
+import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm';
+import { Property } from '@app/common/database/entities/property.entity';
 import {
 	CreatePropertyDto,
 	PropertyImageDto,
@@ -35,8 +35,8 @@ import { PropertyCategory } from '@app/common/database/entities/property-categor
 import { PropertyPurpose } from '@app/common/database/entities/property-purpose.entity';
 import { PropertyType } from '@app/common/database/entities/property-type.entity';
 import { PropertyStatus } from '@app/common/database/entities/property-status.entity';
-import { PropertyAddress } from '../entities/property-address.entity';
-import { Unit } from '../entities/unit.entity';
+import { PropertyAddress } from '@app/common/database/entities/property-address.entity';
+import { Unit } from '@app/common/database/entities/unit.entity';
 import { PropertyImage } from '@app/common/database/entities/property-image.entity';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 
@@ -690,12 +690,38 @@ export class PropertyRepository extends BaseRepository<Property> {
 			throw new Error('You are not authorized to update this property');
 		}
 		if (
-			!isOrgOwner &&
-			(!unit.property.owner || unit.property.owner.firebaseId !== userId) &&
-			(!unit.property.manager || unit.property.manager.firebaseId !== userId)
+			(!isOrgOwner &&
+				(!unit.property.owner || unit.property.owner.firebaseId !== userId)) ||
+			!unit.property.manager ||
+			unit.property.manager.firebaseId !== userId
 		) {
 			throw new Error('You are not authorized to update this property');
 		}
 		await this.manager.remove(Unit, unit);
+	}
+
+	async deleteUnits(
+		ids: number[],
+		orgUuid: string,
+		propertyUuid: string,
+		userId: string,
+		isOrgOwner: boolean,
+	) {
+		const property = await this.manager.findOne(Property, {
+			where: { uuid: propertyUuid },
+		});
+		if (!property || property.organization.organizationUuid !== orgUuid) {
+			throw new Error('You are not authorized to update this property');
+		}
+		if (
+			(!isOrgOwner &&
+				(!property.owner || property.owner.firebaseId !== userId)) ||
+			!property.manager ||
+			property.manager.firebaseId !== userId
+		) {
+			throw new Error('You are not authorized to update this property');
+		}
+		const unitsToRemove = await this.manager.findBy(Unit, { id: In(ids) });
+		await this.manager.remove(unitsToRemove);
 	}
 }

@@ -18,7 +18,7 @@ import {
 	UpdateDateColumn,
 } from 'typeorm';
 import { PropertyAddress } from './property-address.entity';
-import { Organization } from '../../organization/entities/organization.entity';
+import { Organization } from '@app/common/database/entities/organization.entity';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { Maintenance } from '@app/common/database/entities/maintenance.entity';
 import { Unit } from './unit.entity';
