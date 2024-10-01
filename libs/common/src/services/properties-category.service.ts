@@ -34,10 +34,11 @@ export class PropertiesCategoryService {
 		createPropertyCategoryDto: CreatePropertyMetadataDto,
 	): Promise<PropertyMetadataDto> {
 		try {
-			const { name, displayText } = createPropertyCategoryDto;
+			const { name, displayText, metaData } = createPropertyCategoryDto;
 			const propertyCategory = this.propertyCategoryRepository.create({
 				name,
 				displayText,
+				metaData,
 			});
 			const createdCategory =
 				await this.propertyCategoryRepository.save(propertyCategory);
