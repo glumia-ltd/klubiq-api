@@ -27,6 +27,7 @@ import { ClsService } from 'nestjs-cls';
 import { SharedClsStore } from '../dto/public/shared-clsstore';
 import { ActiveUserData } from '@app/auth';
 import { OrganizationCounter } from '../database/entities/organization-counter.entity';
+import { multiply } from 'lodash';
 
 @Injectable()
 export class OrganizationSubscriptionService {
@@ -171,8 +172,10 @@ export class OrganizationSubscriptionService {
 			propertyLimit: subscription.subscription_plan.property_limit,
 			unitLimit: subscription.subscription_plan.unit_limit,
 			userLimit: subscription.subscription_plan.user_limit,
-			documentStorageLimit:
+			documentStorageLimit: multiply(
+				1048576,
 				subscription.subscription_plan.document_storage_limit,
+			),
 		};
 		await this.cacheService.setCache(
 			planLimits,
