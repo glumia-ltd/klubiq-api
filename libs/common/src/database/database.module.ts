@@ -29,6 +29,7 @@ import { Organization } from './entities/organization.entity';
 import { Unit } from './entities/unit.entity';
 import { Property } from './entities/property.entity';
 import { PropertyAddress } from './entities/property-address.entity';
+import { NotificationSubscription } from './entities/notification-subscription.entity';
 
 /// WE HAVE 2 SCHEMA TYPES. => KDO and POO
 /// KDO = Klubiq Data Object
@@ -63,6 +64,7 @@ import { PropertyAddress } from './entities/property-address.entity';
 			Unit,
 			Property,
 			PropertyAddress,
+			NotificationSubscription,
 		]),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],

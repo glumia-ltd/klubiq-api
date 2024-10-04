@@ -32,6 +32,14 @@ export class PropertyImageDto {
 	@IsNumber()
 	@IsOptional()
 	id?: number;
+
+	@IsString()
+	@IsOptional()
+	externalId?: string;
+
+	@IsString()
+	@IsOptional()
+	fileName?: string;
 }
 
 export class CreatePropertyDto {

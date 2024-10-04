@@ -23,6 +23,12 @@ export class PropertyImage extends AbstractEntity {
 	@Column({ type: 'decimal', nullable: false, default: 0 })
 	fileSize?: number;
 
+	@Column({ type: 'varchar', nullable: true })
+	externalId?: string;
+
+	@Column({ type: 'varchar', nullable: true })
+	fileName?: string;
+
 	@AutoMap()
 	@Column({ default: false })
 	isMain?: boolean;
