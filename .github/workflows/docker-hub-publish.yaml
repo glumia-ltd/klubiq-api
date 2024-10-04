@@ -51,6 +51,8 @@ env:
   CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
   CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
   CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+  WEB_VAPID_PUSH_PUBLIC_KEY: ${{ secrets.WEB_PUSH_NOTIFICATION_PUBLIC_KEY }}
+  WEB_VAPID_PUSH_PRIVATE_KEY: ${{ secrets.WEB_VAPID_PUSH_PRIVATE_KEY }}
 
 jobs:
   # build:
@@ -120,6 +122,8 @@ jobs:
               CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
               CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
               CLOUDINARY_API_SECRET=${{secrets.CLOUDINARY_API_SECRET}}
+              WEB_VAPID_PUSH_PUBLIC_KEY: ${{ secrets.WEB_PUSH_NOTIFICATION_PUBLIC_KEY }}
+              WEB_VAPID_PUSH_PRIVATE_KEY: ${{ secrets.WEB_VAPID_PUSH_PRIVATE_KEY }}
           EOF
 
       - name: Login and push to Docker Hub

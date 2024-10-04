@@ -48,6 +48,8 @@ import { CommonConfigService } from './common-config';
 				CLOUDINARY_CLOUD_NAME: Joi.string().required(),
 				CLOUDINARY_API_KEY: Joi.string().required(),
 				CLOUDINARY_API_SECRET: Joi.string().required(),
+				WEB_VAPID_PUSH_PUBLIC_KEY: Joi.string().required(),
+				WEB_VAPID_PUSH_PRIVATE_KEY: Joi.string().required(),
 			}),
 		}),
 		AutomapperModule.forRoot([
