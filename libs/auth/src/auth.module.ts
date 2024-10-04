@@ -51,12 +51,9 @@ const firebaseAdminProvider = {
 		if (apps.length > 0) {
 			return apps[0];
 		} else {
-			return admin.initializeApp(
-				{
-					credential: admin.credential.cert(firebase_params),
-				},
-				'klubiq',
-			);
+			return admin.initializeApp({
+				credential: admin.credential.cert(firebase_params),
+			});
 		}
 	},
 };
