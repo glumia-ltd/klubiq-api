@@ -11,7 +11,6 @@ import { ClsService } from 'nestjs-cls';
 import { SharedClsStore } from '../dto/public/shared-clsstore';
 import { ActiveUserData } from '@app/auth';
 import { v2 as cloudinary } from 'cloudinary';
-import { DateTime } from 'luxon';
 import { OrganizationSubscriptionService } from './organization-subscription.service';
 
 @Injectable()
@@ -63,7 +62,6 @@ export class FileUploadService {
 				'You are not authorized to upload files for this organization',
 			);
 		}
-		const timestamp = DateTime.utc().toUnixInteger();
 		const storageLimit = (
 			await this.orgSubscriptionService.getSubscriptionLimits(
 				this.currentUser.organizationId,
@@ -79,8 +77,7 @@ export class FileUploadService {
 		}
 		const signature = cloudinary.utils.api_sign_request(
 			{
-				timestamp,
-				eager: [{ width: 300, height: 300, crop: 'thumb', gravity: 'face' }],
+				timestamp: fileDataDto.timestamp,
 				folder: `${fileDataDto.folder}/${fileDataDto.organization}`,
 			},
 			this.configService.get<string>('CLOUDINARY_API_SECRET'),

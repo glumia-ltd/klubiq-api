@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { Expose } from 'class-transformer';
-import { IsString, IsUrl } from 'class-validator';
+import { IsNumber, IsString, IsUrl } from 'class-validator';
 
 export class FileUploadDto {
 	@AutoMap()
@@ -13,6 +13,9 @@ export class FileUploadDto {
 
 	@IsString()
 	organizationUuid: string;
+
+	@IsNumber()
+	timestamp: number;
 }
 export class PresignedUrlDto {
 	@Expose()

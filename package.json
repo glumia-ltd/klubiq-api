@@ -60,6 +60,7 @@
     "short-unique-id": "^5.2.0",
     "typeorm": "^0.3.20",
     "uuid": "^9.0.1",
+    "web-push": "^3.6.7",
     "winston": "^3.12.0",
     "winston-cloudwatch": "^6.3.0",
     "winston-daily-rotate-file": "^5.0.0",
@@ -119,7 +120,8 @@
     ],
     "moduleNameMapper": {
       "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1",
-      "^@app/auth(|/.*)$": "<rootDir>/libs/auth/src/$1"
+      "^@app/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
+      "^@app/notifications(|/.*)$": "<rootDir>/libs/notifications/src/$1"
     }
   }
 }

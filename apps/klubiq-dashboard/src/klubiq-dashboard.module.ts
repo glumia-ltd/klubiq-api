@@ -28,6 +28,7 @@ import { EventListenersModule } from './event-listeners/event-listeners.module';
 import { SSEAuthGuard } from '@app/auth/guards/sse-auth.guard';
 import { CacheService } from '@app/common/services/cache.service';
 import { TransactionsModule } from './transactions/transactions.module';
+import { NotificationsModule } from '@app/notifications/notifications.module';
 
 @Module({
 	imports: [
@@ -50,6 +51,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 		SubscriptionModule,
 		UsersModule,
 		TransactionsModule,
+		NotificationsModule,
 	],
 	providers: [
 		ApikeyGuard,
