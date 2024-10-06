@@ -80,6 +80,7 @@ export class PublicController {
 		private readonly permissionService: PermissionsService,
 	) {}
 
+	@Auth(AuthType.None)
 	@Get('property-metadata')
 	async getPropertyFormViewData() {
 		const categories =
