@@ -3,19 +3,21 @@ import { CacheKeys } from '../config/config.constants';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectMapper } from '@automapper/nestjs';
-import { Repository } from 'typeorm';
 import { Mapper } from '@automapper/core';
 import { ClsService } from 'nestjs-cls';
 import { SharedClsStore } from '../dto/public/shared-clsstore';
 import { ErrorMessages } from '../config/error.constant';
 import { OrganizationSettings } from '../database/entities/organization-settings.entity';
+import { OrganizationSettingsRepository } from '../repositories/OrganizationSettingsRepository';
 
 @Injectable()
 export class OrganizationSettingsService {
 	private readonly logger = new Logger(OrganizationSettingsService.name);
 	private readonly cacheKey = CacheKeys.ORGANIZATION_SETTINGS;
 	constructor(
-		private readonly organizationSettingsRepository: Repository<OrganizationSettings>,
+		//@InjectRepository(OrganizationSettings)
+		private readonly organizationSettingsRepository: OrganizationSettingsRepository,
+		//Repository<OrganizationSettings>,
 		private readonly cls: ClsService<SharedClsStore>,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,

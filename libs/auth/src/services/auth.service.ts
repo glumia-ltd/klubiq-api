@@ -42,6 +42,8 @@ import { Cache } from 'cache-manager';
 import { CacheService } from '@app/common/services/cache.service';
 import ShortUniqueId from 'short-unique-id';
 import { DateTime } from 'luxon';
+import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
+import { OrganizationSettings } from '@app/common/database/entities/organization-settings.entity';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
@@ -59,6 +61,7 @@ export abstract class AuthService {
 		protected readonly configService: ConfigService,
 		private readonly httpService: HttpService,
 		protected readonly cls: ClsService<SharedClsStore>,
+		protected readonly organizationSettingsService: OrganizationSettingsService,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -437,9 +440,14 @@ export abstract class AuthService {
 		if (!user) {
 			throw new NotFoundException('User not found');
 		}
+		const userOrgSettings =
+			await this.organizationSettingsService.getOrganizationSettings(
+				user?.org_uuid,
+			);
 		const userData = await this.mapLandlordUserToDto(
 			user,
 			this.cls.get('currentUser'),
+			userOrgSettings,
 		);
 		await this.cacheManager.set(cacheKey, userData, 3600);
 		return userData;
@@ -448,6 +456,7 @@ export abstract class AuthService {
 	private async mapLandlordUserToDto(
 		user: any,
 		currentUser: ActiveUserData,
+		userOrgSettings?: OrganizationSettings,
 	): Promise<LandlordUserDetailsResponseDto> {
 		const entitlementsResolve = (data: string[]): Record<string, string> => {
 			const resolved = map(data, (item) => {
@@ -458,6 +467,10 @@ export abstract class AuthService {
 			});
 			return resolved ? Object.assign({}, ...resolved) : {};
 		};
+		const orgSettings =
+			userOrgSettings && userOrgSettings.settings
+				? userOrgSettings.settings
+				: {};
 		return plainToInstance(LandlordUserDetailsResponseDto, {
 			email: user.email,
 			entitlements: entitlementsResolve(currentUser.entitlements),
@@ -483,6 +496,7 @@ export abstract class AuthService {
 			profilePicUrl: user.profile_pic_url,
 			roleName: currentUser.organizationRole,
 			uuid: user.uuid,
+			orgSettings,
 		});
 	}
 

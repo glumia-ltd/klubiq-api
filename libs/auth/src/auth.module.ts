@@ -16,6 +16,8 @@ import _firebaseConfig from '../../../config.json';
 import { AdminAuthService } from './services/admin-auth.service';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
 import { MailerSendService } from '@app/common/email/email.service';
+import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
+import { RepositoriesModule } from '@app/common/repositories/repositories.module';
 
 interface FirebaseConfig {
 	type: string;
@@ -59,7 +61,7 @@ const firebaseAdminProvider = {
 };
 
 @Module({
-	imports: [HttpModule, SubscriptionModule],
+	imports: [HttpModule, SubscriptionModule, RepositoriesModule],
 	providers: [
 		AdminAuthService,
 		ConfigService,
@@ -75,6 +77,7 @@ const firebaseAdminProvider = {
 		// 	useFactory: () => new CacheService(null),
 		// },
 		UserProfilesRepository,
+		OrganizationSettingsService,
 	],
 	exports: [LandlordAuthService],
 	controllers: [AuthController],

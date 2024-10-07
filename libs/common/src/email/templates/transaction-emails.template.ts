@@ -40,7 +40,7 @@ export const verifyEmailTemplate = (): EmailTemplate => ({
           </style>
         </head>
         <body style="padding-inline: 3em; color: #002147;">
-          <div class="container" style="padding: 30px 40px; border-radius: 8px;">
+          <div class="container" style="padding: 30px 10px; border-radius: 8px;">
             <div style="display: flex; justify-content: center; align-items: center; width: fit-content; gap: 8px; margin-block: 50px; margin-bottom: 24px;">
               <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be52a3b-a911-46f1-8a4f-c19fa4f9c73b.png" width="35" height="35" alt="klubiq logo" />
               <div style="color:#002147; margin-left: 8px; font-size: 24px;">Klubiq</div>

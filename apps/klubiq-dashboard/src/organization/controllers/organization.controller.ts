@@ -27,8 +27,8 @@ import {
 } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 
-@ApiTags('organization')
-@Controller('organization')
+@ApiTags('organizations')
+@Controller('organizations')
 @Auth(AuthType.Bearer)
 @ApiBearerAuth()
 @Feature(AppFeature.SETTING)

@@ -226,4 +226,9 @@ export class LandlordUserDetailsResponseDto {
 	@IsJSON()
 	@IsOptional()
 	preferences?: Record<string, any>;
+
+	@Expose()
+	@IsJSON()
+	@IsOptional()
+	orgSettings?: Record<string, any>;
 }

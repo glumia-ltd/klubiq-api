@@ -32,6 +32,7 @@ import { CacheKeys, UserRoles } from '@app/common/config/config.constants';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { Role } from '@app/common/database/entities/role.entity';
 import { UserRecord } from 'firebase-admin/auth';
+import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
 
 @Injectable()
 export class AdminAuthService extends AuthService {
@@ -50,6 +51,7 @@ export class AdminAuthService extends AuthService {
 		protected readonly configService: ConfigService,
 		httpService: HttpService,
 		protected readonly cls: ClsService<SharedClsStore>,
+		protected readonly organizationSettingsService: OrganizationSettingsService,
 	) {
 		super(
 			firebaseAdminApp,
@@ -60,6 +62,7 @@ export class AdminAuthService extends AuthService {
 			configService,
 			httpService,
 			cls,
+			organizationSettingsService,
 		);
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
