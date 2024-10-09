@@ -7,6 +7,7 @@ import {
 	PROPERTY_METRICS,
 } from '../../properties/interfaces/property-metrics.service.interface';
 import {
+	LeaseMetricsDto,
 	PropertyMetrics,
 	RevenueResponseDto,
 	TransactionMetricsDto,
@@ -17,6 +18,7 @@ import { CacheKeys } from '@app/common/config/config.constants';
 import { DashboardRepository } from '../repositories/dashboard.repository';
 import { DateTime } from 'luxon';
 import { FileDownloadService } from '@app/common/services/file-download.service';
+import { Util } from '@app/common/helpers/util';
 
 @Injectable()
 export class DashboardService {
@@ -30,6 +32,7 @@ export class DashboardService {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly dashboardRepository: DashboardRepository,
 		private readonly fileDownloadService: FileDownloadService,
+		private readonly util: Util,
 	) {}
 	async getPropertyMetrics(
 		invalidateCache: boolean = false,
@@ -132,5 +135,61 @@ export class DashboardService {
 			console.error('Error occurred while generating revenue data:', error);
 			throw error;
 		}
+	}
+
+	async getLeaseMetricsData(): Promise<LeaseMetricsDto> {
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		const cacheKey = `${this.cacheKeyPrefix}/${CacheKeys.LEASE_METRICS}/${currentUser.organizationId}`;
+		const cachedLeaseMetrics =
+			await this.cacheManager.get<LeaseMetricsDto>(cacheKey);
+		if (cachedLeaseMetrics) {
+			this.logger.log('Retrieving lease metrics from cache');
+			return cachedLeaseMetrics;
+		}
+		const expiringLeaseForPeriodCount =
+			await this.dashboardRepository.getExpiringLeases(
+				currentUser.organizationId,
+				30,
+			);
+		const tenantCount = await this.dashboardRepository.getTenantCount(
+			currentUser.organizationId,
+		);
+		const avgLeaseDuration =
+			await this.dashboardRepository.getAverageLeaseDuration(
+				currentUser.organizationId,
+			);
+		const activeLeaseCount = await this.dashboardRepository.getActiveLeaseCount(
+			currentUser.organizationId,
+		);
+		const activeLeaseForPeriodCount =
+			await this.dashboardRepository.getActiveLeaseCount(
+				currentUser.organizationId,
+				'30 days',
+			);
+		const activeLeaseForPeriodPercentageDifference =
+			activeLeaseCount > 0 && activeLeaseForPeriodCount > 0
+				? this.util.getPercentageIncreaseOrDecrease(
+						activeLeaseForPeriodCount,
+						activeLeaseCount,
+					)
+				: 0;
+		const activeLeaseForPeriodChangeIndicator =
+			activeLeaseCount > activeLeaseForPeriodCount
+				? 'positive'
+				: activeLeaseCount < activeLeaseForPeriodCount
+					? 'negative'
+					: 'neutral';
+		const leaseMetrics: LeaseMetricsDto = {
+			expiringLeaseForPeriodCount,
+			tenantCount,
+			avgLeaseDuration,
+			activeLeaseCount,
+			activeLeaseForPeriodCount,
+			activeLeaseForPeriodPercentageDifference,
+			activeLeaseForPeriodChangeIndicator,
+		};
+		await this.cacheManager.set(cacheKey, leaseMetrics, this.cacheTTL);
+		return leaseMetrics;
 	}
 }

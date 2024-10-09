@@ -179,7 +179,15 @@ export class LeaseService implements ILeaseService {
 		) {
 			throw new BadRequestException('Rent due day must be between 1 and 31');
 		}
-		await this.leaseRepository.createLease(leaseDto, false);
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser.organizationId) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		await this.leaseRepository.createLease(
+			leaseDto,
+			currentUser.organizationId,
+			false,
+		);
 	}
 
 	async deleteLease(leaseId: number): Promise<void> {

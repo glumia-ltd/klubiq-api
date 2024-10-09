@@ -634,9 +634,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 			FROM
 			    poo.lease l
 			JOIN
-			    poo.unit u ON u.id = l."unitId"
-			JOIN
-			    poo.property p ON p.uuid = u."propertyUuid" AND p."organizationUuid" = $1
+			    poo.unit u ON u.id = l."unitId" 
 			LEFT JOIN
 			    (
 			        SELECT
@@ -653,10 +651,10 @@ export class PropertyRepository extends BaseRepository<Property> {
 			    ) payments ON l.id = payments."leaseId"
 			WHERE
 			    l."endDate" >= CURRENT_DATE
-			    AND public.calculate_next_due_date(l."startDate", l."paymentFrequency", l."customPaymentFrequency", l."rentDueDay") <= CURRENT_DATE
+			    AND public.calculate_next_due_date(l."startDate", l."lastPaymentDate", l."paymentFrequency", l."customPaymentFrequency", l."rentDueDay") <= CURRENT_DATE
 			    AND (payments.total_paid IS NULL OR payments.total_paid < l."rentAmount")
 			    AND l."isArchived" = false
-			    AND l."isDraft" = false;`;
+			    AND l."organizationUuid" = $1;`;
 		const overdueRentsResult = await this.manager.query(query, [
 			organizationUuid,
 			TransactionType.REVENUE,

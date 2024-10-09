@@ -113,6 +113,10 @@ export class Lease {
 	@OneToMany(() => Transaction, (transaction) => transaction.lease)
 	transactions?: Transaction[];
 
+	@Index('IDX_LEASE_ORGANIZATION_UUID')
+	@Column({ type: 'uuid', nullable: true })
+	organizationUuid?: string;
+
 	tenant_firstname?: string;
 	tenant_lastname?: string;
 	property_name?: string;

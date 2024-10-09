@@ -22,23 +22,31 @@ export interface PropertyMetrics {
 	maintenanceUnitsPercentageDifference?: number;
 	maintenanceUnitsChangeIndicator: 'positive' | 'negative' | 'neutral';
 }
-
 export interface LeaseMetricsDto {
-	rentOverdueFees?: number;
-	rentOverdueCount?: number;
+	activeLeaseCount?: number;
+	activeLeaseForPeriodCount?: number;
+	activeLeaseForPeriodPercentageDifference?: number;
+	activeLeaseForPeriodChangeIndicator: 'positive' | 'negative' | 'neutral';
+	expiringLeaseForPeriodCount?: number;
+	tenantCount?: number;
+	avgLeaseDuration?: number;
 }
 export interface TransactionMetricsDto {
 	totalExpenses?: number;
+	totalRevenue?: number;
 	netCashFlow?: number;
 	totalExpensesLastMonth?: number;
+	totalRevenueLastMonth?: number;
 	netCashFlowLastMonth?: number;
 	totalExpensesPercentageDifference?: number;
+	totalRevenuePercentageDifference?: number;
 	netCashFlowPercentageDifference?: number;
 	totalExpensesChangeIndicator: 'positive' | 'negative' | 'neutral';
+	totalRevenueChangeIndicator: 'positive' | 'negative' | 'neutral';
 	netCashFlowChangeIndicator: 'positive' | 'negative' | 'neutral';
-	todaysRevenue?: number;
-	dailyRevenuePercentageDifference?: number;
-	dailyRevenueChangeIndicator: 'positive' | 'negative' | 'neutral';
+	// todaysRevenue?: number;
+	// dailyRevenuePercentageDifference?: number;
+	// dailyRevenueChangeIndicator: 'positive' | 'negative' | 'neutral';
 }
 
 export interface MonthlyRevenueDto {

@@ -47,6 +47,7 @@ export class DashboardController {
 				propertyMetrics: await this.dashboardService.getPropertyMetrics(),
 				transactionMetrics:
 					await this.dashboardService.getTransactionMetricsData(),
+				leaseMetrics: await this.dashboardService.getLeaseMetricsData(),
 			};
 			return data;
 		} catch (error) {
