@@ -165,7 +165,7 @@ export class DashboardService {
 		const activeLeaseForPeriodCount =
 			await this.dashboardRepository.getActiveLeaseCount(
 				currentUser.organizationId,
-				'30 days',
+				30,
 			);
 		const activeLeaseForPeriodPercentageDifference =
 			activeLeaseCount > 0 && activeLeaseForPeriodCount > 0

@@ -188,6 +188,7 @@ export class LandlordAuthService extends AuthService {
 						currency: orgCountryDto.currency,
 						currencySymbol: orgCountryDto.currencySymbol,
 						countryCode: orgCountryDto.code,
+						language: orgCountryDto.language,
 					};
 					newOrganization.settings = new OrganizationSettings();
 					newOrganization.settings.settings = orgSettings;

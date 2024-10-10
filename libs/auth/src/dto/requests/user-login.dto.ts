@@ -123,6 +123,13 @@ export class OrganizationCountryDto {
 	})
 	@IsString()
 	currencySymbol: string;
+
+	@ApiProperty({
+		description: 'country language',
+		example: 'en;',
+	})
+	@IsString()
+	language: string;
 }
 
 /**

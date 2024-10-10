@@ -200,7 +200,7 @@ export class PropertiesService implements IPropertyMetrics {
 		totalUnits: number,
 	): Promise<number> {
 		try {
-			const occupancyRate = (occupiedUnits * 100) / totalUnits;
+			const occupancyRate = occupiedUnits / totalUnits;
 			return occupancyRate;
 		} catch (error) {
 			this.logger.error('Error getting occupancy rate', error);

@@ -4,7 +4,7 @@ import { PaymentFrequency } from '../config/config.constants';
 
 export class Util {
 	getPercentageIncreaseOrDecrease(oldVal: number, newVal: number): number {
-		return ((newVal - oldVal) / oldVal) * 100;
+		return (newVal - oldVal) / oldVal;
 	}
 	getOverDueRentDetails(lease: Lease) {
 		const { rentAmount } = lease;

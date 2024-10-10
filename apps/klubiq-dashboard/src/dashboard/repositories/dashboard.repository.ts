@@ -368,18 +368,22 @@ export class DashboardRepository {
 
 	async getActiveLeaseCount(
 		orgUuid: string,
-		interval?: string,
+		pastDays: number = 0,
 	): Promise<number> {
 		try {
+			const interval = `'${pastDays} days'`;
 			const activeLeaseCount = await this.manager.query(`
 				SELECT COUNT(*) AS active_lease_count
 				FROM poo.lease 
-				WHERE status = ${LeaseStatus.ACTIVE}
-				AND "startDate" <= ${interval ? '(CURRENT_DATE - INTERVAL ' + interval + ')' : 'CURRENT_DATE'} 
-				AND "endDate" >=  ${interval ? '(CURRENT_DATE - INTERVAL ' + interval + ')' : 'CURRENT_DATE'} 
-                AND "organizationUuid" = '${orgUuid}'; 
+				WHERE "organizationUuid" = '${orgUuid}' 
+				AND (status = '${LeaseStatus.ACTIVE}' OR status = '${LeaseStatus.EXPIRING}')
+				AND ("startDate" <= (CURRENT_DATE - INTERVAL ${interval}))
+				AND ("endDate" >=  (CURRENT_DATE - INTERVAL ${interval})); 
 			`);
-			return activeLeaseCount || 0;
+			const activeLeaseCountForPeriod = parseInt(
+				activeLeaseCount[0]?.active_lease_count,
+			);
+			return activeLeaseCountForPeriod || 0;
 		} catch (error) {
 			console.error('error in getActiveLeaseCount', error.message);
 			throw new Error(error.message);
@@ -390,11 +394,14 @@ export class DashboardRepository {
 			const expiringLeaseCount = await this.manager.query(`
 				SELECT COUNT(*) AS expiring_lease_count
 				FROM poo.lease 
-				WHERE status = ${LeaseStatus.ACTIVE} OR status = ${LeaseStatus.EXPIRING}
-				AND "endDate" BETWEEN  CURRENT_DATE AND (CURRENT_DATE + INTERVAL '${days} days')
-                AND "organizationUuid" = '${orgUuid}'; 
+				WHERE "organizationUuid" = '${orgUuid}' 
+				AND (status = '${LeaseStatus.ACTIVE}' OR status = '${LeaseStatus.EXPIRING}')
+				AND ("endDate" BETWEEN  CURRENT_DATE AND (CURRENT_DATE + INTERVAL '${days} days')); 
 			`);
-			return expiringLeaseCount || 0;
+			const expiringLeaseCountForPeriod = parseInt(
+				expiringLeaseCount[0]?.expiring_lease_count,
+			);
+			return expiringLeaseCountForPeriod || 0;
 		} catch (error) {
 			console.error('error in getExpiringLeases', error.message);
 			throw new Error(error.message);
@@ -404,14 +411,14 @@ export class DashboardRepository {
 	async getTenantCount(orgUuid: string): Promise<number> {
 		try {
 			const tenantCount = await this.manager.query(`
-				SELECT COUNT(DISTINCT tenant.id) AS tenant_count
-				FROM kdo.tenant_user tenant
-				JOIN poo.leases_tenants lt ON lt."tenantId" = tenant.id
+				SELECT COUNT(DISTINCT lt."tenantId" ) AS tenant_count
+				FROM poo.leases_tenants lt 
 				JOIN poo.lease lease ON lease.id = lt."leaseId"
-				WHERE lease.status = ${LeaseStatus.ACTIVE} OR lease.status = ${LeaseStatus.EXPIRING}
-                AND lease."organizationUuid" = '${orgUuid}'; 
+				AND lease."organizationUuid" = '${orgUuid}'
+				WHERE lease.status = '${LeaseStatus.ACTIVE}' OR lease.status = '${LeaseStatus.EXPIRING}'; 
 			`);
-			return tenantCount || 0;
+			const totalTenantCount = parseInt(tenantCount[0]?.tenant_count);
+			return totalTenantCount || 0;
 		} catch (error) {
 			console.error('error in getTenantCount', error.message);
 			throw new Error(error.message);
@@ -421,12 +428,14 @@ export class DashboardRepository {
 	async getAverageLeaseDuration(orgUuid: string): Promise<number> {
 		try {
 			const avgLeaseDuration = await this.manager.query(`
-				SELECT AVG(DATE_PART('day', lease."endDate" - lease."startDate")) AS avg_lease_duration
+				SELECT AVG(EXTRACT(DAY FROM AGE("endDate","startDate"))) AS avg_lease_duration
 				FROM poo.lease
-				WHERE status = ${LeaseStatus.ACTIVE} OR status = ${LeaseStatus.EXPIRING}
-                AND "organizationUuid" = '${orgUuid}'; 
+				WHERE "organizationUuid" = '${orgUuid}' AND (status = '${LeaseStatus.ACTIVE}' OR status = '${LeaseStatus.EXPIRING}');
 			`);
-			return avgLeaseDuration || 0;
+			const averageLeaseDuration = parseInt(
+				avgLeaseDuration[0]?.avg_lease_duration,
+			);
+			return averageLeaseDuration || 0;
 		} catch (error) {
 			console.error('error in getAverageLeaseDuration', error.message);
 			throw new Error(error.message);
