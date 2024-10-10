@@ -430,9 +430,10 @@ export class PropertiesService implements IPropertyMetrics {
 			const cachedProperties =
 				await this.cacheManager.get<PageDto<PropertyListDto>>(cacheKey);
 			if (cachedProperties) return cachedProperties;
-			const propertyListKeys = await this.cacheManager.get<string[]>(
-				`${currentUser.organizationId}/getPropertyListKeys`,
-			);
+			const propertyListKeys =
+				(await this.cacheManager.get<string[]>(
+					`${currentUser.organizationId}/getPropertyListKeys`,
+				)) || [];
 			const [entities, count] =
 				await this.propertyRepository.getOrganizationProperties(
 					currentUser.organizationId,
