@@ -143,8 +143,7 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.propertyRepository.getPropertyCountDataInOrganization(
 					organizationUuid,
 				);
-			const rentOverdueData = await this.getTotalOverdueRents(organizationUuid);
-			//await this.getTotalOverdueRents(organizationUuid);
+			//const rentOverdueData = await this.getTotalOverdueRents(organizationUuid);
 			const propertyMetrics: PropertyMetrics = {
 				vacantUnits: totalUnits - occupiedUnits,
 				occupiedUnits,
@@ -156,7 +155,7 @@ export class PropertiesService implements IPropertyMetrics {
 				singleUnits: propertyCountData.singleUnits,
 				occupancyRateLastMonth: occupancyRateDaysAgo,
 				maintenanceUnitsLastMonth: maintenanceUnitsDaysAgo,
-				rentOverdue: rentOverdueData,
+				//rentOverdue: rentOverdueData,
 				occupancyRatePercentageDifference:
 					occupancyRateDaysAgo > 0 && occupancyRate > 0
 						? this.util.getPercentageIncreaseOrDecrease(
@@ -200,7 +199,7 @@ export class PropertiesService implements IPropertyMetrics {
 		totalUnits: number,
 	): Promise<number> {
 		try {
-			const occupancyRate = (occupiedUnits * 100) / totalUnits;
+			const occupancyRate = occupiedUnits / totalUnits;
 			return occupancyRate;
 		} catch (error) {
 			this.logger.error('Error getting occupancy rate', error);
@@ -430,6 +429,10 @@ export class PropertiesService implements IPropertyMetrics {
 			const cachedProperties =
 				await this.cacheManager.get<PageDto<PropertyListDto>>(cacheKey);
 			if (cachedProperties) return cachedProperties;
+			const propertyListKeys =
+				(await this.cacheManager.get<string[]>(
+					`${currentUser.organizationId}/getPropertyListKeys`,
+				)) || [];
 			const [entities, count] =
 				await this.propertyRepository.getOrganizationProperties(
 					currentUser.organizationId,
@@ -445,6 +448,11 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.mapPlainPropertyToPropertyListDto(entities);
 			const propertiesPageData = new PageDto(mappedEntities, pageMetaDto);
 			await this.cacheManager.set(cacheKey, propertiesPageData, this.cacheTTL);
+			await this.cacheManager.set(
+				`${currentUser.organizationId}/getPropertyListKeys`,
+				[...propertyListKeys, cacheKey],
+				this.cacheTTL,
+			);
 			return propertiesPageData;
 		} catch (error) {
 			this.logger.error('Error retrieving organization properties', error);

@@ -69,6 +69,7 @@ export enum CacheKeys {
 	PROPERTY_AMENITIES = 'property-amenities',
 	PROPERTY_METRICS = 'property-metrics',
 	TRANSACTION_METRICS = 'transaction-metrics',
+	LEASE_METRICS = 'lease-metrics',
 	REVENUE_METRICS = 'revenue-metrics',
 	USER_PREFERENCES = 'user-preferences',
 	ORGANIZATION_SETTINGS = 'organization-settings',

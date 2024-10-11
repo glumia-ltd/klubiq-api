@@ -33,6 +33,7 @@ import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 import { plainToInstance } from 'class-transformer';
 import { filter } from 'lodash';
 import { DateTime } from 'luxon';
+import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics.dto';
 @Injectable()
 export class LeaseService implements ILeaseService {
 	private readonly logger = new Logger(LeaseService.name);
@@ -179,7 +180,15 @@ export class LeaseService implements ILeaseService {
 		) {
 			throw new BadRequestException('Rent due day must be between 1 and 31');
 		}
-		await this.leaseRepository.createLease(leaseDto, false);
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser.organizationId) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		await this.leaseRepository.createLease(
+			leaseDto,
+			currentUser.organizationId,
+			false,
+		);
 	}
 
 	async deleteLease(leaseId: number): Promise<void> {
@@ -192,6 +201,26 @@ export class LeaseService implements ILeaseService {
 			endDate: DateTime.utc().toISO(),
 		};
 		await this.leaseRepository.updateLease(leaseId, leaseDto);
+	}
+	async getTotalOverdueRents(
+		organizationUuid: string,
+	): Promise<RentOverdueLeaseDto> {
+		try {
+			const cacheKey = `${this.cacheKeyPrefix}-overdue-metrics/${organizationUuid}`;
+			const cachedOverdueRentData =
+				await this.cacheManager.get<RentOverdueLeaseDto>(cacheKey);
+			if (cachedOverdueRentData) return cachedOverdueRentData;
+			const totalOverdueRents =
+				await this.leaseRepository.getOverdueRentData(organizationUuid);
+			await this.cacheManager.set(cacheKey, totalOverdueRents, 86400);
+			return totalOverdueRents;
+		} catch (error) {
+			this.logger.error(
+				error.message,
+				error.stack,
+				'Error getting total overdue rents',
+			);
+		}
 	}
 
 	async addTenantToLease(

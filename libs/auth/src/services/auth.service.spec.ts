@@ -25,6 +25,7 @@ const mockCreateUserPayload = {
 		dialCode: '234',
 		currency: 'NGN',
 		currencySymbol: '₦',
+		language: 'en',
 	}, // Adjust this according to the actual structure of OrganizationCountryDto
 };
 jest.mock('firebase-admin');

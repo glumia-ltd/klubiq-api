@@ -10,6 +10,7 @@ import {
 import { Util } from '@app/common/helpers/util';
 import { find, forEach, reduce } from 'lodash';
 import {
+	LeaseStatus,
 	RevenueType,
 	TransactionType,
 } from '@app/common/config/config.constants';
@@ -170,6 +171,11 @@ export class DashboardRepository {
 		}
 	}
 
+	/**
+	 * Gets the transaction metrics data for the given organization.
+	 * @param orgUuid The uuid of the organization.
+	 * @returns The transaction metrics data.
+	 */
 	async getTransactionMetricsData(
 		orgUuid: string,
 	): Promise<TransactionMetricsDto> {
@@ -178,55 +184,55 @@ export class DashboardRepository {
 				totalExpensesPreviousMTD: number = 0,
 				totalRevenueMTD: number = 0,
 				totalRevenuePreviousMTD: number = 0;
-			const todaysRevenuerResult = await this.manager.query(
-				`SELECT
-		SUM(t.amount) as total_revenue
-		FROM
-		poo.transaction t
-		WHERE
-		t."transactionType" = '${TransactionType.REVENUE}'
-                AND t."transactionDate" = CURRENT_DATE
-                AND t."organizationUuid" = '${orgUuid}'; `,
-			);
-			const yesterdayRevenueResult = await this.manager.query(
-				`SELECT
-		SUM(t.amount) as total_revenue
-		FROM
-		poo.transaction t
-		WHERE
-		t."transactionType" = '${TransactionType.REVENUE}'
-                AND t."transactionDate" = (CURRENT_DATE - INTERVAL '1 day')
-                AND t."organizationUuid" = '${orgUuid}'; `,
-			);
+			// 	const todaysRevenuerResult = await this.manager.query(
+			// 		`SELECT
+			// SUM(t.amount) as total_revenue
+			// FROM
+			// poo.transaction t
+			// WHERE
+			// t."transactionType" = '${TransactionType.REVENUE}'
+			//         AND t."transactionDate" = CURRENT_DATE
+			//         AND t."organizationUuid" = '${orgUuid}'; `,
+			// 	);
+			// 	const yesterdayRevenueResult = await this.manager.query(
+			// 		`SELECT
+			// SUM(t.amount) as total_revenue
+			// FROM
+			// poo.transaction t
+			// WHERE
+			// t."transactionType" = '${TransactionType.REVENUE}'
+			//         AND t."transactionDate" = (CURRENT_DATE - INTERVAL '1 day')
+			//         AND t."organizationUuid" = '${orgUuid}'; `,
+			// 	);
 			const totalTransactionsMTDResult = await this.manager.query(
 				`SELECT
-		t."transactionType" as transaction_type,
-			SUM(t.amount) as total_amount
-		FROM
-		poo.transaction t
-		WHERE
-		t."transactionDate" >= (CURRENT_DATE - INTERVAL '30 days')
+					t."transactionType" as transaction_type,
+						SUM(t.amount) as total_amount
+					FROM
+					poo.transaction t
+					WHERE
+					t."transactionDate" >= (CURRENT_DATE - INTERVAL '30 days')
                 AND t."organizationUuid" = '${orgUuid}'
-            GROUP BY t."transactionType"; `,
+            	GROUP BY t."transactionType"; `,
 			);
 			const totalTransactionsPreviousMTDResult = await this.manager.query(
 				`SELECT
-		t."transactionType" as transaction_type,
-			SUM(t.amount) as total_amount
-		FROM
-		poo.transaction t
-		WHERE
-		t."transactionDate" >= (CURRENT_DATE - INTERVAL '60 days')
+					t."transactionType" as transaction_type,
+						SUM(t.amount) as total_amount
+					FROM
+					poo.transaction t
+					WHERE
+					t."transactionDate" >= (CURRENT_DATE - INTERVAL '60 days')
                 AND t."transactionDate" < (CURRENT_DATE - INTERVAL '30 days')
                 AND t."organizationUuid" = '${orgUuid}'
-            GROUP BY t."transactionType"; `,
+            	GROUP BY t."transactionType"; `,
 			);
-			const todaysRevenue = parseFloat(
-				todaysRevenuerResult[0].total_revenue || 0,
-			);
-			const yesterdayRevenue = parseFloat(
-				yesterdayRevenueResult[0].total_revenue || 0,
-			);
+			// const todaysRevenue = parseFloat(
+			// 	todaysRevenuerResult[0].total_revenue || 0,
+			// );
+			// const yesterdayRevenue = parseFloat(
+			// 	yesterdayRevenueResult[0].total_revenue || 0,
+			// );
 			totalTransactionsMTDResult.forEach((row: any) => {
 				if (row.transaction_type === TransactionType.REVENUE) {
 					totalRevenueMTD = parseFloat(row.total_amount || 0);
@@ -241,18 +247,31 @@ export class DashboardRepository {
 					totalExpensesPreviousMTD = parseFloat(row.total_amount || 0);
 				}
 			});
-			const dailyRevenuePercentageDifference =
-				yesterdayRevenue > 0 && todaysRevenue > 0
+			// const dailyRevenuePercentageDifference =
+			// 	yesterdayRevenue > 0 && todaysRevenue > 0
+			// 		? this.util.getPercentageIncreaseOrDecrease(
+			// 			yesterdayRevenue,
+			// 			todaysRevenue,
+			// 		)
+			// 		: 0;
+
+			// const dailyRevenueChangeIndicator =
+			// 	todaysRevenue > yesterdayRevenue
+			// 		? 'positive'
+			// 		: todaysRevenue < yesterdayRevenue
+			// 			? 'negative'
+			// 			: 'neutral';
+			const revenuePercentageDifference =
+				totalRevenuePreviousMTD > 0 && totalRevenueMTD > 0
 					? this.util.getPercentageIncreaseOrDecrease(
-							yesterdayRevenue,
-							todaysRevenue,
+							totalRevenuePreviousMTD,
+							totalRevenueMTD,
 						)
 					: 0;
-
-			const dailyRevenueChangeIndicator =
-				todaysRevenue > yesterdayRevenue
+			const revenueChangeIndicator =
+				totalRevenueMTD > totalRevenuePreviousMTD
 					? 'positive'
-					: todaysRevenue < yesterdayRevenue
+					: totalRevenueMTD < totalRevenuePreviousMTD
 						? 'negative'
 						: 'neutral';
 			const expensesPercentageDifference =
@@ -286,16 +305,17 @@ export class DashboardRepository {
 						: 'neutral';
 			const transactionMetricsData: TransactionMetricsDto = {
 				totalExpenses: totalExpensesMTD,
+				totalRevenue: totalRevenueMTD,
 				netCashFlow: netCashFlowMTD,
 				totalExpensesLastMonth: totalExpensesPreviousMTD,
+				totalRevenueLastMonth: totalRevenuePreviousMTD,
 				netCashFlowLastMonth: netCashFlowPreviousMTD,
 				totalExpensesPercentageDifference: expensesPercentageDifference,
 				netCashFlowPercentageDifference: netCashFlowPercentageDifference,
 				totalExpensesChangeIndicator: expensesChangeIndicator,
 				netCashFlowChangeIndicator: cashFlowChangeIndicator,
-				todaysRevenue,
-				dailyRevenuePercentageDifference,
-				dailyRevenueChangeIndicator,
+				totalRevenueChangeIndicator: revenueChangeIndicator,
+				totalRevenuePercentageDifference: revenuePercentageDifference,
 			};
 			return transactionMetricsData;
 		} catch (error) {
@@ -342,6 +362,82 @@ export class DashboardRepository {
 			return xlsxData;
 		} catch (error) {
 			console.error('error in getRevenueDataForDownload', error.message);
+			throw new Error(error.message);
+		}
+	}
+
+	async getActiveLeaseCount(
+		orgUuid: string,
+		pastDays: number = 0,
+	): Promise<number> {
+		try {
+			const interval = `'${pastDays} days'`;
+			const activeLeaseCount = await this.manager.query(`
+				SELECT COUNT(*) AS active_lease_count
+				FROM poo.lease 
+				WHERE "organizationUuid" = '${orgUuid}' 
+				AND (status = '${LeaseStatus.ACTIVE}' OR status = '${LeaseStatus.EXPIRING}')
+				AND ("startDate" <= (CURRENT_DATE - INTERVAL ${interval}))
+				AND ("endDate" >=  (CURRENT_DATE - INTERVAL ${interval})); 
+			`);
+			const activeLeaseCountForPeriod = parseInt(
+				activeLeaseCount[0]?.active_lease_count,
+			);
+			return activeLeaseCountForPeriod || 0;
+		} catch (error) {
+			console.error('error in getActiveLeaseCount', error.message);
+			throw new Error(error.message);
+		}
+	}
+	async getExpiringLeases(orgUuid: string, days: number = 30): Promise<number> {
+		try {
+			const expiringLeaseCount = await this.manager.query(`
+				SELECT COUNT(*) AS expiring_lease_count
+				FROM poo.lease 
+				WHERE "organizationUuid" = '${orgUuid}' 
+				AND (status = '${LeaseStatus.ACTIVE}' OR status = '${LeaseStatus.EXPIRING}')
+				AND ("endDate" BETWEEN  CURRENT_DATE AND (CURRENT_DATE + INTERVAL '${days} days')); 
+			`);
+			const expiringLeaseCountForPeriod = parseInt(
+				expiringLeaseCount[0]?.expiring_lease_count,
+			);
+			return expiringLeaseCountForPeriod || 0;
+		} catch (error) {
+			console.error('error in getExpiringLeases', error.message);
+			throw new Error(error.message);
+		}
+	}
+
+	async getTenantCount(orgUuid: string): Promise<number> {
+		try {
+			const tenantCount = await this.manager.query(`
+				SELECT COUNT(DISTINCT lt."tenantId" ) AS tenant_count
+				FROM poo.leases_tenants lt 
+				JOIN poo.lease lease ON lease.id = lt."leaseId"
+				AND lease."organizationUuid" = '${orgUuid}'
+				WHERE lease.status = '${LeaseStatus.ACTIVE}' OR lease.status = '${LeaseStatus.EXPIRING}'; 
+			`);
+			const totalTenantCount = parseInt(tenantCount[0]?.tenant_count);
+			return totalTenantCount || 0;
+		} catch (error) {
+			console.error('error in getTenantCount', error.message);
+			throw new Error(error.message);
+		}
+	}
+
+	async getAverageLeaseDuration(orgUuid: string): Promise<number> {
+		try {
+			const avgLeaseDuration = await this.manager.query(`
+				SELECT AVG(EXTRACT(DAY FROM AGE("endDate","startDate"))) AS avg_lease_duration
+				FROM poo.lease
+				WHERE "organizationUuid" = '${orgUuid}' AND (status = '${LeaseStatus.ACTIVE}' OR status = '${LeaseStatus.EXPIRING}');
+			`);
+			const averageLeaseDuration = parseInt(
+				avgLeaseDuration[0]?.avg_lease_duration,
+			);
+			return averageLeaseDuration || 0;
+		} catch (error) {
+			console.error('error in getAverageLeaseDuration', error.message);
 			throw new Error(error.message);
 		}
 	}
