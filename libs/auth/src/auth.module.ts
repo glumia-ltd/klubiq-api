@@ -72,10 +72,6 @@ const firebaseAdminProvider = {
 		MailerSendService,
 		OrgUserProfile,
 		OrganizationRepository,
-		// {
-		// 	provide: CacheService,
-		// 	useFactory: () => new CacheService(null),
-		// },
 		UserProfilesRepository,
 		OrganizationSettingsService,
 	],

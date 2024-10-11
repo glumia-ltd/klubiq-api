@@ -69,3 +69,4 @@ export * from './database/entities/organization-user.entity';
 export * from './database/entities/unit.entity';
 export * from './database/entities/property.entity';
 export * from './database/entities/property-address.entity';
+export * from './repositories/organization-settings.repository';
