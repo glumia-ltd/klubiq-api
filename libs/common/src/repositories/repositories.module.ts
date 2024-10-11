@@ -16,7 +16,7 @@ import {
 } from './subscription.repository';
 import { FeaturesPermissionRepository } from './features-permission.repository';
 import { PropertyAmenityRepository } from './property-amenity.repository';
-import { OrganizationSettingsRepository } from './OrganizationSettingsRepository';
+import { OrganizationSettingsRepository } from './organization-settings.repository';
 
 @Module({
 	providers: [

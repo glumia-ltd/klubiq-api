@@ -8,7 +8,7 @@ import { ClsService } from 'nestjs-cls';
 import { SharedClsStore } from '../dto/public/shared-clsstore';
 import { ErrorMessages } from '../config/error.constant';
 import { OrganizationSettings } from '../database/entities/organization-settings.entity';
-import { OrganizationSettingsRepository } from '../repositories/OrganizationSettingsRepository';
+import { OrganizationSettingsRepository } from '../repositories/organization-settings.repository';
 
 @Injectable()
 export class OrganizationSettingsService {
