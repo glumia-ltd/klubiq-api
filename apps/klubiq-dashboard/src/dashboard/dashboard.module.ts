@@ -11,6 +11,10 @@ import { FileDownloadService } from '@app/common/services/file-download.service'
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
 import { ConfigService } from '@nestjs/config';
 import { CommonConfigService } from '@app/common/config/common-config';
+import { LEASE_SERVICE_INTERFACE } from '../lease/interfaces/lease.interface';
+import { LeaseService } from '../lease/services/lease.service';
+import { LeaseRepository } from '../lease/repositories/lease.repository';
+import { FileUploadService } from '@app/common/services/file-upload.service';
 
 @Module({
 	imports: [RepositoriesModule, SubscriptionModule],
@@ -25,15 +29,21 @@ import { CommonConfigService } from '@app/common/config/common-config';
 			provide: PROPERTY_METRICS,
 			useClass: PropertiesService,
 		},
+		{
+			provide: LEASE_SERVICE_INTERFACE,
+			useClass: LeaseService,
+		},
 		PropertyRepository,
+		LeaseRepository,
 		FileDownloadService,
+		FileUploadService,
 	],
 	exports: [
 		DashboardService,
 		DashboardRepository,
-		PROPERTY_METRICS,
-		PropertyRepository,
-		FileDownloadService,
+		// PROPERTY_METRICS,
+		// PropertyRepository,
+		// FileDownloadService,
 	],
 })
 export class DashboardModule {}

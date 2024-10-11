@@ -3,6 +3,7 @@ export interface DashboardMetricsDto {
 	leaseMetrics?: LeaseMetricsDto;
 	transactionMetrics?: TransactionMetricsDto;
 	monthlyRevenue?: MonthlyRevenueDto;
+	rentsOverDueSummary?: RentOverdueLeaseDto;
 	//revenueMetrics?: RevenueResponseDto;
 }
 export interface PropertyMetrics {
@@ -18,7 +19,6 @@ export interface PropertyMetrics {
 	singleUnits?: number;
 	occupancyRateLastMonth?: number;
 	maintenanceUnitsLastMonth?: number;
-	rentOverdue?: RentOverdueLeaseDto;
 	maintenanceUnitsPercentageDifference?: number;
 	maintenanceUnitsChangeIndicator: 'positive' | 'negative' | 'neutral';
 }

@@ -143,8 +143,7 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.propertyRepository.getPropertyCountDataInOrganization(
 					organizationUuid,
 				);
-			const rentOverdueData = await this.getTotalOverdueRents(organizationUuid);
-			//await this.getTotalOverdueRents(organizationUuid);
+			//const rentOverdueData = await this.getTotalOverdueRents(organizationUuid);
 			const propertyMetrics: PropertyMetrics = {
 				vacantUnits: totalUnits - occupiedUnits,
 				occupiedUnits,
@@ -156,7 +155,7 @@ export class PropertiesService implements IPropertyMetrics {
 				singleUnits: propertyCountData.singleUnits,
 				occupancyRateLastMonth: occupancyRateDaysAgo,
 				maintenanceUnitsLastMonth: maintenanceUnitsDaysAgo,
-				rentOverdue: rentOverdueData,
+				//rentOverdue: rentOverdueData,
 				occupancyRatePercentageDifference:
 					occupancyRateDaysAgo > 0 && occupancyRate > 0
 						? this.util.getPercentageIncreaseOrDecrease(

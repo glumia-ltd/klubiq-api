@@ -628,33 +628,33 @@ export class PropertyRepository extends BaseRepository<Property> {
 		organizationUuid: string,
 	): Promise<RentOverdueLeaseDto> {
 		const query = `
-			SELECT
-			    COUNT(*) AS overDueLeaseCount,
-			    SUM(l."rentAmount") AS overDueRentSum
-			FROM
-			    poo.lease l
-			JOIN
-			    poo.unit u ON u.id = l."unitId" 
-			LEFT JOIN
-			    (
-			        SELECT
-			            t."leaseId",
-			            SUM(t.amount) AS total_paid
-			        FROM
-			            poo.transaction t
-			        WHERE
-			            t."transactionType" = $2
-			            AND t."revenueType" = $3
-			            AND t."transactionDate" <= CURRENT_DATE
-			        GROUP BY
-			            t."leaseId"
-			    ) payments ON l.id = payments."leaseId"
-			WHERE
-			    l."endDate" >= CURRENT_DATE
-			    AND public.calculate_next_due_date(l."startDate", l."lastPaymentDate", l."paymentFrequency", l."customPaymentFrequency", l."rentDueDay") <= CURRENT_DATE
-			    AND (payments.total_paid IS NULL OR payments.total_paid < l."rentAmount")
-			    AND l."isArchived" = false
-			    AND l."organizationUuid" = $1;`;
+				SELECT
+					COUNT(*) AS overDueLeaseCount,
+					SUM(l."rentAmount") AS overDueRentSum
+				FROM
+					poo.lease l
+				JOIN
+					poo.unit u ON u.id = l."unitId" 
+				LEFT JOIN
+					(
+						SELECT
+							t."leaseId",
+							SUM(t.amount) AS total_paid
+						FROM
+							poo.transaction t
+						WHERE
+							t."transactionType" = $2
+							AND t."revenueType" = $3
+							AND t."transactionDate" <= CURRENT_DATE
+						GROUP BY
+							t."leaseId"
+					) payments ON l.id = payments."leaseId"
+				WHERE
+					l."endDate" >= CURRENT_DATE
+					AND public.calculate_next_due_date(l."startDate", l."lastPaymentDate", l."paymentFrequency", l."customPaymentFrequency", l."rentDueDay") <= CURRENT_DATE
+					AND (payments.total_paid IS NULL OR payments.total_paid < l."rentAmount")
+					AND l."isArchived" = false
+					AND l."organizationUuid" = $1;`;
 		const overdueRentsResult = await this.manager.query(query, [
 			organizationUuid,
 			TransactionType.REVENUE,

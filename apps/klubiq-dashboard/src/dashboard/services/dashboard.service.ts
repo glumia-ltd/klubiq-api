@@ -9,6 +9,7 @@ import {
 import {
 	LeaseMetricsDto,
 	PropertyMetrics,
+	RentOverdueLeaseDto,
 	RevenueResponseDto,
 	TransactionMetricsDto,
 } from '@app/common/dto/responses/dashboard-metrics.dto';
@@ -19,6 +20,10 @@ import { DashboardRepository } from '../repositories/dashboard.repository';
 import { DateTime } from 'luxon';
 import { FileDownloadService } from '@app/common/services/file-download.service';
 import { Util } from '@app/common/helpers/util';
+import {
+	ILeaseService,
+	LEASE_SERVICE_INTERFACE,
+} from '../../lease/interfaces/lease.interface';
 
 @Injectable()
 export class DashboardService {
@@ -33,6 +38,8 @@ export class DashboardService {
 		private readonly dashboardRepository: DashboardRepository,
 		private readonly fileDownloadService: FileDownloadService,
 		private readonly util: Util,
+		@Inject(LEASE_SERVICE_INTERFACE)
+		private readonly leaseService: ILeaseService,
 	) {}
 	async getPropertyMetrics(
 		invalidateCache: boolean = false,
@@ -191,5 +198,13 @@ export class DashboardService {
 		};
 		await this.cacheManager.set(cacheKey, leaseMetrics, this.cacheTTL);
 		return leaseMetrics;
+	}
+	async getOverdueRentSummary(): Promise<RentOverdueLeaseDto> {
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		const overdueRentSummary = await this.leaseService.getTotalOverdueRents(
+			currentUser.organizationId,
+		);
+		return overdueRentSummary;
 	}
 }

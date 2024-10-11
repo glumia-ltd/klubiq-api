@@ -16,7 +16,11 @@ import { TenantUser } from '@app/common/database/entities/tenant.entity';
 import ShortUniqueId from 'short-unique-id';
 import { PropertyLeaseMetrics } from '../dto/responses/view-lease.dto';
 import { Unit } from '@app/common/database/entities/unit.entity';
-import { LeaseStatus } from '@app/common/config/config.constants';
+import {
+	LeaseStatus,
+	PaymentFrequency,
+} from '@app/common/config/config.constants';
+import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics.dto';
 
 @Injectable()
 export class LeaseRepository extends BaseRepository<Lease> {
@@ -330,5 +334,148 @@ export class LeaseRepository extends BaseRepository<Lease> {
 			totalTenants: queryResult[0].finaltotaltenants,
 		};
 		return propertyLeaseMetrics;
+	}
+
+	async getOverdueRentData(
+		organizationUuid: string,
+	): Promise<RentOverdueLeaseDto> {
+		const query = `
+			WITH lease_details AS (
+				SELECT 
+					l.id AS lease_id,
+					l."rentAmount",
+					COALESCE(l."lastPaymentDate", l."startDate") AS base_date,
+					CASE
+						WHEN l."paymentFrequency" = '${PaymentFrequency.MONTHLY}' 	THEN INTERVAL '1 MONTH'
+						WHEN l."paymentFrequency" = '${PaymentFrequency.QUARTERLY}' THEN INTERVAL '3 MONTHS'
+						WHEN l."paymentFrequency" = '${PaymentFrequency.ANNUALLY}' 	THEN INTERVAL '1 YEAR'
+						WHEN l."paymentFrequency" = '${PaymentFrequency.WEEKLY}' 	THEN INTERVAL '1 WEEK'
+						WHEN l."paymentFrequency" = '${PaymentFrequency.BI_WEEKLY}' THEN INTERVAL '2 WEEKS'
+						WHEN l."paymentFrequency" = '${PaymentFrequency.BI_MONTHLY}' THEN INTERVAL '2 MONTHS'
+						WHEN l."paymentFrequency" = '${PaymentFrequency.CUSTOM}' 	THEN INTERVAL '1 DAY'
+						ELSE INTERVAL '1 MONTH'
+					END	AS interval_unit
+				FROM
+					poo.lease l),
+			missed_payments AS (
+				-- Calculate the number of payment periods missed based on the payment frequency
+				SELECT
+					ld.lease_id,
+					ld."rentAmount",
+					FLOOR(EXTRACT(EPOCH FROM AGE(CURRENT_DATE, ld.base_date)) / EXTRACT(EPOCH FROM ld.interval_unit))::INT AS missed_periods,
+					ld."rentAmount" * FLOOR(EXTRACT(EPOCH FROM AGE(CURRENT_DATE, ld.base_date)) / EXTRACT(EPOCH FROM ld.interval_unit))::INT AS total_due
+				FROM
+					lease_details ld
+				)
+			SELECT
+				COUNT(*) AS overdue_lease_count,
+				SUM(mp.total_due) AS overdue_lease_total
+			FROM
+				missed_payments mp
+			LEFT JOIN 
+				poo.lease_payment_totals lp ON mp.lease_id = lp."leaseId"
+			WHERE
+				mp.total_due > COALESCE(lp.total_paid, 0)
+				AND mp.lease_id IN 	(
+					SELECT l.id
+					FROM poo.lease l
+					WHERE
+						l."endDate" >= CURRENT_DATE
+						AND COALESCE(l."nextDueDate", public.calculate_next_due_date(l."startDate", l."lastPaymentDate", l."paymentFrequency", l."customPaymentFrequency", l."rentDueDay")) <= CURRENT_DATE
+						AND l."isArchived" = false
+						AND  l."organizationUuid" = $1
+			);`;
+		const overdueRentsResult = await this.manager.query(query, [
+			organizationUuid,
+		]);
+		const overdueRents: RentOverdueLeaseDto = overdueRentsResult.length
+			? {
+					overDueLeaseCount:
+						parseInt(overdueRentsResult[0].overdue_lease_count, 10) || 0,
+					overDueRentSum:
+						parseFloat(overdueRentsResult[0].overdue_lease_total) || 0,
+				}
+			: { overDueLeaseCount: 0, overDueRentSum: 0 };
+		return overdueRents;
+		// const query = `
+		// 	WITH lease_payments AS (
+		// 		-- Subquery to calculate total payments made per lease
+		// 		SELECT
+		// 			t."leaseId",
+		// 			SUM(t."amount") AS total_paid
+		// 		FROM
+		// 			poo.transaction t
+		// 		WHERE
+		// 			t."transactionType" = $2
+		// 			AND t."revenueType" = $3
+		// 			AND t."transactionDate" <= CURRENT_DATE
+		// 		GROUP BY
+		// 			t."leaseId"
+		// 	),
+		// 	missed_payments AS (
+		// 		-- Calculate the number of payment periods missed based on the payment frequency
+		// 		SELECT
+		// 			l.id AS lease_id,
+		// 			l."rentAmount",
+		// 			COALESCE((
+		// 				CASE
+		// 					WHEN l."paymentFrequency" = '${PaymentFrequency.MONTHLY}' THEN
+		// 						EXTRACT(MONTH FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate")))
+		// 					WHEN l."paymentFrequency" = '${PaymentFrequency.QUARTERLY}' THEN
+		// 						EXTRACT(MONTH FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate"))) / 3
+		// 					WHEN l."paymentFrequency" = '${PaymentFrequency.ANNUALLY}' THEN
+		// 						EXTRACT(YEAR FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate")))
+		// 					WHEN l."paymentFrequency" = '${PaymentFrequency.WEEKLY}' THEN
+		// 						EXTRACT(WEEK FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate")))
+		// 					WHEN l."paymentFrequency" = '${PaymentFrequency.BI_WEEKLY}' THEN
+		// 						EXTRACT(WEEK FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate"))) / 2
+		// 					WHEN l."paymentFrequency" = '${PaymentFrequency.BI_MONTHLY}' THEN
+		// 						EXTRACT(MONTH FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate"))) / 2
+		// 					WHEN l."paymentFrequency" = '${PaymentFrequency.CUSTOM}' THEN
+		// 						EXTRACT(DAY FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate")))
+		// 					ELSE
+		// 						1
+		// 				END
+		// 			), 0) AS missed_periods,
+		// 	l."rentAmount" * COALESCE((
+		// 		CASE
+		// 			WHEN l."paymentFrequency" = '${PaymentFrequency.MONTHLY}' THEN
+		// 				EXTRACT(MONTH FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate")))
+		// 			WHEN l."paymentFrequency" = '${PaymentFrequency.QUARTERLY}' THEN
+		// 				EXTRACT(MONTH FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate"))) / 3
+		// 			WHEN l."paymentFrequency" = '${PaymentFrequency.ANNUALLY}' THEN
+		// 				EXTRACT(YEAR FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate")))
+		// 			WHEN l."paymentFrequency" = '${PaymentFrequency.WEEKLY}' THEN
+		// 				EXTRACT(WEEK FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate")))
+		// 			WHEN l."paymentFrequency" = '${PaymentFrequency.BI_WEEKLY}' THEN
+		// 				EXTRACT(WEEK FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate"))) / 2
+		// 			WHEN l."paymentFrequency" = '${PaymentFrequency.BI_MONTHLY}' THEN
+		// 				EXTRACT(MONTH FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate"))) / 2
+		// 			WHEN l."paymentFrequency" = '${PaymentFrequency.CUSTOM}' THEN
+		// 				EXTRACT(DAY FROM AGE(CURRENT_DATE, COALESCE(l."lastPaymentDate", l."startDate")))
+		// 			ELSE
+		// 				1
+		// 		END
+		// 		), 0) AS total_due
+		// 	FROM
+		// 		poo.lease l
+		// 	)
+		// 	SELECT
+		// 		COUNT(*) AS overdue_lease_count,
+		// 		SUM(mp.total_due) AS overdue_lease_total
+		// 	FROM
+		// 		missed_payments mp
+		// 	LEFT JOIN lease_payments lp ON mp.lease_id = lp."leaseId"
+		// 	WHERE
+		// 		mp.total_due > COALESCE(lp.total_paid, 0)
+		// 		AND mp.lease_id IN 	(
+		// 			SELECT l.id
+		// 			FROM poo.lease l
+		// 			WHERE
+		// 				l."endDate" >= CURRENT_DATE
+		// 				AND public.calculate_next_due_date(l."startDate", l."lastPaymentDate", l."paymentFrequency", l."customPaymentFrequency", l."rentDueDay") <= CURRENT_DATE
+		// 				AND l."isArchived" = false
+		// 				AND  l."organizationUuid" = $1
+		// 	);`
 	}
 }

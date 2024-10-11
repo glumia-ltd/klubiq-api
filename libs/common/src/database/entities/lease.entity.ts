@@ -20,6 +20,11 @@ import { Unit } from './unit.entity';
 @Entity({ schema: 'poo' })
 @Index('idx_lease_dates_status', ['startDate', 'endDate', 'status'])
 @Index('idx_lease_dates', ['startDate', 'endDate'])
+@Index('idx_lease_start_last_payment_freq', [
+	'startDate',
+	'lastPaymentDate',
+	'paymentFrequency',
+])
 export class Lease {
 	@PrimaryGeneratedColumn()
 	id?: number;
@@ -59,6 +64,10 @@ export class Lease {
 	@Column({ type: 'date', nullable: true })
 	@Index('idx_lease_last_payment_date')
 	lastPaymentDate?: Date;
+
+	@Column({ type: 'date', nullable: true })
+	@Index('idx_lease_next_due_date')
+	nextDueDate?: Date;
 
 	@Column({ type: 'int', nullable: true })
 	@Index('idx_lease_rent_due_day')
