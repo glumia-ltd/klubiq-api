@@ -15,9 +15,7 @@ export class OrganizationSettingsService {
 	private readonly logger = new Logger(OrganizationSettingsService.name);
 	private readonly cacheKey = CacheKeys.ORGANIZATION_SETTINGS;
 	constructor(
-		//@InjectRepository(OrganizationSettings)
 		private readonly organizationSettingsRepository: OrganizationSettingsRepository,
-		//Repository<OrganizationSettings>,
 		private readonly cls: ClsService<SharedClsStore>,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
