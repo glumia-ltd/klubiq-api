@@ -173,10 +173,10 @@ export class LeaseController {
 
 	@Post('upload-url')
 	@Ability(Actions.WRITE)
-	async getPresignedUrlForPropertyImage(@Body() fileData: FileUploadDto) {
+	async getPresignedUrlForDocument(@Body() fileData: FileUploadDto) {
 		try {
 			const result =
-				await this.leaseService.getPreSignedUploadUrlForPropertyImage(fileData);
+				await this.leaseService.getPreSignedUploadUrlForDocuments(fileData);
 			return result;
 		} catch (error) {
 			throw new BadRequestException(error.message);

@@ -53,4 +53,8 @@ export class GetPropertyDto extends IntersectionType(
 	})
 	@IsEnum(SortProperties)
 	sortBy?: SortProperties;
+
+	get skip(): number {
+		return (this.page - 1) * this.take;
+	}
 }

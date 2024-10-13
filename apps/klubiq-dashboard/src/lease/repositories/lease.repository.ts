@@ -191,8 +191,13 @@ export class LeaseRepository extends BaseRepository<Lease> {
 						queryBuilder.andWhere(`lease.isArchived = :${key}`, {
 							[key]: value === DisplayOptions.ARCHIVED ? true : false,
 						});
-						queryBuilder.andWhere(`lease.isDraft = :${key}`, {
-							[key]: value === DisplayOptions.DRAFT ? true : false,
+					} else if (key === 'unitId') {
+						queryBuilder.andWhere(`unit.id = :${key}`, {
+							[key]: value,
+						});
+					} else if (key === 'propertyId') {
+						queryBuilder.andWhere(`property.uuid = :${key}`, {
+							[key]: value,
 						});
 					} else if (indexOf(this.nonFilterColumns, key) < 0) {
 						queryBuilder.andWhere(`lease.${key} = :${key}`, {
@@ -230,7 +235,9 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				'property.organizationUuid',
 				'property.managerUid',
 				'property.ownerUid',
+				'property.uuid',
 				'unit.unitNumber',
+				'unit.id',
 			])
 			.where('property.organizationUuid = :orgUuid', { orgUuid });
 		if (!isOrgOwner) {

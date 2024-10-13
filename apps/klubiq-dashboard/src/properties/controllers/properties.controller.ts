@@ -301,4 +301,20 @@ export class PropertiesController {
 			throw new BadRequestException(error.message);
 		}
 	}
+
+	@Ability(Actions.WRITE, Actions.VIEW)
+	@Get('view/list')
+	@ApiOkResponse({
+		description: "Returns a view list of an organization's properties",
+		type: [PropertyDetailsDto],
+	})
+	async getOrganizationPropertiesViewList() {
+		try {
+			const data =
+				await this.propertyService.getPropertyGroupedUnitsByOrganization();
+			return data;
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
 }

@@ -14,6 +14,7 @@ import { ErrorMessages } from '@app/common/config/error.constant';
 import { FileUploadService } from '@app/common/services/file-upload.service';
 import { Lease } from '@app/common/database/entities/lease.entity';
 import {
+	CacheTTl,
 	LeaseStatus,
 	PaymentFrequency,
 	RENT_DUE_ON,
@@ -117,6 +118,7 @@ export class LeaseService implements ILeaseService {
 					status: lease.status,
 					tenants: lease.tenants,
 					unitNumber: lease.unit.unitNumber,
+					unitId: lease.unit.id,
 					property: lease.unit.property,
 				},
 				{ excludeExtraneousValues: true },
@@ -212,7 +214,11 @@ export class LeaseService implements ILeaseService {
 			if (cachedOverdueRentData) return cachedOverdueRentData;
 			const totalOverdueRents =
 				await this.leaseRepository.getOverdueRentData(organizationUuid);
-			await this.cacheManager.set(cacheKey, totalOverdueRents, 86400);
+			await this.cacheManager.set(
+				cacheKey,
+				totalOverdueRents,
+				CacheTTl.ONE_DAY,
+			);
 			return totalOverdueRents;
 		} catch (error) {
 			this.logger.error(
@@ -238,9 +244,7 @@ export class LeaseService implements ILeaseService {
 			throw new Error(error.message);
 		}
 	}
-	async getPreSignedUploadUrlForPropertyImage(
-		data: FileUploadDto,
-	): Promise<any> {
+	async getPreSignedUploadUrlForDocuments(data: FileUploadDto): Promise<any> {
 		try {
 			const url = await this.uploadService.getUploadSignature(data);
 			return url;

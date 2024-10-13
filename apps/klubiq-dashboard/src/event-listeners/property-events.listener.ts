@@ -16,17 +16,30 @@ export class PropertyCreatedListener {
 	@OnEvent('property.created')
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async handlePropertyCreatedEvent(payload: CreatePropertyEvent) {
-		const propertyListKeys = await this.cacheManager.get<string[]>(
-			`${payload.organizationId}/getPropertyListKeys`,
+		const propertyCacheKeys = this.getPropertyRelatedCacheKeys(
+			payload.organizationId,
 		);
-		const propertyMetricsKey = `dashboard/${CacheKeys.PROPERTY_METRICS}/${payload.organizationId}`;
-		const propertyMetricsCache =
-			await this.cacheManager.get(propertyMetricsKey);
-		each(propertyListKeys, async (key) => {
+		each(propertyCacheKeys, async (key) => {
+			const cacheData = await this.cacheManager.get(key);
+			if (cacheData && key.includes('getPropertyListKeys')) {
+				this.deletePropertyFilteredCacheKeys(cacheData as string[]);
+			} else {
+				await this.cacheManager.del(key);
+			}
+		});
+	}
+
+	private deletePropertyFilteredCacheKeys(keys: string[]) {
+		each(keys, async (key) => {
 			await this.cacheManager.del(key);
 		});
-		if (propertyMetricsCache) {
-			await this.cacheManager.del(propertyMetricsKey);
-		}
+	}
+
+	private getPropertyRelatedCacheKeys(organizationId: string) {
+		return [
+			`${organizationId}/getPropertyListKeys`,
+			`dashboard/${CacheKeys.PROPERTY_METRICS}/${organizationId}`,
+			`properties-grouped-units/${organizationId}`,
+		];
 	}
 }
