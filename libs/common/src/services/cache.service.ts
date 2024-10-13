@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { CacheTTl } from '../config/config.constants';
 
 @Injectable()
 export class CacheService {
-	private readonly cacheTTL: number = 86400;
+	private readonly cacheTTL: number = CacheTTl.ONE_DAY;
 	constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
 	// gets all data by cache key

@@ -15,17 +15,19 @@ import {
 } from './property-list-response.dto';
 import { LeaseDto } from '../../../lease/dto/responses/view-lease.dto';
 
+//GROUPS :
+// Private - means only exposed for property details page
 export class UnitDto {
 	@Expose()
 	@IsNumber()
 	id: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	@IsOptional()
 	rooms?: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	@IsOptional()
 	offices?: number;
@@ -34,47 +36,47 @@ export class UnitDto {
 	@IsString()
 	unitNumber: string;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	@IsOptional()
 	floor?: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	@IsOptional()
 	bedrooms?: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	@IsOptional()
 	bathrooms?: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	@IsOptional()
 	toilets?: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsOptional()
 	@IsObject()
 	area: { value: number; unit: string };
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	@IsOptional()
 	rentAmount?: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@ValidateNested({ each: true })
 	@Type(() => LeaseDto)
 	leases?: LeaseDto[];
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@ValidateNested({ each: true })
 	@Type(() => PropertyImageResponseDto)
 	images?: PropertyImageResponseDto[];
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsArray()
 	@IsOptional()
 	amenities?: string[];
@@ -100,12 +102,12 @@ export class PropertyDetailsDto {
 	@IsString()
 	name: string;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@ValidateNested()
 	@Type(() => PropertyAddressDto)
 	address: PropertyAddressDto;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	id: number;
 
@@ -113,113 +115,113 @@ export class PropertyDetailsDto {
 	@IsString()
 	uuid: string;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsOptional()
 	@IsObject()
 	area?: { value: number; unit: string };
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@ValidateNested({ each: true })
 	@Type(() => PropertyImageResponseDto)
 	images: PropertyImageResponseDto[];
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	totalRent: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	totalTenants: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	unitCount: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@ValidateNested()
 	@Type(() => PropertyListMetadataDto)
 	type: PropertyListMetadataDto;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@ValidateNested()
 	@Type(() => PropertyListMetadataDto)
 	purpose: PropertyListMetadataDto;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@ValidateNested()
 	@Type(() => PropertyListMetadataDto)
 	status: PropertyListMetadataDto;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@ValidateNested()
 	@Type(() => PropertyListMetadataDto)
 	category: PropertyListMetadataDto;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@ValidateNested()
 	@Type(() => PropertyManagerDto)
 	manager: PropertyManagerDto;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@ValidateNested()
 	@Type(() => PropertyManagerDto)
 	owner: PropertyManagerDto;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsArray()
 	amenities: string[];
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsOptional()
 	@IsString()
 	description?: string;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsOptional()
 	@IsString()
 	note?: string;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsOptional()
 	@IsString({ each: true })
 	tags?: string[];
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	vacantUnitCount: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsNumber()
 	tenantCount: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsOptional()
 	@IsNumber()
 	bedrooms?: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsOptional()
 	@IsNumber()
 	bathrooms?: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsOptional()
 	@IsNumber()
 	toilets?: number;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsBoolean()
 	isMultiUnit: boolean;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsBoolean()
 	isArchived: boolean;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsBoolean()
 	isDraft: boolean;
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsOptional()
 	archivedDate?: Date;
 
@@ -233,7 +235,7 @@ export class PropertyDetailsDto {
 	// @Type(() => LeaseDto)
 	// leases?: LeaseDto[];
 
-	@Expose()
+	@Expose({ groups: ['private'] })
 	@IsBoolean()
 	@IsOptional()
 	isListingPublished?: boolean;

@@ -41,6 +41,10 @@ export class LeaseListPropertyDto {
 	@Expose()
 	@IsString()
 	ownerUid: string;
+
+	@Expose()
+	@IsString()
+	uuid: string;
 }
 export class LeaseDto {
 	@Expose()
@@ -50,6 +54,10 @@ export class LeaseDto {
 	@Expose()
 	@IsString()
 	unitNumber: string;
+
+	@Expose()
+	@IsString()
+	unitId: string;
 
 	@Expose()
 	@IsEnum(() => LeaseStatus)

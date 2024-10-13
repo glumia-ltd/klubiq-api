@@ -1,8 +1,5 @@
 import { PageOptionsDto } from '@app/common/dto/pagination/page-options.dto';
-import {
-	LeaseStatus,
-	PaymentFrequency,
-} from '@app/common/config/config.constants';
+import { LeaseStatus } from '@app/common/config/config.constants';
 import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
 
@@ -10,24 +7,15 @@ export enum SortProperties {
 	START_DATE = 'startDate',
 	END_DATE = 'endDate',
 	CREATED_DATE = 'createdDate',
-	LEASE_NAME = 'name',
-	STATUS = 'status',
+	UPDATED_DATE = 'updatedDate',
 }
+
 export enum DisplayOptions {
 	ALL = 'all',
 	ARCHIVED = 'archived',
-	DRAFT = 'draft',
 }
 
 export class LeaseFilterDto {
-	@IsOptional()
-	@ApiPropertyOptional({
-		enum: PaymentFrequency,
-		default: PaymentFrequency.MONTHLY,
-	})
-	@IsEnum(PaymentFrequency)
-	paymentFrequency?: PaymentFrequency;
-
 	@IsOptional()
 	@ApiPropertyOptional({
 		enum: DisplayOptions,
@@ -45,7 +33,10 @@ export class LeaseFilterDto {
 	status?: LeaseStatus;
 
 	@IsOptional()
-	search?: string;
+	propertyId?: string;
+
+	@IsOptional()
+	unitId?: number;
 }
 
 export class GetLeaseDto extends IntersectionType(
@@ -59,4 +50,8 @@ export class GetLeaseDto extends IntersectionType(
 	})
 	@IsEnum(SortProperties)
 	sortBy?: SortProperties;
+
+	get skip(): number {
+		return (this.page - 1) * this.take;
+	}
 }

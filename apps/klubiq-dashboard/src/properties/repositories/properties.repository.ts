@@ -6,12 +6,10 @@ import {
 } from '@nestjs/common';
 import { Amenity } from '@app/common/database/entities/property-amenity.entity';
 import { BaseRepository } from '@app/common/repositories/base.repository';
-import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics.dto';
 import {
 	DisplayOptions,
+	UnitStatus,
 	UnitType,
-	RevenueType,
-	TransactionType,
 } from '@app/common/config/config.constants';
 import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm';
 import { Property } from '@app/common/database/entities/property.entity';
@@ -234,10 +232,11 @@ export class PropertyRepository extends BaseRepository<Property> {
 			);
 		}
 		await this.getPropertiesFilterQueryString(getPropertyDto, queryBuilder);
+		console.log(getPropertyDto);
 		queryBuilder
-			.orderBy(`property.${getPropertyDto.sortBy}`, getPropertyDto.order)
 			.skip(getPropertyDto.skip)
-			.take(getPropertyDto.take);
+			.take(getPropertyDto.take)
+			.orderBy(`property.${getPropertyDto.sortBy}`, getPropertyDto.order);
 		return await queryBuilder.getManyAndCount();
 	}
 	private async getPropertiesFilterQueryString(
@@ -542,7 +541,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 					P."organizationUuid" AS org_uuid,
 					SUM(P."unitCount") AS total_units
 				FROM poo.property P
-				WHERE (P."organizationUuid" = $1 AND P."isArchived" = false AND P."deletedDate" IS NULL)
+				WHERE (P."organizationUuid" = $1)
 				GROUP BY P."organizationUuid"`;
 		const totalUnitsQuery = await this.manager.query(query, [orgUuid]);
 		const queryResult = totalUnitsQuery.length
@@ -557,20 +556,11 @@ export class PropertyRepository extends BaseRepository<Property> {
 	): Promise<number> {
 		const interval = `'${pastDays} days'`;
 		const query = `
-			SELECT COUNT(DISTINCT "unit"."id") AS "total_occupied_units", "property"."organizationUuid" AS "org_uuid"
-			FROM "poo"."unit" "unit"
-			INNER JOIN "poo"."property" "property" ON "unit"."propertyUuid" = "property"."uuid"
-			WHERE "property"."organizationUuid" = $1
-			  AND "property"."isArchived" = false
-			  AND "property"."deletedDate" IS NULL
-			  AND EXISTS (
-			    SELECT 1
-			    FROM "poo"."lease" "lease"
-			    WHERE "lease"."unitId" = "unit"."id"
-			      AND "lease"."deletedAt" IS NULL
-			      AND ("lease"."startDate" <= (CURRENT_DATE - INTERVAL ${interval}) AND "lease"."endDate" >= (CURRENT_DATE - INTERVAL ${interval}))
-			  )
-			GROUP BY "org_uuid";`;
+			SELECT COUNT(u.id) AS total_occupied_units
+			FROM poo.unit u
+			INNER JOIN poo.lease l ON u.id = l."unitId" AND l."organizationUuid" = $1
+			WHERE u.status = '${UnitStatus.OCCUPIED}'
+			AND (l."startDate" <= (CURRENT_DATE - INTERVAL ${interval}) AND l."endDate" >= (CURRENT_DATE - INTERVAL ${interval}));`;
 		const occupiedUnitsQuery = await this.manager.query(query, [
 			organizationUuid,
 		]);
@@ -624,51 +614,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 
 		return propertyCountData;
 	}
-	async getTotalOverdueRents(
-		organizationUuid: string,
-	): Promise<RentOverdueLeaseDto> {
-		const query = `
-				SELECT
-					COUNT(*) AS overDueLeaseCount,
-					SUM(l."rentAmount") AS overDueRentSum
-				FROM
-					poo.lease l
-				JOIN
-					poo.unit u ON u.id = l."unitId" 
-				LEFT JOIN
-					(
-						SELECT
-							t."leaseId",
-							SUM(t.amount) AS total_paid
-						FROM
-							poo.transaction t
-						WHERE
-							t."transactionType" = $2
-							AND t."revenueType" = $3
-							AND t."transactionDate" <= CURRENT_DATE
-						GROUP BY
-							t."leaseId"
-					) payments ON l.id = payments."leaseId"
-				WHERE
-					l."endDate" >= CURRENT_DATE
-					AND public.calculate_next_due_date(l."startDate", l."lastPaymentDate", l."paymentFrequency", l."customPaymentFrequency", l."rentDueDay") <= CURRENT_DATE
-					AND (payments.total_paid IS NULL OR payments.total_paid < l."rentAmount")
-					AND l."isArchived" = false
-					AND l."organizationUuid" = $1;`;
-		const overdueRentsResult = await this.manager.query(query, [
-			organizationUuid,
-			TransactionType.REVENUE,
-			RevenueType.PROPERTY_RENTAL,
-		]);
-		const overdueRents: RentOverdueLeaseDto = overdueRentsResult.length
-			? {
-					overDueLeaseCount:
-						parseInt(overdueRentsResult[0].overdueleasecount, 10) || 0,
-					overDueRentSum: parseFloat(overdueRentsResult[0].overduerentsum) || 0,
-				}
-			: { overDueLeaseCount: 0, overDueRentSum: 0 };
-		return overdueRents;
-	}
 
 	// 7. Delete a unit and its associated images
 	async deleteUnit(
@@ -721,5 +666,19 @@ export class PropertyRepository extends BaseRepository<Property> {
 		}
 		const unitsToRemove = await this.manager.findBy(Unit, { id: In(ids) });
 		await this.manager.remove(unitsToRemove);
+	}
+
+	async getPropertyGroupedUnitsByOrganization(orgUuid: string) {
+		const query = await this.createQueryBuilder('property')
+			.leftJoinAndSelect('property.units', 'units')
+			.select([
+				'property.uuid',
+				'property.name',
+				'units.id',
+				'units.unitNumber',
+			])
+			.where('property.organizationUuid = :orgUuid', { orgUuid })
+			.getMany();
+		return query;
 	}
 }

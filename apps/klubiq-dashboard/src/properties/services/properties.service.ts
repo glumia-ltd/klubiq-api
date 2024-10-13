@@ -21,18 +21,18 @@ import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { PageMetaDto } from '@app/common/dto/pagination/page-meta.dto';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
 import { IPropertyMetrics } from '../interfaces/property-metrics.service.interface';
-import {
-	PropertyMetrics,
-	RentOverdueLeaseDto,
-} from '@app/common/dto/responses/dashboard-metrics.dto';
-import { UserRoles } from '@app/common/config/config.constants';
+import { PropertyMetrics } from '@app/common/dto/responses/dashboard-metrics.dto';
+import { CacheTTl, UserRoles } from '@app/common/config/config.constants';
 import { Util } from '@app/common/helpers/util';
 import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 import { Unit } from '@app/common/database/entities/unit.entity';
 import { plainToInstance } from 'class-transformer';
 import { filter, padEnd, reduce } from 'lodash';
-import { PropertyDetailsDto } from '../dto/responses/property-details.dto';
+import {
+	PropertyDetailsDto,
+	UnitDto,
+} from '../dto/responses/property-details.dto';
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreatePropertyEvent } from '../../event-listeners/event-models/property-event';
@@ -53,22 +53,6 @@ export class PropertiesService implements IPropertyMetrics {
 		private eventEmitter: EventEmitter2,
 		private readonly commonConfigService: CommonConfigService,
 	) {}
-
-	async getTotalOverdueRents(
-		organizationUuid: string,
-	): Promise<RentOverdueLeaseDto> {
-		try {
-			const totalOverdueRents =
-				await this.propertyRepository.getTotalOverdueRents(organizationUuid);
-			return totalOverdueRents;
-		} catch (error) {
-			this.logger.error(
-				error.message,
-				error.stack,
-				'Error getting total overdue rents',
-			);
-		}
-	}
 	async getTotalUnits(organizationUuid: string): Promise<number> {
 		try {
 			const totalUnits =
@@ -206,6 +190,66 @@ export class PropertiesService implements IPropertyMetrics {
 		}
 	}
 
+	private mapUnitsToUnitListDto(units: Unit[], groups?: string[]) {
+		return plainToInstance(
+			UnitDto,
+			units.map((unit) => {
+				return { ...unit };
+			}),
+			{ excludeExtraneousValues: true, groups },
+		);
+	}
+	private async mapGroupedUnitsToPropertyListDto(
+		plainProperty: Property[],
+	): Promise<PropertyDetailsDto[]> {
+		const propertyListDto = plainProperty.map(async (property) =>
+			plainToInstance(
+				PropertyDetailsDto,
+				{
+					uuid: property.uuid,
+					name: property.name,
+					units: await property.units,
+				},
+				{ excludeExtraneousValues: true },
+			),
+		);
+		return Promise.all(propertyListDto);
+	}
+	private async mapPlainPropertyToPropertyListDto(
+		plainProperty: Property[],
+	): Promise<PropertyListDto[]> {
+		return plainToInstance(
+			PropertyListDto,
+			plainProperty.map((property) => {
+				const rooms = property.isMultiUnit ? null : property.mainUnit?.rooms;
+				const offices = property.isMultiUnit
+					? null
+					: property.mainUnit?.offices;
+				const floor = property.isMultiUnit ? null : property.mainUnit?.floor;
+				const mainImage = property.mainPhoto;
+				const bedrooms = property.isMultiUnit
+					? null
+					: property.mainUnit?.bedrooms;
+				const bathrooms = property.isMultiUnit
+					? null
+					: property.mainUnit?.bathrooms;
+				const toilets = property.isMultiUnit
+					? null
+					: property.mainUnit?.toilets;
+				return {
+					...property,
+					mainImage,
+					bedrooms,
+					bathrooms,
+					toilets,
+					rooms,
+					offices,
+					floor,
+				};
+			}),
+			{ excludeExtraneousValues: true },
+		);
+	}
 	private async mapPlainPropertyDetailToDto(
 		property: Property,
 	): Promise<PropertyDetailsDto> {
@@ -253,7 +297,7 @@ export class PropertiesService implements IPropertyMetrics {
 				images: images,
 				area: !property.isMultiUnit ? units?.[0]?.area : null,
 			},
-			{ excludeExtraneousValues: true },
+			{ excludeExtraneousValues: true, groups: ['private'] },
 		);
 	}
 	/**
@@ -462,42 +506,6 @@ export class PropertiesService implements IPropertyMetrics {
 		}
 	}
 
-	private async mapPlainPropertyToPropertyListDto(
-		plainProperty: Property[],
-	): Promise<PropertyListDto[]> {
-		return plainToInstance(
-			PropertyListDto,
-			plainProperty.map((property) => {
-				const rooms = property.isMultiUnit ? null : property.mainUnit?.rooms;
-				const offices = property.isMultiUnit
-					? null
-					: property.mainUnit?.offices;
-				const floor = property.isMultiUnit ? null : property.mainUnit?.floor;
-				const mainImage = property.mainPhoto;
-				const bedrooms = property.isMultiUnit
-					? null
-					: property.mainUnit?.bedrooms;
-				const bathrooms = property.isMultiUnit
-					? null
-					: property.mainUnit?.bathrooms;
-				const toilets = property.isMultiUnit
-					? null
-					: property.mainUnit?.toilets;
-				return {
-					...property,
-					mainImage,
-					bedrooms,
-					bathrooms,
-					toilets,
-					rooms,
-					offices,
-					floor,
-				};
-			}),
-			{ excludeExtraneousValues: true },
-		);
-	}
-
 	/**
 	 * Creates a draft property using the provided CreatePropertyDto.
 	 *
@@ -606,6 +614,15 @@ export class PropertiesService implements IPropertyMetrics {
 		}
 	}
 
+	/**
+	 * Deletes the specified units from a property.
+	 *
+	 * @param {number[]} unitIds - The IDs of the units to delete.
+	 * @param {string} propertyUuid - The UUID of the property to delete the units from.
+	 * @return {Promise<void>} A promise that resolves when the units are successfully deleted.
+	 * @throws {ForbiddenException} - If the current user's organization ID is not found in the context.
+	 * @throws {BadRequestException} - If there is an error deleting the units from the property.
+	 */
 	async deleteUnitsFromProperty(
 		unitIds: number[],
 		propertyUuid: string,
@@ -628,5 +645,29 @@ export class PropertiesService implements IPropertyMetrics {
 				description: error.message,
 			});
 		}
+	}
+
+	/**
+	 * Retrieves all properties belonging to the organization grouped by property and units.
+	 * @param {string} orgUuid - The UUID of the organization.
+	 * @return {Promise<PropertyDetailsDto[]>} - The properties belonging to the organization grouped by property and units.
+	 * @throws {ForbiddenException} - If the current user's organization ID is not found in the context.
+	 */
+	async getPropertyGroupedUnitsByOrganization(): Promise<PropertyDetailsDto[]> {
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser.organizationId)
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		const cacheKey = `${this.cacheKeyPrefix}-grouped-units/${currentUser.organizationId}`;
+		const cachedProperties =
+			await this.cacheManager.get<PropertyDetailsDto[]>(cacheKey);
+		if (cachedProperties) return cachedProperties;
+		const properties =
+			await this.propertyRepository.getPropertyGroupedUnitsByOrganization(
+				currentUser.organizationId,
+			);
+		const mappedProperties =
+			await this.mapGroupedUnitsToPropertyListDto(properties);
+		await this.cacheManager.set(cacheKey, mappedProperties, CacheTTl.ONE_DAY);
+		return mappedProperties;
 	}
 }
