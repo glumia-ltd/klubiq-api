@@ -17,6 +17,7 @@ import {
 import { FeaturesPermissionRepository } from './features-permission.repository';
 import { PropertyAmenityRepository } from './property-amenity.repository';
 import { OrganizationSettingsRepository } from './organization-settings.repository';
+import { UserPreferenceRepository } from './user-preference.repository';
 
 @Module({
 	providers: [
@@ -96,6 +97,11 @@ import { OrganizationSettingsRepository } from './organization-settings.reposito
 			useFactory: (em: EntityManager) => new OrganizationSettingsRepository(em),
 			inject: [EntityManager],
 		},
+		{
+			provide: UserPreferenceRepository,
+			useFactory: (em: EntityManager) => new UserPreferenceRepository(em),
+			inject: [EntityManager],
+		},
 	],
 	exports: [
 		UserProfilesRepository,
@@ -113,6 +119,7 @@ import { OrganizationSettingsRepository } from './organization-settings.reposito
 		FeaturesPermissionRepository,
 		PropertyAmenityRepository,
 		OrganizationSettingsRepository,
+		UserPreferenceRepository,
 	],
 })
 export class RepositoriesModule {}

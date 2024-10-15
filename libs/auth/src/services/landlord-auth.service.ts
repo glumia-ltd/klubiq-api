@@ -55,6 +55,7 @@ import { SubscriptionPlan } from '@app/common/database/entities/subscription-pla
 import { SubscriptionPlanDto } from '@app/common/dto/responses/subscription-plan.dto';
 import ShortUniqueId from 'short-unique-id';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
+import { UserPreferencesService } from '@app/common/services/user-preferences.service';
 
 @Injectable()
 export class LandlordAuthService extends AuthService {
@@ -76,6 +77,7 @@ export class LandlordAuthService extends AuthService {
 		protected readonly cls: ClsService<SharedClsStore>,
 		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		protected readonly organizationSettingsService: OrganizationSettingsService,
+		protected readonly userPreferencesService: UserPreferencesService,
 	) {
 		super(
 			firebaseAdminApp,
@@ -87,6 +89,7 @@ export class LandlordAuthService extends AuthService {
 			httpService,
 			cls,
 			organizationSettingsService,
+			userPreferencesService,
 		);
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',

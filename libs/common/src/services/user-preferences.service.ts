@@ -3,19 +3,19 @@ import { CacheKeys } from '../config/config.constants';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectMapper } from '@automapper/nestjs';
-import { Repository } from 'typeorm';
 import { UserPreferences } from '../database/entities/user-preferences.entity';
 import { Mapper } from '@automapper/core';
 import { ClsService } from 'nestjs-cls';
 import { SharedClsStore } from '../dto/public/shared-clsstore';
 import { ErrorMessages } from '../config/error.constant';
+import { UserPreferenceRepository } from '../repositories/user-preference.repository';
 
 @Injectable()
 export class UserPreferencesService {
 	private readonly logger = new Logger(UserPreferencesService.name);
 	private readonly cacheKey = CacheKeys.USER_PREFERENCES;
 	constructor(
-		private readonly userPreferencesRepository: Repository<UserPreferences>,
+		private readonly userPreferencesRepository: UserPreferenceRepository,
 		private readonly cls: ClsService<SharedClsStore>,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,

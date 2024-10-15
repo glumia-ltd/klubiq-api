@@ -179,6 +179,13 @@ export class AuthController {
 		);
 	}
 
+	@Auth(AuthType.Bearer)
+	@Post('update-preferences')
+	@ApiOkResponse()
+	async updateUserPreferences(@Body() preferences: Record<string, any>) {
+		return await this.landlordAuthService.updateUserPreferences(preferences);
+	}
+
 	// @Auth(AuthType.ApiKey)
 	// @HttpCode(HttpStatus.OK)
 	// @Post('upadte-config')

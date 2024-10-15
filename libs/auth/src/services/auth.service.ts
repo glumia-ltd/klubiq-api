@@ -44,6 +44,7 @@ import ShortUniqueId from 'short-unique-id';
 import { DateTime } from 'luxon';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
 import { OrganizationSettings } from '@app/common/database/entities/organization-settings.entity';
+import { UserPreferencesService } from '@app/common/services/user-preferences.service';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
@@ -62,6 +63,7 @@ export abstract class AuthService {
 		private readonly httpService: HttpService,
 		protected readonly cls: ClsService<SharedClsStore>,
 		protected readonly organizationSettingsService: OrganizationSettingsService,
+		protected readonly userPreferencesService: UserPreferencesService,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -83,6 +85,23 @@ export abstract class AuthService {
 	// 	return tAuth;
 	// }
 
+	async updateUserPreferences(preferences: any) {
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser) {
+			throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
+		}
+
+		const updatedUserPreferences =
+			await this.userPreferencesService.updateUserPreferences(
+				currentUser.uid,
+				preferences,
+			);
+		if (updatedUserPreferences) {
+			const cacheKey = `${this.cacheKeyPrefix}/user/${currentUser.uid}`;
+			await this.cacheManager.del(cacheKey);
+		}
+		return updatedUserPreferences;
+	}
 	async verifyToken(): Promise<any> {
 		const token = this.cls.get('jwtToken');
 		return this.auth.verifyIdToken(token);
@@ -413,9 +432,16 @@ export abstract class AuthService {
 			if (!currentUser.uid) {
 				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
 			}
+			const cacheKey = `${this.cacheKeyPrefix}/user/${currentUser.uid}`;
+
 			switch (currentUser.systemRole) {
 				case UserRoles.LANDLORD:
-					return await this.getLandlordUser(currentUser.uid);
+					const cachedUser =
+						await this.cacheManager.get<LandlordUserDetailsResponseDto>(
+							cacheKey,
+						);
+					if (cachedUser) return cachedUser;
+					else return await this.getLandlordUser(currentUser.uid, cacheKey);
 				case UserRoles.ADMIN:
 					break;
 			}
@@ -431,11 +457,8 @@ export abstract class AuthService {
 
 	private async getLandlordUser(
 		userId: string,
+		cacheKey: string = `${this.cacheKeyPrefix}/user/${userId}`,
 	): Promise<LandlordUserDetailsResponseDto> {
-		const cacheKey = `${this.cacheKeyPrefix}-landlord/user/${userId}`;
-		const cachedUser =
-			await this.cacheManager.get<LandlordUserDetailsResponseDto>(cacheKey);
-		if (cachedUser) return cachedUser;
 		const user = await this.userProfilesRepository.getLandLordUserInfo(userId);
 		if (!user) {
 			throw new NotFoundException('User not found');
