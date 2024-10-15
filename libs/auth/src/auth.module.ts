@@ -18,6 +18,7 @@ import { SubscriptionModule } from '@app/common/public/subscription/subscription
 import { MailerSendService } from '@app/common/email/email.service';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
 import { RepositoriesModule } from '@app/common/repositories/repositories.module';
+import { UserPreferencesService } from '@app/common/services/user-preferences.service';
 
 interface FirebaseConfig {
 	type: string;
@@ -74,6 +75,7 @@ const firebaseAdminProvider = {
 		OrganizationRepository,
 		UserProfilesRepository,
 		OrganizationSettingsService,
+		UserPreferencesService,
 	],
 	exports: [LandlordAuthService],
 	controllers: [AuthController],
