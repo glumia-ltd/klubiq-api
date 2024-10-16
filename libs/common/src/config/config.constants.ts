@@ -260,3 +260,52 @@ export const CacheTTl = {
 	ONE_MONTH: 60 * 60 * 24 * 30,
 	ONE_YEAR: 60 * 60 * 24 * 365,
 };
+
+export const LEASE_FILTER_OPTIONS: FilterData[] = [
+	{
+		id: 'display',
+		title: 'Display',
+		options: Object.values(DisplayOptions).map((option) => {
+			return {
+				label: startCase(option),
+				value: option,
+				Icon: '',
+			};
+		}),
+	},
+	{
+		id: 'status',
+		title: 'Status',
+		options: Object.values(LeaseStatus).map((option) => {
+			return {
+				label: startCase(option),
+				value: option,
+				Icon: '',
+			};
+		}),
+	},
+	{
+		id: 'sortBy',
+		title: 'Sort Options',
+		options: [
+			{
+				label: 'Recently Updated',
+				value: SortProperties.UPDATED_DATE,
+				order: 'DESC',
+				Icon: 'TopBottom',
+			},
+			{
+				value: SortProperties.CREATED_DATE,
+				order: 'DESC',
+				label: 'Newest',
+				Icon: 'ReverseIcon',
+			},
+			{
+				value: SortProperties.CREATED_DATE,
+				order: 'ASC',
+				label: 'Oldest',
+				Icon: 'AscendIcon',
+			},
+		],
+	},
+];
