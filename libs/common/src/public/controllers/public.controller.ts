@@ -24,6 +24,7 @@ import {
 	AppFeature,
 	FILTER_OPTIONS,
 	FilterData,
+	LEASE_FILTER_OPTIONS,
 	UserRoles,
 } from '../../config/config.constants';
 import { ViewFeatureDto } from '../../dto/responses/feature-response.dto';
@@ -121,6 +122,15 @@ export class PublicController {
 			types,
 			purposes,
 			amenities,
+			filterOptions,
+		};
+	}
+
+	@Auth(AuthType.None)
+	@Get('lease-metadata')
+	async getLeaseFormViewData() {
+		const filterOptions: FilterData[] = [...LEASE_FILTER_OPTIONS];
+		return {
 			filterOptions,
 		};
 	}
