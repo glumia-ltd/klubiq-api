@@ -24,14 +24,6 @@ export class NotificationSubscriptionDto {
 	organizationUuid?: string; // Organization UUID
 }
 
-export class SendNotificationDto {
-	@Expose()
-	payload: NotificationPayloadDto;
-
-	@Expose()
-	userIds: string[];
-}
-
 export class NotificationPayloadDto {
 	@Expose()
 	title: string;
@@ -41,4 +33,12 @@ export class NotificationPayloadDto {
 	data?: Record<string, any>;
 	@Expose()
 	actionLink?: string;
+}
+
+export class SendNotificationDto {
+	@Expose()
+	payload: NotificationPayloadDto;
+
+	@Expose()
+	userIds: string[];
 }

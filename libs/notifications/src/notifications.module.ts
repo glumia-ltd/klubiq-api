@@ -8,6 +8,7 @@ import {
 } from './notifications.repository';
 import { NotificationsSubscriptionController } from './controllers/notifications-subscriptions.controller';
 import { NotificationsController } from './controllers/notifications.controller';
+import { NotificationsService } from './services/notifications.service';
 
 @Module({
 	imports: [RepositoriesModule],
@@ -17,6 +18,7 @@ import { NotificationsController } from './controllers/notifications.controller'
 		ConfigService,
 		NotificationsRepository,
 		NotificationsSubscriptionRepository,
+		NotificationsService,
 	],
 	exports: [NotificationsSubscriptionService],
 })
