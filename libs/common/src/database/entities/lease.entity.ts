@@ -3,6 +3,7 @@ import {
 	CreateDateColumn,
 	DeleteDateColumn,
 	Entity,
+	Generated,
 	Index,
 	JoinColumn,
 	JoinTable,
@@ -28,6 +29,11 @@ import { Unit } from './unit.entity';
 export class Lease {
 	@PrimaryGeneratedColumn()
 	id?: number;
+
+	@Generated('uuid')
+	@Column({ unique: true })
+	@Index('idx_lease_uuid')
+	uuid?: string;
 
 	@Index()
 	@Column({ length: 255, unique: true, nullable: false })

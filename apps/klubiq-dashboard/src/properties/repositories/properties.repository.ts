@@ -232,7 +232,6 @@ export class PropertyRepository extends BaseRepository<Property> {
 			);
 		}
 		await this.getPropertiesFilterQueryString(getPropertyDto, queryBuilder);
-		console.log(getPropertyDto);
 		queryBuilder
 			.skip(getPropertyDto.skip)
 			.take(getPropertyDto.take)
