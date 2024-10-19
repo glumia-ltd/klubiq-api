@@ -19,7 +19,7 @@ export class NotificationSubscription {
 
 	@Index('idx_user_notification_subscription_ID')
 	@Column()
-	userEmail: string;
+	userId: string;
 
 	@Column('jsonb')
 	subscription: Record<string, any>;
@@ -29,7 +29,7 @@ export class NotificationSubscription {
 	organizationUuid?: string;
 
 	@OneToOne(() => UserProfile)
-	@JoinColumn({ name: 'userEmail', referencedColumnName: 'email' })
+	@JoinColumn({ name: 'userId', referencedColumnName: 'firebaseId' })
 	user: UserProfile;
 
 	@ManyToOne(() => Organization, (organization) => organization.subscriptions)

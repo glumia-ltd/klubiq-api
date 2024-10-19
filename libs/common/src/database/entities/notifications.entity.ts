@@ -13,10 +13,14 @@ import { Unit } from './unit.entity';
 import { UserProfile } from './user-profile.entity';
 import { Property } from './property.entity';
 import { Lease } from './lease.entity';
+import { NotificationPriority } from '@app/common/config/config.constants';
 
 @Entity({ schema: 'kdo' })
 @Index('idx_notifications_user_read', ['userId', 'isRead'])
 export class Notifications {
+	@Column({ nullable: true })
+	actionLink: string;
+
 	@CreateDateColumn()
 	createdAt: Date;
 
@@ -26,6 +30,9 @@ export class Notifications {
 	@Index('idx_notification_delivered_at')
 	@Column({ type: 'timestamp without time zone', nullable: true })
 	deliveredAt: Date;
+
+	@Column({ type: 'timestamp without time zone', nullable: true })
+	expiresAt: Date;
 
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
@@ -37,7 +44,7 @@ export class Notifications {
 	@Column({ type: 'boolean', default: false, nullable: true })
 	isRead: boolean;
 
-	@Column()
+	@Column({ nullable: true })
 	leaseId: number;
 
 	@Column({ type: 'text' })
@@ -47,8 +54,15 @@ export class Notifications {
 	@Index('idx_notification_organization_uuid')
 	organizationUuid?: string;
 
-	@Column()
+	@Column({ nullable: true })
 	propertyId: string;
+
+	@Column({
+		type: 'enum',
+		enum: NotificationPriority,
+		default: NotificationPriority.LOW,
+	})
+	priority?: NotificationPriority;
 
 	@Column({ type: 'timestamp without time zone', nullable: true })
 	readAt: Date;
@@ -63,10 +77,10 @@ export class Notifications {
 	@UpdateDateColumn()
 	updatedAt: Date;
 
-	@Column()
+	@Column({ nullable: true })
 	unitId: number;
 
-	@Column()
+	@Column({ nullable: true })
 	@Index('idx_notification_user_id')
 	userId: string;
 

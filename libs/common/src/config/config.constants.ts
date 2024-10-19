@@ -21,6 +21,12 @@ export const SYSTEM_ROLES: UserRoles[] = [
 	UserRoles.LANDLORD,
 	UserRoles.TENANT,
 ];
+export enum Priority {
+	LOW = 'Low',
+	MEDIUM = 'Medium',
+	HIGH = 'High',
+	URGENT = 'Urgent',
+}
 
 export const ORG_ROLES: UserRoles[] = [
 	UserRoles.ORG_OWNER,
@@ -119,10 +125,10 @@ export enum LeaseStatus {
 }
 
 export enum MaintenancePriority {
-	LOW = 'Low',
-	MEDIUM = 'Medium',
-	HIGH = 'High',
-	URGENT = 'Urgent',
+	LOW = Priority.LOW,
+	MEDIUM = Priority.MEDIUM,
+	HIGH = Priority.HIGH,
+	URGENT = Priority.URGENT,
 }
 
 export enum MaintenanceType {
@@ -309,3 +315,10 @@ export const LEASE_FILTER_OPTIONS: FilterData[] = [
 		],
 	},
 ];
+
+export enum NotificationPriority {
+	LOW = Priority.LOW,
+	MEDIUM = Priority.MEDIUM,
+	HIGH = Priority.HIGH,
+	URGENT = Priority.URGENT,
+}
