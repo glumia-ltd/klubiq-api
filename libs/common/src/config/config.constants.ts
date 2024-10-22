@@ -244,13 +244,28 @@ export const RENT_DUE_ON = (
 	return {
 		[PaymentFrequency.WEEKLY]: `${day} every week`,
 		[PaymentFrequency.BI_WEEKLY]: `${day} Bi-Weekly`,
-		[PaymentFrequency.MONTHLY]: `${rentDueDay} every month`,
+		[PaymentFrequency.MONTHLY]: `${rentDueDay}<sup>${getDaySuffix(rentDueDay)}</sup> of every month`,
 		[PaymentFrequency.ANNUALLY]: `${startDayAndMonth} every year`,
 		[PaymentFrequency.ONE_TIME]: `Once on ${startDayAndMonth}`,
-		[PaymentFrequency.BI_MONTHLY]: `${rentDueDay} Bi-Monthly`,
+		[PaymentFrequency.BI_MONTHLY]: `${rentDueDay}<sup>${getDaySuffix(rentDueDay)}</sup> of every other month`,
 		[PaymentFrequency.QUARTERLY]: `Quarterly on ${day}`,
 		[PaymentFrequency.CUSTOM]: `See lease agreement`,
 	};
+};
+
+const getDaySuffix = (day: number) => {
+	const j = day % 10;
+	const k = day % 100;
+	if (j === 1 && k !== 11) {
+		return 'st';
+	}
+	if (j === 2 && k !== 12) {
+		return 'nd';
+	}
+	if (j === 3 && k !== 13) {
+		return 'rd';
+	}
+	return 'th';
 };
 
 export enum PaymentStatus {
