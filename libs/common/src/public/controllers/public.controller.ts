@@ -13,6 +13,7 @@ import {
 	ApiBody,
 	ApiCreatedResponse,
 	ApiOkResponse,
+	ApiSecurity,
 	ApiTags,
 } from '@nestjs/swagger';
 import {
@@ -62,10 +63,12 @@ import {
 	Roles,
 } from '@app/auth/decorators/auth.decorator';
 import { PermissionsService } from '@app/common/permissions/permissions.service';
+import { PublicService } from '@app/common/services/public.service';
 
 @ApiTags('public')
 @ApiBearerAuth()
-@Auth(AuthType.Bearer)
+@ApiSecurity('ApiKey')
+@Auth(AuthType.None)
 @Controller('public')
 @Feature(AppFeature.SETTING)
 export class PublicController {
@@ -79,10 +82,15 @@ export class PublicController {
 		private readonly roleService: RolesService,
 		private readonly propertyAmenityService: PropertiesAmenityService,
 		private readonly permissionService: PermissionsService,
+		private readonly publicService: PublicService,
 	) {}
 
 	@Auth(AuthType.None)
 	@Get('property-metadata')
+	@ApiOkResponse({
+		description: 'Get metadata for property view and forms',
+		type: Object,
+	})
 	async getPropertyFormViewData() {
 		const categories =
 			await this.propertyCategoryService.getAllPropertyCategories();
@@ -126,10 +134,29 @@ export class PublicController {
 		};
 	}
 
-	@Auth(AuthType.None)
+	@Auth(AuthType.Bearer)
 	@Get('lease-metadata')
+	@ApiOkResponse({
+		description: 'Get metadata for lease view and forms',
+		type: Object,
+	})
 	async getLeaseFormViewData() {
-		const filterOptions: FilterData[] = [...LEASE_FILTER_OPTIONS];
+		const propertyList =
+			await this.publicService.getOrganizationPropertiesViewList();
+		const filterOptions: FilterData[] = [
+			{
+				id: 'propertyId',
+				title: 'Property',
+				options: propertyList.map((option) => {
+					return {
+						label: option.name,
+						value: option.uuid,
+						Icon: '',
+					};
+				}),
+			},
+			...LEASE_FILTER_OPTIONS,
+		];
 		return {
 			filterOptions,
 		};
@@ -455,4 +482,14 @@ export class PublicController {
 		}
 	}
 	//#endregion
+
+	// @Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+	@Auth(AuthType.ApiKey)
+	@Delete('system/reset-cache')
+	@ApiOkResponse({
+		description: 'Resets system cache',
+	})
+	async resetCache() {
+		return this.publicService.resetCache();
+	}
 }

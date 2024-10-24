@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsEmail, IsEmpty, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmpty, IsNotEmpty, IsString } from 'class-validator';
 
 export type PushSubscription = {
 	endpoint: string;
@@ -12,8 +12,7 @@ export type PushSubscription = {
 export class NotificationSubscriptionDto {
 	@Expose()
 	@IsString()
-	@IsEmail()
-	userEmail: string; // User Email
+	userId: string; // User Email
 
 	@Expose()
 	@IsNotEmpty()
@@ -25,12 +24,21 @@ export class NotificationSubscriptionDto {
 	organizationUuid?: string; // Organization UUID
 }
 
-export class NotificationDto {
+export class NotificationPayloadDto {
 	@Expose()
-	data: {
-		title: string;
-		body: string;
-	};
+	title: string;
 	@Expose()
-	userEmails: string[];
+	body: string;
+	@Expose()
+	data?: Record<string, any>;
+	@Expose()
+	actionLink?: string;
+}
+
+export class SendNotificationDto {
+	@Expose()
+	payload: NotificationPayloadDto;
+
+	@Expose()
+	userIds: string[];
 }

@@ -1,2 +1,2 @@
 export * from './notifications.module';
-export * from './notifications.service';
+export * from './services/notifications-subscription.service';
