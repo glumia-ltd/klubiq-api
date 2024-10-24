@@ -13,6 +13,7 @@ import {
 	ApiBody,
 	ApiCreatedResponse,
 	ApiOkResponse,
+	ApiSecurity,
 	ApiTags,
 } from '@nestjs/swagger';
 import {
@@ -66,7 +67,8 @@ import { PublicService } from '@app/common/services/public.service';
 
 @ApiTags('public')
 @ApiBearerAuth()
-@Auth(AuthType.Bearer)
+@ApiSecurity('ApiKey')
+@Auth(AuthType.None)
 @Controller('public')
 @Feature(AppFeature.SETTING)
 export class PublicController {
@@ -480,4 +482,14 @@ export class PublicController {
 		}
 	}
 	//#endregion
+
+	// @Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+	@Auth(AuthType.ApiKey)
+	@Delete('system/reset-cache')
+	@ApiOkResponse({
+		description: 'Resets system cache',
+	})
+	async resetCache() {
+		return this.publicService.resetCache();
+	}
 }

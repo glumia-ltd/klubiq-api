@@ -280,13 +280,12 @@ export class PropertiesService implements IPropertyMetrics {
 			units,
 			(unit) => unit?.leases?.length > 0,
 		)?.length;
-
 		const vacantUnitCount = property.unitCount - occupiedUnitCount;
 		return plainToInstance(
 			PropertyDetailsDto,
 			{
 				...property,
-				totalRent: Number(totalRent?.toFixed(2)),
+				totalRent: Number(totalRent).toFixed(2) || 0,
 				occupiedUnitCount,
 				vacantUnitCount,
 				totalTenants,
