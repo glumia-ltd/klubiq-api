@@ -11,6 +11,8 @@ import { OrganizationUser } from '@app/common/database/entities/organization-use
 import { UpdateUserDto } from '../dto/update-organization-user.dto';
 import { AuthUserResponseDto } from '@app/auth';
 import { UserResponseDto } from '../dto/create-organization-user.dto';
+import { UserDetailsDto } from '../dto/org-user.dto';
+import { transform } from 'lodash';
 
 @Injectable()
 export class UsersService {
@@ -103,5 +105,26 @@ export class UsersService {
 		} catch (err) {
 			throw err;
 		}
+	}
+
+	async getOrgUsersByRoleId(
+		roleId: number,
+		orgId: string,
+	): Promise<UserDetailsDto[]> {
+		const users = await this.usersRepository.getOrgUsersByRoleId(roleId, orgId);
+		const transformedUsers: UserDetailsDto[] = transform(
+			users,
+			(result, user) => {
+				const userProfile: UserDetailsDto = {
+					userId: user.organizationUser_firebaseId,
+					firstName: user.organizationUser_firstName || user.profile_firstName,
+					lastName: user.organizationUser_lastName || user.profile_lastName,
+					email: user.profile_email,
+				};
+				result.push(userProfile);
+			},
+			[],
+		);
+		return transformedUsers;
 	}
 }

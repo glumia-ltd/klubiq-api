@@ -35,7 +35,7 @@ import {
 } from '../dto/responses/property-details.dto';
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CreatePropertyEvent } from '../../event-listeners/event-models/property-event';
+import { PropertyEvent } from '../../event-listeners/event-models/property-event';
 import { CommonConfigService } from '@app/common/config/common-config';
 
 @Injectable()
@@ -355,6 +355,10 @@ export class PropertiesService implements IPropertyMetrics {
 				updateData,
 				currentUser.organizationRole === UserRoles.ORG_OWNER,
 			);
+			this.eventEmitter.emit('property.updated', {
+				organizationId: currentUser.organizationId,
+				propertyId: uuid,
+			} as PropertyEvent);
 			return await this.mapPlainPropertyDetailToDto(property);
 		} catch (error) {
 			this.logger.error('Error updating Property Data', error);
@@ -379,6 +383,10 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.organizationId,
 				currentUser.uid,
 			);
+			this.eventEmitter.emit('property.deleted', {
+				organizationId: currentUser.organizationId,
+				propertyId: uuid,
+			} as PropertyEvent);
 		} catch (error) {
 			this.logger.error('Error deleting Property Data', error);
 			throw new Error(`Error deleting Property Data. Error: ${error}`);
@@ -401,6 +409,10 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.organizationId,
 				currentUser.uid,
 			);
+			this.eventEmitter.emit('property.archived', {
+				organizationId: currentUser.organizationId,
+				propertyId: propertyUuid,
+			} as PropertyEvent);
 		} catch (error) {
 			this.logger.error('Error archiving Property Data', error);
 			throw Error(`Error archiving Property Data. Error: ${error}`);
@@ -434,9 +446,10 @@ export class PropertiesService implements IPropertyMetrics {
 			createDto.isMultiUnit =
 				createDto?.isMultiUnit ?? createDto.units?.length > 1;
 			createDto.orgUuid = currentUser.organizationId;
-			createDto.units[0].unitNumber = createDto.isMultiUnit
-				? createDto.units[0].unitNumber
-				: padEnd(createDto.name, 4, '-1');
+			if (!createDto.isMultiUnit) {
+				createDto.units[0].unitNumber = padEnd(createDto.name, 4, '-1');
+			}
+			createDto.managerUid = currentUser.uid;
 			const createdProperty = await this.propertyRepository.createProperty(
 				createDto,
 				isDraft,
@@ -445,7 +458,11 @@ export class PropertiesService implements IPropertyMetrics {
 				organizationId: currentUser.organizationId,
 				name: createdProperty.name,
 				totalUnits: createdProperty.unitCount,
-			} as CreatePropertyEvent);
+				propertyManagerId: createdProperty.manager?.firebaseId,
+				propertyManagerEmail: currentUser.email,
+				propertyId: createdProperty.uuid,
+				propertyManagerName: currentUser.email,
+			} as PropertyEvent);
 			return await this.mapPlainPropertyDetailToDto(createdProperty);
 		} catch (error) {
 			this.logger.error('Error creating Property Data', error.message);

@@ -53,6 +53,17 @@ env:
   CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
   WEB_VAPID_PUSH_PUBLIC_KEY: ${{ secrets.WEB_PUSH_NOTIFICATION_PUBLIC_KEY }}
   WEB_VAPID_PUSH_PRIVATE_KEY: ${{ secrets.WEB_VAPID_PUSH_PRIVATE_KEY }}
+  ORG_OWNER_ROLE_ID: ${{ secrets.ORG_OWNER_ROLE_ID }}
+  PROPERTY_MANAGER_ROLE_ID: ${{ secrets.PROPERTY_MANAGER_ROLE_ID }}
+  LANDLORD_ROLE_ID: ${{ secrets.LANDLORD_ROLE_ID }}
+  KLUBIQ_ADMIN_ROLE_ID: ${{ secrets.KLUBIQ_ADMIN_ROLE_ID }}
+  KLUBIQ_STAFF_ROLE_ID: ${{ secrets.KLUBIQ_STAFF_ROLE_ID }}
+  KLUBIQ_SUPER_ADMIN_ROLE_ID: ${{ secrets.KLUBIQ_SUPER_ADMIN_ROLE_ID }}
+  SNS_NOTIFICATION_TOPIC_ARN: ${{ secrets.SNS_NOTIFICATION_TOPIC_ARN }}
+  TENANT_ROLE_ID: ${{ secrets.TENANT_ROLE_ID }}
+  LEASE_MANAGER_ROLE_ID: ${{ secrets.LEASE_MANAGER_ROLE_ID }}
+  PROPERTY_OWNER_ROLE_ID: ${{ secrets.PROPERTY_OWNER_ROLE_ID }}
+  ORG_CUSTOM_ROLE_ID: ${{ secrets.ORG_CUSTOM_ROLE_ID }}
 
 jobs:
   build:
@@ -137,6 +148,17 @@ jobs:
             export CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
             export WEB_VAPID_PUSH_PUBLIC_KEY=${{ secrets.WEB_PUSH_NOTIFICATION_PUBLIC_KEY }}
             export WEB_VAPID_PUSH_PRIVATE_KEY=${{ secrets.WEB_VAPID_PUSH_PRIVATE_KEY }}
+            export ORG_OWNER_ROLE_ID=${{ secrets.ORG_OWNER_ROLE_ID }}
+            export PROPERTY_MANAGER_ROLE_ID=${{ secrets.PROPERTY_MANAGER_ROLE_ID }}
+            export LANDLORD_ROLE_ID=${{ secrets.LANDLORD_ROLE_ID }}
+            export KLUBIQ_ADMIN_ROLE_ID=${{ secrets.KLUBIQ_ADMIN_ROLE_ID }}
+            export KLUBIQ_STAFF_ROLE_ID=${{ secrets.KLUBIQ_STAFF_ROLE_ID }}
+            export KLUBIQ_SUPER_ADMIN_ROLE_ID=${{ secrets.KLUBIQ_SUPER_ADMIN_ROLE_ID }}
+            export SNS_NOTIFICATION_TOPIC_ARN=${{ secrets.SNS_NOTIFICATION_TOPIC_ARN }}
+            export TENANT_ROLE_ID=${{ secrets.TENANT_ROLE_ID }}
+            export LEASE_MANAGER_ROLE_ID=${{ secrets.LEASE_MANAGER_ROLE_ID }}
+            export PROPERTY_OWNER_ROLE_ID=${{ secrets.PROPERTY_OWNER_ROLE_ID }}
+            export ORG_CUSTOM_ROLE_ID=${{ secrets.ORG_CUSTOM_ROLE_ID }}
 
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
 

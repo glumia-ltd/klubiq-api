@@ -42,3 +42,43 @@ export class SendNotificationDto {
 	@Expose()
 	userIds: string[];
 }
+
+export class SNSNotificationDto {
+	@Expose()
+	@IsString()
+	@IsNotEmpty()
+	message: string;
+
+	@Expose()
+	@IsString()
+	subject: string;
+
+	@Expose()
+	@IsString({ each: true })
+	emails: string[];
+
+	@Expose()
+	@IsString({ each: true })
+	userIds: string[];
+
+	@Expose()
+	@IsString()
+	organizationUuid?: string;
+
+	@Expose()
+	@IsString()
+	type: string;
+
+	@Expose()
+	channels: string[];
+
+	@Expose()
+	userNames: string[];
+
+	@Expose()
+	@IsString()
+	emailTemplateId: string;
+
+	@Expose()
+	notificationIds?: string[];
+}

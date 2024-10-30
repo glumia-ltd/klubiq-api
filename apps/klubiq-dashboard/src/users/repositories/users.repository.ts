@@ -25,4 +25,19 @@ export class UsersRepository extends BaseRepository<OrganizationUser> {
 		}
 		return data;
 	}
+	async getOrgUsersByRoleId(roleId: number, orgId: string) {
+		const query = this.createQueryBuilder('organizationUser')
+			.leftJoinAndSelect('organizationUser.profile', 'profile')
+			.select([
+				'organizationUser.firebaseId',
+				'profile.email',
+				'organizationUser.firstName',
+				'organizationUser.lastName',
+				'profile.firstName',
+				'profile.lastName',
+			])
+			.where('organizationUser.roleId = :roleId', { roleId })
+			.andWhere('organizationUser.organizationUuid = :orgId', { orgId });
+		return await query.getRawMany();
+	}
 }

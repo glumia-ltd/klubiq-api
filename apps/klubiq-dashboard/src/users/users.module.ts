@@ -6,11 +6,10 @@ import { UsersRepository } from './repositories/users.repository';
 import { EntityManager } from 'typeorm';
 import { RepositoriesModule } from '@app/common/repositories/repositories.module';
 import { OrgUserMapProfile } from './profiles/org-user-profile';
-import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from '@app/auth';
 
 @Module({
-	imports: [DatabaseModule, RepositoriesModule, ConfigModule, AuthModule],
+	imports: [DatabaseModule, RepositoriesModule, AuthModule],
 	controllers: [UsersController],
 	providers: [
 		UsersService,

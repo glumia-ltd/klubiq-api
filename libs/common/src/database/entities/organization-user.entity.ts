@@ -68,6 +68,7 @@ export class OrganizationUser {
 		name: 'roleId',
 		referencedColumnName: 'id',
 	})
+	@Index('IDX_ORG_USER_ROLE')
 	orgRole?: OrganizationRole;
 
 	@AutoMap(() => Organization)
