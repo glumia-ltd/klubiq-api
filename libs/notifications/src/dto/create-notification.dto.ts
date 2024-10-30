@@ -33,5 +33,5 @@ export class CreateNotificationDto {
 	organizationUuid?: string;
 
 	@IsString()
-	actionLink: string;
+	actionLink?: string;
 }

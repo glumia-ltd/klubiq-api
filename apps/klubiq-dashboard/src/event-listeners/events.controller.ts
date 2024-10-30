@@ -14,14 +14,13 @@ import { UserRoles } from '@app/common/config/config.constants';
 import { Auth, Roles } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 import { Observable, Subject } from 'rxjs';
-import {
-	//EventEmitter2,
-	OnEvent,
-} from '@nestjs/event-emitter';
+import {} from //EventEmitter2,
+//OnEvent,
+'@nestjs/event-emitter';
 import { DashboardService } from '../dashboard/services/dashboard.service';
 import { ClsService } from 'nestjs-cls';
 //import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { CreatePropertyEvent } from './event-models/property-event';
+import { PropertyEvent } from './event-models/property-event';
 import { Request } from 'express';
 
 @ApiTags('events')
@@ -71,8 +70,8 @@ export class EventsController {
 		}
 	}
 
-	@OnEvent('property.created')
-	async handlePropertyCreatedEvent(payload: CreatePropertyEvent) {
+	//@OnEvent('property.created')
+	async handlePropertyCreatedEvent(payload: PropertyEvent) {
 		const orgDashboardStream = this.propertyEvents$.get(payload.organizationId);
 		if (orgDashboardStream) {
 			const metrics = await this.dashboardService.getPropertyMetrics(true);

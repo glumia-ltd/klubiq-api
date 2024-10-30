@@ -236,7 +236,12 @@ export class PropertyRepository extends BaseRepository<Property> {
 		queryBuilder
 			.skip(getPropertyDto.skip)
 			.take(getPropertyDto.take)
-			.orderBy(`property.${getPropertyDto.sortBy}`, getPropertyDto.order);
+			.orderBy(
+				`property.${getPropertyDto.sortBy}`,
+				getPropertyDto.order,
+				'NULLS LAST',
+			)
+			.addOrderBy('property.isArchived', 'DESC');
 		return await queryBuilder.getManyAndCount();
 	}
 	private async getPropertiesFilterQueryString(

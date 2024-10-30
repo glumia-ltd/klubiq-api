@@ -20,6 +20,6 @@ import { NotificationsService } from './services/notifications.service';
 		NotificationsSubscriptionRepository,
 		NotificationsService,
 	],
-	exports: [NotificationsSubscriptionService],
+	exports: [NotificationsSubscriptionService, NotificationsService],
 })
 export class NotificationsModule {}
