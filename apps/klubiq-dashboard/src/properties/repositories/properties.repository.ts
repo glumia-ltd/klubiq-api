@@ -143,6 +143,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 					status: { id: statusId },
 					address: savedAddress,
 					organization: { organizationUuid: orgUuid },
+					manager: { firebaseId: createData.managerUid },
 					isDraft,
 				});
 				const savedProperty = await transactionalEntityManager.save(property);
@@ -338,20 +339,19 @@ export class PropertyRepository extends BaseRepository<Property> {
 	}
 
 	async archiveProperty(propertyUuid: string, orgUuid: string, userId: string) {
-		const queryBuilder = this.createQueryBuilder('property');
-		queryBuilder
+		await this.createQueryBuilder('property')
 			.update(Property)
 			.set({ isArchived: true, archivedDate: new Date() })
 			.where('uuid = :propertyUuid', { propertyUuid })
 			.andWhere('organizationUuid = :orgUuid', { orgUuid })
 			.andWhere(
 				new Brackets((qb) => {
-					qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
-						.orWhere('property.managerUid = :managerUid', {
+					qb.where('property."ownerUid" = :ownerUid', { ownerUid: userId })
+						.orWhere('property."managerUid" = :managerUid', {
 							managerUid: userId,
 						})
 						.orWhere(
-							'property.ownerUid IS NULL AND property.managerUid IS NULL',
+							'property."ownerUid" IS NULL AND property."managerUid" IS NULL',
 						);
 				}),
 			)
@@ -359,19 +359,18 @@ export class PropertyRepository extends BaseRepository<Property> {
 	}
 
 	async deleteProperty(propertyUuid: string, orgUuid: string, userId: string) {
-		const queryBuilder = this.createQueryBuilder('property');
-		queryBuilder
+		await this.createQueryBuilder('property')
 			.softDelete()
 			.where('uuid = :propertyUuid', { propertyUuid })
 			.andWhere('organizationUuid = :orgUuid', { orgUuid })
 			.andWhere(
 				new Brackets((qb) => {
-					qb.where('property.ownerUid = :ownerUid', { ownerUid: userId })
-						.orWhere('property.managerUid = :managerUid', {
+					qb.where('property."ownerUid" = :ownerUid', { ownerUid: userId })
+						.orWhere('property."managerUid" = :managerUid', {
 							managerUid: userId,
 						})
 						.orWhere(
-							'property.ownerUid IS NULL AND property.managerUid IS NULL',
+							'property."ownerUid" IS NULL AND property."managerUid" IS NULL',
 						);
 				}),
 			)
