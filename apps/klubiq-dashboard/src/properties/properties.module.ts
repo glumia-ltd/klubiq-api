@@ -9,6 +9,8 @@ import { SubscriptionModule } from '@app/common/public/subscription/subscription
 import { CommonConfigService } from '@app/common/config/common-config';
 import { ConfigService } from '@nestjs/config';
 import { FileUploadService } from '@app/common/services/file-upload.service';
+import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '@app/notifications/notifications.module';
 
 @Module({
 	providers: [
@@ -24,7 +26,12 @@ import { FileUploadService } from '@app/common/services/file-upload.service';
 		},
 	],
 	controllers: [PropertiesController],
-	imports: [RepositoriesModule, SubscriptionModule],
+	imports: [
+		RepositoriesModule,
+		SubscriptionModule,
+		UsersModule,
+		NotificationsModule,
+	],
 	exports: [PROPERTY_METRICS, PropertyRepository],
 })
 export class PropertiesModule {}

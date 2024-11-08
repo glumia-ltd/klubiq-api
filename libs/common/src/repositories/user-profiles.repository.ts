@@ -53,7 +53,6 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 			.where('user.firebaseId = :uid', { uid })
 			.andWhere('user.isActive = :isActive', { isActive: true })
 			.getRawOne();
-
 		return userData;
 	}
 

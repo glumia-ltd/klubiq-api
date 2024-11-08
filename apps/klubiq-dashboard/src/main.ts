@@ -22,7 +22,7 @@ async function bootstrap() {
 	const app = await NestFactory.create(KlubiqDashboardModule, {
 		logger: WinstonModule.createLogger(customLogger.createLoggerConfig),
 	});
-
+	const configService = app.get(ConfigService);
 	app.setGlobalPrefix('/api');
 	app.use(helmet());
 	/// SWAGGER CONFIGURATION
@@ -72,7 +72,7 @@ async function bootstrap() {
 
 	app.useGlobalFilters(new HttpExceptionFilter());
 	app.useGlobalInterceptors(new HttpResponseInterceptor());
-	await app.listen(3000);
+	await app.listen(configService.get('APP_PORT') || 3000);
 
 	if (module.hot) {
 		module.hot.accept();

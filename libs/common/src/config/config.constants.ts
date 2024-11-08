@@ -337,3 +337,20 @@ export enum NotificationPriority {
 	HIGH = Priority.HIGH,
 	URGENT = Priority.URGENT,
 }
+
+export const ROLE_ALIAS = (
+	customRoleName?: string,
+): Record<UserRoles, string> => {
+	return {
+		[UserRoles.ADMIN]: 'Admin',
+		[UserRoles.SUPER_ADMIN]: 'Executive Admin',
+		[UserRoles.STAFF]: 'Staff',
+		[UserRoles.LANDLORD]: 'Landlord',
+		[UserRoles.TENANT]: 'Tenant',
+		[UserRoles.ORG_OWNER]: 'Director',
+		[UserRoles.PROPERTY_MANAGER]: 'Property Manager',
+		[UserRoles.PROPERTY_OWNER]: 'Property Owner',
+		[UserRoles.LEASE_MANAGER]: 'Lease Manager',
+		[UserRoles.CUSTOM]: `${customRoleName || 'Member'}`,
+	};
+};

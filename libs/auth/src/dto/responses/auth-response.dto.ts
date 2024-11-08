@@ -231,4 +231,11 @@ export class LandlordUserDetailsResponseDto {
 	@IsJSON()
 	@IsOptional()
 	orgSettings?: Record<string, any>;
+
+	@Expose()
+	@IsOptional()
+	orgSubscription?: {
+		isFreeTrial: boolean;
+		planId: number;
+	};
 }

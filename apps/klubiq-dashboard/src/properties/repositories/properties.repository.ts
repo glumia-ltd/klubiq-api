@@ -365,7 +365,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 
 	async deleteProperty(propertyUuid: string, orgUuid: string, userId: string) {
 		await this.createQueryBuilder('property')
-			.softDelete()
+			.delete()
 			.where('uuid = :propertyUuid', { propertyUuid })
 			.andWhere('organizationUuid = :orgUuid', { orgUuid })
 			.andWhere(

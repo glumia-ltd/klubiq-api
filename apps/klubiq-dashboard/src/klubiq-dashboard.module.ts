@@ -24,23 +24,25 @@ import { LeaseModule } from './lease/lease.module';
 import { LeaseRepository } from './lease/repositories/lease.repository';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { EventListenersModule } from './event-listeners/event-listeners.module';
 import { SSEAuthGuard } from '@app/auth/guards/sse-auth.guard';
 import { CacheService } from '@app/common/services/cache.service';
 import { TransactionsModule } from './transactions/transactions.module';
 import { NotificationsModule } from '@app/notifications/notifications.module';
+import { PropertyEventsListener } from '@app/common/event-listeners/property-events.listener';
+import { QueueModule } from '@app/common/config/queue.module';
 
 @Module({
 	imports: [
 		// Common modules
-		EventEmitterModule.forRoot(),
+		EventEmitterModule.forRoot({
+			// removeListener: true,
+		}),
 
 		// CUSTOM MODULES
 		AuthModule,
 		ConfigModule,
 		DashboardModule,
 		DatabaseModule,
-		EventListenersModule,
 		HealthModule,
 		LeaseModule,
 		OrganizationModule,
@@ -52,6 +54,7 @@ import { NotificationsModule } from '@app/notifications/notifications.module';
 		UsersModule,
 		TransactionsModule,
 		NotificationsModule,
+		QueueModule,
 	],
 	providers: [
 		ApikeyGuard,
@@ -79,6 +82,7 @@ import { NotificationsModule } from '@app/notifications/notifications.module';
 			provide: CacheService,
 			useFactory: () => new CacheService(null),
 		},
+		PropertyEventsListener,
 	],
 	exports: [UsersModule],
 })

@@ -17,6 +17,7 @@ import { CommonConfigService } from './common-config';
 @Module({
 	imports: [
 		NestConfigModule.forRoot({
+			isGlobal: true,
 			validationSchema: Joi.object({
 				DATABASE_HOST: Joi.string().required(),
 				DATABASE_PORT: Joi.number().required(),
@@ -82,10 +83,11 @@ import { CommonConfigService } from './common-config';
 		}),
 		CacheModule.registerAsync({
 			isGlobal: true,
-			useFactory: async () => ({
+			inject: [ConfigService],
+			useFactory: async (configService: ConfigService) => ({
 				store: redis,
 				host: 'localhost',
-				port: 6379,
+				port: configService.get('REDIS_PORT'),
 				max: 10,
 				// ttl: 300,
 			}),

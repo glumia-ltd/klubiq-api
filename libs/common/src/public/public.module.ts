@@ -20,7 +20,6 @@ import { OrganizationSubscriptionService } from '../services/organization-subscr
 import { CommonConfigService } from '../config/common-config';
 import { SubscriptionPlanService } from '../services/subscription-plan.service';
 import { ConfigService } from '@nestjs/config';
-
 @Module({
 	controllers: [PublicController, PropertyMetadataController],
 	providers: [

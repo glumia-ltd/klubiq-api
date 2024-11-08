@@ -64,6 +64,9 @@ env:
   LEASE_MANAGER_ROLE_ID: ${{ secrets.LEASE_MANAGER_ROLE_ID }}
   PROPERTY_OWNER_ROLE_ID: ${{ secrets.PROPERTY_OWNER_ROLE_ID }}
   ORG_CUSTOM_ROLE_ID: ${{ secrets.ORG_CUSTOM_ROLE_ID }}
+  REDIS_PORT: ${{ secrets.REDIS_PORT }}
+  WORKER_PORT: ${{ secrets.WORKER_PORT }}
+  APP_PORT: ${{ secrets.APP_PORT }}
 
 jobs:
   build:
@@ -159,6 +162,9 @@ jobs:
             export LEASE_MANAGER_ROLE_ID=${{ secrets.LEASE_MANAGER_ROLE_ID }}
             export PROPERTY_OWNER_ROLE_ID=${{ secrets.PROPERTY_OWNER_ROLE_ID }}
             export ORG_CUSTOM_ROLE_ID=${{ secrets.ORG_CUSTOM_ROLE_ID }}
+            export REDIS_PORT=${{ secrets.REDIS_PORT }}
+            export WORKER_PORT=${{ secrets.WORKER_PORT }}
+            export APP_PORT=${{ secrets.APP_PORT }}
 
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
 

@@ -38,12 +38,6 @@ import { FileUploadService } from '@app/common/services/file-upload.service';
 		FileDownloadService,
 		FileUploadService,
 	],
-	exports: [
-		DashboardService,
-		DashboardRepository,
-		// PROPERTY_METRICS,
-		// PropertyRepository,
-		// FileDownloadService,
-	],
+	exports: [DashboardService, DashboardRepository],
 })
 export class DashboardModule {}
