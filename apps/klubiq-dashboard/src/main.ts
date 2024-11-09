@@ -1,4 +1,4 @@
-import { NestFactory, repl } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { WinstonModule } from 'nest-winston';
 import helmet from 'helmet';
 import {
@@ -16,11 +16,12 @@ import { ConfigService } from '@nestjs/config';
 declare const module: any;
 
 async function bootstrap() {
-	await repl(KlubiqDashboardModule);
+	//await repl(KlubiqDashboardModule);
 	const customLogger = new CustomLogging(new ConfigService()); // Create an instance of ConfigService
 
 	const app = await NestFactory.create(KlubiqDashboardModule, {
 		logger: WinstonModule.createLogger(customLogger.createLoggerConfig),
+		snapshot: true,
 	});
 	const configService = app.get(ConfigService);
 	app.setGlobalPrefix('/api');

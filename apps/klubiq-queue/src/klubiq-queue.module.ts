@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerSendService } from '@app/common/email/email.service';
-import { EmailProcessor } from './processors/email.processor';
+import { NotificationProcessor } from './processors/notification.processor';
+// import { DevtoolsModule } from '@nestjs/devtools-integration';
 
 @Module({
 	imports: [
@@ -17,9 +18,14 @@ import { EmailProcessor } from './processors/email.processor';
 			}),
 		}),
 		BullModule.registerQueue({
-			name: 'email',
+			name: 'notification',
 		}),
+		// DevtoolsModule.registerAsync({
+		// 	useFactory: () => ({
+		// 		http: process.env.NODE_ENV !== 'production',
+		// 	}),
+		// }),
 	],
-	providers: [MailerSendService, ConfigService, EmailProcessor],
+	providers: [MailerSendService, ConfigService, NotificationProcessor],
 })
 export class KlubiqQueueModule {}

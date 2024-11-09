@@ -30,9 +30,16 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { NotificationsModule } from '@app/notifications/notifications.module';
 import { PropertyEventsListener } from '@app/common/event-listeners/property-events.listener';
 import { QueueModule } from '@app/common/config/queue.module';
+import { DevtoolsModule } from '@nestjs/devtools-integration';
+//import { DevtoolsModule } from '@nestjs/devtools-integration';
 
 @Module({
 	imports: [
+		DevtoolsModule.registerAsync({
+			useFactory: () => ({
+				http: process.env.NODE_ENV !== 'production',
+			}),
+		}),
 		// Common modules
 		EventEmitterModule.forRoot({
 			// removeListener: true,
@@ -84,6 +91,6 @@ import { QueueModule } from '@app/common/config/queue.module';
 		},
 		PropertyEventsListener,
 	],
-	exports: [UsersModule],
+	//exports: [UsersModule],
 })
 export class KlubiqDashboardModule {}

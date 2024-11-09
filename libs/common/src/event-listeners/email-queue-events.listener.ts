@@ -4,7 +4,7 @@ import {
 	QueueEventsListener,
 	OnQueueEvent,
 } from '@nestjs/bullmq';
-@QueueEventsListener('email')
+@QueueEventsListener('notification')
 export class EmailQueueEventListener extends QueueEventsHost {
 	@OnQueueEvent('completed')
 	async onCompleted(job: { jobId: string; result: any }) {

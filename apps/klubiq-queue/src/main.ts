@@ -8,6 +8,7 @@ async function bootstrap() {
 	const customLogger = new CustomLogging(new ConfigService()); // Create an instance of ConfigService
 	const app = await NestFactory.create(KlubiqQueueModule, {
 		logger: WinstonModule.createLogger(customLogger.createLoggerConfig),
+		//snapshot: true,
 	});
 	const configService = app.get(ConfigService);
 	await app.listen(configService.get('WORKER_PORT') || 3001);

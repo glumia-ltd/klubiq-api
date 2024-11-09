@@ -76,40 +76,6 @@ export class PropertiesController {
 		}
 	}
 
-	@Ability(Actions.WRITE)
-	@UseGuards(SubscriptionLimitGuard)
-	@Post('draft')
-	@ApiOkResponse({
-		description: 'Returns details of the draft property',
-		type: PropertyDetailsDto,
-	})
-	@ApiBody({
-		description: 'Property details to save as draft',
-		type: CreatePropertyDto,
-	})
-	async createDraftProperty(@Body() propertyData: CreatePropertyDto) {
-		try {
-			const data = await this.propertyService.createDraftProperty(propertyData);
-			return data;
-		} catch (error) {
-			throw new BadRequestException(error.message);
-		}
-	}
-
-	@Ability(Actions.WRITE)
-	@HttpCode(HttpStatus.OK)
-	@Post(':propertyUuid/draft')
-	@ApiOkResponse({
-		description: 'Returns success if draft property is saved successfully',
-	})
-	async saveDraftProperty(@Param('propertyUuid') propertyUuid: string) {
-		try {
-			await this.propertyService.saveDraftProperty(propertyUuid);
-		} catch (error) {
-			throw new BadRequestException(error.message);
-		}
-	}
-
 	@Ability(Actions.WRITE, Actions.VIEW)
 	@Get()
 	@ApiOkResponse({

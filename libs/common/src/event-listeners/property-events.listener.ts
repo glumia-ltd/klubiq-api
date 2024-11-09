@@ -28,7 +28,7 @@ export class PropertyEventsListener {
 		private readonly configService: ConfigService,
 		private readonly notificationService: NotificationsService,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
-		@InjectQueue('email') private emailQueue: Queue,
+		@InjectQueue('notification') private emailQueue: Queue,
 		private readonly eventEmitter: EventEmitter2,
 	) {
 		this.orgAdminRoleId = this.configService.get<number>('ORG_OWNER_ROLE_ID');

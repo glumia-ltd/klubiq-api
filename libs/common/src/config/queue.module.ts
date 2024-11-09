@@ -19,7 +19,7 @@ import { BullModule } from '@nestjs/bullmq';
 			}),
 		}),
 		BullModule.registerQueue({
-			name: 'email',
+			name: 'notification',
 		}),
 	],
 	exports: [BullModule],

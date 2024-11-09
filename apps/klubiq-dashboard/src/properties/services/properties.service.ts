@@ -495,6 +495,9 @@ export class PropertiesService implements IPropertyMetrics {
 		getPropertyDto?: GetPropertyDto,
 	): Promise<PageDto<PropertyListDto>> {
 		try {
+			this.eventEmitter.emitAsync('property.list', {
+				organizationId: this.cls.get('currentUser').organizationId,
+			} as PropertyEvent);
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			const cacheKey = `${this.cacheKeyPrefix}/${currentUser.organizationId}${this.cls.get('requestUrl')}`;
