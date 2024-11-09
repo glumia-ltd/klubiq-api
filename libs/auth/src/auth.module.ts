@@ -19,7 +19,6 @@ import { MailerSendService } from '@app/common/email/email.service';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
 import { RepositoriesModule } from '@app/common/repositories/repositories.module';
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
-
 interface FirebaseConfig {
 	type: string;
 	project_id: string;

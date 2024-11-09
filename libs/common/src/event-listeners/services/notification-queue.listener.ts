@@ -1,11 +1,10 @@
-//import { NotificationsService } from '@app/notifications';
 import {
 	QueueEventsHost,
 	QueueEventsListener,
 	OnQueueEvent,
 } from '@nestjs/bullmq';
 @QueueEventsListener('notification')
-export class EmailQueueEventListener extends QueueEventsHost {
+export class NotificationQueueListener extends QueueEventsHost {
 	@OnQueueEvent('completed')
 	async onCompleted(job: { jobId: string; result: any }) {
 		console.log('Job completed', job);

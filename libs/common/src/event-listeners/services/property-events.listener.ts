@@ -1,11 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { PropertyEvent } from './event-models/property-event';
+import { PropertyEvent } from '../event-models/property-event';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { each, map, transform } from 'lodash';
 import { CacheKeys } from '@app/common/config/config.constants';
-import { UsersService } from '../../../../apps/klubiq-dashboard/src/users/services/users.service';
+import { UsersService } from 'apps/klubiq-dashboard/src/users/services/users.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateNotificationDto } from '@app/notifications/dto/create-notification.dto';
 import { NotificationsService } from '@app/notifications';

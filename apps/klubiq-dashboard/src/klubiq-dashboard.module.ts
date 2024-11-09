@@ -28,10 +28,8 @@ import { SSEAuthGuard } from '@app/auth/guards/sse-auth.guard';
 import { CacheService } from '@app/common/services/cache.service';
 import { TransactionsModule } from './transactions/transactions.module';
 import { NotificationsModule } from '@app/notifications/notifications.module';
-import { PropertyEventsListener } from '@app/common/event-listeners/property-events.listener';
-import { QueueModule } from '@app/common/config/queue.module';
 import { DevtoolsModule } from '@nestjs/devtools-integration';
-//import { DevtoolsModule } from '@nestjs/devtools-integration';
+import { EventListenerModule } from '@app/common/event-listeners/event-listener.module';
 
 @Module({
 	imports: [
@@ -61,16 +59,13 @@ import { DevtoolsModule } from '@nestjs/devtools-integration';
 		UsersModule,
 		TransactionsModule,
 		NotificationsModule,
-		QueueModule,
+		EventListenerModule,
 	],
 	providers: [
 		ApikeyGuard,
-		AuthenticationGuard,
 		FirebaseAuthGuard,
-		LeaseRepository,
-		PermissionsGuard,
-		RolesGuard,
 		SSEAuthGuard,
+		LeaseRepository,
 		UsersRepository,
 		UsersService,
 		{
@@ -89,7 +84,6 @@ import { DevtoolsModule } from '@nestjs/devtools-integration';
 			provide: CacheService,
 			useFactory: () => new CacheService(null),
 		},
-		PropertyEventsListener,
 	],
 	//exports: [UsersModule],
 })
