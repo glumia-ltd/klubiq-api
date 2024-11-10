@@ -455,21 +455,16 @@ export class PropertiesService implements IPropertyMetrics {
 				createDto,
 				isDraft,
 			);
-
-			if (createdProperty.uuid) {
-				// console.log('Event Emitters', this.eventEmitter.);
-				this.eventEmitter.emitAsync('property.created', {
-					organizationId: currentUser.organizationId,
-					name: createdProperty.name,
-					totalUnits: createdProperty.unitCount,
-					propertyManagerId: createdProperty.manager?.firebaseId,
-					propertyManagerEmail: currentUser.email,
-					propertyId: createdProperty.uuid,
-					propertyManagerName: currentUser.email,
-					propertyAddress: this.getPropertyAddress(createdProperty.address),
-				} as PropertyEvent);
-			}
-
+			this.eventEmitter.emitAsync('property.created', {
+				organizationId: currentUser.organizationId,
+				name: createdProperty.name,
+				totalUnits: createDto.units?.length || 1,
+				propertyManagerId: createdProperty.manager?.firebaseId,
+				propertyManagerEmail: currentUser.email,
+				propertyId: createdProperty.uuid,
+				propertyManagerName: currentUser.name,
+				propertyAddress: this.getPropertyAddress(createdProperty.address),
+			} as PropertyEvent);
 			return await this.mapPlainPropertyDetailToDto(createdProperty);
 		} catch (error) {
 			this.logger.error('Error creating Property Data', error.message);
@@ -480,9 +475,11 @@ export class PropertiesService implements IPropertyMetrics {
 		}
 	}
 	private getPropertyAddress(address: PropertyAddress): string {
-		return `${address.addressLine1}, ${address.addressLine2 ? `${address.addressLine2}, ` : ''}
+		return address.isManualAddress
+			? `${address.addressLine1}, ${address.addressLine2 ? `${address.addressLine2}, ` : ''}
 		${address.city ? `${address.city} ` : ''} ${address.state ? `${address.state}, ` : ''} ${address.postalCode ? `${address.postalCode}, ` : ''}
-		${address.country ? `${address.country}` : ''}`;
+		${address.country ? `${address.country}` : ''}`
+			: `${address.addressLine2 ? `${address.addressLine2}, ` : ''}${address.addressLine1}`;
 	}
 
 	/**
@@ -495,9 +492,6 @@ export class PropertiesService implements IPropertyMetrics {
 		getPropertyDto?: GetPropertyDto,
 	): Promise<PageDto<PropertyListDto>> {
 		try {
-			this.eventEmitter.emitAsync('property.list', {
-				organizationId: this.cls.get('currentUser').organizationId,
-			} as PropertyEvent);
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			const cacheKey = `${this.cacheKeyPrefix}/${currentUser.organizationId}${this.cls.get('requestUrl')}`;
@@ -506,7 +500,6 @@ export class PropertiesService implements IPropertyMetrics {
 			if (cachedProperties) {
 				return cachedProperties;
 			}
-
 			const propertyListKeys =
 				(await this.cacheManager.get<string[]>(
 					`${currentUser.organizationId}/getPropertyListKeys`,

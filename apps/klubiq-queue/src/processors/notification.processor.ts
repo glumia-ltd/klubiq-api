@@ -4,12 +4,18 @@ import {
 	EmailRecipient,
 	EmailTemplates,
 } from '@app/common/email/types/email.types';
-import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
+import {
+	InjectQueue,
+	OnWorkerEvent,
+	Processor,
+	WorkerHost,
+} from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Job } from 'bullmq';
-import { map } from 'lodash';
+import { Job, Queue } from 'bullmq';
+import { each, map } from 'lodash';
 import { console } from 'node:inspector/promises';
+import { postJobAction } from './job-constants';
 
 @Processor('notification')
 export class NotificationProcessor extends WorkerHost {
@@ -18,24 +24,50 @@ export class NotificationProcessor extends WorkerHost {
 	constructor(
 		private readonly mailerSendService: MailerSendService,
 		private readonly configService: ConfigService,
+		@InjectQueue('notification-results')
+		private notificationResultsQueue: Queue,
 	) {
 		super();
 		this.supportEmail = this.configService.get<string>('SUPPORT_EMAIL');
 	}
 	async process(job: Job<any, any, any>): Promise<any> {
-		console.log(`Processing job ${job.id}`);
-		const { emailTemplate, notificationIds, recipients, personalization } =
-			job.data;
-		const is_sent = await this.buildAndSendEmail(
+		const {
 			emailTemplate,
+			notificationIds,
 			recipients,
 			personalization,
-		);
-		return { is_sent, notificationIds };
+			channels,
+			userIds,
+		} = job.data;
+
+		each(channels, async (channel) => {
+			if (channel === 'EMAIL') {
+				await this.buildAndSendEmail(
+					emailTemplate,
+					recipients,
+					personalization,
+				);
+				this.notificationResultsQueue.add(
+					'email-delivered',
+					{
+						notificationIds,
+						action: postJobAction.MARK_AS_DELIVERED,
+					},
+					{
+						removeOnComplete: true,
+						removeOnFail: 3,
+						delay: 10000,
+						attempts: 3,
+					},
+				);
+			} else if (channel === 'PUSH') {
+				console.log('PUSH to users', userIds);
+			}
+		});
 	}
 	@OnWorkerEvent('completed')
-	onJobCompleted(jobId: string, result: any) {
-		this.logger.log(`Job ${jobId} completed with result: ${result}`);
+	async onJobCompleted(jobId: any) {
+		console.log(`Job ${jobId} completed with result`);
 	}
 
 	@OnWorkerEvent('active')

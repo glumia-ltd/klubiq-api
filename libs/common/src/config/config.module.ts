@@ -59,6 +59,13 @@ import { CommonConfigService } from './common-config';
 				LEASE_MANAGER_ROLE_ID: Joi.number().required(),
 				PROPERTY_OWNER_ROLE_ID: Joi.number().required(),
 				ORG_CUSTOM_ROLE_ID: Joi.number().required(),
+				REDIS_PORT: Joi.number().required(),
+				WORKER_PORT: Joi.number().required(),
+				APP_PORT: Joi.number().required(),
+				CLIENT_BASE_URL: Joi.string().required(),
+				EMAIL_COPYRIGHT_TEXT: Joi.string().optional(),
+				EMAIL_COPYRIGHT_LINK: Joi.string().optional(),
+				EMAIL_PRIVACY_LINK: Joi.string().optional(),
 			}),
 		}),
 		AutomapperModule.forRoot([

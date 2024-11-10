@@ -41,7 +41,6 @@ export class NotificationsService {
 	}
 
 	async createNotifications(createNotificationsDto: CreateNotificationDto[]) {
-		console.log('CREATING NOTIFICATIONS: ', createNotificationsDto);
 		const Notifications = this.notificationsRepository.create(
 			createNotificationsDto,
 		);
@@ -54,7 +53,6 @@ export class NotificationsService {
 			},
 			[],
 		);
-		console.table('NOTIFICATION IDS:', notificationIds);
 		return notificationIds;
 	}
 
@@ -68,12 +66,18 @@ export class NotificationsService {
 		return query.orderBy('notifications.createdAt', 'DESC').getMany();
 	}
 
-	async markAsRead(ids: string[]) {
+	async markAsReadOrDelivered(
+		ids: string[],
+		delivered?: boolean,
+		read?: boolean,
+	) {
 		forEach(ids, (id) => {
-			this.notificationsRepository.update(
-				{ id },
-				{ isRead: true, readAt: DateTime.utc().toJSDate() },
-			);
+			this.notificationsRepository.update(id, {
+				isRead: read,
+				isDelivered: delivered,
+				readAt: read ? DateTime.utc().toJSDate() : null,
+				deliveredAt: delivered ? DateTime.utc().toJSDate() : null,
+			});
 		});
 	}
 

@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerSendService } from '@app/common/email/email.service';
 import { NotificationProcessor } from './processors/notification.processor';
+import { JobResultsProcessor } from './processors/job-results.processor';
 // import { DevtoolsModule } from '@nestjs/devtools-integration';
 
 @Module({
@@ -17,15 +18,26 @@ import { NotificationProcessor } from './processors/notification.processor';
 				},
 			}),
 		}),
-		BullModule.registerQueue({
-			name: 'notification',
-		}),
+		BullModule.registerQueue(
+			{
+				name: 'notification',
+			},
+			{
+				name: 'notification-results',
+			},
+		),
+
 		// DevtoolsModule.registerAsync({
 		// 	useFactory: () => ({
 		// 		http: process.env.NODE_ENV !== 'production',
 		// 	}),
 		// }),
 	],
-	providers: [MailerSendService, ConfigService, NotificationProcessor],
+	providers: [
+		MailerSendService,
+		ConfigService,
+		NotificationProcessor,
+		JobResultsProcessor,
+	],
 })
 export class KlubiqQueueModule {}

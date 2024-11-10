@@ -1,3 +1,4 @@
+import { NotificationsService } from '@app/notifications/services/notifications.service';
 import {
 	QueueEventsHost,
 	QueueEventsListener,
@@ -5,10 +6,17 @@ import {
 } from '@nestjs/bullmq';
 @QueueEventsListener('notification')
 export class NotificationQueueListener extends QueueEventsHost {
-	@OnQueueEvent('completed')
-	async onCompleted(job: { jobId: string; result: any }) {
-		console.log('Job completed', job);
+	constructor(private readonly notificationsService: NotificationsService) {
+		super();
 	}
+	// @OnQueueEvent('completed')
+	// async onCompleted(jobId: string) {
+
+	// 	if (job.returnvalue?.notificationIds) {
+
+	// 		this.notificationsService.markAsReadOrDelivered(job.returnvalue.notificationIds, true, false);
+	// 	}
+	// }
 
 	@OnQueueEvent('failed')
 	async onFailed(job: { jobId: string; result: any }) {
