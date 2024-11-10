@@ -182,15 +182,18 @@ jobs:
             if pm2 status ${{ env.APP }} | grep -q "online"; then
                 echo "Process '${{ env.APP }}' is already running."
                 pm2 restart ${{ env.APP }} -a --update-env --watch
+                pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-queue/main.js --name ${{ env.QUEUE_APP }} -a --update-env --watch
+
             else
                 echo "Process '${{ env.APP }}' is not running. Starting a new process..."
                 pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name ${{ env.APP }} -a --update-env --watch
+                pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-queue/main.js --name ${{ env.QUEUE_APP }} -a --update-env --watch
+
             fi
 
-            if pm2 status ${{ env.QUEUE_APP }} | grep -q "online"; then
-                echo "Process '${{ env.QUEUE_APP }}' is already running."
-                pm2 restart ${{ env.QUEUE_APP }} -a --update-env --watch
-            else
-                echo "Process '${{ env.QUEUE_APP }}' is not running. Starting a new process..."
-                pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-queue/main.js --name ${{ env.QUEUE_APP }} -a --update-env --watch
-            fi
+        # # if pm2 status ${{ env.QUEUE_APP }} | grep -q "online"; then
+        # #     echo "Process '${{ env.QUEUE_APP }}' is already running."
+        # #     pm2 restart ${{ env.QUEUE_APP }} -a --update-env --watch
+        # # else
+        # #     echo "Process '${{ env.QUEUE_APP }}' is not running. Starting a new process..."
+        # # fi
