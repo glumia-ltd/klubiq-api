@@ -253,7 +253,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 				const value = filterDto[key];
 				if (typeof value !== 'undefined' && value !== null) {
 					if (key === 'search') {
-						queryBuilder.andWhere(`property.name LIKE :${key}`, {
+						queryBuilder.andWhere(`property.name ILIKE :${key}`, {
 							[key]: `%${value}%`,
 						});
 					} else if (key === 'display') {
@@ -365,7 +365,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 
 	async deleteProperty(propertyUuid: string, orgUuid: string, userId: string) {
 		await this.createQueryBuilder('property')
-			.softDelete()
+			.delete()
 			.where('uuid = :propertyUuid', { propertyUuid })
 			.andWhere('organizationUuid = :orgUuid', { orgUuid })
 			.andWhere(

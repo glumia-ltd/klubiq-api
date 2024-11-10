@@ -64,6 +64,9 @@ export class LandlordAuthService extends AuthService {
 	private readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	protected readonly logger = new Logger(LandlordAuthService.name);
 	protected readonly suid = new ShortUniqueId();
+	protected readonly landlordRoleId: number;
+	protected readonly orgOwnerRoleId: number;
+
 	constructor(
 		@Inject(CACHE_MANAGER) protected cacheManager: Cache,
 		@Inject('FIREBASE_ADMIN') firebaseAdminApp: admin.app.App,
@@ -75,7 +78,7 @@ export class LandlordAuthService extends AuthService {
 		protected readonly configService: ConfigService,
 		httpService: HttpService,
 		protected readonly cls: ClsService<SharedClsStore>,
-		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
+		protected readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		protected readonly organizationSettingsService: OrganizationSettingsService,
 		protected readonly userPreferencesService: UserPreferencesService,
 	) {
@@ -90,12 +93,15 @@ export class LandlordAuthService extends AuthService {
 			cls,
 			organizationSettingsService,
 			userPreferencesService,
+			organizationSubscriptionService,
 		);
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
 		);
 		this.emailAuthContinueUrl =
 			this.configService.get<string>('CONTINUE_URL_PATH');
+		this.landlordRoleId = this.configService.get<number>('LANDLORD_ROLE_ID');
+		this.orgOwnerRoleId = this.configService.get<number>('ORG_OWNER_ROLE_ID');
 	}
 
 	// STEP 1
@@ -119,7 +125,9 @@ export class LandlordAuthService extends AuthService {
 					createUserDto,
 					null,
 				)) as UserProfile;
-
+				if (!userProfile) {
+					throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
+				}
 				await this.sendVerificationEmail(
 					createUserDto.email,
 					createUserDto.firstName,

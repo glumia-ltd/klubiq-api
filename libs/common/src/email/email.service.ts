@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend'; // Assuming you have installed the 'mailersend' package
 import {
@@ -14,6 +14,7 @@ export class MailerSendService {
 	private readonly supportEmail: string;
 	private readonly transactionalEmailSender: string;
 	private readonly transactionalEmailSenderName: string;
+	private readonly logger = new Logger(MailerSendService.name);
 
 	constructor(private readonly configService: ConfigService) {
 		this.apiKey = this.configService.get('EMAIL_API_KEY');
@@ -61,7 +62,7 @@ export class MailerSendService {
 			(oneRecipient) =>
 				new Recipient(
 					oneRecipient.email,
-					`${oneRecipient.firstName} ${oneRecipient.lastName}`,
+					`${oneRecipient?.firstName ?? ''} ${oneRecipient?.lastName ?? ''}`,
 				),
 		);
 		const templatedEmailParams = new EmailParams()
@@ -79,7 +80,17 @@ export class MailerSendService {
 			}
 			return 'Email sent successfully';
 		} catch (error) {
-			throw new Error(`Failed to send email. MailerSend API error: ${error}`);
+			this.logger.error(
+				`Failed to send email. MailerSend API error: ${error.message}. ${error.errors}`,
+				error,
+			);
+			console.error(
+				`Failed to send email. MailerSend API error: ${error.message}. ${error.errors}`,
+				error,
+			);
+			throw new Error(
+				`Failed to send email. MailerSend API error: ${error.message}. ${error.errors}`,
+			);
 		}
 	}
 }

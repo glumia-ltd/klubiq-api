@@ -38,6 +38,7 @@ export enum AuthType {
 }
 
 export interface ActiveUserData {
+	name: string;
 	email: string;
 	systemRole: string;
 	organizationRole?: string;

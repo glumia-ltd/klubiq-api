@@ -46,6 +46,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/notifications/tsconfig.lib.json"
       }
+    },
+    "klubiq-queue": {
+      "type": "application",
+      "root": "apps/klubiq-queue",
+      "entryFile": "main",
+      "sourceRoot": "apps/klubiq-queue/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/klubiq-queue/tsconfig.app.json"
+      }
     }
   },
   "monorepo": true,

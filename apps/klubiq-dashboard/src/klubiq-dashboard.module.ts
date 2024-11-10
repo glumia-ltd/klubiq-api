@@ -24,23 +24,30 @@ import { LeaseModule } from './lease/lease.module';
 import { LeaseRepository } from './lease/repositories/lease.repository';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { EventListenersModule } from './event-listeners/event-listeners.module';
 import { SSEAuthGuard } from '@app/auth/guards/sse-auth.guard';
 import { CacheService } from '@app/common/services/cache.service';
 import { TransactionsModule } from './transactions/transactions.module';
 import { NotificationsModule } from '@app/notifications/notifications.module';
+import { DevtoolsModule } from '@nestjs/devtools-integration';
+import { EventListenerModule } from '@app/common/event-listeners/event-listener.module';
 
 @Module({
 	imports: [
+		DevtoolsModule.registerAsync({
+			useFactory: () => ({
+				http: process.env.NODE_ENV !== 'production',
+			}),
+		}),
 		// Common modules
-		EventEmitterModule.forRoot(),
+		EventEmitterModule.forRoot({
+			// removeListener: true,
+		}),
 
 		// CUSTOM MODULES
 		AuthModule,
 		ConfigModule,
 		DashboardModule,
 		DatabaseModule,
-		EventListenersModule,
 		HealthModule,
 		LeaseModule,
 		OrganizationModule,
@@ -52,15 +59,13 @@ import { NotificationsModule } from '@app/notifications/notifications.module';
 		UsersModule,
 		TransactionsModule,
 		NotificationsModule,
+		EventListenerModule,
 	],
 	providers: [
 		ApikeyGuard,
-		AuthenticationGuard,
 		FirebaseAuthGuard,
-		LeaseRepository,
-		PermissionsGuard,
-		RolesGuard,
 		SSEAuthGuard,
+		LeaseRepository,
 		UsersRepository,
 		UsersService,
 		{
@@ -80,6 +85,6 @@ import { NotificationsModule } from '@app/notifications/notifications.module';
 			useFactory: () => new CacheService(null),
 		},
 	],
-	exports: [UsersModule],
+	//exports: [UsersModule],
 })
 export class KlubiqDashboardModule {}

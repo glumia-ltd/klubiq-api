@@ -21,7 +21,7 @@ import {
 	TokenResponseDto,
 } from '../dto/responses/auth-response.dto';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
-import { UserRoles } from '@app/common/config/config.constants';
+import { ROLE_ALIAS, UserRoles } from '@app/common/config/config.constants';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
 import { ErrorMessages } from '@app/common/config/error.constant';
 import { Mapper } from '@automapper/core';
@@ -45,6 +45,8 @@ import { DateTime } from 'luxon';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
 import { OrganizationSettings } from '@app/common/database/entities/organization-settings.entity';
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
+import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
+import { OrganizationSubscriptionDto } from '@app/common/dto/responses/organization-subscription.dto';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
@@ -53,6 +55,7 @@ export abstract class AuthService {
 	private readonly cacheTTL = 90;
 	protected readonly cacheService = new CacheService(this.cacheManager);
 	protected readonly suid = new ShortUniqueId();
+	private currentUser: ActiveUserData;
 	constructor(
 		@Inject('FIREBASE_ADMIN') protected firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
@@ -64,6 +67,7 @@ export abstract class AuthService {
 		protected readonly cls: ClsService<SharedClsStore>,
 		protected readonly organizationSettingsService: OrganizationSettingsService,
 		protected readonly userPreferencesService: UserPreferencesService,
+		protected readonly organizationSubscriptionService: OrganizationSubscriptionService,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -428,25 +432,25 @@ export abstract class AuthService {
 
 	async getUserInfo(): Promise<any> {
 		try {
-			const currentUser = this.cls.get('currentUser');
-			if (!currentUser.uid) {
+			this.currentUser = this.cls.get('currentUser');
+			if (!this.currentUser.uid) {
 				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
 			}
-			const cacheKey = `${this.cacheKeyPrefix}/user/${currentUser.uid}`;
+			const cacheKey = `${this.cacheKeyPrefix}/user/${this.currentUser.uid}`;
 
-			switch (currentUser.systemRole) {
+			switch (this.currentUser.systemRole) {
 				case UserRoles.LANDLORD:
 					const cachedUser =
 						await this.cacheManager.get<LandlordUserDetailsResponseDto>(
 							cacheKey,
 						);
 					if (cachedUser) return cachedUser;
-					else return await this.getLandlordUser(currentUser.uid, cacheKey);
+					else return await this.getLandlordUser(this.currentUser, cacheKey);
 				case UserRoles.ADMIN:
 					break;
 			}
 			const user = await this.userProfilesRepository.getUserLoginInfo(
-				currentUser.uid,
+				this.currentUser.uid,
 			);
 			const userData = this.mapper.map(user, UserProfile, AuthUserResponseDto);
 			return userData;
@@ -456,21 +460,28 @@ export abstract class AuthService {
 	}
 
 	private async getLandlordUser(
-		userId: string,
-		cacheKey: string = `${this.cacheKeyPrefix}/user/${userId}`,
+		currentUser: ActiveUserData,
+		cacheKey: string = `${this.cacheKeyPrefix}/user/${currentUser.uid}`,
 	): Promise<LandlordUserDetailsResponseDto> {
-		const user = await this.userProfilesRepository.getLandLordUserInfo(userId);
-		if (!user) {
+		const userDetails = await this.userProfilesRepository.getLandLordUserInfo(
+			currentUser.uid,
+		);
+		if (!userDetails) {
 			throw new NotFoundException('User not found');
 		}
 		const userOrgSettings =
 			await this.organizationSettingsService.getOrganizationSettings(
-				user?.org_uuid,
+				userDetails?.org_uuid,
+			);
+		const orgSubscription =
+			await this.organizationSubscriptionService.getSubscription(
+				currentUser.organizationId,
 			);
 		const userData = await this.mapLandlordUserToDto(
-			user,
-			this.cls.get('currentUser'),
+			userDetails,
+			currentUser,
 			userOrgSettings,
+			orgSubscription,
 		);
 		await this.cacheManager.set(cacheKey, userData, 3600);
 		return userData;
@@ -480,6 +491,7 @@ export abstract class AuthService {
 		user: any,
 		currentUser: ActiveUserData,
 		userOrgSettings?: OrganizationSettings,
+		activeSubscription?: OrganizationSubscriptionDto,
 	): Promise<LandlordUserDetailsResponseDto> {
 		const entitlementsResolve = (data: string[]): Record<string, string> => {
 			const resolved = map(data, (item) => {
@@ -494,6 +506,10 @@ export abstract class AuthService {
 			userOrgSettings && userOrgSettings.settings
 				? userOrgSettings.settings
 				: {};
+		const orgSubscription = {
+			isFreeTrial: activeSubscription.is_free_trial,
+			planId: activeSubscription.subscription_plan_id,
+		};
 		return plainToInstance(LandlordUserDetailsResponseDto, {
 			email: user.email,
 			entitlements: entitlementsResolve(currentUser.entitlements),
@@ -517,9 +533,12 @@ export abstract class AuthService {
 			phone: user.phone,
 			preferences: user.user_preferences,
 			profilePicUrl: user.profile_pic_url,
-			roleName: currentUser.organizationRole,
+			roleName:
+				ROLE_ALIAS()[currentUser.organizationRole] ||
+				currentUser.organizationRole,
 			uuid: user.uuid,
 			orgSettings,
+			orgSubscription,
 		});
 	}
 

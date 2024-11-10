@@ -1,40 +1,55 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { PropertyEvent } from './event-models/property-event';
-import { DashboardService } from '../dashboard/services/dashboard.service';
+import { PropertyEvent } from '../event-models/property-event';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { each, transform } from 'lodash';
 import { CacheKeys } from '@app/common/config/config.constants';
-import { UsersService } from '../users/services/users.service';
+import { UsersService } from 'apps/klubiq-dashboard/src/users/services/users.service';
 import { ConfigService } from '@nestjs/config';
-import { SNSNotificationDto } from '@app/notifications/dto/notification-subscription.dto';
 import { CreateNotificationDto } from '@app/notifications/dto/create-notification.dto';
-
 import { NotificationsService } from '@app/notifications';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { EmailTypes } from '@app/common/email/types/email.types';
+import {
+	EVENT_TEMPLATE,
+	EVENTS,
+	EventTemplate,
+} from '../event-models/event-constants';
 
 @Injectable()
-export class PropertyCreatedListener {
+export class PropertyEventsListener {
 	private readonly orgAdminRoleId: number;
+	private readonly supportEmail: string;
+	private readonly clientBaseUrl: string;
+	private readonly emailCopyrightText: string;
+	private readonly logger = new Logger(PropertyEventsListener.name);
 	constructor(
-		private readonly dashboardService: DashboardService,
 		private readonly userService: UsersService,
 		private readonly configService: ConfigService,
 		private readonly notificationService: NotificationsService,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
+		@InjectQueue('notification') private notificationQueue: Queue,
 	) {
 		this.orgAdminRoleId = this.configService.get<number>('ORG_OWNER_ROLE_ID');
+		this.supportEmail = this.configService.get<string>('SUPPORT_EMAIL');
+		this.clientBaseUrl = this.configService.get<string>('CLIENT_BASE_URL');
+		this.emailCopyrightText = this.configService.get<string>(
+			'EMAIL_COPYRIGHT_TEXT',
+		);
 	}
-	@OnEvent('property.created')
+	@OnEvent(EVENTS.PROPERTY_CREATED, { async: true })
 	async handlePropertyCreatedEvent(payload: PropertyEvent) {
 		await this.invalidateOrganizationPropertyCache(payload);
-		//await this.createAndSendPropertyNotification(payload);
+		await this.createEmailNotification(payload);
 	}
 
 	@OnEvent('property.updated')
 	@OnEvent('property.deleted')
 	@OnEvent('property.archived')
 	async handlePropertyUpdatedOrDeletedEvent(payload: PropertyEvent) {
+		console.log('ABOUT TO invalidateOrganizationPropertyCache', payload);
 		await this.invalidateOrganizationPropertyCache(payload);
 	}
 
@@ -67,7 +82,7 @@ export class PropertyCreatedListener {
 
 	private async getNotificationRecipients(
 		payload: PropertyEvent,
-		template: any,
+		template: EventTemplate,
 	) {
 		const {
 			organizationId,
@@ -79,13 +94,15 @@ export class PropertyCreatedListener {
 			this.orgAdminRoleId,
 			organizationId,
 		);
-		console.log('Users to Notify: ', users);
+		this.logger.log('Users to Notify: ', users);
 		const notificationRecipients = transform(
 			users,
 			(result, user) => {
 				result.userIds.push(user.userId);
-				result.userEmails.push(user.email);
-				result.userNames.push(user.firstName);
+				result.emailRecipients.push({
+					email: user.email,
+					firstName: user.firstName,
+				});
 				result.notificationDtos.push({
 					userId: user.userId,
 					title: template.subject,
@@ -95,12 +112,14 @@ export class PropertyCreatedListener {
 					organizationUuid: payload.organizationId,
 				});
 			},
-			{ userIds: [], userEmails: [], userNames: [], notificationDtos: [] },
+			{ userIds: [], emailRecipients: [], notificationDtos: [] },
 		);
 		if (!notificationRecipients.userIds.includes(propertyManagerId)) {
 			notificationRecipients.userIds.push(propertyManagerId);
-			notificationRecipients.userEmails.push(propertyManagerEmail);
-			notificationRecipients.userNames.push(propertyManagerName);
+			notificationRecipients.emailRecipients.push({
+				email: propertyManagerEmail,
+				firstName: propertyManagerName,
+			});
 			notificationRecipients.notificationDtos.push({
 				userId: propertyManagerId,
 				title: template.subject,
@@ -113,36 +132,59 @@ export class PropertyCreatedListener {
 		return notificationRecipients;
 	}
 
-	private async createAndSendPropertyNotification(payload: PropertyEvent) {
-		const template = this.getPropertyCreatedNotificationTemplate(payload);
+	// private async createAndSendPropertyNotification(payload: PropertyEvent) {
+	// 	const template = this.getPropertyCreatedNotificationTemplate(payload);
+	// 	const notificationRecipients = await this.getNotificationRecipients(
+	// 		payload,
+	// 		template,
+	// 	);
+	// 	// const snsNotification: SNSNotificationDto = {
+	// 	// 	subject: template.subject,
+	// 	// 	message: template.message,
+	// 	// 	userIds: notificationRecipients.userIds,
+	// 	// 	emails: notificationRecipients.userEmails,
+	// 	// 	userNames: notificationRecipients.userNames,
+	// 	// 	type: template.type,
+	// 	// 	channels: ['EMAIL', 'PUSH'],
+	// 	// 	emailTemplateId: template.emailTemplateId,
+	// 	// };
+	// 	const notification: CreateNotificationDto[] =
+	// 		notificationRecipients.notificationDtos;
+	// 	await this.notificationService.createNotifications(notification);
+	// 	// snsNotification.notificationIds = notificationIds;
+	// 	// await this.notificationService.publishNotification(snsNotification);
+	// }
+
+	private async createEmailNotification(payload: PropertyEvent) {
+		const template = EVENT_TEMPLATE(payload)[EVENTS.PROPERTY_CREATED];
 		const notificationRecipients = await this.getNotificationRecipients(
 			payload,
 			template,
 		);
-		const snsNotification: SNSNotificationDto = {
-			subject: template.subject,
-			message: template.message,
-			userIds: notificationRecipients.userIds,
-			emails: notificationRecipients.userEmails,
-			userNames: notificationRecipients.userNames,
-			type: template.type,
-			channels: ['EMAIL', 'PUSH'],
-			emailTemplateId: template.emailTemplateId,
-		};
 		const notification: CreateNotificationDto[] =
 			notificationRecipients.notificationDtos;
 		const notificationIds =
 			await this.notificationService.createNotifications(notification);
-		snsNotification.notificationIds = notificationIds;
-		await this.notificationService.publishNotification(snsNotification);
-	}
-
-	private getPropertyCreatedNotificationTemplate(payload: PropertyEvent) {
-		return {
-			subject: 'New Property Created',
-			message: `A new property has been created by ${payload.propertyManagerName} in your organization.`,
-			emailTemplateId: 'property-created',
-			type: 'PROPERTY_CREATED',
+		const personalization = {
+			property_name: payload.name,
+			property_address: payload.propertyAddress,
+			unit_count: payload.totalUnits,
+			support_email: this.supportEmail,
+			view_property_link: `${this.clientBaseUrl}/properties/${payload.propertyId}`,
+			copyright: this.emailCopyrightText,
 		};
+		const data = {
+			emailTemplate: EmailTypes.PROPERTY_CREATED,
+			notificationIds,
+			recipients: notificationRecipients.emailRecipients,
+			personalization,
+			userIds: notificationRecipients.userIds,
+			channels: ['EMAIL', 'PUSH'],
+		};
+		await this.notificationQueue.add('notify', data, {
+			lifo: false,
+			removeOnComplete: true,
+			removeOnFail: true,
+		});
 	}
 }

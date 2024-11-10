@@ -2,7 +2,8 @@ import {
 	inviteOrgUserTemplate,
 	resetPasswordEmailTemplate,
 	verifyEmailTemplate,
-} from '../templates/transaction-emails.template';
+} from '../email-templates/transaction-emails.template';
+import { propertyCreatedEmailTemplate } from '../email-templates/notification-email.templates';
 
 export enum EmailTypes {
 	EMAIL_VERIFICATION = 'email-verification',
@@ -11,6 +12,7 @@ export enum EmailTypes {
 	ORG_USER_INVITE = 'org-user-invite',
 	USER_INVITE_ACCEPT = 'user-invite-accept',
 	WELCOME = 'welcome',
+	PROPERTY_CREATED = 'property-created',
 }
 export interface EmailInterfaceParams {
 	from?: string;
@@ -32,7 +34,7 @@ export interface EmailInterfaceParams {
 export type EmailRecipient = {
 	email: string;
 	firstName: string;
-	lastName: string;
+	lastName?: string;
 };
 
 interface ReplyTo {
@@ -47,7 +49,7 @@ interface Attachment {
 }
 
 export interface EmailTemplate {
-	text: string;
+	text?: string;
 	html: string;
 	subject: string;
 }
@@ -59,4 +61,5 @@ export const EmailTemplates: Record<EmailTypes, EmailTemplate> = {
 	[EmailTypes.WELCOME]: resetPasswordEmailTemplate(),
 	[EmailTypes.PASSWORD_CHANGE]: resetPasswordEmailTemplate(),
 	[EmailTypes.USER_INVITE_ACCEPT]: resetPasswordEmailTemplate(),
+	[EmailTypes.PROPERTY_CREATED]: propertyCreatedEmailTemplate(),
 };

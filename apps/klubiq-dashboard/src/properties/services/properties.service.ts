@@ -35,8 +35,9 @@ import {
 } from '../dto/responses/property-details.dto';
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PropertyEvent } from '../../event-listeners/event-models/property-event';
+import { PropertyEvent } from '../../../../../libs/common/src/event-listeners/event-models/property-event';
 import { CommonConfigService } from '@app/common/config/common-config';
+import { PropertyAddress } from '@app/common';
 
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
@@ -50,7 +51,7 @@ export class PropertiesService implements IPropertyMetrics {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly util: Util,
 		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
-		private eventEmitter: EventEmitter2,
+		private readonly eventEmitter: EventEmitter2,
 		private readonly commonConfigService: CommonConfigService,
 	) {}
 	async getTotalUnits(organizationUuid: string): Promise<number> {
@@ -454,14 +455,15 @@ export class PropertiesService implements IPropertyMetrics {
 				createDto,
 				isDraft,
 			);
-			this.eventEmitter.emit('property.created', {
+			this.eventEmitter.emitAsync('property.created', {
 				organizationId: currentUser.organizationId,
 				name: createdProperty.name,
-				totalUnits: createdProperty.unitCount,
+				totalUnits: createDto.units?.length || 1,
 				propertyManagerId: createdProperty.manager?.firebaseId,
 				propertyManagerEmail: currentUser.email,
 				propertyId: createdProperty.uuid,
-				propertyManagerName: currentUser.email,
+				propertyManagerName: currentUser.name,
+				propertyAddress: this.getPropertyAddress(createdProperty.address),
 			} as PropertyEvent);
 			return await this.mapPlainPropertyDetailToDto(createdProperty);
 		} catch (error) {
@@ -471,6 +473,13 @@ export class PropertiesService implements IPropertyMetrics {
 				description: error.message,
 			});
 		}
+	}
+	private getPropertyAddress(address: PropertyAddress): string {
+		return address.isManualAddress
+			? `${address.addressLine1}, ${address.addressLine2 ? `${address.addressLine2}, ` : ''}
+		${address.city ? `${address.city} ` : ''} ${address.state ? `${address.state}, ` : ''} ${address.postalCode ? `${address.postalCode}, ` : ''}
+		${address.country ? `${address.country}` : ''}`
+			: `${address.addressLine2 ? `${address.addressLine2}, ` : ''}${address.addressLine1}`;
 	}
 
 	/**
@@ -488,7 +497,9 @@ export class PropertiesService implements IPropertyMetrics {
 			const cacheKey = `${this.cacheKeyPrefix}/${currentUser.organizationId}${this.cls.get('requestUrl')}`;
 			const cachedProperties =
 				await this.cacheManager.get<PageDto<PropertyListDto>>(cacheKey);
-			if (cachedProperties) return cachedProperties;
+			if (cachedProperties) {
+				return cachedProperties;
+			}
 			const propertyListKeys =
 				(await this.cacheManager.get<string[]>(
 					`${currentUser.organizationId}/getPropertyListKeys`,
