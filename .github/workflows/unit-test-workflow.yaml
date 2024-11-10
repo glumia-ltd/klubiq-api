@@ -65,6 +65,10 @@ env:
   REDIS_PORT: ${{ secrets.REDIS_PORT }}
   WORKER_PORT: ${{ secrets.WORKER_PORT }}
   APP_PORT: ${{ secrets.APP_PORT }}
+  CLIENT_BASE_URL: ${{ vars.CLIENT_BASE_URL }}
+  EMAIL_COPYRIGHT_TEXT: ${{ vars.EMAIL_COPYRIGHT_TEXT }}
+  EMAIL_PRIVACY_LINK: ${{ vars.EMAIL_PRIVACY_LINK }}
+  EMAIL_COPYRIGHT_LINK: ${{ vars.EMAIL_COPYRIGHT_LINK }}
 
 jobs:
   test:

@@ -16,12 +16,9 @@ export class JobResultsProcessor extends WorkerHost {
 	}
 	async process(job: Job<any, any, any>): Promise<any> {
 		const { action, notificationIds } = job.data;
-		console.log(`Job Data: `, job.data);
 		switch (action) {
 			case postJobAction.MARK_AS_DELIVERED:
-				console.log(`Job ${job.id} is being processed for action: ${action}`);
 				if (notificationIds && notificationIds.length > 0) {
-					console.log(`Marking notifications as delivered: ${notificationIds}`);
 					await this.markAsDelivered(notificationIds);
 				}
 				break;
@@ -48,15 +45,11 @@ export class JobResultsProcessor extends WorkerHost {
 	@OnWorkerEvent('active')
 	onJobActive(jobId: string) {
 		this.logger.log(`Job ${jobId} is active`);
-		console.log(`Job ${jobId} is active`);
 	}
 
 	@OnWorkerEvent('failed')
 	onJobFailed(jobId: string, failedReason: any) {
 		this.logger.error(
-			`Job ${jobId} failed with reason: ${JSON.stringify(failedReason)}`,
-		);
-		console.error(
 			`Job ${jobId} failed with reason: ${JSON.stringify(failedReason)}`,
 		);
 	}

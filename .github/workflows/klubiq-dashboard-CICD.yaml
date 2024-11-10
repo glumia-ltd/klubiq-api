@@ -30,6 +30,7 @@ env:
   CONTINUE_URL_PATH: ${{ vars.CONTINUE_URL_PATH }}
   GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
   APP: klubiq-dashboard-api
+  QUEUE_APP: klubiq-queue
   PRIVATE_KEY: ${{ secrets.CERTIFICATE }}
   HOSTNAME: ${{ secrets.HOSTNAME }}
   USERNAME: ${{ secrets.USERNAME }}
@@ -67,6 +68,10 @@ env:
   REDIS_PORT: ${{ secrets.REDIS_PORT }}
   WORKER_PORT: ${{ secrets.WORKER_PORT }}
   APP_PORT: ${{ secrets.APP_PORT }}
+  CLIENT_BASE_URL: ${{ vars.CLIENT_BASE_URL }}
+  EMAIL_COPYRIGHT_TEXT: ${{ vars.EMAIL_COPYRIGHT_TEXT }}
+  EMAIL_PRIVACY_LINK: ${{ vars.EMAIL_PRIVACY_LINK }}
+  EMAIL_COPYRIGHT_LINK: ${{ vars.EMAIL_COPYRIGHT_LINK }}
 
 jobs:
   build:
@@ -78,6 +83,7 @@ jobs:
           echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
           npm install
           npm run build
+          npm run build:queue
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -165,6 +171,10 @@ jobs:
             export REDIS_PORT=${{ secrets.REDIS_PORT }}
             export WORKER_PORT=${{ secrets.WORKER_PORT }}
             export APP_PORT=${{ secrets.APP_PORT }}
+            export CLIENT_BASE_URL=${{ vars.CLIENT_BASE_URL }}
+            export EMAIL_COPYRIGHT_TEXT=${{ vars.EMAIL_COPYRIGHT_TEXT }}
+            export EMAIL_PRIVACY_LINK=${{ vars.EMAIL_PRIVACY_LINK }}
+            export EMAIL_COPYRIGHT_LINK=${{ vars.EMAIL_COPYRIGHT_LINK }}
 
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
 
@@ -177,5 +187,10 @@ jobs:
                 pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name ${{ env.APP }} -a --update-env --watch
             fi
 
-      #pm2 stop ${{ env.APP }}
-      #pm2 restart ${{ env.APP }} --update-env --watch
+            if pm2 status ${{ env.QUEUE_APP }} | grep -q "online"; then
+                echo "Process '${{ env.QUEUE_APP }}' is already running."
+                pm2 restart ${{ env.QUEUE_APP }} -a --update-env --watch
+            else
+                echo "Process '${{ env.QUEUE_APP }}' is not running. Starting a new process..."
+                pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-queue/main.js --name ${{ env.QUEUE_APP }} -a --update-env --watch
+            fi
