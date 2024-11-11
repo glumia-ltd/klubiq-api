@@ -14,7 +14,6 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Job, Queue } from 'bullmq';
 import { each, map } from 'lodash';
-import { console } from 'node:inspector/promises';
 import { postJobAction } from './job-constants';
 
 @Processor('notification')
