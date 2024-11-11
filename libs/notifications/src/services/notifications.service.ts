@@ -10,6 +10,8 @@ import { ConfigService } from '@nestjs/config';
 // import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 //import { SNSNotificationDto } from '../dto/notification-subscription.dto';
 import { NotificationsSubscriptionService } from './notifications-subscription.service';
+import * as webpush from 'web-push';
+import { SendNotificationDto } from '../dto/notification-subscription.dto';
 
 @Injectable()
 export class NotificationsService {
@@ -24,6 +26,11 @@ export class NotificationsService {
 		private readonly notificationsRepository: NotificationsRepository,
 		private readonly notificationsSubscriptionService: NotificationsSubscriptionService,
 	) {
+		webpush.setVapidDetails(
+			`mailto:${this.configService.get<string>('SUPPORT_EMAIL')}`,
+			this.configService.get<string>('WEB_VAPID_PUSH_PUBLIC_KEY'),
+			this.configService.get<string>('WEB_VAPID_PUSH_PRIVATE_KEY'),
+		);
 		// this.snsClient = new SNSClient({
 		// 	region: this.configService.get<string>('AWS_S3_REGION'),
 		// 	credentials: {
@@ -101,4 +108,20 @@ export class NotificationsService {
 	// 	const published = await this.snsClient.send(new PublishCommand(params));
 	// 	console.log('published output: ', published);
 	// }
+
+	async sendWebPushNotification(notification: SendNotificationDto) {
+		const subscriptions =
+			await this.notificationsSubscriptionService.getUserSubscriptionDetails(
+				notification.userIds,
+			);
+		const promises = subscriptions.map((item) => {
+			const subscription = item.subscription['push'] as PushSubscription;
+			return webpush
+				.sendNotification(subscription, JSON.stringify(notification.payload))
+				.catch((error: any) => {
+					this.logger.error(error);
+				});
+		});
+		await Promise.all(promises);
+	}
 }

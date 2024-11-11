@@ -300,6 +300,19 @@ export class PropertiesService implements IPropertyMetrics {
 			{ excludeExtraneousValues: true, groups: ['private'] },
 		);
 	}
+
+	private async updateOrgCacheKeys(cacheKey: string) {
+		const currentUser = this.cls.get('currentUser');
+		const propertyListKeys =
+			(await this.cacheManager.get<string[]>(
+				`${currentUser.organizationId}/getPropertyListKeys`,
+			)) || [];
+		await this.cacheManager.set(
+			`${currentUser.organizationId}/getPropertyListKeys`,
+			[...propertyListKeys, cacheKey],
+			this.cacheTTL,
+		);
+	}
 	/**
 	 * Retrieves a property by its UUID from the current organization.
 	 *
@@ -326,6 +339,7 @@ export class PropertiesService implements IPropertyMetrics {
 				);
 			const propertyDetails = await this.mapPlainPropertyDetailToDto(property);
 			await this.cacheManager.set(cacheKey, propertyDetails, this.cacheTTL);
+			await this.updateOrgCacheKeys(cacheKey);
 			return propertyDetails;
 		} catch (error) {
 			this.logger.error('Error getting Property Data', error);
@@ -500,10 +514,10 @@ export class PropertiesService implements IPropertyMetrics {
 			if (cachedProperties) {
 				return cachedProperties;
 			}
-			const propertyListKeys =
-				(await this.cacheManager.get<string[]>(
-					`${currentUser.organizationId}/getPropertyListKeys`,
-				)) || [];
+			// const propertyListKeys =
+			// 	(await this.cacheManager.get<string[]>(
+			// 		`${currentUser.organizationId}/getPropertyListKeys`,
+			// 	)) || [];
 			const [entities, count] =
 				await this.propertyRepository.getOrganizationProperties(
 					currentUser.organizationId,
@@ -519,11 +533,7 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.mapPlainPropertyToPropertyListDto(entities);
 			const propertiesPageData = new PageDto(mappedEntities, pageMetaDto);
 			await this.cacheManager.set(cacheKey, propertiesPageData, this.cacheTTL);
-			await this.cacheManager.set(
-				`${currentUser.organizationId}/getPropertyListKeys`,
-				[...propertyListKeys, cacheKey],
-				this.cacheTTL,
-			);
+			await this.updateOrgCacheKeys(cacheKey);
 			return propertiesPageData;
 		} catch (error) {
 			this.logger.error('Error retrieving organization properties', error);

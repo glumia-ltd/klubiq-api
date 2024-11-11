@@ -110,4 +110,6 @@ export class NotificationProcessor extends WorkerHost {
 			);
 		}
 	}
+
+	private async sendPushNotification() {}
 }

@@ -8,7 +8,6 @@ import { CacheKeys } from '@app/common/config/config.constants';
 import { UsersService } from 'apps/klubiq-dashboard/src/users/services/users.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateNotificationDto } from '@app/notifications/dto/create-notification.dto';
-import { NotificationsService } from '@app/notifications';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { EmailTypes } from '@app/common/email/types/email.types';
@@ -17,6 +16,8 @@ import {
 	EVENTS,
 	EventTemplate,
 } from '../event-models/event-constants';
+import { NotificationsService } from '@app/notifications/services/notifications.service';
+import { NotificationPayloadDto } from '@app/notifications/dto/notification-subscription.dto';
 
 @Injectable()
 export class PropertyEventsListener {
@@ -180,6 +181,15 @@ export class PropertyEventsListener {
 			personalization,
 			userIds: notificationRecipients.userIds,
 			channels: ['EMAIL', 'PUSH'],
+			notificationData: {
+				title: template.subject,
+				body: template.message,
+				data: {
+					propertyId: payload.propertyId,
+					organizationUuid: payload.organizationId,
+				},
+				actionLink: `${this.clientBaseUrl}/properties/${payload.propertyId}`,
+			} as NotificationPayloadDto,
 		};
 		await this.notificationQueue.add('notify', data, {
 			lifo: false,
