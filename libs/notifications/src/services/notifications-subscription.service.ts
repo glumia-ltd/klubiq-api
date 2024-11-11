@@ -3,12 +3,8 @@ import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 import { NotificationsSubscriptionRepository } from '../notifications.repository';
-import {
-	NotificationSubscriptionDto,
-	SendNotificationDto,
-} from '../dto/notification-subscription.dto';
+import { NotificationSubscriptionDto } from '../dto/notification-subscription.dto';
 import { ConfigService } from '@nestjs/config';
-import * as webpush from 'web-push';
 
 @Injectable()
 export class NotificationsSubscriptionService {
@@ -19,13 +15,7 @@ export class NotificationsSubscriptionService {
 		private readonly cls: ClsService<SharedClsStore>,
 		private readonly configService: ConfigService,
 		private readonly notificationsSubscriptionRepository: NotificationsSubscriptionRepository,
-	) {
-		webpush.setVapidDetails(
-			`mailto:${this.configService.get<string>('SUPPORT_EMAIL')}`,
-			this.configService.get<string>('WEB_VAPID_PUSH_PUBLIC_KEY'),
-			this.configService.get<string>('WEB_VAPID_PUSH_PRIVATE_KEY'),
-		);
-	}
+	) {}
 
 	async createOrUpdateNotificationSubscription(
 		subscriptionDto: NotificationSubscriptionDto,
@@ -86,20 +76,5 @@ export class NotificationsSubscriptionService {
 
 	async deleteSubscription(id: string) {
 		await this.notificationsSubscriptionRepository.delete({ id });
-	}
-
-	async sendNotification(notification: SendNotificationDto) {
-		const subscriptions = await this.getUserSubscriptionDetails(
-			notification.userIds,
-		);
-		const promises = subscriptions.map((item) => {
-			const subscription = item.subscription['push'] as PushSubscription;
-			return webpush
-				.sendNotification(subscription, JSON.stringify(notification.payload))
-				.catch((error: any) => {
-					this.logger.error(error);
-				});
-		});
-		await Promise.all(promises);
 	}
 }

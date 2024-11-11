@@ -19,6 +19,7 @@ import { AuthType } from '@app/auth/types/firebase.types';
 import { Auth } from '@app/auth/decorators/auth.decorator';
 import { NotificationsService } from '../services/notifications.service';
 import { CreateNotificationDto } from '../dto/create-notification.dto';
+import { SendNotificationDto } from '../dto/notification-subscription.dto';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
@@ -76,5 +77,13 @@ export class NotificationsController {
 	@Delete()
 	async deleteNotifications(@Body() notificationIds: string[]) {
 		return await this.notificationsService.deleteNotifications(notificationIds);
+	}
+
+	@ApiOkResponse({ description: 'Web push notification sent' })
+	@Post('web-notification')
+	async sendWebNotification(@Body() notificationDto: SendNotificationDto) {
+		return await this.notificationsService.sendWebPushNotification(
+			notificationDto,
+		);
 	}
 }
