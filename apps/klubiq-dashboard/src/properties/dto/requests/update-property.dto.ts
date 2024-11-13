@@ -7,8 +7,9 @@ import {
 	IsArray,
 	ValidateNested,
 	IsObject,
+	IsNotEmpty,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { UnitStatus } from '@app/common/config/config.constants';
 
 export class UpdateUnitDto {
@@ -72,4 +73,23 @@ export class UpdatePropertyDto extends PartialType(CreatePropertyDto) {
 	@ValidateNested({ each: true })
 	@Type(() => UpdateUnitDto)
 	units?: UpdateUnitDto[];
+}
+
+export class DeletePropertyDto {
+	@Expose()
+	@IsString()
+	@IsNotEmpty()
+	uuid: string;
+
+	@Expose()
+	@IsString()
+	address: string;
+
+	@Expose()
+	@IsString()
+	name: string;
+
+	@Expose()
+	@IsString()
+	unitCount: number;
 }

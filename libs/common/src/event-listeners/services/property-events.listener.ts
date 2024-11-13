@@ -43,12 +43,17 @@ export class PropertyEventsListener {
 	@OnEvent(EVENTS.PROPERTY_CREATED, { async: true })
 	async handlePropertyCreatedEvent(payload: PropertyEvent) {
 		await this.invalidateOrganizationPropertyCache(payload);
-		await this.createEmailNotification(payload);
+		await this.createEmailNotification(payload, EVENTS.PROPERTY_CREATED);
 	}
 
-	@OnEvent('property.updated')
-	@OnEvent('property.deleted')
-	@OnEvent('property.archived')
+	@OnEvent(EVENTS.PROPERTY_DELETED, { async: true })
+	async handlePropertyDeletedEvent(payload: PropertyEvent) {
+		await this.invalidateOrganizationPropertyCache(payload);
+		await this.createEmailNotification(payload, EVENTS.PROPERTY_DELETED);
+	}
+
+	@OnEvent(EVENTS.PROPERTY_UPDATED)
+	@OnEvent(EVENTS.PROPERTY_ARCHIVED)
 	async handlePropertyUpdatedOrDeletedEvent(payload: PropertyEvent) {
 		console.log('ABOUT TO invalidateOrganizationPropertyCache', payload);
 		await this.invalidateOrganizationPropertyCache(payload);
@@ -84,6 +89,7 @@ export class PropertyEventsListener {
 	private async getNotificationRecipients(
 		payload: PropertyEvent,
 		template: EventTemplate,
+		eventType: EVENTS,
 	) {
 		const {
 			organizationId,
@@ -115,7 +121,10 @@ export class PropertyEventsListener {
 			},
 			{ userIds: [], emailRecipients: [], notificationDtos: [] },
 		);
-		if (!notificationRecipients.userIds.includes(propertyManagerId)) {
+		if (
+			!notificationRecipients.userIds.includes(propertyManagerId) &&
+			[EVENTS.PROPERTY_CREATED].includes(eventType)
+		) {
 			notificationRecipients.userIds.push(propertyManagerId);
 			notificationRecipients.emailRecipients.push({
 				email: propertyManagerEmail,
@@ -133,34 +142,15 @@ export class PropertyEventsListener {
 		return notificationRecipients;
 	}
 
-	// private async createAndSendPropertyNotification(payload: PropertyEvent) {
-	// 	const template = this.getPropertyCreatedNotificationTemplate(payload);
-	// 	const notificationRecipients = await this.getNotificationRecipients(
-	// 		payload,
-	// 		template,
-	// 	);
-	// 	// const snsNotification: SNSNotificationDto = {
-	// 	// 	subject: template.subject,
-	// 	// 	message: template.message,
-	// 	// 	userIds: notificationRecipients.userIds,
-	// 	// 	emails: notificationRecipients.userEmails,
-	// 	// 	userNames: notificationRecipients.userNames,
-	// 	// 	type: template.type,
-	// 	// 	channels: ['EMAIL', 'PUSH'],
-	// 	// 	emailTemplateId: template.emailTemplateId,
-	// 	// };
-	// 	const notification: CreateNotificationDto[] =
-	// 		notificationRecipients.notificationDtos;
-	// 	await this.notificationService.createNotifications(notification);
-	// 	// snsNotification.notificationIds = notificationIds;
-	// 	// await this.notificationService.publishNotification(snsNotification);
-	// }
-
-	private async createEmailNotification(payload: PropertyEvent) {
-		const template = EVENT_TEMPLATE(payload)[EVENTS.PROPERTY_CREATED];
+	private async createEmailNotification(
+		payload: PropertyEvent,
+		propertyEvent: EVENTS,
+	) {
+		const template = EVENT_TEMPLATE(payload)[propertyEvent];
 		const notificationRecipients = await this.getNotificationRecipients(
 			payload,
 			template,
+			propertyEvent,
 		);
 		const notification: CreateNotificationDto[] =
 			notificationRecipients.notificationDtos;
@@ -174,13 +164,17 @@ export class PropertyEventsListener {
 			view_property_link: `${this.clientBaseUrl}/properties/${payload.propertyId}`,
 			copyright: this.emailCopyrightText,
 		};
+		if (propertyEvent === EVENTS.PROPERTY_DELETED) {
+			personalization['deleted_by'] = payload.propertyManagerName;
+			personalization['deletion_date'] = payload.deletedOn;
+		}
 		const data = {
 			emailTemplate: EmailTypes.PROPERTY_CREATED,
 			notificationIds,
 			recipients: notificationRecipients.emailRecipients,
 			personalization,
 			userIds: notificationRecipients.userIds,
-			channels: ['EMAIL', 'PUSH'],
+			channels: ['EMAIL', 'WEB-PUSH'],
 			notificationData: {
 				title: template.subject,
 				body: template.message,

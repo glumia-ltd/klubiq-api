@@ -15,11 +15,14 @@ import { ConfigService } from '@nestjs/config';
 import { Job, Queue } from 'bullmq';
 import { each, map } from 'lodash';
 import { postJobAction } from './job-constants';
+import axios from 'axios';
+import { NotificationPayloadDto } from '@app/notifications/dto/notification-subscription.dto';
 
 @Processor('notification')
 export class NotificationProcessor extends WorkerHost {
 	private readonly logger = new Logger(NotificationProcessor.name);
 	private readonly supportEmail: string;
+	private readonly APIPort: number;
 	constructor(
 		private readonly mailerSendService: MailerSendService,
 		private readonly configService: ConfigService,
@@ -28,6 +31,7 @@ export class NotificationProcessor extends WorkerHost {
 	) {
 		super();
 		this.supportEmail = this.configService.get<string>('SUPPORT_EMAIL');
+		this.APIPort = this.configService.get<number>('APP_PORT');
 	}
 	async process(job: Job<any, any, any>): Promise<any> {
 		const {
@@ -37,6 +41,7 @@ export class NotificationProcessor extends WorkerHost {
 			personalization,
 			channels,
 			userIds,
+			notificationData,
 		} = job.data;
 
 		each(channels, async (channel) => {
@@ -59,8 +64,9 @@ export class NotificationProcessor extends WorkerHost {
 						attempts: 3,
 					},
 				);
-			} else if (channel === 'PUSH') {
+			} else if (channel === 'WEB-PUSH') {
 				console.log('PUSH to users', userIds);
+				this.sendPushNotification(notificationData, userIds);
 			}
 		});
 	}
@@ -111,5 +117,18 @@ export class NotificationProcessor extends WorkerHost {
 		}
 	}
 
-	private async sendPushNotification() {}
+	private async sendPushNotification(
+		notificationData: NotificationPayloadDto,
+		userIds: string[],
+	) {
+		try {
+			await axios.post(
+				`http://localhost:${this.APIPort}/api/notifications/send-web-notification`,
+				{ payload: notificationData, userIds },
+			);
+			console.log(`Notifications sent to: ${userIds}`);
+		} catch (error) {
+			this.logger.error(`Error marking notifications as delivered: ${error}`);
+		}
+	}
 }

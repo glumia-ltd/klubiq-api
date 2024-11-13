@@ -21,7 +21,7 @@ export class CustomLogging {
 			datePattern: 'YYYY-MM-DD-HH',
 			zippedArchive: false,
 			maxSize: '20m',
-			maxFiles: '1d',
+			maxFiles: '7d',
 		} as DailyRotateFile.DailyRotateFileTransportOptions);
 		this.cloudWatchTransport = new WinstonCloudWatch({
 			awsOptions: {

@@ -11,7 +11,10 @@ import { PropertyRepository } from '../repositories/properties.repository';
 import { Property } from '@app/common/database/entities/property.entity';
 import { ErrorMessages } from '@app/common/config/error.constant';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
-import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
+import {
+	DeletePropertyDto,
+	UpdatePropertyDto,
+} from '../dto/requests/update-property.dto';
 import { PropertyListDto } from '../dto/responses/property-list-response.dto';
 import { ClsService } from 'nestjs-cls';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
@@ -38,6 +41,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PropertyEvent } from '../../../../../libs/common/src/event-listeners/event-models/property-event';
 import { CommonConfigService } from '@app/common/config/common-config';
 import { PropertyAddress } from '@app/common';
+import { DateTime } from 'luxon';
 
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
@@ -389,18 +393,22 @@ export class PropertiesService implements IPropertyMetrics {
 	 * @throws {ForbiddenException} If the current user's organization ID is not found in the context.
 	 * @throws {Error} If there is an error deleting the property data.
 	 */
-	async deleteProperty(uuid: string): Promise<void> {
+	async deleteProperty(deleteData: DeletePropertyDto): Promise<void> {
 		try {
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			await this.propertyRepository.deleteProperty(
-				uuid,
+				deleteData.uuid,
 				currentUser.organizationId,
 				currentUser.uid,
 			);
 			this.eventEmitter.emit('property.deleted', {
 				organizationId: currentUser.organizationId,
-				propertyId: uuid,
+				propertyId: deleteData.uuid,
+				name: deleteData.name,
+				totalUnits: deleteData.unitCount || 1,
+				propertyAddress: deleteData.address,
+				deletedOn: DateTime.utc().toString(),
 			} as PropertyEvent);
 		} catch (error) {
 			this.logger.error('Error deleting Property Data', error);

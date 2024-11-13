@@ -13,6 +13,7 @@ export enum EmailTypes {
 	USER_INVITE_ACCEPT = 'user-invite-accept',
 	WELCOME = 'welcome',
 	PROPERTY_CREATED = 'property-created',
+	PROPERTY_DELETED = 'property-deleted',
 }
 export interface EmailInterfaceParams {
 	from?: string;
@@ -62,4 +63,5 @@ export const EmailTemplates: Record<EmailTypes, EmailTemplate> = {
 	[EmailTypes.PASSWORD_CHANGE]: resetPasswordEmailTemplate(),
 	[EmailTypes.USER_INVITE_ACCEPT]: resetPasswordEmailTemplate(),
 	[EmailTypes.PROPERTY_CREATED]: propertyCreatedEmailTemplate(),
+	[EmailTypes.PROPERTY_DELETED]: propertyCreatedEmailTemplate(),
 };

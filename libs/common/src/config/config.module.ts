@@ -83,6 +83,7 @@ import { CommonConfigService } from './common-config';
 					request.headers['x-correlation-id'] ?? uuidv4(),
 				setup: (cls, req) => {
 					cls.set('clientName', req.headers['x-client-name']);
+					cls.set('clientTimeZone', req.headers['x-client-tzo']);
 					cls.set('jwtToken', req.headers.authorization?.split(' ')[1]);
 					cls.set('requestUrl', req.originalUrl);
 				},
