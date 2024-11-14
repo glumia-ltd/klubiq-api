@@ -402,13 +402,17 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.organizationId,
 				currentUser.uid,
 			);
+			const deletedTime = DateTime.utc()
+				.setZone(this.cls.get('clientTimeZoneName'))
+				.toLocaleString(DateTime.DATETIME_FULL);
 			this.eventEmitter.emit('property.deleted', {
 				organizationId: currentUser.organizationId,
 				propertyId: deleteData.uuid,
 				name: deleteData.name,
 				totalUnits: deleteData.unitCount || 1,
 				propertyAddress: deleteData.address,
-				deletedOn: DateTime.utc().toString(),
+				propertyManagerName: currentUser.name,
+				deletedOn: deletedTime,
 			} as PropertyEvent);
 		} catch (error) {
 			this.logger.error('Error deleting Property Data', error);

@@ -43,13 +43,21 @@ export class PropertyEventsListener {
 	@OnEvent(EVENTS.PROPERTY_CREATED, { async: true })
 	async handlePropertyCreatedEvent(payload: PropertyEvent) {
 		await this.invalidateOrganizationPropertyCache(payload);
-		await this.createEmailNotification(payload, EVENTS.PROPERTY_CREATED);
+		await this.createEmailNotification(
+			payload,
+			EVENTS.PROPERTY_CREATED,
+			EmailTypes.PROPERTY_CREATED,
+		);
 	}
 
 	@OnEvent(EVENTS.PROPERTY_DELETED, { async: true })
 	async handlePropertyDeletedEvent(payload: PropertyEvent) {
 		await this.invalidateOrganizationPropertyCache(payload);
-		await this.createEmailNotification(payload, EVENTS.PROPERTY_DELETED);
+		await this.createEmailNotification(
+			payload,
+			EVENTS.PROPERTY_DELETED,
+			EmailTypes.PROPERTY_DELETED,
+		);
 	}
 
 	@OnEvent(EVENTS.PROPERTY_UPDATED)
@@ -115,7 +123,8 @@ export class PropertyEventsListener {
 					title: template.subject,
 					message: template.message,
 					type: template.type,
-					propertyId: payload.propertyId,
+					propertyId:
+						eventType === EVENTS.PROPERTY_DELETED ? null : payload.propertyId,
 					organizationUuid: payload.organizationId,
 				});
 			},
@@ -145,6 +154,7 @@ export class PropertyEventsListener {
 	private async createEmailNotification(
 		payload: PropertyEvent,
 		propertyEvent: EVENTS,
+		emailTemplate: EmailTypes,
 	) {
 		const template = EVENT_TEMPLATE(payload)[propertyEvent];
 		const notificationRecipients = await this.getNotificationRecipients(
@@ -169,7 +179,7 @@ export class PropertyEventsListener {
 			personalization['deletion_date'] = payload.deletedOn;
 		}
 		const data = {
-			emailTemplate: EmailTypes.PROPERTY_CREATED,
+			emailTemplate: emailTemplate,
 			notificationIds,
 			recipients: notificationRecipients.emailRecipients,
 			personalization,
@@ -179,10 +189,16 @@ export class PropertyEventsListener {
 				title: template.subject,
 				body: template.message,
 				data: {
-					propertyId: payload.propertyId,
+					propertyId:
+						propertyEvent === EVENTS.PROPERTY_DELETED
+							? null
+							: payload.propertyId,
 					organizationUuid: payload.organizationId,
 				},
-				actionLink: `${this.clientBaseUrl}/properties/${payload.propertyId}`,
+				actionLink:
+					propertyEvent === EVENTS.PROPERTY_DELETED
+						? null
+						: `${this.clientBaseUrl}/properties/${payload.propertyId}`,
 			} as NotificationPayloadDto,
 		};
 		await this.notificationQueue.add('notify', data, {

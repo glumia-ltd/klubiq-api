@@ -781,7 +781,7 @@ hr {
           <div class="content">
 
             <!-- START CENTERED WHITE CONTAINER -->
-            <span class="preheader">Property Deletion Confirmation - {{property_name}} Removed from Klubiq.</span>
+            <span class="preheader">Property - <strong>{{property_name}}</strong> Removed from Klubiq.</span>
             <table role="presentation" class="main">
 
               <!-- START MAIN CONTENT AREA -->
@@ -790,7 +790,7 @@ hr {
                   <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                     <tr>
                       <td>
-                        <p>We want to inform you that the property {{property_name}} has been successfully removed from your organization’s account in Klubiq.</p>
+                        <p>We want to inform you that the property <strong>{{property_name}}</strong> has been successfully removed from your organization’s account in Klubiq.</p>
                         <p><strong>Property Details:</strong></p>
                         <ul>
                           <li><strong>Property Name:</strong> {{ property_name }}</li>

@@ -83,7 +83,8 @@ import { CommonConfigService } from './common-config';
 					request.headers['x-correlation-id'] ?? uuidv4(),
 				setup: (cls, req) => {
 					cls.set('clientName', req.headers['x-client-name']);
-					cls.set('clientTimeZone', req.headers['x-client-tzo']);
+					cls.set('clientTimeZoneOffset', req.headers['x-client-tzo']);
+					cls.set('clientTimeZoneName', req.headers['x-client-tz-name']);
 					cls.set('jwtToken', req.headers.authorization?.split(' ')[1]);
 					cls.set('requestUrl', req.originalUrl);
 				},
@@ -96,7 +97,6 @@ import { CommonConfigService } from './common-config';
 				store: redis,
 				host: 'localhost',
 				port: configService.get('REDIS_PORT'),
-				max: 10,
 				// ttl: 300,
 			}),
 		}),

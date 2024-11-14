@@ -12,6 +12,7 @@ import {
 	ApiBearerAuth,
 	ApiBody,
 	ApiCreatedResponse,
+	ApiExcludeEndpoint,
 	ApiOkResponse,
 	ApiSecurity,
 	ApiTags,
@@ -138,7 +139,7 @@ export class PublicController {
 	@Get('lease-metadata')
 	@ApiOkResponse({
 		description: 'Get metadata for lease view and forms',
-		type: Object,
+		type: () => [],
 	})
 	async getLeaseFormViewData() {
 		const propertyList =
@@ -234,6 +235,7 @@ export class PublicController {
 		}
 	}
 
+	@ApiExcludeEndpoint()
 	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('features/:id')
 	@ApiOkResponse({
@@ -319,6 +321,7 @@ export class PublicController {
 		}
 	}
 
+	@ApiExcludeEndpoint()
 	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('features-permissions/:id')
 	@ApiOkResponse({
@@ -392,6 +395,7 @@ export class PublicController {
 		}
 	}
 
+	@ApiExcludeEndpoint()
 	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('system-roles/:id')
 	@ApiOkResponse({
@@ -469,6 +473,7 @@ export class PublicController {
 		}
 	}
 
+	@ApiExcludeEndpoint()
 	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('organization-roles/:id')
 	@ApiOkResponse({

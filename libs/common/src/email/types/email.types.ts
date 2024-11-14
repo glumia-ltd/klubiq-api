@@ -3,7 +3,10 @@ import {
 	resetPasswordEmailTemplate,
 	verifyEmailTemplate,
 } from '../email-templates/transaction-emails.template';
-import { propertyCreatedEmailTemplate } from '../email-templates/notification-email.templates';
+import {
+	propertyCreatedEmailTemplate,
+	propertyDeletedEmailTemplate,
+} from '../email-templates/notification-email.templates';
 
 export enum EmailTypes {
 	EMAIL_VERIFICATION = 'email-verification',
@@ -63,5 +66,5 @@ export const EmailTemplates: Record<EmailTypes, EmailTemplate> = {
 	[EmailTypes.PASSWORD_CHANGE]: resetPasswordEmailTemplate(),
 	[EmailTypes.USER_INVITE_ACCEPT]: resetPasswordEmailTemplate(),
 	[EmailTypes.PROPERTY_CREATED]: propertyCreatedEmailTemplate(),
-	[EmailTypes.PROPERTY_DELETED]: propertyCreatedEmailTemplate(),
+	[EmailTypes.PROPERTY_DELETED]: propertyDeletedEmailTemplate(),
 };

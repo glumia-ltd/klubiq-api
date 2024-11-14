@@ -90,6 +90,6 @@ export class DeletePropertyDto {
 	name: string;
 
 	@Expose()
-	@IsString()
+	@IsNumber()
 	unitCount: number;
 }
