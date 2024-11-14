@@ -136,6 +136,19 @@ export class PublicController {
 	}
 
 	@Auth(AuthType.Bearer)
+	@Get('org/:orgId/properties')
+	@ApiOkResponse({
+		description: 'Get view list of properties for an organization',
+		type: Object,
+	})
+	async getOrganizationPropertyViewList(@Param('orgId') orgId: string) {
+		if (!orgId) return [];
+		const propertyList =
+			await this.publicService.getOrganizationPropertiesViewList();
+		return propertyList;
+	}
+
+	@Auth(AuthType.Bearer)
 	@Get('lease-metadata')
 	@ApiOkResponse({
 		description: 'Get metadata for lease view and forms',
