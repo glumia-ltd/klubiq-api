@@ -25,7 +25,7 @@ export class SSEAuthGuard implements CanActivate {
 			this.cls.set('currentUser', firebaseUser as any);
 			return true;
 		} catch {
-			throw new Error('Invalid API Key');
+			throw new Error('Invalid auth token');
 		}
 	}
 }

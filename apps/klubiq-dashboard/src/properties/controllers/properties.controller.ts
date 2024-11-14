@@ -26,7 +26,10 @@ import {
 	UserRoles,
 } from '@app/common/config/config.constants';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
-import { UpdatePropertyDto } from '../dto/requests/update-property.dto';
+import {
+	DeletePropertyDto,
+	UpdatePropertyDto,
+} from '../dto/requests/update-property.dto';
 import {
 	Auth,
 	Feature,
@@ -144,9 +147,13 @@ export class PropertiesController {
 	})
 	async deleteProperty(
 		@Param('propertyUuid') propertyUuid: string,
+		@Body() deleteData: DeletePropertyDto,
 	): Promise<void> {
 		try {
-			await this.propertyService.deleteProperty(propertyUuid);
+			if (propertyUuid !== deleteData.uuid) {
+				throw new BadRequestException('Property id does not match');
+			}
+			await this.propertyService.deleteProperty(deleteData);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}

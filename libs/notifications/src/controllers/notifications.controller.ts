@@ -79,8 +79,10 @@ export class NotificationsController {
 		return await this.notificationsService.deleteNotifications(notificationIds);
 	}
 
+	@Auth(AuthType.None)
+	@ApiExcludeEndpoint()
 	@ApiOkResponse({ description: 'Web push notification sent' })
-	@Post('web-notification')
+	@Post('send-web-notification')
 	async sendWebNotification(@Body() notificationDto: SendNotificationDto) {
 		return await this.notificationsService.sendWebPushNotification(
 			notificationDto,

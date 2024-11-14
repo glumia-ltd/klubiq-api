@@ -115,7 +115,7 @@ export class NotificationsService {
 				notification.userIds,
 			);
 		const promises = subscriptions.map((item) => {
-			const subscription = item.subscription['push'] as PushSubscription;
+			const subscription = item.subscription['web-push'] as PushSubscription;
 			return webpush
 				.sendNotification(subscription, JSON.stringify(notification.payload))
 				.catch((error: any) => {

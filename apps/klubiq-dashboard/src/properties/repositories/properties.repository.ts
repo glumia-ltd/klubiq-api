@@ -380,6 +380,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 				}),
 			)
 			.execute();
+		// return deleteData.
 	}
 
 	//UPDATE UNIT AND IT'S IMAGES

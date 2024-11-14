@@ -6,4 +6,6 @@ export interface SharedClsStore extends ClsStore {
 	jwtToken: string;
 	currentUser: ActiveUserData;
 	requestUrl: string;
+	clientTimeZoneOffset: number;
+	clientTimeZoneName: string;
 }
