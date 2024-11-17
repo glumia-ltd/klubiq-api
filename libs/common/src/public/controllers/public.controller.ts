@@ -138,14 +138,17 @@ export class PublicController {
 	@Auth(AuthType.Bearer)
 	@Get('org/:orgId/properties')
 	@ApiOkResponse({
-		description: 'Get view list of properties for an organization',
-		type: Object,
+		description: 'Get view list of properties and tenants for an organization',
+		//type: () => ({ properties: [], tenants: [] }),
 	})
-	async getOrganizationPropertyViewList(@Param('orgId') orgId: string) {
+	async getOrganizationPropertiesAndTenantsViewList(
+		@Param('orgId') orgId: string,
+	) {
 		if (!orgId) return [];
 		const propertyList =
 			await this.publicService.getOrganizationPropertiesViewList();
-		return propertyList;
+		const tenantList = await this.publicService.getOrganizationTenants(orgId);
+		return { properties: propertyList, tenants: tenantList };
 	}
 
 	@Auth(AuthType.Bearer)

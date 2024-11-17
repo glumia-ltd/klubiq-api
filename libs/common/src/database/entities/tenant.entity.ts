@@ -8,10 +8,12 @@ import {
 	UpdateDateColumn,
 	CreateDateColumn,
 	Index,
+	OneToMany,
 } from 'typeorm';
 import { AutoMap } from '@automapper/classes';
 import { UserProfile } from './user-profile.entity';
 import { Lease } from './lease.entity';
+import { OrganizationTenants } from './organization-tenants.entity';
 
 @Entity({ schema: 'kdo' })
 export class TenantUser {
@@ -68,4 +70,10 @@ export class TenantUser {
 
 	@UpdateDateColumn()
 	updatedDate?: Date;
+
+	@OneToMany(
+		() => OrganizationTenants,
+		(organizationTenant) => organizationTenant.tenant,
+	)
+	organizationTenants?: OrganizationTenants[];
 }
