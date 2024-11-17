@@ -32,7 +32,9 @@ export class NotificationSubscription {
 	@JoinColumn({ name: 'userId', referencedColumnName: 'firebaseId' })
 	user: UserProfile;
 
-	@ManyToOne(() => Organization, (organization) => organization.subscriptions)
+	@ManyToOne(() => Organization, (organization) => organization.subscriptions, {
+		onDelete: 'CASCADE',
+	})
 	@JoinColumn({ name: 'organizationUuid' })
 	organization?: Organization;
 
