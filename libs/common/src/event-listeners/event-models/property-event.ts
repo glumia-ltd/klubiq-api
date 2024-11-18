@@ -7,5 +7,8 @@ export class PropertyEvent {
 	propertyId?: string;
 	propertyManagerName?: string;
 	propertyAddress?: string;
-	deletedOn?: string;
+	eventTimestamp?: string;
+	assignedToName?: string;
+	assignedToEmail?: string;
+	assignedToId?: string;
 }

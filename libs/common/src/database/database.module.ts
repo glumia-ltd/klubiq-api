@@ -6,19 +6,9 @@ import { Permission } from './entities/permission.entity';
 import { OrganizationRole } from './entities/organization-role.entity';
 import { Feature } from './entities/feature.entity';
 import { FeaturePermission } from './entities/feature-permission.entity';
-import { PropertyType } from './entities/property-type.entity';
-import { PropertyCategory } from './entities/property-category.entity';
-import { PropertyPurpose } from './entities/property-purpose.entity';
-import { PropertyStatus } from './entities/property-status.entity';
-import { Amenity } from './entities/property-amenity.entity';
-import { PropertyImage } from './entities/property-image.entity';
 import { Lease } from './entities/lease.entity';
 import { Transaction } from './entities/transaction.entity';
 import { Maintenance } from './entities/maintenance.entity';
-import { UserInvitation } from './entities/user-invitation.entity';
-import { TenantUser } from './entities/tenant.entity';
-import { UserPreferences } from './entities/user-preferences.entity';
-import { OrganizationSettings } from './entities/organization-settings.entity';
 import { OrganizationSubscriptions } from './entities/organization-subscriptions.entity';
 import { SubscriptionPlan } from './entities/subscription-plan.entity';
 import { OrganizationCounter } from './entities/organization-counter.entity';
@@ -41,22 +31,12 @@ import { Notifications } from './entities/notifications.entity';
 			Role,
 			UserProfile,
 			Permission,
-			OrganizationRole,
 			Feature,
 			FeaturePermission,
-			PropertyType,
-			PropertyCategory,
-			PropertyPurpose,
-			PropertyStatus,
-			Amenity,
-			PropertyImage,
+			OrganizationRole,
 			Lease,
 			Maintenance,
 			Transaction,
-			UserInvitation,
-			TenantUser,
-			UserPreferences,
-			OrganizationSettings,
 			SubscriptionPlan,
 			OrganizationSubscriptions,
 			OrganizationCounter,

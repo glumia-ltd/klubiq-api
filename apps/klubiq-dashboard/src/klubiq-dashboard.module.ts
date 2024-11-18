@@ -30,6 +30,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { NotificationsModule } from '@app/notifications/notifications.module';
 import { DevtoolsModule } from '@nestjs/devtools-integration';
 import { EventListenerModule } from '@app/common/event-listeners/event-listener.module';
+import { KdoDBSchemaModule } from '@app/common/database/kdo-db-schema.module';
 
 @Module({
 	imports: [
@@ -39,15 +40,14 @@ import { EventListenerModule } from '@app/common/event-listeners/event-listener.
 			}),
 		}),
 		// Common modules
-		EventEmitterModule.forRoot({
-			// removeListener: true,
-		}),
+		EventEmitterModule.forRoot(),
 
 		// CUSTOM MODULES
 		AuthModule,
 		ConfigModule,
 		DashboardModule,
 		DatabaseModule,
+		KdoDBSchemaModule,
 		HealthModule,
 		LeaseModule,
 		OrganizationModule,

@@ -81,6 +81,7 @@ export enum CacheKeys {
 	ORGANIZATION_SETTINGS = 'organization-settings',
 	SUBSCRIPTION_PLANS = 'subscription-plans',
 	ORGANIZATION_SUBSCRIPTIONS = 'organization-subscriptions',
+	ORGANIZATION_TENANTS = 'organization-tenants',
 }
 
 export enum TransactionType {
@@ -347,7 +348,7 @@ export const ROLE_ALIAS = (
 		[UserRoles.STAFF]: 'Staff',
 		[UserRoles.LANDLORD]: 'Landlord',
 		[UserRoles.TENANT]: 'Tenant',
-		[UserRoles.ORG_OWNER]: 'Director',
+		[UserRoles.ORG_OWNER]: 'Executive Manager',
 		[UserRoles.PROPERTY_MANAGER]: 'Property Manager',
 		[UserRoles.PROPERTY_OWNER]: 'Property Owner',
 		[UserRoles.LEASE_MANAGER]: 'Lease Manager',

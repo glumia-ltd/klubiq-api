@@ -38,7 +38,7 @@ import {
 } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
-import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
+import { PropertyManagerAssignmentDto } from '../dto/requests/property-manager.dto';
 import { PropertyDetailsDto } from '../dto/responses/property-details.dto';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 import { PropertyListDto } from '../dto/responses/property-list-response.dto';
@@ -239,11 +239,11 @@ export class PropertiesController {
 	})
 	@ApiBody({
 		description: 'Manager or Owner to assign to property',
-		type: PropertyManagerDto,
+		type: PropertyManagerAssignmentDto,
 	})
 	async assignToManager(
 		@Param('propertyUuid') propertyUuid: string,
-		@Body() managerDto: PropertyManagerDto,
+		@Body() managerDto: PropertyManagerAssignmentDto,
 	) {
 		try {
 			const data = await this.propertyService.assignPropertyToManagerOrOwner(

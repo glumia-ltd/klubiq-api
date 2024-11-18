@@ -27,7 +27,7 @@ import { IPropertyMetrics } from '../interfaces/property-metrics.service.interfa
 import { PropertyMetrics } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { CacheTTl, UserRoles } from '@app/common/config/config.constants';
 import { Util } from '@app/common/helpers/util';
-import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
+import { PropertyManagerAssignmentDto } from '../dto/requests/property-manager.dto';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 import { Unit } from '@app/common/database/entities/unit.entity';
 import { plainToInstance } from 'class-transformer';
@@ -330,7 +330,7 @@ export class PropertiesService implements IPropertyMetrics {
 		try {
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			const cacheKey = `${currentUser.uid}/${this.cacheKeyPrefix}.${uuid}`;
+			const cacheKey = `${this.cacheKeyPrefix}/${uuid}`;
 			const cachedProperty =
 				await this.cacheManager.get<PropertyDetailsDto>(cacheKey);
 			if (cachedProperty) return cachedProperty;
@@ -412,7 +412,7 @@ export class PropertiesService implements IPropertyMetrics {
 				totalUnits: deleteData.unitCount || 1,
 				propertyAddress: deleteData.address,
 				propertyManagerName: currentUser.name,
-				deletedOn: deletedTime,
+				eventTimestamp: deletedTime,
 			} as PropertyEvent);
 		} catch (error) {
 			this.logger.error('Error deleting Property Data', error);
@@ -526,10 +526,6 @@ export class PropertiesService implements IPropertyMetrics {
 			if (cachedProperties) {
 				return cachedProperties;
 			}
-			// const propertyListKeys =
-			// 	(await this.cacheManager.get<string[]>(
-			// 		`${currentUser.organizationId}/getPropertyListKeys`,
-			// 	)) || [];
 			const [entities, count] =
 				await this.propertyRepository.getOrganizationProperties(
 					currentUser.organizationId,
@@ -552,55 +548,6 @@ export class PropertiesService implements IPropertyMetrics {
 			throw new Error(
 				`Error retrieving organization properties. Error: ${error}`,
 			);
-		}
-	}
-
-	/**
-	 * Creates a draft property using the provided CreatePropertyDto.
-	 *
-	 * @param {CreatePropertyDto} createDto - The data for creating the draft property.
-	 * @return {Promise<PropertyDto>} - The created draft property.
-	 * @throws {ForbiddenException} - If no organization ID is found in the context.
-	 * @throws {BadRequestException} - If there is an error creating the draft property.
-	 */
-	async createDraftProperty(
-		createDto: CreatePropertyDto,
-	): Promise<PropertyDetailsDto> {
-		try {
-			const draftProperty = await this.createProperty(createDto, true);
-			return draftProperty;
-		} catch (error) {
-			this.logger.error('Error creating draft Property Data', error.message);
-			throw new BadRequestException(`Error creating draft Property.`, {
-				cause: new Error(),
-				description: error.message,
-			});
-		}
-	}
-
-	/**
-	 * Saves a draft property with the specified UUID.
-	 *
-	 * @param {string} propertyUuid - The UUID of the property to save as a draft.
-	 * @return {Promise<void>} - A promise that resolves when the draft property is saved successfully.
-	 * @throws {ForbiddenException} - If no organization ID is found in the context.
-	 * @throws {BadRequestException} - If there is an error saving the draft property.
-	 */
-	async saveDraftProperty(propertyUuid: string): Promise<void> {
-		try {
-			const currentUser = this.cls.get('currentUser');
-			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			await this.propertyRepository.saveDraftProperty(
-				propertyUuid,
-				currentUser.organizationId,
-				currentUser.uid,
-			);
-		} catch (error) {
-			this.logger.error('Error saving draft Property', error);
-			throw new BadRequestException(`Error saving draft Property.`, {
-				cause: new Error(),
-				description: error.message,
-			});
 		}
 	}
 
@@ -641,17 +588,29 @@ export class PropertiesService implements IPropertyMetrics {
 
 	async assignPropertyToManagerOrOwner(
 		propertyUuid: string,
-		managerDto: PropertyManagerDto,
+		managerDto: PropertyManagerAssignmentDto,
 	): Promise<boolean> {
 		try {
-			const orgId = this.cls.get('currentUser').organizationId;
-			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser.organizationId)
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			const assigned =
 				await this.propertyRepository.assignPropertyToManagerOrOwner(
 					propertyUuid,
-					orgId,
+					currentUser.organizationId,
 					managerDto,
 				);
+			const eventTimestamp = DateTime.utc()
+				.setZone(this.cls.get('clientTimeZoneName'))
+				.toLocaleString(DateTime.DATETIME_FULL);
+			this.eventEmitter.emit('property.deleted', {
+				organizationId: currentUser.organizationId,
+				propertyId: propertyUuid,
+				propertyManagerName: currentUser.name,
+				name: managerDto.propertyName,
+				propertyAddress: managerDto.propertyAddress,
+				eventTimestamp,
+			} as PropertyEvent);
 			return assigned;
 		} catch (error) {
 			const logMessage = `Error assigning property ${propertyUuid} to ${managerDto.isPropertyOwner ? 'owner' : 'manager'}`;
@@ -698,7 +657,6 @@ export class PropertiesService implements IPropertyMetrics {
 
 	/**
 	 * Retrieves all properties belonging to the organization grouped by property and units.
-	 * @param {string} orgUuid - The UUID of the organization.
 	 * @return {Promise<PropertyDetailsDto[]>} - The properties belonging to the organization grouped by property and units.
 	 * @throws {ForbiddenException} - If the current user's organization ID is not found in the context.
 	 */

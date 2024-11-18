@@ -4,6 +4,7 @@ import {
 	verifyEmailTemplate,
 } from '../email-templates/transaction-emails.template';
 import {
+	propertyAssignedEmailTemplate,
 	propertyCreatedEmailTemplate,
 	propertyDeletedEmailTemplate,
 } from '../email-templates/notification-email.templates';
@@ -17,6 +18,7 @@ export enum EmailTypes {
 	WELCOME = 'welcome',
 	PROPERTY_CREATED = 'property-created',
 	PROPERTY_DELETED = 'property-deleted',
+	PROPERTY_ASSIGNED = 'property-assigned',
 }
 export interface EmailInterfaceParams {
 	from?: string;
@@ -67,4 +69,5 @@ export const EmailTemplates: Record<EmailTypes, EmailTemplate> = {
 	[EmailTypes.USER_INVITE_ACCEPT]: resetPasswordEmailTemplate(),
 	[EmailTypes.PROPERTY_CREATED]: propertyCreatedEmailTemplate(),
 	[EmailTypes.PROPERTY_DELETED]: propertyDeletedEmailTemplate(),
+	[EmailTypes.PROPERTY_ASSIGNED]: propertyAssignedEmailTemplate(),
 };
