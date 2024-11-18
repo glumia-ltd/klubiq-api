@@ -5,6 +5,7 @@ export enum EVENTS {
 	PROPERTY_UPDATED = 'property.updated',
 	PROPERTY_DELETED = 'property.deleted',
 	PROPERTY_ARCHIVED = 'property.archived',
+	PROPERTY_ASSIGNED = 'property.assigned',
 }
 export type EventTemplate = {
 	subject: string;
@@ -34,6 +35,11 @@ export const EVENT_TEMPLATE = (
 			subject: 'Property Archived',
 			message: `A property has been archived by ${payload.propertyManagerName} in your organization.`,
 			type: 'property-archived',
+		},
+		[EVENTS.PROPERTY_ASSIGNED]: {
+			subject: 'Property Assigned',
+			message: `A property has been assigned to you by ${payload.propertyManagerName} in your organization.`,
+			type: 'property-assigned',
 		},
 	};
 };

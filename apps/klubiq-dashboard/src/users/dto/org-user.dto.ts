@@ -11,5 +11,5 @@ export class UserDetailsDto {
 	firstName: string;
 
 	@IsString()
-	lastName: string;
+	lastName?: string;
 }

@@ -28,7 +28,7 @@ import {
 import { find, indexOf, map } from 'lodash';
 import { DateTime } from 'luxon';
 import { PropertyCountData } from '../dto/responses/property-count.dto';
-import { PropertyManagerDto } from '../dto/requests/property-manager.dto';
+import { PropertyManagerAssignmentDto } from '../dto/requests/property-manager.dto';
 import { PropertyCategory } from '@app/common/database/entities/property-category.entity';
 import { PropertyPurpose } from '@app/common/database/entities/property-purpose.entity';
 import { PropertyType } from '@app/common/database/entities/property-type.entity';
@@ -60,7 +60,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 	async assignPropertyToManagerOrOwner(
 		propertyUuid: string,
 		orgId: string,
-		managerDto: PropertyManagerDto,
+		managerDto: PropertyManagerAssignmentDto,
 	) {
 		const update = await this.createQueryBuilder('property')
 			.update(Property)
