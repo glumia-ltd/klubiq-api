@@ -27,7 +27,7 @@ export const verifyEmailTemplate = (): EmailTemplate => ({
               <tr>
                 <td class="align-center" width="100%">
                   <a href="https://postdrop.io">
-                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="40" alt="Postdrop">
+                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Postdrop">
                   </a>
                 </td>
               </tr>
@@ -139,7 +139,7 @@ export const resetPasswordEmailTemplate = (): EmailTemplate => ({
               <tr>
                 <td class="align-center" width="100%">
                   <a href="https://postdrop.io">
-                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="40" alt="Postdrop">
+                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Postdrop">
                   </a>
                 </td>
               </tr>
@@ -258,7 +258,7 @@ export const inviteOrgUserTemplate = (): EmailTemplate => ({
               <tr>
                 <td class="align-center" width="100%">
                   <a href="https://postdrop.io">
-                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="40" alt="Postdrop">
+                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Postdrop">
                   </a>
                 </td>
               </tr>
