@@ -41,6 +41,15 @@ export class DashboardService {
 		@Inject(LEASE_SERVICE_INTERFACE)
 		private readonly leaseService: ILeaseService,
 	) {}
+
+	private async updateOrgCacheKeys(cacheKey: string, listKeyName: string) {
+		const listKeys = (await this.cacheManager.get<string[]>(listKeyName)) || [];
+		await this.cacheManager.set(
+			listKeyName,
+			[...listKeys, cacheKey],
+			this.cacheTTL,
+		);
+	}
 	async getPropertyMetrics(
 		invalidateCache: boolean = false,
 	): Promise<PropertyMetrics> {
@@ -54,7 +63,6 @@ export class DashboardService {
 		const cachedPropertyMetrics =
 			await this.cacheManager.get<PropertyMetrics>(cacheKey);
 		if (cachedPropertyMetrics) {
-			this.logger.log('Retrieving property metrics from cache');
 			return cachedPropertyMetrics;
 		}
 		const propertyMetrics: PropertyMetrics =
@@ -63,6 +71,10 @@ export class DashboardService {
 				30,
 			);
 		await this.cacheManager.set(cacheKey, propertyMetrics, this.cacheTTL);
+		this.updateOrgCacheKeys(
+			cacheKey,
+			`${currentUser.organizationId}/getPropertyListKeys`,
+		);
 		return propertyMetrics;
 	}
 
@@ -91,6 +103,10 @@ export class DashboardService {
 			endDate,
 		);
 		await this.cacheManager.set(cacheKey, result, this.cacheTTL);
+		this.updateOrgCacheKeys(
+			cacheKey,
+			`${currentUser.organizationId}/transactionListKeys`,
+		);
 		return result;
 	}
 
@@ -108,6 +124,10 @@ export class DashboardService {
 			currentUser.organizationId,
 		);
 		await this.cacheManager.set(cacheKey, result, this.cacheTTL);
+		this.updateOrgCacheKeys(
+			cacheKey,
+			`${currentUser.organizationId}/transactionListKeys`,
+		);
 		return result;
 	}
 
@@ -197,6 +217,10 @@ export class DashboardService {
 			activeLeaseForPeriodChangeIndicator,
 		};
 		await this.cacheManager.set(cacheKey, leaseMetrics, this.cacheTTL);
+		this.updateOrgCacheKeys(
+			cacheKey,
+			`${currentUser.organizationId}/getLeaseListKeys`,
+		);
 		return leaseMetrics;
 	}
 	async getOverdueRentSummary(): Promise<RentOverdueLeaseDto> {

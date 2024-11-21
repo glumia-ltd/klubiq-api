@@ -1,3 +1,5 @@
+import { TenantDto } from '@app/common/dto/responses/tenant.dto';
+
 export class PropertyEvent {
 	organizationId: string;
 	name?: string;
@@ -11,4 +13,16 @@ export class PropertyEvent {
 	assignedToName?: string;
 	assignedToEmail?: string;
 	assignedToId?: string;
+}
+
+export class LeaseEvent extends PropertyEvent {
+	tenants: TenantDto[];
+	startDate?: string;
+	endDate?: string;
+	leaseId?: string;
+	paymentFrequency?: string;
+	rent?: number;
+	unitNumber?: string;
+	leaseName?: string;
+	firstPaymentDate?: string;
 }

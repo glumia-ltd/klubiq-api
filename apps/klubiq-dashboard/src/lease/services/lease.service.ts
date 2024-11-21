@@ -49,6 +49,20 @@ export class LeaseService implements ILeaseService {
 		private readonly leaseRepository: LeaseRepository,
 		private readonly uploadService: FileUploadService,
 	) {}
+
+	private async updateOrgCacheKeys(cacheKey: string) {
+		const currentUser = this.cls.get('currentUser');
+		const leaseListKeys =
+			(await this.cacheManager.get<string[]>(
+				`${currentUser.organizationId}/getLeaseListKeys`,
+			)) || [];
+		await this.cacheManager.set(
+			`${currentUser.organizationId}/getLeaseListKeys`,
+			[...leaseListKeys, cacheKey],
+			this.cacheTTL,
+		);
+	}
+
 	async getOrganizationLeases(
 		getLeaseDto?: GetLeaseDto,
 	): Promise<PageDto<LeaseDto>> {
@@ -73,6 +87,7 @@ export class LeaseService implements ILeaseService {
 		const mappedEntities = await this.mapLeaseListToDto(entities);
 		const leaseData = new PageDto(mappedEntities, pageMetaDto);
 		await this.cacheManager.set(cacheKey, leaseData, this.cacheTTL);
+		this.updateOrgCacheKeys(cacheKey);
 		return leaseData;
 	}
 
@@ -146,6 +161,7 @@ export class LeaseService implements ILeaseService {
 		const leases = await this.leaseRepository.getUnitLeases(unitId);
 		const mappedLeases = await this.mapLeaseRawToDto(leases);
 		await this.cacheManager.set(cacheKey, mappedLeases, this.cacheTTL);
+		this.updateOrgCacheKeys(cacheKey);
 		if (currentUser.organizationRole !== UserRoles.ORG_OWNER)
 			return filter(
 				mappedLeases,
@@ -163,6 +179,7 @@ export class LeaseService implements ILeaseService {
 		const lease = await this.leaseRepository.getLeaseById(id);
 		const mappedLease = await this.mapLeaseDetailRawToDto(lease);
 		await this.cacheManager.set(cacheKey, mappedLease, this.cacheTTL);
+		this.updateOrgCacheKeys(cacheKey);
 		return mappedLease;
 	}
 

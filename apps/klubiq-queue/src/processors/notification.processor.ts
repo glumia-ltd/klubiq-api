@@ -105,6 +105,7 @@ export class NotificationProcessor extends WorkerHost {
 				from_name: 'Klubiq',
 			} as EmailInterfaceParams;
 			const personalization = map(recipients, (recipient) => {
+				personalizationData['first_name'] = recipient.firstName;
 				return {
 					email: recipient.email,
 					data: personalizationData || {},

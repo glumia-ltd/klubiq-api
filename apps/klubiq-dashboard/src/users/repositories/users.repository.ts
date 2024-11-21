@@ -40,4 +40,21 @@ export class UsersRepository extends BaseRepository<OrganizationUser> {
 			.andWhere('organizationUser.organizationUuid = :orgId', { orgId });
 		return await query.getRawMany();
 	}
+
+	async getOrgUsersInRoleIds(roleIds: number[], orgId: string) {
+		const roles = roleIds.join(',');
+		const query = this.createQueryBuilder('organizationUser')
+			.leftJoinAndSelect('organizationUser.profile', 'profile')
+			.select([
+				'organizationUser.firebaseId',
+				'profile.email',
+				'organizationUser.firstName',
+				'organizationUser.lastName',
+				'profile.firstName',
+				'profile.lastName',
+			])
+			.where('organizationUser.organizationUuid = :orgId', { orgId })
+			.andWhere('organizationUser.roleId IN :roles', { roles });
+		return await query.getRawMany();
+	}
 }

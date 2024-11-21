@@ -237,8 +237,7 @@ export const propertyAssignedEmailTemplate = (): EmailTemplate => ({
                           <li>Property Information and Updates</li>
                           <li>Reports and Insights</li>
                         </ul>
-                        <p>To get started, log in to your Klubiq account and navigate to the {{ property_name }} section. 
-                        If you have any questions or require assistance with property management features, feel free to reach out to our support team.</p>
+                        <p>To get started, log in to your Klubiq account and navigate to the {{ property_name }} section.</p>
                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
                           <tbody
                           <tr>
@@ -247,6 +246,109 @@ export const propertyAssignedEmailTemplate = (): EmailTemplate => ({
                                   <tbody>
                                     <tr>
                                       <td> <a href="{{view_property_link}}" target="_blank">Manage Property Now</a> </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td> 
+                                 <p>If you have any questions or need assistance, our support team is here to help. You can reach us at <a href="mailto:{{ support_email }}" style="color: #002147; background: none; border: 0; padding: 0; text-decoration: none;">{{ support_email }}</a> or visit our website for more information.</p>
+                                <p>We value your use of Klubiq for property management and are committed to making your experience as seamless as possible.</p>
+                                </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <p>The Klubiq Team</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            <!-- END MAIN CONTENT AREA -->
+            </table>
+
+            <!-- START FOOTER -->
+            <div class="footer">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td class="content-block">
+                    <span class="apple-link">{{ copyright }}</span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <!-- END FOOTER -->
+
+          <!-- END CENTERED WHITE CONTAINER -->
+          </div>
+        </td>
+        <td>&nbsp;</td>
+      </tr>
+    </table>
+  </body>
+      </html>`,
+	subject: 'A Property Has Been Assigned to You.',
+});
+
+export const leaseCreatedEmailTemplate = (): EmailTemplate => ({
+	html: `  <!DOCTYPE html>
+      <html lang="en">
+         ${emailHtmlHead('New Lease Created for {{property_name}}.')}
+          <body class="">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
+      <tr>
+        <td>&nbsp;</td>
+        <td class="container">
+          <div class="header">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td class="align-center" width="100%">
+                  <a href="https://postdrop.io">
+                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Postdrop">
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="content">
+
+            <!-- START CENTERED WHITE CONTAINER -->
+            <span class="preheader">New Lease Created for {{property_name}}.</span>
+            <table role="presentation" class="main">
+
+              <!-- START MAIN CONTENT AREA -->
+              <tr>
+                <td class="wrapper">
+                  <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td>
+                      <p>Dear {{first_name}},</p>
+                        <p>We’re excited to inform you that a new lease has been successfully created in Klubiq for <strong>{{property_name}}</strong>.</p>
+                        <p><strong>Lease Details:</strong></p>
+                        <ul>
+                          <li><strong>Property Name:</strong> {{ property_name }}</li>
+                          <li><strong>Unit:</strong> {{ unit_number }}</li>
+                          <li><strong>Tenant(s):</strong> {{ tenants }}</li>
+                          <li><strong>Start Date:</strong> {{ start_date }}</li>
+                          <li><strong>End Date:</strong> {{ end_date }}</li>
+                          <li><strong>Payment Frequency:</strong> {{ payment_frequency }}</li>
+                          <li><strong>Rent Amount:</strong> {{ rent_amount }}</li>
+                        </ul>
+                        <p><strong>What’s Next?</strong></p>
+                        <ol type="1">
+                          <li>Payment Schedule: The first payment is scheduled for {{first_payment_date}}. You can view the payment breakdown and history in the lease section.</li>
+                          <li>Lease Management: As the lease progresses, you can manage updates, and communication directly through the Klubiq platform.</li>
+                        </ol>
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
+                          <tbody
+                          <tr>
+                              <td align="center">
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                                  <tbody>
+                                    <tr>
+                                      <td> <a href="{{view_lease_details_link}}" target="_blank">View Lease Details</a> </td>
                                     </tr>
                                   </tbody>
                                 </table>

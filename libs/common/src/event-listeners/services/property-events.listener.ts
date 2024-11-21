@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { PropertyEvent } from '../event-models/property-event';
+import { PropertyEvent } from '../event-models/event-models';
 import { ConfigService } from '@nestjs/config';
 import { CreateNotificationDto } from '@app/notifications/dto/create-notification.dto';
 import { Queue } from 'bullmq';

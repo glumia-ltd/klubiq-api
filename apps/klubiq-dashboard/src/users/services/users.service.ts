@@ -127,4 +127,27 @@ export class UsersService {
 		);
 		return transformedUsers;
 	}
+	async getOrgUsersInRoleIds(
+		roleIds: number[],
+		orgId: string,
+	): Promise<UserDetailsDto[]> {
+		const users = await this.usersRepository.getOrgUsersInRoleIds(
+			roleIds,
+			orgId,
+		);
+		const transformedUsers: UserDetailsDto[] = transform(
+			users,
+			(result, user) => {
+				const userProfile: UserDetailsDto = {
+					userId: user.organizationUser_firebaseId,
+					firstName: user.organizationUser_firstName || user.profile_firstName,
+					lastName: user.organizationUser_lastName || user.profile_lastName,
+					email: user.profile_email,
+				};
+				result.push(userProfile);
+			},
+			[],
+		);
+		return transformedUsers;
+	}
 }
