@@ -67,7 +67,7 @@ import { PermissionsService } from '@app/common/permissions/permissions.service'
 import { PublicService } from '@app/common/services/public.service';
 import {
 	FilterViewModel,
-	PropertyAndTenantViewModel,
+	//PropertyAndTenantViewModel,
 } from '@app/common/dto/responses/shared-view-model.dto';
 
 @ApiTags('public')
@@ -94,7 +94,7 @@ export class PublicController {
 	@Get('property-metadata')
 	@ApiOkResponse({
 		description: 'Get metadata for property view and forms',
-		type: Object,
+		//type: Object,
 	})
 	async getPropertyFormViewData() {
 		const categories =
@@ -143,7 +143,7 @@ export class PublicController {
 	@Get('org/:orgId/properties')
 	@ApiOkResponse({
 		description: 'Get view list of properties and tenants for an organization',
-		type: () => PropertyAndTenantViewModel,
+		//type: () => PropertyAndTenantViewModel,
 	})
 	async getOrganizationPropertiesAndTenantsViewList(
 		@Param('orgId') orgId: string,
