@@ -14,19 +14,15 @@ import {
 } from 'class-validator';
 
 export class CreateLeaseDto {
-	@AutoMap()
 	@IsString()
 	name: string;
 
-	@AutoMap()
 	@IsDateString()
 	startDate: string;
 
-	@AutoMap()
 	@IsDateString()
 	endDate?: string;
 
-	@AutoMap()
 	@IsArray()
 	@IsOptional()
 	newTenants?: CreateTenantDto[];
@@ -35,37 +31,38 @@ export class CreateLeaseDto {
 	@IsOptional()
 	tenantsIds?: number[];
 
-	@AutoMap()
 	@IsNumber()
 	unitId: number;
 
-	@AutoMap()
 	@IsNumber()
 	rentDueDay: number;
 
-	@AutoMap()
 	@IsNumber()
 	rentAmount: number;
 
-	@AutoMap()
 	@IsOptional()
 	@IsNumber()
 	securityDeposit?: number;
 
-	@AutoMap()
 	@IsOptional()
 	isDraft?: boolean;
 
-	@AutoMap()
 	@IsString()
 	@IsEnum(PaymentFrequency)
 	paymentFrequency: PaymentFrequency;
 
-	@AutoMap()
 	@IsString()
 	@IsEnum(LeaseStatus)
 	@IsOptional()
 	status?: LeaseStatus;
+
+	@IsString()
+	propertyName: string;
+
+	firstPaymentDate?: string;
+
+	@IsString()
+	unitNumber: string;
 }
 
 export class LeaseTenantsDto {

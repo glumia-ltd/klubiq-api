@@ -21,8 +21,9 @@ export class LeaseEvent extends PropertyEvent {
 	endDate?: string;
 	leaseId?: string;
 	paymentFrequency?: string;
-	rent?: number;
+	rent?: number | string;
 	unitNumber?: string;
 	leaseName?: string;
 	firstPaymentDate?: string;
+	propertyName?: string;
 }
