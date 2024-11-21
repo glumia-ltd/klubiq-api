@@ -97,7 +97,8 @@ export class LeaseRepository extends BaseRepository<Lease> {
 					organizationUuid,
 					...leaseData,
 				});
-				await transactionalEntityManager.save(lease);
+				const savedLease = await transactionalEntityManager.save(lease);
+				return savedLease;
 			},
 		);
 	}

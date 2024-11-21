@@ -38,7 +38,7 @@ import {
 } from '../dto/responses/property-details.dto';
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PropertyEvent } from '../../../../../libs/common/src/event-listeners/event-models/property-event';
+import { PropertyEvent } from '../../../../../libs/common/src/event-listeners/event-models/event-models';
 import { CommonConfigService } from '@app/common/config/common-config';
 import { PropertyAddress } from '@app/common';
 import { DateTime } from 'luxon';

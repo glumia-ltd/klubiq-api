@@ -1,4 +1,4 @@
-import { PropertyEvent } from './property-event';
+import { PropertyEvent } from './event-models';
 
 export enum EVENTS {
 	PROPERTY_CREATED = 'property.created',
@@ -6,6 +6,7 @@ export enum EVENTS {
 	PROPERTY_DELETED = 'property.deleted',
 	PROPERTY_ARCHIVED = 'property.archived',
 	PROPERTY_ASSIGNED = 'property.assigned',
+	LEASE_CREATED = 'lease.created',
 }
 export type EventTemplate = {
 	subject: string;
@@ -40,6 +41,11 @@ export const EVENT_TEMPLATE = (
 			subject: 'Property Assigned',
 			message: `A property has been assigned to you by ${payload.propertyManagerName} in your organization.`,
 			type: 'property-assigned',
+		},
+		[EVENTS.LEASE_CREATED]: {
+			subject: 'New Lease Created',
+			message: `A new lease has been created by ${payload.propertyManagerName} in your organization.`,
+			type: 'lease-created',
 		},
 	};
 };

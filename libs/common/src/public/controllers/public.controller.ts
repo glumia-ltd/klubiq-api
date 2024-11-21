@@ -65,6 +65,10 @@ import {
 } from '@app/auth/decorators/auth.decorator';
 import { PermissionsService } from '@app/common/permissions/permissions.service';
 import { PublicService } from '@app/common/services/public.service';
+import {
+	FilterViewModel,
+	PropertyAndTenantViewModel,
+} from '@app/common/dto/responses/shared-view-model.dto';
 
 @ApiTags('public')
 @ApiBearerAuth()
@@ -139,7 +143,7 @@ export class PublicController {
 	@Get('org/:orgId/properties')
 	@ApiOkResponse({
 		description: 'Get view list of properties and tenants for an organization',
-		//type: () => ({ properties: [], tenants: [] }),
+		type: () => PropertyAndTenantViewModel,
 	})
 	async getOrganizationPropertiesAndTenantsViewList(
 		@Param('orgId') orgId: string,
@@ -155,7 +159,7 @@ export class PublicController {
 	@Get('lease-metadata')
 	@ApiOkResponse({
 		description: 'Get metadata for lease view and forms',
-		type: () => [],
+		type: () => [FilterViewModel],
 	})
 	async getLeaseFormViewData() {
 		const propertyList =

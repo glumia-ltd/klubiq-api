@@ -4,6 +4,7 @@ import {
 	verifyEmailTemplate,
 } from '../email-templates/transaction-emails.template';
 import {
+	leaseCreatedEmailTemplate,
 	propertyAssignedEmailTemplate,
 	propertyCreatedEmailTemplate,
 	propertyDeletedEmailTemplate,
@@ -19,6 +20,7 @@ export enum EmailTypes {
 	PROPERTY_CREATED = 'property-created',
 	PROPERTY_DELETED = 'property-deleted',
 	PROPERTY_ASSIGNED = 'property-assigned',
+	LEASE_CREATED = 'lease-created',
 }
 export interface EmailInterfaceParams {
 	from?: string;
@@ -70,4 +72,5 @@ export const EmailTemplates: Record<EmailTypes, EmailTemplate> = {
 	[EmailTypes.PROPERTY_CREATED]: propertyCreatedEmailTemplate(),
 	[EmailTypes.PROPERTY_DELETED]: propertyDeletedEmailTemplate(),
 	[EmailTypes.PROPERTY_ASSIGNED]: propertyAssignedEmailTemplate(),
+	[EmailTypes.LEASE_CREATED]: leaseCreatedEmailTemplate(),
 };

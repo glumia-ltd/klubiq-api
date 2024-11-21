@@ -35,6 +35,8 @@ import { plainToInstance } from 'class-transformer';
 import { filter } from 'lodash';
 import { DateTime } from 'luxon';
 import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EVENTS } from '@app/common/event-listeners/event-models/event-constants';
 @Injectable()
 export class LeaseService implements ILeaseService {
 	private readonly logger = new Logger(LeaseService.name);
@@ -48,7 +50,22 @@ export class LeaseService implements ILeaseService {
 		@InjectRepository(LeaseRepository)
 		private readonly leaseRepository: LeaseRepository,
 		private readonly uploadService: FileUploadService,
+		private readonly eventEmitter: EventEmitter2,
 	) {}
+
+	private async updateOrgCacheKeys(cacheKey: string) {
+		const currentUser = this.cls.get('currentUser');
+		const leaseListKeys =
+			(await this.cacheManager.get<string[]>(
+				`${currentUser.organizationId}/getLeaseListKeys`,
+			)) || [];
+		await this.cacheManager.set(
+			`${currentUser.organizationId}/getLeaseListKeys`,
+			[...leaseListKeys, cacheKey],
+			this.cacheTTL,
+		);
+	}
+
 	async getOrganizationLeases(
 		getLeaseDto?: GetLeaseDto,
 	): Promise<PageDto<LeaseDto>> {
@@ -73,6 +90,7 @@ export class LeaseService implements ILeaseService {
 		const mappedEntities = await this.mapLeaseListToDto(entities);
 		const leaseData = new PageDto(mappedEntities, pageMetaDto);
 		await this.cacheManager.set(cacheKey, leaseData, this.cacheTTL);
+		this.updateOrgCacheKeys(cacheKey);
 		return leaseData;
 	}
 
@@ -146,6 +164,7 @@ export class LeaseService implements ILeaseService {
 		const leases = await this.leaseRepository.getUnitLeases(unitId);
 		const mappedLeases = await this.mapLeaseRawToDto(leases);
 		await this.cacheManager.set(cacheKey, mappedLeases, this.cacheTTL);
+		this.updateOrgCacheKeys(cacheKey);
 		if (currentUser.organizationRole !== UserRoles.ORG_OWNER)
 			return filter(
 				mappedLeases,
@@ -163,6 +182,7 @@ export class LeaseService implements ILeaseService {
 		const lease = await this.leaseRepository.getLeaseById(id);
 		const mappedLease = await this.mapLeaseDetailRawToDto(lease);
 		await this.cacheManager.set(cacheKey, mappedLease, this.cacheTTL);
+		this.updateOrgCacheKeys(cacheKey);
 		return mappedLease;
 	}
 
@@ -186,10 +206,19 @@ export class LeaseService implements ILeaseService {
 		if (!currentUser.organizationId) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
-		await this.leaseRepository.createLease(
+		const createdLease = await this.leaseRepository.createLease(
 			leaseDto,
 			currentUser.organizationId,
 			false,
+		);
+		const totalTenants =
+			leaseDto.newTenants.length || 0 + leaseDto.tenantsIds.length || 0;
+		this.emitEvent(
+			EVENTS.LEASE_CREATED,
+			currentUser.organizationId,
+			leaseDto,
+			createdLease.id,
+			totalTenants,
 		);
 	}
 
@@ -311,5 +340,27 @@ export class LeaseService implements ILeaseService {
 			},
 			{ excludeExtraneousValues: true },
 		);
+	}
+
+	private emitEvent(
+		event: string,
+		organizationId: string,
+		data: CreateLeaseDto | UpdateLeaseDto,
+		leaseId?: number,
+		tenantCount: number = 0,
+	) {
+		this.eventEmitter.emitAsync(event, {
+			tenants: tenantCount,
+			startDate: data.startDate,
+			endDate: data.endDate,
+			leaseId: leaseId,
+			paymentFrequency: data.paymentFrequency,
+			rent: data.rentAmount,
+			unitNumber: data.unitNumber,
+			leaseName: data.name,
+			firstPaymentDate: data.firstPaymentDate,
+			propertyName: data.propertyName,
+			organizationId: organizationId,
+		});
 	}
 }
