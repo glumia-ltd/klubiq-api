@@ -21,6 +21,9 @@ export class Notifications {
 	@Column({ nullable: true })
 	actionLink: string;
 
+	@Column({ nullable: true })
+	actionText: string;
+
 	@CreateDateColumn()
 	createdAt: Date;
 
@@ -113,4 +116,8 @@ export class Notifications {
 	})
 	@JoinColumn({ name: 'leaseId' })
 	lease?: Lease;
+
+	@Index('idx_notification_is_announcement')
+	@Column({ type: 'boolean', default: false, nullable: true })
+	isAnnouncement: boolean;
 }

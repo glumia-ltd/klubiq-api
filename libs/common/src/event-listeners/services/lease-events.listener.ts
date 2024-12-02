@@ -50,6 +50,8 @@ export class LeaseEventsListener {
 		leaseEvent: EVENTS,
 		emailTemplate: EmailTypes,
 	) {
+		payload.actionLink = `${this.clientBaseUrl}/leases/${payload.leaseId}`;
+		payload.actionText = 'View Lease';
 		const template = EVENT_TEMPLATE(payload)[leaseEvent];
 		const notificationRecipients =
 			await this.helperService.getNotificationRecipientsByRoles(
@@ -71,7 +73,7 @@ export class LeaseEventsListener {
 			lease_name: payload.leaseName,
 			rent_amount: payload.rent,
 			payment_frequency: payload.paymentFrequency,
-			view_lease_link: `${this.clientBaseUrl}/leases/${payload.leaseId}`,
+			view_lease_link: payload.actionLink,
 			copyright: this.emailCopyrightText,
 			first_payment_date: payload.firstPaymentDate,
 			event_date: payload.eventTimestamp,
@@ -96,7 +98,7 @@ export class LeaseEventsListener {
 					leaseId: payload.leaseId,
 					organizationUuid: payload.organizationId,
 				},
-				actionLink: `${this.clientBaseUrl}/leases/${payload.leaseId}`,
+				actionLink: payload.actionLink,
 				// leaseEvent === EVENTS.PROPERTY_DELETED
 				//     ? null
 				//     : `${this.clientBaseUrl}/properties/${payload.propertyId}`,

@@ -295,6 +295,8 @@ export class LeaseService implements ILeaseService {
 
 	private async mapLeaseDetailRawToDto(lease: any): Promise<LeaseDetailsDto> {
 		const rentDueRecord = RENT_DUE_ON(lease.rent_due_day, lease.start_date);
+		const start = DateTime.fromISO(lease.start_date);
+		const end = DateTime.fromISO(lease.end_date);
 		return plainToInstance(
 			LeaseDetailsDto,
 			{
@@ -317,7 +319,7 @@ export class LeaseService implements ILeaseService {
 				propertyAddress: lease.property_address,
 				propertyType: lease.property_type,
 				isMultiUnitProperty: lease.is_multi_unit_property,
-				daysToLeaseExpires: lease.days_to_lease_expires,
+				daysToLeaseExpires: end.diff(start, 'days').days,
 				nextPaymentDate: lease.next_payment_date,
 				rentDueDay: lease.rent_due_day,
 				rentDueOn: rentDueRecord[lease.payment_frequency],

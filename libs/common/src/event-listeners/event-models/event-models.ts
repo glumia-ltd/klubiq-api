@@ -13,6 +13,8 @@ export class PropertyEvent {
 	assignedToName?: string;
 	assignedToEmail?: string;
 	assignedToId?: string;
+	actionLink?: string;
+	actionText?: string;
 }
 
 export class LeaseEvent extends PropertyEvent {

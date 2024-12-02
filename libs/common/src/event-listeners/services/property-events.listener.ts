@@ -72,6 +72,8 @@ export class PropertyEventsListener {
 		propertyEvent: EVENTS,
 		emailTemplate: EmailTypes,
 	) {
+		payload.actionLink = `${this.clientBaseUrl}/properties/${payload.propertyId}`;
+		payload.actionText = 'View Property';
 		const template = EVENT_TEMPLATE(payload)[propertyEvent];
 		const notificationRecipients =
 			await this.helperService.getNotificationRecipients(
@@ -88,7 +90,7 @@ export class PropertyEventsListener {
 			property_address: payload.propertyAddress,
 			unit_count: payload.totalUnits,
 			support_email: this.supportEmail,
-			view_property_link: `${this.clientBaseUrl}/properties/${payload.propertyId}`,
+			view_property_link: payload.actionLink,
 			copyright: this.emailCopyrightText,
 			event_date: payload.eventTimestamp,
 		};
@@ -109,16 +111,16 @@ export class PropertyEventsListener {
 				title: template.subject,
 				body: template.message,
 				data: {
-					propertyId:
-						propertyEvent === EVENTS.PROPERTY_DELETED
-							? null
-							: payload.propertyId,
-					organizationUuid: payload.organizationId,
+					metadata: {
+						propertyId:
+							propertyEvent === EVENTS.PROPERTY_DELETED
+								? null
+								: payload.propertyId,
+						organizationUuid: payload.organizationId,
+					},
 				},
 				actionLink:
-					propertyEvent === EVENTS.PROPERTY_DELETED
-						? null
-						: `${this.clientBaseUrl}/properties/${payload.propertyId}`,
+					propertyEvent === EVENTS.PROPERTY_DELETED ? null : payload.actionLink,
 			} as NotificationPayloadDto,
 		};
 		await this.notificationQueue.add(

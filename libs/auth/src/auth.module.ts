@@ -19,6 +19,7 @@ import { MailerSendService } from '@app/common/email/email.service';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
 import { RepositoriesModule } from '@app/common/repositories/repositories.module';
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
+import { NotificationsModule } from '@app/notifications/notifications.module';
 interface FirebaseConfig {
 	type: string;
 	project_id: string;
@@ -61,7 +62,12 @@ const firebaseAdminProvider = {
 };
 
 @Module({
-	imports: [HttpModule, SubscriptionModule, RepositoriesModule],
+	imports: [
+		HttpModule,
+		SubscriptionModule,
+		RepositoriesModule,
+		NotificationsModule,
+	],
 	providers: [
 		AdminAuthService,
 		ConfigService,

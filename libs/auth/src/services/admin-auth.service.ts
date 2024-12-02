@@ -35,6 +35,7 @@ import { UserRecord } from 'firebase-admin/auth';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
+import { NotificationsSubscriptionService } from '@app/notifications/services/notifications-subscription.service';
 
 @Injectable()
 export class AdminAuthService extends AuthService {
@@ -56,6 +57,7 @@ export class AdminAuthService extends AuthService {
 		protected readonly organizationSettingsService: OrganizationSettingsService,
 		protected readonly userPreferencesService: UserPreferencesService,
 		protected readonly organizationSubscriptionService: OrganizationSubscriptionService,
+		protected readonly notificationSubService: NotificationsSubscriptionService,
 	) {
 		super(
 			firebaseAdminApp,
@@ -69,6 +71,7 @@ export class AdminAuthService extends AuthService {
 			organizationSettingsService,
 			userPreferencesService,
 			organizationSubscriptionService,
+			notificationSubService,
 		);
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
