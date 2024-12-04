@@ -47,6 +47,7 @@ import { OrganizationSettings } from '@app/common/database/entities/organization
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
 import { OrganizationSubscriptionDto } from '@app/common/dto/responses/organization-subscription.dto';
+import { NotificationsSubscriptionService } from '@app/notifications/services/notifications-subscription.service';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
@@ -68,6 +69,7 @@ export abstract class AuthService {
 		protected readonly organizationSettingsService: OrganizationSettingsService,
 		protected readonly userPreferencesService: UserPreferencesService,
 		protected readonly organizationSubscriptionService: OrganizationSubscriptionService,
+		protected readonly notificationSubService: NotificationsSubscriptionService,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -477,12 +479,17 @@ export abstract class AuthService {
 			await this.organizationSubscriptionService.getSubscription(
 				currentUser.organizationId,
 			);
+		const notificationsSubscription =
+			await this.notificationSubService.getAUserSubscriptionDetails(
+				currentUser.uid,
+			);
 		const userData = await this.mapLandlordUserToDto(
 			userDetails,
 			currentUser,
 			userOrgSettings,
 			orgSubscription,
 		);
+		userData.notificationSubscription = notificationsSubscription;
 		await this.cacheManager.set(cacheKey, userData, 3600);
 		return userData;
 	}

@@ -32,12 +32,12 @@ export class NotificationsSubscriptionService {
 		let userSubscription =
 			await this.notificationsSubscriptionRepository.findOne({
 				where: {
-					userId: subscriptionDto.userId,
+					userId: this.currentUser.uid,
 				},
 			});
-		if (!userSubscription) {
+		if (userSubscription === null) {
 			userSubscription = this.notificationsSubscriptionRepository.create({
-				userId: subscriptionDto.userId,
+				userId: this.currentUser.uid,
 				organizationUuid: subscriptionDto.organizationUuid,
 				subscription: subscriptionDto.subscription,
 			});
@@ -52,14 +52,25 @@ export class NotificationsSubscriptionService {
 		return result;
 	}
 
-	async getUserSubscriptionDetails(userEmail: string[]) {
+	async getUserSubscriptionDetails(userIds: string[]) {
 		const usersSubscriptions = await this.notificationsSubscriptionRepository
 			.createQueryBuilder('notificationSubscription')
 			.select('notificationSubscription.subscription')
-			.where('notificationSubscription.userEmail IN (:...userEmail)', {
-				userEmail,
+			.where('notificationSubscription.userId IN (:...userIds)', {
+				userIds,
 			})
 			.getMany();
+		return usersSubscriptions;
+	}
+
+	async getAUserSubscriptionDetails(userId: string) {
+		const usersSubscriptions = await this.notificationsSubscriptionRepository
+			.createQueryBuilder('notificationSubscription')
+			.select('notificationSubscription.subscription')
+			.where('notificationSubscription.userId = :userId', {
+				userId,
+			})
+			.getOne();
 		return usersSubscriptions;
 	}
 

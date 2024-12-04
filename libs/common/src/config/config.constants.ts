@@ -338,6 +338,13 @@ export enum NotificationPriority {
 	HIGH = Priority.HIGH,
 	URGENT = Priority.URGENT,
 }
+export enum NotificationPeriod {
+	Today = 'Today',
+	Yesterday = 'Yesterday',
+	Last7Days = 'Last 7 days',
+	Last30Days = 'Last 30 days',
+	Older = 'Older',
+}
 
 export const ROLE_ALIAS = (
 	customRoleName?: string,

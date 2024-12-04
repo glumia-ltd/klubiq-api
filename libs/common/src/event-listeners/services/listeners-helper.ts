@@ -99,13 +99,18 @@ export class HelperService {
 				this.orgAdminRoleId,
 				organizationId,
 			);
+			const isManagerAdmin = admin_recipients.find(
+				(user) => user.userId === propertyManagerId,
+			);
 			const manager_recipient: UserDetailsDto = {
 				userId: propertyManagerId,
 				email: propertyManagerEmail,
-				firstName: names[0],
-				lastName: names.length > 1 && names[1],
+				firstName: names && names[0],
+				lastName: names && names.length > 1 && names[1],
 			};
-			users = [...users, manager_recipient, ...admin_recipients];
+			users = isManagerAdmin
+				? [...admin_recipients]
+				: [manager_recipient, ...admin_recipients];
 		} else {
 			const admin_recipients = await this.userService.getOrgUsersByRoleId(
 				this.orgAdminRoleId,
@@ -118,8 +123,8 @@ export class HelperService {
 			const recipients: UserDetailsDto = {
 				userId: assignedToId,
 				email: assignedToEmail,
-				firstName: names[0],
-				lastName: names.length > 1 && names[1],
+				firstName: names[0] || '',
+				lastName: (names.length > 1 && names[1]) || '',
 			};
 			users = [...users, recipients];
 		}
@@ -159,13 +164,18 @@ export class HelperService {
 				roles,
 				payload.organizationId,
 			);
+			const isManagerAdmin = admin_recipients.find(
+				(user) => user.userId === payload.propertyManagerId,
+			);
 			const manager_recipient: UserDetailsDto = {
 				userId: payload.propertyManagerId,
 				email: payload.propertyManagerEmail,
-				firstName: names[0],
-				lastName: names.length > 1 && names[1],
+				firstName: (names && names[0]) || '',
+				lastName: (names && names.length > 1 && names[1]) || '',
 			};
-			users = [...users, manager_recipient, ...admin_recipients];
+			users = isManagerAdmin
+				? [...admin_recipients]
+				: [manager_recipient, ...admin_recipients];
 		} else {
 			const admin_recipients = await this.userService.getOrgUsersInRoleIds(
 				roles,
@@ -196,6 +206,8 @@ export class HelperService {
 					title: template.subject,
 					message: template.message,
 					type: template.type,
+					actionLink: payload.actionLink,
+					actionText: payload.actionText,
 					propertyId:
 						eventType === EVENTS.PROPERTY_DELETED ? null : payload.propertyId,
 					organizationUuid: payload.organizationId,

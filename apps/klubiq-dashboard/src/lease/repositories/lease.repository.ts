@@ -152,7 +152,6 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				'type.name AS property_type',
 				'unit.unitNumber AS unit_number',
 				'property.isMultiUnit AS is_multi_unit_property',
-				`EXTRACT(DAY FROM AGE(lease.endDate, CURRENT_DATE)) AS days_to_lease_expires`,
 				"TO_CHAR(public.calculate_future_next_due_date(lease.startDate, lease.lastPaymentDate, lease.paymentFrequency, lease.customPaymentFrequency, lease.rentDueDay)::DATE, 'YYYY-MM-DD') AS next_payment_date",
 				'tenant.firstName AS tenant_first_name',
 				'tenant.lastName AS tenant_last_name',

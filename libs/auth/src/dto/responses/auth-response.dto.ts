@@ -238,4 +238,9 @@ export class LandlordUserDetailsResponseDto {
 		isFreeTrial: boolean;
 		planId: number;
 	};
+
+	@Expose()
+	@IsJSON()
+	@IsOptional()
+	notificationSubscription?: Record<string, any>;
 }

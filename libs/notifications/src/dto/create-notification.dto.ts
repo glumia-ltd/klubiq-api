@@ -34,4 +34,7 @@ export class CreateNotificationDto {
 
 	@IsString()
 	actionLink?: string;
+
+	@IsString()
+	actionText?: string;
 }

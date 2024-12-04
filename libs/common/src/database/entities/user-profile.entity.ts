@@ -17,6 +17,7 @@ import { AutoMap } from '@automapper/classes';
 import { Property } from './property.entity';
 import { TenantUser } from './tenant.entity';
 import { UserPreferences } from './user-preferences.entity';
+import { NotificationSubscription } from './notification-subscription.entity';
 
 @Entity({ schema: 'kdo' })
 export class UserProfile {
@@ -150,4 +151,14 @@ export class UserProfile {
 		cascade: ['insert', 'remove'],
 	})
 	preferences: UserPreferences;
+
+	@OneToOne(
+		() => NotificationSubscription,
+		(subscription) => subscription.user,
+		{
+			eager: true,
+			cascade: ['insert', 'remove'],
+		},
+	)
+	notificationSubscription?: NotificationSubscription;
 }

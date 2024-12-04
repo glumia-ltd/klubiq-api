@@ -1,5 +1,14 @@
-import { Expose } from 'class-transformer';
-import { IsEmpty, IsNotEmpty, IsString } from 'class-validator';
+import {
+	NotificationPeriod,
+	NotificationPriority,
+} from '@app/common/config/config.constants';
+import { Expose, Type } from 'class-transformer';
+import {
+	IsNotEmpty,
+	IsOptional,
+	IsString,
+	ValidateNested,
+} from 'class-validator';
 
 export type PushSubscription = {
 	endpoint: string;
@@ -11,35 +20,44 @@ export type PushSubscription = {
 };
 export class NotificationSubscriptionDto {
 	@Expose()
-	@IsString()
-	userId: string; // User Email
-
-	@Expose()
 	@IsNotEmpty()
 	subscription: Record<string, PushSubscription>; // Push subscription object
 
 	@Expose()
-	@IsEmpty()
 	@IsString()
 	organizationUuid?: string; // Organization UUID
 }
 
 export class NotificationPayloadDto {
 	@Expose()
+	@IsNotEmpty()
+	@IsString()
 	title: string;
+
 	@Expose()
+	@IsNotEmpty()
+	@IsString()
 	body: string;
+
 	@Expose()
+	@IsOptional()
 	data?: Record<string, any>;
+
 	@Expose()
+	@IsOptional()
+	@IsString()
 	actionLink?: string;
 }
 
 export class SendNotificationDto {
 	@Expose()
+	@ValidateNested()
+	@Type(() => NotificationPayloadDto)
 	payload: NotificationPayloadDto;
 
 	@Expose()
+	@IsNotEmpty()
+	@IsString({ each: true })
 	userIds: string[];
 }
 
@@ -81,4 +99,33 @@ export class SNSNotificationDto {
 
 	@Expose()
 	notificationIds?: string[];
+}
+export class NotificationResponseDto {
+	notifications: groupedNotification[];
+}
+export class NotificationsDto {
+	actionLink?: string;
+	actionText?: string;
+	createdAt: Date;
+	data?: Record<string, any>;
+	expiresAt?: Date;
+	id: string;
+	isRead: boolean;
+	isAnnouncement: boolean;
+	leaseId?: number;
+	message: string;
+	organizationUuid?: string;
+	propertyId?: string;
+	priority?: NotificationPriority;
+	readAt?: Date;
+	title: string;
+	type: string;
+	unitId?: number;
+	userId?: string;
+	time?: string;
+}
+
+export class groupedNotification {
+	period: NotificationPeriod;
+	notifications: NotificationsDto[];
 }
