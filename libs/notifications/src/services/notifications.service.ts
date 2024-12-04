@@ -13,7 +13,6 @@ import { NotificationsSubscriptionService } from './notifications-subscription.s
 import * as webpush from 'web-push';
 import {
 	groupedNotification,
-	NotificationResponseDto,
 	NotificationsDto,
 	SendNotificationDto,
 } from '../dto/notification-subscription.dto';
@@ -96,11 +95,9 @@ export class NotificationsService {
 		const notifications = await query
 			.orderBy('notifications.createdAt', 'DESC')
 			.getMany();
-		const data: NotificationResponseDto = {
-			total: notifications.length,
-			notifications: this.groupNotificationsByDate(notifications),
-		};
-		return data;
+		return notifications;
+		// const data = this.groupNotificationsByDate(notifications)
+		// return data;
 	}
 
 	private groupNotificationsByDate(

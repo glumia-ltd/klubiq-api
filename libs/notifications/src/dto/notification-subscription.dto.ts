@@ -101,12 +101,11 @@ export class SNSNotificationDto {
 	notificationIds?: string[];
 }
 export class NotificationResponseDto {
-	total: number;
 	notifications: groupedNotification[];
 }
 export class NotificationsDto {
 	actionLink?: string;
-	actiontText?: string;
+	actionText?: string;
 	createdAt: Date;
 	data?: Record<string, any>;
 	expiresAt?: Date;

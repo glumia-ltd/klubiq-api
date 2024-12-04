@@ -74,7 +74,7 @@ export class NotificationsController {
 	@ApiExcludeEndpoint()
 	@ApiOkResponse({ description: 'Delete notifications' })
 	@ApiBody({ description: 'Delete notifications', type: [String] })
-	@Delete()
+	@Delete('delete')
 	async deleteNotifications(@Body() notificationIds: string[]) {
 		return await this.notificationsService.deleteNotifications(notificationIds);
 	}
