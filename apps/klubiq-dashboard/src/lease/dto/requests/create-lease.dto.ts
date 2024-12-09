@@ -21,6 +21,7 @@ export class CreateLeaseDto {
 	startDate: string;
 
 	@IsDateString()
+	@IsOptional()
 	endDate?: string;
 
 	@IsArray()
@@ -59,6 +60,8 @@ export class CreateLeaseDto {
 	@IsString()
 	propertyName: string;
 
+	@IsString()
+	@IsOptional()
 	firstPaymentDate?: string;
 
 	@IsString()
