@@ -56,7 +56,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 					.createQueryBuilder(Lease, 'lease')
 					.where('lease."unitId" = :unitId', { unitId })
 					.andWhere(
-						':startDate BETWEEN lease."startDate" AND lease."endDate"',
+						':newLeaseStartDate BETWEEN lease."startDate" AND lease."endDate"',
 						{ newLeaseStartDate },
 					)
 					.andWhere('lease.status IN (:...statuses)', {
