@@ -41,6 +41,7 @@
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/mapped-types": "^2.0.5",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/schedule": "^4.1.1",
     "@nestjs/swagger": "^7.3.0",
     "@nestjs/terminus": "^10.2.3",
     "@nestjs/typeorm": "^10.0.2",
@@ -126,7 +127,8 @@
     "moduleNameMapper": {
       "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1",
       "^@app/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
-      "^@app/notifications(|/.*)$": "<rootDir>/libs/notifications/src/$1"
+      "^@app/notifications(|/.*)$": "<rootDir>/libs/notifications/src/$1",
+      "^@app/schedulers(|/.*)$": "<rootDir>/libs/schedulers/src/$1"
     }
   }
 }

@@ -95,4 +95,8 @@ export class FileUploadService {
 	//   };
 	//   return this.s3.headObject(params).promise();
 	// }
+
+	async deleteFilesFromCloudinary(files: string[]) {
+		await cloudinary.api.delete_resources(files);
+	}
 }

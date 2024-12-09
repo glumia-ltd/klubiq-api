@@ -31,6 +31,7 @@ import { NotificationsModule } from '@app/notifications/notifications.module';
 import { DevtoolsModule } from '@nestjs/devtools-integration';
 import { EventListenerModule } from '@app/common/event-listeners/event-listener.module';
 import { KdoDBSchemaModule } from '@app/common/database/kdo-db-schema.module';
+import { SchedulersModule } from '@app/schedulers/schedulers.module';
 
 @Module({
 	imports: [
@@ -60,6 +61,7 @@ import { KdoDBSchemaModule } from '@app/common/database/kdo-db-schema.module';
 		TransactionsModule,
 		NotificationsModule,
 		EventListenerModule,
+		SchedulersModule,
 	],
 	providers: [
 		ApikeyGuard,

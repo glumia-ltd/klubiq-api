@@ -36,6 +36,12 @@
       ],
       "@app/notifications/*": [
         "libs/notifications/src/*"
+      ],
+      "@app/schedulers": [
+        "libs/schedulers/src"
+      ],
+      "@app/schedulers/*": [
+        "libs/schedulers/src/*"
       ]
     },
     "resolveJsonModule": true

@@ -13,6 +13,7 @@ import { PropertyType } from './entities/property-type.entity';
 import { TenantUser } from './entities/tenant.entity';
 import { UserInvitation } from './entities/user-invitation.entity';
 import { UserPreferences } from './entities/user-preferences.entity';
+import { DeletedFilesRecords } from './entities/deleted-files.entity';
 
 /// WE HAVE 2 SCHEMA TYPES. => KDO and POO
 /// KDO = Klubiq Data Object
@@ -32,6 +33,7 @@ import { UserPreferences } from './entities/user-preferences.entity';
 			UserPreferences,
 			OrganizationSettings,
 			OrganizationTenants,
+			DeletedFilesRecords,
 		]),
 	],
 })

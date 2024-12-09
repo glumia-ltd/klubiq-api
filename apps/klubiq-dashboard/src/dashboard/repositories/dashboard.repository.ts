@@ -22,6 +22,8 @@ export class DashboardRepository {
 	private readonly salesGraphColor = '#002147';
 	private readonly rentalGraphColor = '#6699CC';
 
+	/*************  ✨ Codeium Command ⭐  *************/
+	/******  2bc9823a-3854-448e-b017-2aa541e44cc0  *******/
 	constructor(
 		private manager: EntityManager,
 		private readonly util: Util,
