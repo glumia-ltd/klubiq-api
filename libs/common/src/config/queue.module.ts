@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-//import { PropertyEventsListener } from '../event-listeners/property-events.listener';
 
 @Module({
 	imports: [

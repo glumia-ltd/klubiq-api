@@ -206,13 +206,19 @@ export class LeaseService implements ILeaseService {
 		if (!currentUser.organizationId) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
+		leaseDto.status =
+			DateTime.fromISO(leaseDto.startDate).startOf('day').toJSDate() >
+			DateTime.utc().startOf('day').toJSDate()
+				? LeaseStatus.IN_ACTIVE
+				: LeaseStatus.ACTIVE;
+
 		const createdLease = await this.leaseRepository.createLease(
 			leaseDto,
 			currentUser.organizationId,
 			false,
 		);
 		const totalTenants =
-			leaseDto.newTenants.length || 0 + leaseDto.tenantsIds.length || 0;
+			leaseDto.newTenants?.length || 0 + leaseDto.tenantsIds?.length || 0;
 		this.emitEvent(
 			EVENTS.LEASE_CREATED,
 			currentUser.organizationId,
