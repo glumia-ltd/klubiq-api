@@ -1,3 +1,4 @@
+import { PropertyImage } from '@app/common/database/entities/property-image.entity';
 import { Injectable } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 
@@ -5,14 +6,17 @@ import { EntityManager } from 'typeorm';
 export class TasksService {
 	constructor(private readonly entityManager: EntityManager) {}
 
+	getDeletedFilesQuery() {
+		return this.entityManager
+			.createQueryBuilder(PropertyImage, 'pi')
+			.where('pi.isArchived = :isArchived', { isArchived: true })
+			.andWhere('pi.fileSize = :fileSize', { fileSize: 0 });
+	}
 	async getDeletedFilesCount() {
-		return await this.entityManager
-			.createQueryBuilder('deleted_files_records', 'dfr')
-			.getCount();
+		return await this.getDeletedFilesQuery().getCount();
 	}
 	async getDeletedFilesRecord(page: number) {
-		const query = await this.entityManager
-			.createQueryBuilder('deleted_files_records', 'dfr')
+		const query = await this.getDeletedFilesQuery()
 			.select('dfr.externalId')
 			.skip(page - 1)
 			.take(100)
@@ -21,11 +25,7 @@ export class TasksService {
 	}
 
 	async deleteRecords() {
-		const query = await this.entityManager
-			.createQueryBuilder('deleted_files_records', 'dfr')
-			.delete()
-			//.where('dfr.externalId IN (:...externalIds)', { externalIds })
-			.execute();
+		const query = await this.getDeletedFilesQuery().delete().execute();
 		return query;
 	}
 }
