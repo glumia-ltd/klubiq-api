@@ -55,6 +55,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/klubiq-queue/tsconfig.app.json"
       }
+    },
+    "schedulers": {
+      "type": "library",
+      "root": "libs/schedulers",
+      "entryFile": "index",
+      "sourceRoot": "libs/schedulers/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/schedulers/tsconfig.lib.json"
+      }
     }
   },
   "monorepo": true,

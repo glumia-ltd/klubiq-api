@@ -57,7 +57,7 @@ export class Unit {
 	status: UnitStatus;
 
 	@ManyToOne(() => Property, (property) => property.units, {
-		onDelete: 'CASCADE',
+		onDelete: 'SET NULL',
 		onUpdate: 'CASCADE',
 	})
 	@JoinColumn({ name: 'propertyUuid' })
@@ -73,7 +73,7 @@ export class Unit {
 	@OneToMany(() => Lease, (lease) => lease.unit)
 	leases?: Lease[];
 
-	@OneToMany(() => PropertyImage, (image) => image.unit, { cascade: true })
+	@OneToMany(() => PropertyImage, (image) => image.unit)
 	images?: PropertyImage[];
 
 	@Column({ type: 'simple-array', nullable: true })
