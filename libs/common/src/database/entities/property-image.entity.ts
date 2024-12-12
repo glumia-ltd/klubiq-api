@@ -34,13 +34,13 @@ export class PropertyImage extends AbstractEntity {
 	isMain?: boolean;
 
 	@ManyToOne(() => Property, (property) => property.images, {
-		onDelete: 'CASCADE',
+		onDelete: 'SET NULL',
 	})
 	@Index('IDX_PROPERTY_IMAGES_PROPERTY_ID')
 	property?: Property;
 
 	@ManyToOne(() => Unit, (unit) => unit.images, {
-		onDelete: 'CASCADE',
+		onDelete: 'SET NULL',
 		nullable: true,
 	})
 	@JoinColumn({ name: 'unitId' })
@@ -51,10 +51,13 @@ export class PropertyImage extends AbstractEntity {
 		() => Organization,
 		(organization) => organization.propertyImages,
 		{
-			onDelete: 'CASCADE',
+			onDelete: 'SET NULL',
 		},
 	)
 	@JoinColumn({ name: 'organizationUuid' })
 	@Index('IDX_ORGANIZATION_IMAGES_ORGANIZATION_ID')
 	organization: Organization;
+
+	@Column({ default: false })
+	isArchived?: boolean;
 }

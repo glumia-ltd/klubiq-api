@@ -14,8 +14,8 @@ export const propertyCreatedEmailTemplate = (): EmailTemplate => ({
             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
               <tr>
                 <td class="align-center" width="100%">
-                  <a href="https://postdrop.io">
-                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Postdrop">
+                  <a href="https://dev.klubiq.com">
+                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Klubiq">
                   </a>
                 </td>
               </tr>
@@ -112,8 +112,8 @@ export const propertyDeletedEmailTemplate = (): EmailTemplate => ({
             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
               <tr>
                 <td class="align-center" width="100%">
-                  <a href="https://postdrop.io">
-                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Postdrop">
+                  <a href="https://dev.klubiq.com">
+                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Klubiq">
                   </a>
                 </td>
               </tr>
@@ -201,8 +201,8 @@ export const propertyAssignedEmailTemplate = (): EmailTemplate => ({
             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
               <tr>
                 <td class="align-center" width="100%">
-                  <a href="https://postdrop.io">
-                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Postdrop">
+                  <a href="https://dev.klubiq.com">
+                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Klubiq">
                   </a>
                 </td>
               </tr>
@@ -305,8 +305,8 @@ export const leaseCreatedEmailTemplate = (): EmailTemplate => ({
             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
               <tr>
                 <td class="align-center" width="100%">
-                  <a href="https://postdrop.io">
-                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Postdrop">
+                  <a href="https://dev.klubiq.com">
+                  <img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" height="20" alt="Klubiq">
                   </a>
                 </td>
               </tr>

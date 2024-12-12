@@ -51,9 +51,6 @@ export class Property {
 	@Column({ default: false })
 	isMultiUnit?: boolean;
 
-	// @Column({ type: 'json', nullable: true })
-	// area?: { value: number; unit: string };
-
 	@DeleteDateColumn({ select: false })
 	deletedDate?: Date;
 
@@ -123,7 +120,7 @@ export class Property {
 
 	@OneToMany(() => Unit, (unit) => unit.property, {
 		cascade: true,
-		onDelete: 'CASCADE',
+		// onDelete: 'CASCADE',
 		onUpdate: 'CASCADE',
 		lazy: true,
 	})
