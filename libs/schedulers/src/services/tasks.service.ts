@@ -6,26 +6,32 @@ import { EntityManager } from 'typeorm';
 export class TasksService {
 	constructor(private readonly entityManager: EntityManager) {}
 
-	getDeletedFilesQuery() {
-		return this.entityManager
+	async getDeletedFilesCount() {
+		return await this.entityManager
 			.createQueryBuilder(PropertyImage, 'pi')
 			.where('pi.isArchived = :isArchived', { isArchived: true })
-			.andWhere('pi.fileSize = :fileSize', { fileSize: 0 });
-	}
-	async getDeletedFilesCount() {
-		return await this.getDeletedFilesQuery().getCount();
+			.andWhere('pi.fileSize = :fileSize', { fileSize: 0 })
+			.getCount();
 	}
 	async getDeletedFilesRecord(page: number) {
-		const query = await this.getDeletedFilesQuery()
-			.select('dfr.externalId')
+		const result = await this.entityManager
+			.createQueryBuilder(PropertyImage, 'pi')
+			.select('pi.externalId')
+			.where('pi.isArchived = :isArchived', { isArchived: true })
+			.andWhere('pi.fileSize = :fileSize', { fileSize: 0 })
 			.skip(page - 1)
 			.take(100)
 			.getRawMany();
-		return query;
+		return result;
 	}
 
 	async deleteRecords() {
-		const query = await this.getDeletedFilesQuery().delete().execute();
-		return query;
+		await this.entityManager
+			.createQueryBuilder()
+			.delete()
+			.from(PropertyImage)
+			.where('isArchived = :isArchived', { isArchived: true })
+			.andWhere('fileSize = :fileSize', { fileSize: 0 })
+			.execute();
 	}
 }
