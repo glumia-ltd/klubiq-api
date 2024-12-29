@@ -1,3 +1,4 @@
+import { LeasePaymentTotalView } from '@app/common/database/entities/lease-payement.view';
 import { PropertyImage } from '@app/common/database/entities/property-image.entity';
 import { Injectable } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
@@ -33,5 +34,20 @@ export class TasksService {
 			.where('isArchived = :isArchived', { isArchived: true })
 			.andWhere('fileSize = :fileSize', { fileSize: 0 })
 			.execute();
+	}
+	async refreshLeasePaymentTotalView() {
+		await this.entityManager.query(
+			'REFRESH MATERIALIZED VIEW poo.lease_payment_totals WITH DATA',
+		);
+	}
+	async getLeasePaymentTotalView() {
+		// const result = await this.entityManager.query(
+		// 	`SELECT * FROM lease_payment_total_view`,
+		// );
+		const result = await this.entityManager
+			.createQueryBuilder(LeasePaymentTotalView, 'lptv')
+			.select(['lptv.leaseId', 'lptv.total_paid'])
+			.getMany();
+		return result;
 	}
 }
