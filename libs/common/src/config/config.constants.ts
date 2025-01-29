@@ -103,7 +103,7 @@ export enum PaymentFrequency {
 	BI_WEEKLY = 'Bi-Weekly',
 	MONTHLY = 'Monthly',
 	ANNUALLY = 'Annually',
-	ONE_TIME = 'One Time',
+	ONE_TIME = 'One-Time',
 	BI_MONTHLY = 'Bi-Monthly',
 	QUARTERLY = 'Quarterly',
 	CUSTOM = 'Custom',
