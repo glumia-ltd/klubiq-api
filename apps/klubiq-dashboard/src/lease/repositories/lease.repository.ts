@@ -388,7 +388,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 					FROM poo.lease l
 					WHERE
 						l."endDate" >= CURRENT_DATE
-						AND COALESCE(l."nextDueDate", public.calculate_next_due_date(l."startDate", l."lastPaymentDate", l."paymentFrequency", l."customPaymentFrequency", l."rentDueDay")) <= CURRENT_DATE
+						AND COALESCE(l."nextDueDate", public.calculate_next_rent_due_date(l."startDate",l."endDate", l."rentDueDay", l."paymentFrequency"::TEXT, l."customPaymentFrequency", l."lastPaymentDate")) <= CURRENT_DATE
 						AND l."isArchived" = false
 						AND  l."organizationUuid" = $1
 			);`;
