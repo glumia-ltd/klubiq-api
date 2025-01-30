@@ -206,6 +206,7 @@ export class LeaseService implements ILeaseService {
 		if (!currentUser.organizationId) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
+
 		leaseDto.status =
 			DateTime.fromISO(leaseDto.startDate).startOf('day').toJSDate() >
 			DateTime.utc().startOf('day').toJSDate()

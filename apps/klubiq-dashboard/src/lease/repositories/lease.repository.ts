@@ -152,7 +152,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				'type.name AS property_type',
 				'unit.unitNumber AS unit_number',
 				'property.isMultiUnit AS is_multi_unit_property',
-				"TO_CHAR(public.calculate_future_next_due_date(lease.startDate, lease.lastPaymentDate, lease.paymentFrequency, lease.customPaymentFrequency, lease.rentDueDay)::DATE, 'YYYY-MM-DD') AS next_payment_date",
+				"TO_CHAR(public.calculate_next_rent_due_date(lease.startDate, lease.endDate, lease.rentDueDay, lease.paymentFrequency, lease.customPaymentFrequency, lease.lastPaymentDate)::DATE, 'YYYY-MM-DD')AS next_payment_date",
 				'tenant.firstName AS tenant_first_name',
 				'tenant.lastName AS tenant_last_name',
 			])
@@ -388,7 +388,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 					FROM poo.lease l
 					WHERE
 						l."endDate" >= CURRENT_DATE
-						AND COALESCE(l."nextDueDate", public.calculate_next_rent_due_date(l."startDate",l."endDate", l."rentDueDay", l."paymentFrequency"::TEXT, l."customPaymentFrequency", l."lastPaymentDate")) <= CURRENT_DATE
+						AND COALESCE(l."nextDueDate", public.calculate_next_rent_due_date(l."startDate",l."endDate", l."rentDueDay", l."paymentFrequency", l."customPaymentFrequency", l."lastPaymentDate")) <= CURRENT_DATE
 						AND l."isArchived" = false
 						AND  l."organizationUuid" = $1
 			);`;
@@ -406,3 +406,4 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		return overdueRents;
 	}
 }
+//(public.calculate_future_next_due_date(lease.startDate, lease.lastPaymentDate, lease.paymentFrequency, lease.customPaymentFrequency, lease.rentDueDay)::DATE, 'YYYY-MM-DD') AS next_payment_date",
