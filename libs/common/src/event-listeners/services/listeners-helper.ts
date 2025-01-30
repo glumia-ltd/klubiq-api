@@ -43,12 +43,12 @@ export class HelperService {
 	}
 
 	async invalidateOrganizationLeaseCache(payload: LeaseEvent) {
-		const propertyCacheKeys = this.getPropertyRelatedCacheKeys(
+		const leaseCacheKeys = this.getLeaseRelatedCacheKeys(
 			payload.organizationId,
 		);
-		each(propertyCacheKeys, async (key) => {
+		each(leaseCacheKeys, async (key) => {
 			const cacheData = await this.cacheManager.get(key);
-			if (cacheData && key.includes('getPropertyListKeys')) {
+			if (cacheData && key.includes('getLeaseListKeys')) {
 				this.deleteFilteredCacheKeys(cacheData as string[]);
 			} else {
 				await this.cacheManager.del(key);
@@ -72,9 +72,8 @@ export class HelperService {
 
 	private getLeaseRelatedCacheKeys(organizationId: string) {
 		return [
-			`${organizationId}/getPropertyListKeys`,
-			`dashboard/${CacheKeys.PROPERTY_METRICS}/${organizationId}`,
-			`properties-grouped-units/${organizationId}`,
+			`${organizationId}/getLeaseListKeys`,
+			`dashboard/${CacheKeys.LEASE_METRICS}/${organizationId}`,
 		];
 	}
 
@@ -159,7 +158,9 @@ export class HelperService {
 	) {
 		let users: UserDetailsDto[] = [];
 		if (this.propertyManagerRecipientsEvent.includes(eventType)) {
-			const names = payload.propertyManagerName.split[' '];
+			const names = payload.propertyManagerName
+				? payload.propertyManagerName.split[' ']
+				: [];
 			const admin_recipients = await this.userService.getOrgUsersInRoleIds(
 				roles,
 				payload.organizationId,
@@ -170,8 +171,8 @@ export class HelperService {
 			const manager_recipient: UserDetailsDto = {
 				userId: payload.propertyManagerId,
 				email: payload.propertyManagerEmail,
-				firstName: (names && names[0]) || '',
-				lastName: (names && names.length > 1 && names[1]) || '',
+				firstName: (names && names.length > 1 && names[0]) || '',
+				lastName: (names && names.length > 2 && names[1]) || '',
 			};
 			users = isManagerAdmin
 				? [...admin_recipients]
@@ -184,12 +185,14 @@ export class HelperService {
 			users = [...users, ...admin_recipients];
 		}
 		if (this.propertyUserRecipientsEvent.includes(eventType)) {
-			const names = payload.assignedToName.split[' '];
+			const names = payload.assignedToName
+				? payload.assignedToName.split[' ']
+				: [];
 			const recipients: UserDetailsDto = {
 				userId: payload.assignedToId,
 				email: payload.assignedToEmail,
-				firstName: names[0],
-				lastName: names.length > 1 && names[1],
+				firstName: names && names.length > 1 && names[0],
+				lastName: names && names.length > 2 && names[1],
 			};
 			users = [...users, recipients];
 		}

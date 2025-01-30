@@ -137,6 +137,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 				// create the property
 				const property = transactionalEntityManager.create(Property, {
 					...propertyData,
+					unitCount: units.length > 0 ? units.length : 1,
 					category: { id: categoryId },
 					purpose: { id: purposeId },
 					type: { id: typeId },

@@ -206,6 +206,7 @@ export class LeaseService implements ILeaseService {
 		if (!currentUser.organizationId) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
+
 		leaseDto.status =
 			DateTime.fromISO(leaseDto.startDate).startOf('day').toJSDate() >
 			DateTime.utc().startOf('day').toJSDate()
@@ -223,6 +224,8 @@ export class LeaseService implements ILeaseService {
 			EVENTS.LEASE_CREATED,
 			currentUser.organizationId,
 			leaseDto,
+			currentUser.uid,
+			currentUser.email,
 			createdLease.id,
 			totalTenants,
 		);
@@ -254,6 +257,7 @@ export class LeaseService implements ILeaseService {
 				totalOverdueRents,
 				CacheTTl.ONE_DAY,
 			);
+			this.updateOrgCacheKeys(cacheKey);
 			return totalOverdueRents;
 		} catch (error) {
 			this.logger.error(
@@ -354,6 +358,8 @@ export class LeaseService implements ILeaseService {
 		event: string,
 		organizationId: string,
 		data: CreateLeaseDto | UpdateLeaseDto,
+		currentUserId: string,
+		currentUserEmail: string,
 		leaseId?: number,
 		tenantCount: number = 0,
 	) {
@@ -369,6 +375,8 @@ export class LeaseService implements ILeaseService {
 			firstPaymentDate: data.firstPaymentDate,
 			propertyName: data.propertyName,
 			organizationId: organizationId,
+			propertyManagerId: currentUserId,
+			propertyManagerEmail: currentUserEmail,
 		});
 	}
 }

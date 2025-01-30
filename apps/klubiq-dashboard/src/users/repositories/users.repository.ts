@@ -42,7 +42,7 @@ export class UsersRepository extends BaseRepository<OrganizationUser> {
 	}
 
 	async getOrgUsersInRoleIds(roleIds: number[], orgId: string) {
-		const roles = roleIds.join(',');
+		// const roles = roleIds.join(',');
 		const query = this.createQueryBuilder('organizationUser')
 			.leftJoinAndSelect('organizationUser.profile', 'profile')
 			.select([
@@ -54,7 +54,7 @@ export class UsersRepository extends BaseRepository<OrganizationUser> {
 				'profile.lastName',
 			])
 			.where('organizationUser.organizationUuid = :orgId', { orgId })
-			.andWhere('organizationUser.roleId IN :roles', { roles });
+			.andWhere('organizationUser.roleId IN (:...roleIds)', { roleIds });
 		return await query.getRawMany();
 	}
 }

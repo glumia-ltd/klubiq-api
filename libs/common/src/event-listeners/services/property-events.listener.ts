@@ -72,7 +72,7 @@ export class PropertyEventsListener {
 		propertyEvent: EVENTS,
 		emailTemplate: EmailTypes,
 	) {
-		payload.actionLink = `${this.clientBaseUrl}/properties/${payload.propertyId}`;
+		payload.actionLink = `${this.clientBaseUrl}properties/${payload.propertyId}`;
 		payload.actionText = 'View Property';
 		const template = EVENT_TEMPLATE(payload)[propertyEvent];
 		const notificationRecipients =
