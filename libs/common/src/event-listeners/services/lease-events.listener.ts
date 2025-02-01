@@ -19,6 +19,7 @@ export class LeaseEventsListener {
 	private readonly clientBaseUrl: string;
 	private readonly emailCopyrightText: string;
 	private readonly logger = new Logger(LeaseEventsListener.name);
+	private currencyFormat: Intl.NumberFormat;
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly notificationService: NotificationsService,
@@ -37,6 +38,13 @@ export class LeaseEventsListener {
 	}
 	@OnEvent(EVENTS.LEASE_CREATED, { async: true })
 	async handleLeaseCreatedEvent(payload: LeaseEvent) {
+		this.currencyFormat = new Intl.NumberFormat(
+			`${payload.language}-${payload.locale}`,
+			{
+				style: 'currency',
+				currency: payload.currency,
+			},
+		);
 		await this.helperService.invalidateOrganizationLeaseCache(payload);
 		await this.createNotification(
 			payload,
@@ -52,6 +60,7 @@ export class LeaseEventsListener {
 	) {
 		payload.actionLink = `${this.clientBaseUrl}leases/${payload.leaseId}`;
 		payload.actionText = 'View Lease';
+		payload.rent = payload.rent;
 		const template = EVENT_TEMPLATE(payload)[leaseEvent];
 		const notificationRecipients =
 			await this.helperService.getNotificationRecipientsByRoles(
@@ -65,18 +74,19 @@ export class LeaseEventsListener {
 		const notificationIds =
 			await this.notificationService.createNotifications(notification);
 		const personalization = {
-			property_name: payload.name,
+			property_name: payload.propertyName,
 			unit_number: payload.unitNumber,
 			support_email: this.supportEmail,
 			start_date: payload.startDate,
 			end_date: payload.endDate,
 			lease_name: payload.leaseName,
-			rent_amount: payload.rent,
+			rent_amount:
+				this.currencyFormat.format(Number(payload.rent)) || payload.rent,
 			payment_frequency: payload.paymentFrequency,
 			view_lease_link: payload.actionLink,
 			copyright: this.emailCopyrightText,
 			first_payment_date: payload.firstPaymentDate,
-			event_date: payload.eventTimestamp,
+			event_date: payload.eventTimestamp || new Date().toUTCString(),
 		};
 		// if (leaseEvent === EVENTS.PROPERTY_DELETED) {
 		//     personalization['deleted_by'] = payload.propertyManagerName;

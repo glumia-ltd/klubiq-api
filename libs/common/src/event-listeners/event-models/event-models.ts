@@ -15,6 +15,9 @@ export class PropertyEvent {
 	assignedToId?: string;
 	actionLink?: string;
 	actionText?: string;
+	currency?: string;
+	locale?: string;
+	language?: string;
 }
 
 export class LeaseEvent extends PropertyEvent {

@@ -11,8 +11,7 @@ export class SchedulersService {
 		private readonly fileService: FileUploadService,
 	) {}
 
-	//@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-	@Cron(CronExpression.EVERY_5_MINUTES)
+	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
 	async handleDeletedFilesRecords() {
 		const total_deleted = await this.tasksService.getDeletedFilesCount();
 		if (total_deleted > 0) {
@@ -27,8 +26,18 @@ export class SchedulersService {
 		}
 	}
 
-	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+	@Cron(CronExpression.EVERY_10_MINUTES)
 	async refreshLeasePaymentTotalView() {
 		await this.tasksService.refreshLeasePaymentTotalView();
+	}
+
+	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+	async updateOrganizationCounter() {
+		await this.tasksService.updateOrganizationCounters();
+	}
+
+	@Cron(CronExpression.EVERY_5_MINUTES)
+	async updateLeaseStatuses() {
+		await this.tasksService.updateOrganizationCounters();
 	}
 }

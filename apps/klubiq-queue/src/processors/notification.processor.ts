@@ -76,6 +76,7 @@ export class NotificationProcessor extends WorkerHost {
 	@OnWorkerEvent('completed')
 	async onJobCompleted(jobId: any) {
 		console.log(`Job ${jobId} completed with result`);
+		return { jobId, result: true };
 	}
 
 	@OnWorkerEvent('active')
@@ -92,6 +93,7 @@ export class NotificationProcessor extends WorkerHost {
 		console.error(
 			`Job ${jobId} failed with reason: ${JSON.stringify(failedReason)}`,
 		);
+		return { jobId, failedReason };
 	}
 	private async buildAndSendEmail(
 		templateName: string,
@@ -140,8 +142,10 @@ export class NotificationProcessor extends WorkerHost {
 				},
 			);
 			console.log(`Notifications sent to: ${userIds}`, response.data);
+			return response.data;
 		} catch (error) {
 			this.logger.error(`Error sending push notification: ${error}`);
+			return null;
 		}
 	}
 }

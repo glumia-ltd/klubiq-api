@@ -50,4 +50,17 @@ export class TasksService {
 			.getMany();
 		return result;
 	}
+
+	async updateOrganizationCounters() {
+		const result = await this.entityManager.query(
+			'SELECT poo.update_organization_counts_batch()',
+		);
+		return result;
+	}
+	async updateLeaseStatus() {
+		const result = await this.entityManager.query(
+			'SELECT poo.update_lease_status()',
+		);
+		return result;
+	}
 }

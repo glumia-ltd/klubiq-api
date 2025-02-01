@@ -87,6 +87,9 @@ import { CommonConfigService } from './common-config';
 					cls.set('clientTimeZoneName', req.headers['x-client-tz-name']);
 					cls.set('jwtToken', req.headers.authorization?.split(' ')[1]);
 					cls.set('requestUrl', req.originalUrl);
+					cls.set('clientLanguage', req.headers['x-client-lang'] || 'en');
+					cls.set('clientLocale', req.headers['x-client-locale'] || 'NG');
+					cls.set('clientCurrency', req.headers['x-client-currency'] || 'NGN');
 				},
 			},
 		}),

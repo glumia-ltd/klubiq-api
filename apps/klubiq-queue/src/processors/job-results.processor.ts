@@ -39,6 +39,7 @@ export class JobResultsProcessor extends WorkerHost {
 	@OnWorkerEvent('completed')
 	onJobCompleted(jobId: string, result: any) {
 		this.logger.log(`Job ${jobId} completed with result: ${result}`);
+		return { jobId, result };
 	}
 
 	@OnWorkerEvent('active')
@@ -51,6 +52,7 @@ export class JobResultsProcessor extends WorkerHost {
 		this.logger.error(
 			`Job ${jobId} failed with reason: ${JSON.stringify(failedReason)}`,
 		);
+		return { jobId, failedReason };
 	}
 
 	async markAsDelivered(notificationIds: number[]) {
@@ -62,6 +64,7 @@ export class JobResultsProcessor extends WorkerHost {
 			console.log(`Marked notifications as delivered: ${notificationIds}`);
 		} catch (error) {
 			this.logger.error(`Error marking notifications as delivered: ${error}`);
+			return null;
 		}
 	}
 }
