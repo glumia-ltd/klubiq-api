@@ -206,10 +206,11 @@ export class LeaseService implements ILeaseService {
 		if (!currentUser.organizationId) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
-
+		console.log('Start Date: ', leaseDto.startDate);
+		console.log('Now Date: ', DateTime.utc().toJSDate());
 		leaseDto.status =
-			DateTime.fromISO(leaseDto.startDate).startOf('day').toJSDate() >
-			DateTime.utc().startOf('day').toJSDate()
+			DateTime.fromISO(leaseDto.startDate).toJSDate().getDate() >
+			DateTime.utc().toJSDate().getDate()
 				? LeaseStatus.IN_ACTIVE
 				: LeaseStatus.ACTIVE;
 
@@ -226,6 +227,7 @@ export class LeaseService implements ILeaseService {
 			leaseDto,
 			currentUser.uid,
 			currentUser.email,
+			currentUser.name,
 			createdLease.id,
 			totalTenants,
 		);
@@ -360,6 +362,7 @@ export class LeaseService implements ILeaseService {
 		data: CreateLeaseDto | UpdateLeaseDto,
 		currentUserId: string,
 		currentUserEmail: string,
+		currentUserName: string,
 		leaseId?: number,
 		tenantCount: number = 0,
 	) {
@@ -377,6 +380,10 @@ export class LeaseService implements ILeaseService {
 			organizationId: organizationId,
 			propertyManagerId: currentUserId,
 			propertyManagerEmail: currentUserEmail,
+			propertyManagerName: currentUserName,
+			currency: this.cls.get('clientCurrency'),
+			locale: this.cls.get('clientLocale'),
+			language: this.cls.get('clientLanguage'),
 		});
 	}
 }

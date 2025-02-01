@@ -392,5 +392,5 @@ export const leaseCreatedEmailTemplate = (): EmailTemplate => ({
     </table>
   </body>
       </html>`,
-	subject: 'A Property Has Been Assigned to You.',
+	subject: 'New Lease Created for {{ property_name }}.',
 });

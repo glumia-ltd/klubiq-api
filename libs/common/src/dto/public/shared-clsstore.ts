@@ -8,4 +8,7 @@ export interface SharedClsStore extends ClsStore {
 	requestUrl: string;
 	clientTimeZoneOffset: number;
 	clientTimeZoneName: string;
+	clientLanguage: string;
+	clientLocale: string;
+	clientCurrency: string;
 }

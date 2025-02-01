@@ -140,6 +140,8 @@ export class HelperService {
 					title: template.subject,
 					message: template.message,
 					type: template.type,
+					actionLink: payload.actionLink,
+					actionText: payload.actionText,
 					propertyId:
 						eventType === EVENTS.PROPERTY_DELETED ? null : payload.propertyId,
 					organizationUuid: payload.organizationId,

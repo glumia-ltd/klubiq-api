@@ -92,7 +92,7 @@ export class PropertyEventsListener {
 			support_email: this.supportEmail,
 			view_property_link: payload.actionLink,
 			copyright: this.emailCopyrightText,
-			event_date: payload.eventTimestamp,
+			event_date: payload.eventTimestamp || new Date().toUTCString(),
 		};
 		if (propertyEvent === EVENTS.PROPERTY_DELETED) {
 			personalization['deleted_by'] = payload.propertyManagerName;
@@ -123,6 +123,7 @@ export class PropertyEventsListener {
 					propertyEvent === EVENTS.PROPERTY_DELETED ? null : payload.actionLink,
 			} as NotificationPayloadDto,
 		};
+		console.log('NOTIFICATION DATA: ', data);
 		await this.notificationQueue.add(
 			'notify',
 			data,
