@@ -36,7 +36,7 @@ export class SchedulersService {
 		await this.tasksService.updateOrganizationCounters();
 	}
 
-	@Cron(CronExpression.EVERY_5_MINUTES)
+	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
 	async updateLeaseStatuses() {
 		await this.tasksService.updateOrganizationCounters();
 	}
