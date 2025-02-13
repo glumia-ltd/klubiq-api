@@ -58,7 +58,7 @@ export class LeaseEventsListener {
 		leaseEvent: EVENTS,
 		emailTemplate: EmailTypes,
 	) {
-		payload.actionLink = `${this.clientBaseUrl}leases/${payload.leaseId}`;
+		payload.actionLink = `${this.clientBaseUrl}lease/${payload.leaseId}`;
 		payload.actionText = 'View Lease';
 		payload.rent = payload.rent;
 		const template = EVENT_TEMPLATE(payload)[leaseEvent];
