@@ -378,7 +378,7 @@ export class DashboardRepository {
 				SELECT COUNT(*) AS active_lease_count
 				FROM poo.lease 
 				WHERE "organizationUuid" = '${orgUuid}' 
-				AND (status = '${LeaseStatus.ACTIVE}' OR status = '${LeaseStatus.EXPIRING}')
+				AND (status = '${LeaseStatus.ACTIVE}')
 				AND ("startDate" <= (CURRENT_DATE - INTERVAL ${interval}))
 				AND ("endDate" >=  (CURRENT_DATE - INTERVAL ${interval})); 
 			`);
@@ -397,8 +397,8 @@ export class DashboardRepository {
 				SELECT COUNT(*) AS expiring_lease_count
 				FROM poo.lease 
 				WHERE "organizationUuid" = '${orgUuid}' 
-				AND (status = '${LeaseStatus.ACTIVE}' OR status = '${LeaseStatus.EXPIRING}')
-				AND ("endDate" BETWEEN  CURRENT_DATE AND (CURRENT_DATE + INTERVAL '${days} days')); 
+				AND (status = '${LeaseStatus.EXPIRING}')
+				AND("endDate" BETWEEN  CURRENT_DATE AND(CURRENT_DATE + INTERVAL '${days} days')); 
 			`);
 			const expiringLeaseCountForPeriod = parseInt(
 				expiringLeaseCount[0]?.expiring_lease_count,

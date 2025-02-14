@@ -275,6 +275,10 @@ export enum PaymentStatus {
 	UNPAID = 'Unpaid',
 	OVERDUE = 'Overdue',
 	PARTIAL = 'Partial',
+	FAILED = 'Failed',
+	CANCELLED = 'Cancelled',
+	REFUNDED = 'Refunded',
+	OTHER = 'Other',
 }
 export const CacheTTl = {
 	ONE_DAY: 60 * 60 * 24,

@@ -1,3 +1,4 @@
+import { LeaseStatus, UnitStatus } from '@app/common/config/config.constants';
 import { LeasePaymentTotalView } from '@app/common/database/entities/lease-payement.view';
 import { PropertyImage } from '@app/common/database/entities/property-image.entity';
 import { Injectable } from '@nestjs/common';
@@ -60,6 +61,29 @@ export class TasksService {
 	async updateLeaseStatus() {
 		const result = await this.entityManager.query(
 			'SELECT poo.update_lease_status()',
+		);
+		return result;
+	}
+	async updateUnitStatus() {
+		const result = await this.entityManager.query(
+			`WITH unit_status_update AS (
+				SELECT
+        			u.id AS unit_id,
+        			CASE
+            			WHEN EXISTS (
+                			SELECT 1
+                			FROM poo.lease l
+                			WHERE l."unitId" = u.id
+                			AND l.status IN ('${LeaseStatus.ACTIVE}', '${LeaseStatus.EXPIRING}')
+            			) THEN '${UnitStatus.OCCUPIED}'
+            			ELSE '${UnitStatus.VACANT}'
+        		END AS new_status
+    		FROM poo.unit u
+			)		
+			UPDATE poo.unit u
+			SET status = unit_status_update.new_status
+			FROM unit_status_update
+			WHERE u.id = unit_status_update.unit_id;`,
 		);
 		return result;
 	}

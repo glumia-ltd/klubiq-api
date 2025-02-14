@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { TasksService } from './tasks.service';
+import { LeaseTasksService } from './lease-tasks.service';
 import { FileUploadService } from '@app/common/services/file-upload.service';
 
 @Injectable()
@@ -9,10 +10,11 @@ export class SchedulersService {
 	constructor(
 		private readonly tasksService: TasksService,
 		private readonly fileService: FileUploadService,
+		private readonly leaseTasksService: LeaseTasksService,
 	) {}
 
 	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-	async handleDeletedFilesRecords() {
+	async everyMidnightJobs() {
 		const total_deleted = await this.tasksService.getDeletedFilesCount();
 		if (total_deleted > 0) {
 			this.logger.debug(`Total deleted files records: ${total_deleted}`);
@@ -24,20 +26,19 @@ export class SchedulersService {
 			}
 			await this.tasksService.deleteRecords();
 		}
+		await this.tasksService.updateOrganizationCounters();
+		await this.tasksService.updateLeaseStatus();
+		await this.tasksService.updateUnitStatus();
+		await this.leaseTasksService.generateUnpaidTransactions();
 	}
 
 	@Cron(CronExpression.EVERY_10_MINUTES)
-	async refreshLeasePaymentTotalView() {
+	async every10MinutesJob() {
 		await this.tasksService.refreshLeasePaymentTotalView();
 	}
 
-	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-	async updateOrganizationCounter() {
-		await this.tasksService.updateOrganizationCounters();
-	}
-
-	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-	async updateLeaseStatuses() {
-		await this.tasksService.updateOrganizationCounters();
-	}
+	// @Cron(CronExpression.EVERY_5_MINUTES)
+	// async every5MinutesJob() {
+	// 	await this.leaseTasksService.generateUnpaidTransactions();
+	// }
 }

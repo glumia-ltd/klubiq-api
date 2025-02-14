@@ -8,6 +8,7 @@ import { Amenity } from '@app/common/database/entities/property-amenity.entity';
 import { BaseRepository } from '@app/common/repositories/base.repository';
 import {
 	DisplayOptions,
+	LeaseStatus,
 	UnitStatus,
 	UnitType,
 } from '@app/common/config/config.constants';
@@ -564,7 +565,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 			SELECT COUNT(u.id) AS total_occupied_units
 			FROM poo.unit u
 			INNER JOIN poo.lease l ON u.id = l."unitId" AND l."organizationUuid" = $1
-			WHERE u.status = '${UnitStatus.OCCUPIED}'
+			WHERE u.status = '${UnitStatus.OCCUPIED}' OR l.status IN ('${LeaseStatus.ACTIVE}', '${LeaseStatus.EXPIRING}')
 			AND (l."startDate" <= (CURRENT_DATE - INTERVAL ${interval}) AND l."endDate" >= (CURRENT_DATE - INTERVAL ${interval}));`;
 		const occupiedUnitsQuery = await this.manager.query(query, [
 			organizationUuid,

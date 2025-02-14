@@ -359,7 +359,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 						WHEN l."paymentFrequency" = '${PaymentFrequency.WEEKLY}' 	THEN INTERVAL '1 WEEK'
 						WHEN l."paymentFrequency" = '${PaymentFrequency.BI_WEEKLY}' THEN INTERVAL '2 WEEKS'
 						WHEN l."paymentFrequency" = '${PaymentFrequency.BI_MONTHLY}' THEN INTERVAL '2 MONTHS'
-						WHEN l."paymentFrequency" = '${PaymentFrequency.CUSTOM}' THEN make_interval(days=>l."rentDueDay")
+						WHEN l."paymentFrequency" = '${PaymentFrequency.CUSTOM}' THEN make_interval(days=>l."customPaymentFrequency")
 						ELSE INTERVAL '1 MONTH'
 					END	AS interval_unit
 				FROM
@@ -369,29 +369,25 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				SELECT
 					ld.lease_id,
 					ld."rentAmount",
-					FLOOR(EXTRACT(EPOCH FROM AGE(CURRENT_DATE, ld.base_date)) / EXTRACT(EPOCH FROM ld.interval_unit))::INT AS missed_periods,
-					ld."rentAmount" * FLOOR(EXTRACT(EPOCH FROM AGE(CURRENT_DATE, ld.base_date)) / EXTRACT(EPOCH FROM ld.interval_unit))::INT AS total_due
-				FROM
-					lease_details ld
+					GREATEST(0, FLOOR(EXTRACT(EPOCH FROM AGE(CURRENT_DATE, ld.base_date)) / 
+            		COALESCE(NULLIF(EXTRACT(EPOCH FROM ld.interval_unit), 0), l."customPaymentFrequency" * 86400)))::INT AS missed_periods,
+        			ld."rentAmount" * GREATEST(0, FLOOR(EXTRACT(EPOCH FROM AGE(CURRENT_DATE, ld.base_date)) / 
+            		COALESCE(NULLIF(EXTRACT(EPOCH FROM ld.interval_unit), 0), l."customPaymentFrequency" * 86400)))::INT AS total_due
+				FROM lease_details ld
+				JOIN poo.lease l ON ld.lease_id = l.id
 				)
 			SELECT
-				COUNT(*) AS overdue_lease_count,
+				COUNT(mp.lease_id) AS overdue_lease_count,
 				SUM(mp.total_due) AS overdue_lease_total
-			FROM
-				missed_payments mp
-			LEFT JOIN 
-				poo.lease_payment_totals lp ON mp.lease_id = lp."leaseId"
+			FROM missed_payments mp
+			LEFT JOIN poo.lease_payment_totals lp ON mp.lease_id = lp."leaseId"
+			JOIN poo.lease l ON mp.lease_id = l.id
 			WHERE
 				mp.total_due > COALESCE(lp.total_paid, 0)
-				AND mp.lease_id IN 	(
-					SELECT l.id
-					FROM poo.lease l
-					WHERE
-						l."endDate" >= CURRENT_DATE
-						AND COALESCE(l."nextDueDate", public.calculate_next_rent_due_date(l."startDate",l."endDate", l."rentDueDay", l."paymentFrequency", l."customPaymentFrequency", l."lastPaymentDate")) <= CURRENT_DATE
-						AND l."isArchived" = false
-						AND  l."organizationUuid" = $1
-			);`;
+				AND l."endDate" >= 	CURRENT_DATE
+				AND COALESCE(l."nextDueDate", public.calculate_next_rent_due_date(l."startDate",l."endDate", l."rentDueDay", l."paymentFrequency", l."customPaymentFrequency", l."lastPaymentDate")) <= CURRENT_DATE
+				AND l."isArchived" = false
+				AND  l."organizationUuid" = $1;`;
 		const overdueRentsResult = await this.manager.query(query, [
 			organizationUuid,
 		]);
