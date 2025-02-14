@@ -175,7 +175,7 @@ export class OrganizationSubscriptionService {
 			documentStorageLimit: multiply(
 				1048576,
 				subscription.subscription_plan.document_storage_limit,
-			),
+			), //convert MB to bytes
 		};
 		await this.cacheService.setCache(
 			planLimits,

@@ -71,7 +71,7 @@ export class FileUploadService {
 			await this.orgSubscriptionService.getOrganizationAssetCount(
 				this.currentUser.organizationId,
 			)
-		).document_storage_size;
+		).document_storage_size; //storage  in bytes
 		if (storageUsed >= storageLimit) {
 			throw new Error('Storage limit exceeded');
 		}
