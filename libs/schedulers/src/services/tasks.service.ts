@@ -75,13 +75,13 @@ export class TasksService {
                 			FROM poo.lease l
                 			WHERE l."unitId" = u.id
                 			AND l.status IN ('${LeaseStatus.ACTIVE}', '${LeaseStatus.EXPIRING}')
-            			) THEN '${UnitStatus.OCCUPIED}'
-            			ELSE '${UnitStatus.VACANT}'
+            			) THEN '${UnitStatus.OCCUPIED}'::poo.unit_status_enum
+            			ELSE '${UnitStatus.VACANT}'::poo.unit_status_enum
         		END AS new_status
     		FROM poo.unit u
 			)		
 			UPDATE poo.unit u
-			SET status = unit_status_update.new_status
+			SET status = unit_status_update.new_status::poo.unit_status_enum
 			FROM unit_status_update
 			WHERE u.id = unit_status_update.unit_id;`,
 		);
