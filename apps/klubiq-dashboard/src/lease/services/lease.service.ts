@@ -211,7 +211,7 @@ export class LeaseService implements ILeaseService {
 		leaseDto.status =
 			DateTime.fromISO(leaseDto.startDate).toJSDate().getDate() >
 			DateTime.utc().toJSDate().getDate()
-				? LeaseStatus.IN_ACTIVE
+				? LeaseStatus.INACTIVE
 				: LeaseStatus.ACTIVE;
 
 		const createdLease = await this.leaseRepository.createLease(

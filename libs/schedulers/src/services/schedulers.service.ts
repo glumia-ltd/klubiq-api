@@ -37,8 +37,11 @@ export class SchedulersService {
 		await this.tasksService.refreshLeasePaymentTotalView();
 	}
 
+	// FOR TESTING USE ONLY
 	// @Cron(CronExpression.EVERY_5_MINUTES)
 	// async every5MinutesJob() {
 	// 	await this.leaseTasksService.generateUnpaidTransactions();
+	// 	await this.tasksService.updateLeaseStatus();
+	// 	await this.tasksService.updateUnitStatus();
 	// }
 }
