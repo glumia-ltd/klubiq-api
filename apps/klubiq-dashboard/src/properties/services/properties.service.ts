@@ -67,25 +67,6 @@ export class PropertiesService implements IPropertyMetrics {
 			this.logger.error('Error getting total properties', error);
 		}
 	}
-	async getTotalOccupiedUnits(
-		organizationUuid: string,
-		days?: number,
-	): Promise<number> {
-		try {
-			const vacantProperties =
-				await this.propertyRepository.getTotalOccupiedUnits(
-					organizationUuid,
-					days,
-				);
-			return vacantProperties;
-		} catch (error) {
-			this.logger.error(
-				error.message,
-				error.stack,
-				'Error getting total occupied properties',
-			);
-		}
-	}
 	async getTotalMaintenanceUnits(
 		organizationUuid: string,
 		days?: number,
@@ -106,11 +87,15 @@ export class PropertiesService implements IPropertyMetrics {
 		daysAgo?: number,
 	): Promise<PropertyMetrics> {
 		try {
-			const occupiedUnits = await this.getTotalOccupiedUnits(organizationUuid);
-			const occupiedUnitsDaysAgo = await this.getTotalOccupiedUnits(
-				organizationUuid,
-				daysAgo,
-			);
+			const unitStatus =
+				await this.propertyRepository.getUnitStatusCounts(organizationUuid);
+			const unitStatusDaysAgo =
+				await this.propertyRepository.getUnitStatusCounts(
+					organizationUuid,
+					daysAgo,
+				);
+			const occupiedUnits = unitStatus.occupied;
+			const occupiedUnitsDaysAgo = unitStatusDaysAgo.occupied;
 			const totalUnits = await this.getTotalUnits(organizationUuid);
 			const maintenanceUnits =
 				await this.getTotalMaintenanceUnits(organizationUuid);
@@ -134,7 +119,7 @@ export class PropertiesService implements IPropertyMetrics {
 				);
 			//const rentOverdueData = await this.getTotalOverdueRents(organizationUuid);
 			const propertyMetrics: PropertyMetrics = {
-				vacantUnits: totalUnits - occupiedUnits,
+				vacantUnits: unitStatus.vacant,
 				occupiedUnits,
 				totalUnits,
 				maintenanceUnits,

@@ -11,6 +11,7 @@ import { Util } from '@app/common/helpers/util';
 import { find, forEach, reduce } from 'lodash';
 import {
 	LeaseStatus,
+	PaymentStatus,
 	RevenueType,
 	TransactionType,
 } from '@app/common/config/config.constants';
@@ -22,8 +23,6 @@ export class DashboardRepository {
 	private readonly salesGraphColor = '#002147';
 	private readonly rentalGraphColor = '#6699CC';
 
-	/*************  ✨ Codeium Command ⭐  *************/
-	/******  2bc9823a-3854-448e-b017-2aa541e44cc0  *******/
 	constructor(
 		private manager: EntityManager,
 		private readonly util: Util,
@@ -49,6 +48,7 @@ export class DashboardRepository {
 					date_series ds
 				LEFT JOIN poo.transaction t ON date_trunc('month', t."transactionDate") = ds.month
         	    AND t."transactionType" = '${TransactionType.REVENUE}'
+				AND t."status" = '${PaymentStatus.PAID}'
 				AND t."organizationUuid" = '${orgUuid}'
 				GROUP BY  ds.month, t."revenueType"
 			    ORDER BY ds.month ASC, t."revenueType";
@@ -79,6 +79,7 @@ export class DashboardRepository {
                         '1 month') AS month
 					LEFT JOIN poo.transaction t ON date_trunc('month', t."transactionDate") = month
 					AND t."transactionType" = '${TransactionType.REVENUE}'
+					AND t."status" = '${PaymentStatus.PAID}'
 					AND t."organizationUuid" = '${orgUuid}'
     				GROUP BY month
 				) SELECT SUM(total_amount) as total_revenue_previous12_months FROM monthly_total_revenue;`,
@@ -186,26 +187,6 @@ export class DashboardRepository {
 				totalExpensesPreviousMTD: number = 0,
 				totalRevenueMTD: number = 0,
 				totalRevenuePreviousMTD: number = 0;
-			// 	const todaysRevenuerResult = await this.manager.query(
-			// 		`SELECT
-			// SUM(t.amount) as total_revenue
-			// FROM
-			// poo.transaction t
-			// WHERE
-			// t."transactionType" = '${TransactionType.REVENUE}'
-			//         AND t."transactionDate" = CURRENT_DATE
-			//         AND t."organizationUuid" = '${orgUuid}'; `,
-			// 	);
-			// 	const yesterdayRevenueResult = await this.manager.query(
-			// 		`SELECT
-			// SUM(t.amount) as total_revenue
-			// FROM
-			// poo.transaction t
-			// WHERE
-			// t."transactionType" = '${TransactionType.REVENUE}'
-			//         AND t."transactionDate" = (CURRENT_DATE - INTERVAL '1 day')
-			//         AND t."organizationUuid" = '${orgUuid}'; `,
-			// 	);
 			const totalTransactionsMTDResult = await this.manager.query(
 				`SELECT
 					t."transactionType" as transaction_type,
@@ -215,6 +196,7 @@ export class DashboardRepository {
 					WHERE
 					t."transactionDate" >= (CURRENT_DATE - INTERVAL '30 days')
                 AND t."organizationUuid" = '${orgUuid}'
+				AND t."status" = '${PaymentStatus.PAID}'
             	GROUP BY t."transactionType"; `,
 			);
 			const totalTransactionsPreviousMTDResult = await this.manager.query(
@@ -227,14 +209,9 @@ export class DashboardRepository {
 					t."transactionDate" >= (CURRENT_DATE - INTERVAL '60 days')
                 AND t."transactionDate" < (CURRENT_DATE - INTERVAL '30 days')
                 AND t."organizationUuid" = '${orgUuid}'
+				AND t."status" = '${PaymentStatus.PAID}'
             	GROUP BY t."transactionType"; `,
 			);
-			// const todaysRevenue = parseFloat(
-			// 	todaysRevenuerResult[0].total_revenue || 0,
-			// );
-			// const yesterdayRevenue = parseFloat(
-			// 	yesterdayRevenueResult[0].total_revenue || 0,
-			// );
 			totalTransactionsMTDResult.forEach((row: any) => {
 				if (row.transaction_type === TransactionType.REVENUE) {
 					totalRevenueMTD = parseFloat(row.total_amount || 0);
@@ -249,20 +226,6 @@ export class DashboardRepository {
 					totalExpensesPreviousMTD = parseFloat(row.total_amount || 0);
 				}
 			});
-			// const dailyRevenuePercentageDifference =
-			// 	yesterdayRevenue > 0 && todaysRevenue > 0
-			// 		? this.util.getPercentageIncreaseOrDecrease(
-			// 			yesterdayRevenue,
-			// 			todaysRevenue,
-			// 		)
-			// 		: 0;
-
-			// const dailyRevenueChangeIndicator =
-			// 	todaysRevenue > yesterdayRevenue
-			// 		? 'positive'
-			// 		: todaysRevenue < yesterdayRevenue
-			// 			? 'negative'
-			// 			: 'neutral';
 			const revenuePercentageDifference =
 				totalRevenuePreviousMTD > 0 && totalRevenueMTD > 0
 					? this.util.getPercentageIncreaseOrDecrease(
