@@ -10,14 +10,19 @@ export class UsersRepository extends BaseRepository<OrganizationUser> {
 		super(OrganizationUser, manager);
 	}
 
-	async getUserByFirebaseIdOrEmail(query: string) {
+	async getUserByEmailOrUuid(query: string) {
 		const data = await this.repository.findOne({
 			relations: { profile: true },
-			where: [{ firebaseId: query }, { profile: { email: query } }],
+			where: [{ organizationUserUuid: query }, { profile: { email: query } }],
 			select: {
-				organizationUserId: true,
 				organizationUserUuid: true,
-				firebaseId: true,
+				profile: {
+					firstName: true,
+					lastName: true,
+					email: true,
+					firebaseId: true,
+					profileUuid: true,
+				},
 			},
 		});
 		if (!data) {
@@ -29,10 +34,8 @@ export class UsersRepository extends BaseRepository<OrganizationUser> {
 		const query = this.createQueryBuilder('organizationUser')
 			.leftJoinAndSelect('organizationUser.profile', 'profile')
 			.select([
-				'organizationUser.firebaseId',
+				'profile.profileUuid',
 				'profile.email',
-				'organizationUser.firstName',
-				'organizationUser.lastName',
 				'profile.firstName',
 				'profile.lastName',
 			])
@@ -42,14 +45,11 @@ export class UsersRepository extends BaseRepository<OrganizationUser> {
 	}
 
 	async getOrgUsersInRoleIds(roleIds: number[], orgId: string) {
-		// const roles = roleIds.join(',');
 		const query = this.createQueryBuilder('organizationUser')
 			.leftJoinAndSelect('organizationUser.profile', 'profile')
 			.select([
-				'organizationUser.firebaseId',
+				'profile.profileUuid',
 				'profile.email',
-				'organizationUser.firstName',
-				'organizationUser.lastName',
 				'profile.firstName',
 				'profile.lastName',
 			])

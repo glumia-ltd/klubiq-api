@@ -43,8 +43,9 @@ export interface ActiveUserData {
 	systemRole: string;
 	organizationRole?: string;
 	organizationId?: string;
-	uid?: string;
+	uid: string;
 	entitlements: string[];
+	kUid: string;
 }
 export interface RolesAndEntitlements {
 	roles: UserRoles[];

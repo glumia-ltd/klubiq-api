@@ -112,7 +112,7 @@ export class NotificationsDto {
 	id: string;
 	isRead: boolean;
 	isAnnouncement: boolean;
-	leaseId?: number;
+	leaseId?: string;
 	message: string;
 	organizationUuid?: string;
 	propertyId?: string;
@@ -120,7 +120,7 @@ export class NotificationsDto {
 	readAt?: Date;
 	title: string;
 	type: string;
-	unitId?: number;
+	unitId?: string;
 	userId?: string;
 	time?: string;
 }

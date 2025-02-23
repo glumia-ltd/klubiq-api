@@ -3,7 +3,6 @@ import {
 	PrimaryGeneratedColumn,
 	DeleteDateColumn,
 	Column,
-	Generated,
 	OneToMany,
 	CreateDateColumn,
 	UpdateDateColumn,
@@ -18,6 +17,7 @@ import { OrganizationSettings } from '@app/common/database/entities/organization
 import { OrganizationSubscriptions } from '@app/common/database/entities/organization-subscriptions.entity';
 import { PropertyImage } from '@app/common/database/entities/property-image.entity';
 import { OrganizationTenants } from './organization-tenants.entity';
+import { OrganizationRole } from './organization-role.entity';
 
 @Entity({ schema: 'poo' })
 export class Organization {
@@ -26,23 +26,21 @@ export class Organization {
 	organizationUuid?: string;
 
 	@AutoMap()
-	@Index('idx_organization_id')
-	@Generated('increment')
-	@Column({ unique: true })
-	organizationId?: number;
-
-	@AutoMap()
 	@Column({ default: true })
 	isActive?: boolean;
 
 	@AutoMap()
 	@Index()
-	@Column({ length: 100, unique: true })
+	@Column({ length: 100, unique: true, nullable: true })
 	name: string;
 
 	@AutoMap()
 	@Column({ default: false })
 	isVerified?: boolean;
+
+	@AutoMap()
+	@Column({ default: false })
+	isKYBVerified?: boolean;
 
 	@AutoMap()
 	@Column({ nullable: true })
@@ -97,14 +95,14 @@ export class Organization {
 	})
 	users?: OrganizationUser[];
 
-	@DeleteDateColumn()
+	@DeleteDateColumn({ type: 'timestamptz' })
 	@Index('idx_deleted_date')
 	deletedDate?: Date;
 
-	@CreateDateColumn()
+	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdDate?: Date;
 
-	@UpdateDateColumn()
+	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	updatedDate?: Date;
 
 	@AutoMap()
@@ -150,4 +148,17 @@ export class Organization {
 		(organizationTenant) => organizationTenant.organization,
 	)
 	organizationTenants?: OrganizationTenants[];
+
+	@AutoMap(() => [OrganizationRole])
+	@OneToMany(() => OrganizationRole, (orgRole) => orgRole.organization, {
+		cascade: true,
+	})
+	roles?: OrganizationRole[];
+
+	@Column({
+		type: 'enum',
+		enum: ['individual', 'company', 'ngo', 'government', 'other', 'self'],
+		default: 'individual',
+	})
+	orgType: string;
 }

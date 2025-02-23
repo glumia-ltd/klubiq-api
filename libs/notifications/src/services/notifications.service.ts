@@ -75,7 +75,7 @@ export class NotificationsService {
 	) {
 		if (!userId) {
 			this.currentUser = this.cls.get('currentUser');
-			userId = this.currentUser.uid;
+			userId = this.currentUser.kUid;
 		}
 		const query = this.notificationsRepository
 			.createQueryBuilder('notifications')

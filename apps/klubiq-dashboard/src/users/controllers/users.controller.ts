@@ -11,12 +11,8 @@ import { UsersService } from '../services/users.service';
 
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationUser } from '@app/common/database/entities/organization-user.entity';
-import {
-	Actions,
-	AppFeature,
-	UserRoles,
-} from '@app/common/config/config.constants';
-import { AuthType, Auth, Roles, Feature, Ability } from '@app/auth';
+import { Permissions, AppFeature } from '@app/common/config/config.constants';
+import { AuthType, Auth, Feature, Permission } from '@app/auth';
 import { UpdateUserDto } from '../dto/update-organization-user.dto';
 
 @ApiTags('users')
@@ -24,13 +20,16 @@ import { UpdateUserDto } from '../dto/update-organization-user.dto';
 @ApiBearerAuth()
 @Auth(AuthType.Bearer)
 @Feature(AppFeature.USER)
-@Roles(UserRoles.LANDLORD)
 export class UsersController {
 	constructor(private readonly usersService: UsersService) {}
 
 	@Get()
-	//@Roles(UserRoles.ORG_OWNER)
-	@Ability(Actions.VIEW, Actions.WRITE)
+	@Permission(
+		Permissions.READ,
+		Permissions.CREATE,
+		Permissions.UPDATE,
+		Permissions.DELETE,
+	)
 	@ApiOkResponse({
 		description: 'Returns all the users available ',
 	})
@@ -43,11 +42,10 @@ export class UsersController {
 	}
 
 	@Get('landlord/:identifier')
-	@Roles(UserRoles.LANDLORD)
 	async getLandlordUser(
 		@Param('identifier') identifier: string,
 	): Promise<OrganizationUser> {
-		const user = await this.usersService.getUserByEmailOrFirebaseId(identifier);
+		const user = await this.usersService.getUserByEmailOrUuid(identifier);
 		if (!user) {
 			throw new NotFoundException('Landlord user not found');
 		}

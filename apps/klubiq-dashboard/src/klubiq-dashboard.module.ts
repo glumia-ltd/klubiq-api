@@ -19,7 +19,6 @@ import { UsersRepository } from './users/repositories/users.repository';
 import { APP_GUARD } from '@nestjs/core';
 import { PropertiesModule } from './properties/properties.module';
 import { DashboardModule } from './dashboard/dashboard.module';
-import { PermissionsGuard } from '@app/auth/guards/permissions.guard';
 import { LeaseModule } from './lease/lease.module';
 import { LeaseRepository } from './lease/repositories/lease.repository';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
@@ -73,10 +72,6 @@ import { SchedulersModule } from '@app/schedulers/schedulers.module';
 		{
 			provide: APP_GUARD,
 			useClass: AuthenticationGuard,
-		},
-		{
-			provide: APP_GUARD,
-			useClass: PermissionsGuard,
 		},
 		{
 			provide: APP_GUARD,

@@ -28,9 +28,9 @@ export class OrganizationCounter {
 	@Column({ type: 'bigint', default: 0 })
 	document_storage_size: number;
 
-	@CreateDateColumn({ type: 'timestamp without time zone' })
+	@CreateDateColumn({ type: 'timestamp with time zone' })
 	created_at: Date;
 
-	@UpdateDateColumn({ type: 'timestamp without time zone' })
+	@UpdateDateColumn({ type: 'timestamp with time zone' })
 	updated_at: Date;
 }

@@ -77,21 +77,6 @@ export class OrganizationService {
 		}
 	}
 
-	// This gets the organization by id
-	async getOrganizationById(id: number) {
-		try {
-			this.logger.verbose(`Getting organization by id: ${id}`);
-			const org = await this.organizationRepository.findOneWithId({
-				organizationId: id,
-			});
-			const orgDetails = await this.mapPlainToClass(org);
-			return orgDetails;
-		} catch (err) {
-			this.logger.error('Error getting organization', err);
-			throw new Error(`Error getting organization. Error: ${err}`);
-		}
-	}
-
 	// This creates a new organization
 	async create(createOrganizationDto: CreateOrganizationDto) {
 		try {

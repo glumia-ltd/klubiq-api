@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
+@Entity({ schema: 'kdo' })
 @Entity('deleted_files_records')
 export class DeletedFilesRecords {
 	@PrimaryGeneratedColumn()

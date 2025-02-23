@@ -1,9 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-// import { ViewFeaturePermissionDto, ViewRoleFeaturePermissionDto } from './feature-permission.dto';
-import { Role } from '../../database/entities/role.entity';
-import { MapperPickType } from '@automapper/classes/mapped-types';
-import { ViewFeaturePermissionDto } from './feature-permission.dto';
+import { Exclude } from 'class-transformer';
 
 export class ViewOrgRoleDto {
 	@AutoMap()
@@ -13,11 +10,6 @@ export class ViewOrgRoleDto {
 	@AutoMap()
 	permissions: string[];
 }
-export class ViewSystemRoleDto extends MapperPickType(Role, [
-	'id',
-	'name',
-	'description',
-]) {}
 
 export class OrgRoleResponseDto {
 	@AutoMap()
@@ -32,7 +24,7 @@ export class OrgRoleResponseDto {
 	@ApiProperty()
 	description?: string;
 
-	@AutoMap(() => [ViewFeaturePermissionDto])
-	@ApiProperty()
-	featurePermissions: ViewFeaturePermissionDto[];
+	@AutoMap()
+	@Exclude()
+	isKlubiqInternal?: boolean;
 }

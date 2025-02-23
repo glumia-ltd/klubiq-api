@@ -15,16 +15,10 @@ import { OrganizationService } from '../services/organization.service';
 import { CreateOrganizationDto } from '../dto/requests/create-organization.dto';
 import { UpdateOrganizationDto } from '../dto/requests/update-organization.dto';
 import { OrganizationResponseDto } from '../dto/responses/organization-response.dto';
-import { UserRoles } from '@app/common/config/config.constants';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { PageOptionsDto } from '@app/common/dto/pagination/page-options.dto';
-import { AppFeature, Actions } from '@app/common/config/config.constants';
-import {
-	Ability,
-	Auth,
-	Feature,
-	Roles,
-} from '@app/auth/decorators/auth.decorator';
+import { AppFeature, Permissions } from '@app/common/config/config.constants';
+import { Permission, Auth, Feature } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 
 @ApiTags('organizations')
@@ -36,7 +30,6 @@ export class OrganizationController {
 	constructor(private readonly organizationService: OrganizationService) {}
 
 	@Post()
-	@Roles(UserRoles.SUPER_ADMIN, UserRoles.SUPER_ADMIN)
 	@ApiOkResponse({
 		description: 'Creates a new organization',
 		type: OrganizationResponseDto,
@@ -46,7 +39,6 @@ export class OrganizationController {
 	}
 
 	@Get()
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN, UserRoles.STAFF)
 	@ApiOkResponse({
 		description: 'Gets all organization',
 		type: OrganizationResponseDto,
@@ -58,8 +50,8 @@ export class OrganizationController {
 	}
 
 	@Get(':uuid')
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN, UserRoles.LANDLORD)
-	//@Ability(Actions.WRITE, Actions.VIEW)
+
+	//@Permission(Permissions.READ, Permissions.CREATE, Permissions.UPDATE, Permissions.DELETE)
 	@ApiOkResponse({
 		description: 'Gets a organization by uuid',
 		type: OrganizationResponseDto,
@@ -69,13 +61,7 @@ export class OrganizationController {
 	}
 
 	@Patch(':uuid')
-	@Roles(
-		UserRoles.ADMIN,
-		UserRoles.SUPER_ADMIN,
-		UserRoles.STAFF,
-		UserRoles.ORG_OWNER,
-	)
-	@Ability(Actions.WRITE)
+	@Permission(Permissions.CREATE)
 	@ApiOkResponse({
 		description: 'Updates an organization',
 		type: OrganizationResponseDto,
@@ -87,7 +73,6 @@ export class OrganizationController {
 		return await this.organizationService.update(uuid, updateOrganizationDto);
 	}
 
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@ApiOkResponse({
 		description: 'soft deletes an organization',
 	})
@@ -96,7 +81,6 @@ export class OrganizationController {
 		return await this.organizationService.softDeleteOrganization(uuid);
 	}
 
-	@Roles(UserRoles.SUPER_ADMIN)
 	@ApiOkResponse({
 		description: 'Removes an organization from the database',
 	})
@@ -106,8 +90,7 @@ export class OrganizationController {
 	}
 
 	@Put(':uuid')
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
-	@Ability(Actions.WRITE)
+	@Permission(Permissions.CREATE)
 	@ApiOkResponse({
 		description: 'Updates an organization',
 		type: OrganizationResponseDto,

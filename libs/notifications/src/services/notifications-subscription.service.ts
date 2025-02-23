@@ -32,12 +32,12 @@ export class NotificationsSubscriptionService {
 		let userSubscription =
 			await this.notificationsSubscriptionRepository.findOne({
 				where: {
-					userId: this.currentUser.uid,
+					userId: this.currentUser.kUid,
 				},
 			});
 		if (userSubscription === null) {
 			userSubscription = this.notificationsSubscriptionRepository.create({
-				userId: this.currentUser.uid,
+				userId: this.currentUser.kUid,
 				organizationUuid: subscriptionDto.organizationUuid,
 				subscription: subscriptionDto.subscription,
 			});

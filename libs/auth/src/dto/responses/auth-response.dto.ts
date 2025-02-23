@@ -5,7 +5,6 @@ import {
 	IsBoolean,
 	IsJSON,
 	IsJWT,
-	IsNumber,
 	IsOptional,
 	IsString,
 } from 'class-validator';
@@ -35,10 +34,6 @@ export class AuthUserResponseDto {
 	@AutoMap()
 	@ApiProperty()
 	company?: string;
-
-	@AutoMap()
-	@ApiProperty()
-	companyId?: number;
 
 	@AutoMap()
 	@ApiProperty()
@@ -106,19 +101,11 @@ export class AuthUserResponseDto {
 
 	@AutoMap()
 	@ApiProperty()
-	organizationUserId?: number;
-
-	@AutoMap()
-	@ApiProperty()
 	phoneNumber: string;
 
 	@AutoMap()
 	@ApiProperty()
 	postalCode: string;
-
-	@AutoMap()
-	@ApiProperty()
-	profileId: number;
 
 	@AutoMap()
 	@ApiProperty()
@@ -142,10 +129,6 @@ export class AuthUserResponseDto {
 
 	@AutoMap()
 	@ApiProperty()
-	tenantId?: number;
-
-	@AutoMap()
-	@ApiProperty()
 	tenantUuid?: string;
 }
 
@@ -165,16 +148,16 @@ export class LandlordUserDetailsResponseDto {
 	uuid: string;
 
 	@Expose()
-	@IsNumber()
-	id: number;
+	@IsString()
+	profileUuid: string;
+
+	@Expose()
+	@IsString()
+	firebaseId: string;
 
 	@Expose()
 	@IsString()
 	organization: string;
-
-	@Expose()
-	@IsNumber()
-	organizationId: number;
 
 	@Expose()
 	@IsString()

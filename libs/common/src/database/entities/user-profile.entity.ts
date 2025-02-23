@@ -4,14 +4,10 @@ import {
 	Column,
 	CreateDateColumn,
 	UpdateDateColumn,
-	ManyToOne,
 	OneToOne,
-	Generated,
-	JoinColumn,
 	Index,
 	OneToMany,
 } from 'typeorm';
-import { Role } from './role.entity';
 import { OrganizationUser } from './organization-user.entity';
 import { AutoMap } from '@automapper/classes';
 import { Property } from './property.entity';
@@ -24,12 +20,6 @@ export class UserProfile {
 	@AutoMap()
 	@PrimaryGeneratedColumn('uuid')
 	profileUuid?: string;
-
-	@AutoMap()
-	@Index('IDX_PROFILE_ID')
-	@Generated('increment')
-	@Column({ unique: true })
-	profileId?: number;
 
 	@AutoMap()
 	@Column({ length: 100, nullable: true })
@@ -109,14 +99,6 @@ export class UserProfile {
 	@Column({ default: false })
 	isPrivacyPolicyAgreed?: boolean;
 
-	@AutoMap(() => Role)
-	@ManyToOne(() => Role, { eager: true })
-	@JoinColumn({
-		name: 'roleId',
-		referencedColumnName: 'id',
-	})
-	systemRole?: Role;
-
 	@AutoMap(() => OrganizationUser)
 	@OneToOne(
 		() => OrganizationUser,
@@ -139,10 +121,10 @@ export class UserProfile {
 	@OneToMany(() => Property, (property) => property.owner)
 	propertiesOwned?: Property[];
 
-	@CreateDateColumn()
+	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdDate?: Date;
 
-	@UpdateDateColumn()
+	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	updatedDate?: Date;
 
 	@AutoMap(() => [UserPreferences])
@@ -161,4 +143,8 @@ export class UserProfile {
 		},
 	)
 	notificationSubscription?: NotificationSubscription;
+
+	@AutoMap()
+	@Column({ default: false })
+	isKYCVerified?: boolean;
 }

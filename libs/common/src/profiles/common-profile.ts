@@ -6,25 +6,13 @@ import {
 	createMapper,
 } from '@automapper/core';
 import { AutomapperProfile, InjectMapper } from '@automapper/nestjs';
-// import { Feature } from '../database/entities/feature.entity';
-// import { Permission } from '../database/entities/permission.entity';
-// import { FeaturePermission } from '../database/entities/feature-permission.entity';
-// import { ViewFeaturePermissionDto } from '../dto/feature-permission.dto';
 import { OrganizationRole } from '../database/entities/organization-role.entity';
-import {
-	OrgRoleResponseDto,
-	ViewSystemRoleDto,
-} from '../dto/responses/org-role.dto';
+import { OrgRoleResponseDto } from '../dto/responses/org-role.dto';
 import { classes } from '@automapper/classes';
 import { Feature } from '../database/entities/feature.entity';
 import { ViewFeatureDto } from '../dto/responses/feature-response.dto';
-import {
-	ViewFeaturePermissionDto,
-	ViewPermissionDto,
-} from '../dto/responses/feature-permission.dto';
+import { ViewPermissionDto } from '../dto/responses/feature-permission.dto';
 import { Permission } from '../database/entities/permission.entity';
-import { FeaturePermission } from '../database/entities/feature-permission.entity';
-import { Role } from '../database/entities/role.entity';
 
 export class CommonProfile extends AutomapperProfile {
 	@InjectMapper('MAPPER') customMapper: Mapper;
@@ -39,8 +27,6 @@ export class CommonProfile extends AutomapperProfile {
 		return (customMapper) => {
 			createMap(customMapper, Feature, ViewFeatureDto);
 			createMap(customMapper, Permission, ViewPermissionDto);
-			createMap(customMapper, FeaturePermission, ViewFeaturePermissionDto);
-			createMap(customMapper, Role, ViewSystemRoleDto);
 			createMap(customMapper, OrganizationRole, OrgRoleResponseDto);
 		};
 	}

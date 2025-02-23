@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common/decorators/modules';
-import { Role } from './entities/role.entity';
 
 import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
 import { OrganizationTenants } from './entities/organization-tenants.entity';
@@ -21,7 +20,6 @@ import { DeletedFilesRecords } from './entities/deleted-files.entity';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
-			Role,
 			UserInvitation,
 			TenantUser,
 			Amenity,

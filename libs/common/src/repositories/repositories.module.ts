@@ -3,7 +3,6 @@ import { UserProfilesRepository } from '../repositories/user-profiles.repository
 import { PermissionsRepository } from './permissions.repository';
 import { FeaturesRepository } from './features.repository';
 import { OrganizationRolesRepository } from './organization-roles.repository';
-import { RolesRepository } from '../repositories/roles.repository';
 import { EntityManager } from 'typeorm';
 import { PropertyCategoryRepository } from './properties-category.repository';
 import { PropertyStatusRepository } from './properties-status.repository';
@@ -19,17 +18,13 @@ import { PropertyAmenityRepository } from './property-amenity.repository';
 import { OrganizationSettingsRepository } from './organization-settings.repository';
 import { UserPreferenceRepository } from './user-preference.repository';
 import { TenantRepository } from './tenant.repository';
+import { RoleFeaturePermissionsRepository } from './roles-features-permission.repository';
 
 @Module({
 	providers: [
 		{
 			provide: UserProfilesRepository,
 			useFactory: (em: EntityManager) => new UserProfilesRepository(em),
-			inject: [EntityManager],
-		},
-		{
-			provide: RolesRepository,
-			useFactory: (em: EntityManager) => new RolesRepository(em),
 			inject: [EntityManager],
 		},
 		{
@@ -108,10 +103,15 @@ import { TenantRepository } from './tenant.repository';
 			useFactory: (em: EntityManager) => new TenantRepository(em),
 			inject: [EntityManager],
 		},
+		{
+			provide: RoleFeaturePermissionsRepository,
+			useFactory: (em: EntityManager) =>
+				new RoleFeaturePermissionsRepository(em),
+			inject: [EntityManager],
+		},
 	],
 	exports: [
 		UserProfilesRepository,
-		RolesRepository,
 		PermissionsRepository,
 		FeaturesRepository,
 		OrganizationRolesRepository,
@@ -127,6 +127,7 @@ import { TenantRepository } from './tenant.repository';
 		OrganizationSettingsRepository,
 		UserPreferenceRepository,
 		TenantRepository,
+		RoleFeaturePermissionsRepository,
 	],
 })
 export class RepositoriesModule {}

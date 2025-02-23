@@ -47,7 +47,7 @@ export class DashboardRepository {
         	    FROM
 					date_series ds
 				LEFT JOIN poo.transaction t ON date_trunc('month', t."transactionDate") = ds.month
-        	    AND t."transactionType" = '${TransactionType.REVENUE}'
+        	    AND t."type" = '${TransactionType.REVENUE}'
 				AND t."status" = '${PaymentStatus.PAID}'
 				AND t."organizationUuid" = '${orgUuid}'
 				GROUP BY  ds.month, t."revenueType"
@@ -78,7 +78,7 @@ export class DashboardRepository {
                         date_trunc('month', ('${endDateStr}'::DATE - INTERVAL '11 months')),
                         '1 month') AS month
 					LEFT JOIN poo.transaction t ON date_trunc('month', t."transactionDate") = month
-					AND t."transactionType" = '${TransactionType.REVENUE}'
+					AND t."type" = '${TransactionType.REVENUE}'
 					AND t."status" = '${PaymentStatus.PAID}'
 					AND t."organizationUuid" = '${orgUuid}'
     				GROUP BY month
@@ -189,7 +189,7 @@ export class DashboardRepository {
 				totalRevenuePreviousMTD: number = 0;
 			const totalTransactionsMTDResult = await this.manager.query(
 				`SELECT
-					t."transactionType" as transaction_type,
+					t."type" as transaction_type,
 						SUM(t.amount) as total_amount
 					FROM
 					poo.transaction t
@@ -197,11 +197,11 @@ export class DashboardRepository {
 					t."transactionDate" >= (CURRENT_DATE - INTERVAL '30 days')
                 AND t."organizationUuid" = '${orgUuid}'
 				AND t."status" = '${PaymentStatus.PAID}'
-            	GROUP BY t."transactionType"; `,
+            	GROUP BY t."type"; `,
 			);
 			const totalTransactionsPreviousMTDResult = await this.manager.query(
 				`SELECT
-					t."transactionType" as transaction_type,
+					t."type" as transaction_type,
 						SUM(t.amount) as total_amount
 					FROM
 					poo.transaction t
@@ -210,7 +210,7 @@ export class DashboardRepository {
                 AND t."transactionDate" < (CURRENT_DATE - INTERVAL '30 days')
                 AND t."organizationUuid" = '${orgUuid}'
 				AND t."status" = '${PaymentStatus.PAID}'
-            	GROUP BY t."transactionType"; `,
+            	GROUP BY t."type"; `,
 			);
 			totalTransactionsMTDResult.forEach((row: any) => {
 				if (row.transaction_type === TransactionType.REVENUE) {

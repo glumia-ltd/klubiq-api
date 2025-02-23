@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common/decorators/modules';
 import { ConfigModule } from '../config/config.module';
-import { Role } from './entities/role.entity';
 import { UserProfile } from './entities/user-profile.entity';
 import { Permission } from './entities/permission.entity';
 import { OrganizationRole } from './entities/organization-role.entity';
@@ -21,6 +20,9 @@ import { Property } from './entities/property.entity';
 import { PropertyAddress } from './entities/property-address.entity';
 import { NotificationSubscription } from './entities/notification-subscription.entity';
 import { Notifications } from './entities/notifications.entity';
+import { RoleFeaturePermissions } from './entities/role-feature-permission.entity';
+import { MainSeeder } from './seeder';
+import { Logger, OnApplicationBootstrap } from '@nestjs/common';
 
 /// WE HAVE 2 SCHEMA TYPES. => KDO and POO
 /// KDO = Klubiq Data Object
@@ -28,7 +30,6 @@ import { Notifications } from './entities/notifications.entity';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
-			Role,
 			UserProfile,
 			Permission,
 			Feature,
@@ -47,6 +48,7 @@ import { Notifications } from './entities/notifications.entity';
 			PropertyAddress,
 			NotificationSubscription,
 			Notifications,
+			RoleFeaturePermissions,
 		]),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],
@@ -69,5 +71,23 @@ import { Notifications } from './entities/notifications.entity';
 			inject: [ConfigService],
 		}),
 	],
+	providers: [MainSeeder],
 })
-export class DatabaseModule {}
+export class DatabaseModule implements OnApplicationBootstrap {
+	private readonly logger = new Logger(DatabaseModule.name);
+	constructor(
+		private readonly mainSeeder: MainSeeder,
+		private readonly configService: ConfigService,
+	) {}
+
+	async onApplicationBootstrap() {
+		const seedDatabase = this.configService.get<boolean>('SYNCHRONIZE_DB');
+		if (seedDatabase) {
+			this.logger.log('Seeding database...');
+			await this.mainSeeder.run();
+			this.logger.log('Database seeded.');
+		} else {
+			this.logger.log('Database seeding is disabled.');
+		}
+	}
+}

@@ -2,15 +2,15 @@ import { startCase } from 'lodash';
 import { DateTime } from 'luxon';
 
 export enum UserRoles {
-	SUPER_ADMIN = 'SuperAdmin',
+	SUPER_ADMIN = 'Super_Admin',
 	ADMIN = 'Admin',
 	STAFF = 'Staff',
 	LANDLORD = 'Landlord',
 	TENANT = 'Tenant',
-	ORG_OWNER = 'OrganizationOwner',
-	PROPERTY_MANAGER = 'PropertyManager',
-	PROPERTY_OWNER = 'PropertyOwner',
-	LEASE_MANAGER = 'LeaseManager',
+	ORG_OWNER = 'Organization_Owner',
+	PROPERTY_MANAGER = 'Property_Manager',
+	PROPERTY_OWNER = 'Property_Owner',
+	LEASE_MANAGER = 'Lease_Manager',
 	CUSTOM = 'Custom',
 }
 
@@ -21,6 +21,7 @@ export const SYSTEM_ROLES: UserRoles[] = [
 	UserRoles.LANDLORD,
 	UserRoles.TENANT,
 ];
+
 export enum Priority {
 	LOW = 'Low',
 	MEDIUM = 'Medium',
@@ -36,9 +37,11 @@ export const ORG_ROLES: UserRoles[] = [
 	UserRoles.CUSTOM,
 ];
 
-export enum Actions {
-	VIEW = 'View',
-	WRITE = 'Write',
+export enum Permissions {
+	READ = 'Read',
+	CREATE = 'Create',
+	UPDATE = 'Update',
+	DELETE = 'Delete',
 }
 
 export enum AppFeature {
@@ -52,6 +55,14 @@ export enum AppFeature {
 	MESSAGING = 'Messaging',
 	PUBLIC = 'Public',
 	DASHBOARD = 'Dashboard',
+	ADMIN_PORTAL = 'Admin Portal',
+	ORGANIZATION = 'Organization',
+	SUBSCRIPTION = 'Subscription',
+	TRANSACTION = 'Transaction',
+	TENANT_PORTAL = 'Tenant Portal',
+	WEBHOOK = 'Webhook',
+	API = 'API',
+	WALLET = 'Wallet',
 }
 
 //Enums to identify if it's a sign-up event or invite user event
@@ -82,6 +93,7 @@ export enum CacheKeys {
 	SUBSCRIPTION_PLANS = 'subscription-plans',
 	ORGANIZATION_SUBSCRIPTIONS = 'organization-subscriptions',
 	ORGANIZATION_TENANTS = 'organization-tenants',
+	ROLE_FEATURE_PERMISSIONS = 'role-feature-permissions',
 }
 
 export enum TransactionType {

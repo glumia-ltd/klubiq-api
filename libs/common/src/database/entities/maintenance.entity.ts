@@ -14,12 +14,13 @@ import {
 	JoinColumn,
 	ManyToOne,
 	PrimaryGeneratedColumn,
+	UpdateDateColumn,
 } from 'typeorm';
 
 @Entity({ schema: 'poo' })
 export class Maintenance {
 	@AutoMap()
-	@PrimaryGeneratedColumn()
+	@PrimaryGeneratedColumn('uuid')
 	id?: number;
 
 	@AutoMap()
@@ -34,8 +35,19 @@ export class Maintenance {
 	@Column({ type: 'timestamp with time zone', nullable: true })
 	endDate?: Date;
 
-	@CreateDateColumn({ select: false })
+	@CreateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
 	createdDate?: Date;
+
+	@UpdateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
+	updatedDate?: Date;
 
 	@AutoMap()
 	@Column({ type: 'varchar' })

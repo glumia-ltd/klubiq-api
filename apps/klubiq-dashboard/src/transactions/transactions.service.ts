@@ -27,7 +27,7 @@ export class TransactionsService {
 		private readonly util: Util,
 	) {}
 	async recordTransaction(
-		leaseId: number,
+		leaseId: string,
 		transactionDto: CreateTransactionDto,
 	): Promise<Transaction> {
 		const lease = await this.leaseRepository.findOneWithId({ id: leaseId });
@@ -43,7 +43,7 @@ export class TransactionsService {
 			status: paymentStatus,
 			lease,
 			transactionDate: DateTime.utc().toJSDate(),
-			transactionType: TransactionType.REVENUE,
+			type: TransactionType.REVENUE,
 			revenueType: RevenueType.PROPERTY_RENTAL,
 			code: padStart(uniqueCode, 14, 'KUI-'),
 		});
@@ -52,14 +52,14 @@ export class TransactionsService {
 		await this.leaseRepository.save(lease);
 		return transaction;
 	}
-	async getTransactionHistory(leaseId: number): Promise<Transaction[]> {
+	async getTransactionHistory(leaseId: string): Promise<Transaction[]> {
 		return await this.transactionRepository.find({
 			where: { lease: { id: leaseId } },
 			order: { transactionDate: 'DESC' },
 		});
 	}
 	async recordPartialTransaction(
-		leaseId: number,
+		leaseId: string,
 		transactionDto: CreateTransactionDto,
 	): Promise<Transaction> {
 		const lease = await this.leaseRepository.findOneWithId({ id: leaseId });
@@ -68,7 +68,7 @@ export class TransactionsService {
 			lease,
 			amount: transactionDto.amount,
 			transactionDate: DateTime.utc().toJSDate(),
-			transactionType: TransactionType.REVENUE,
+			type: TransactionType.REVENUE,
 			revenueType: RevenueType.PROPERTY_RENTAL,
 			code: padStart(
 				this.suid.stamp(10, DateTime.utc().toJSDate()),

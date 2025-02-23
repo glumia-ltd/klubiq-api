@@ -29,7 +29,7 @@ export class NotificationSubscription {
 	organizationUuid?: string;
 
 	@OneToOne(() => UserProfile, (user) => user.notificationSubscription)
-	@JoinColumn({ name: 'userId', referencedColumnName: 'firebaseId' })
+	@JoinColumn({ name: 'userId', referencedColumnName: 'profileUuid' })
 	user: UserProfile;
 
 	@ManyToOne(() => Organization, (organization) => organization.subscriptions, {
@@ -38,9 +38,17 @@ export class NotificationSubscription {
 	@JoinColumn({ name: 'organizationUuid' })
 	organization?: Organization;
 
-	@CreateDateColumn({ select: false })
+	@CreateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
 	createdAt: Date;
 
-	@UpdateDateColumn({ select: false })
+	@UpdateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
 	updatedAt: Date;
 }

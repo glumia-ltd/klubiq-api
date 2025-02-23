@@ -37,6 +37,18 @@ export class CacheService {
 			return cachedList.find((f) => f[key] == identifier);
 	}
 
+	async getCacheByIdentifiers<T>(
+		cacheKey: string,
+		keys: string[],
+		identifiers: any[],
+	): Promise<T> {
+		const cachedList = await this.cacheManager.get<T[]>(cacheKey);
+		if (cachedList && cachedList.length > 0)
+			return cachedList.find((f) => {
+				return keys.every((key, index) => f[key] == identifiers[index]);
+			});
+	}
+
 	// gets a cached data by Id or identifier
 	async getCacheByKey<T>(cacheKey: string): Promise<T> {
 		return await this.cacheManager.get<T>(cacheKey);
@@ -87,6 +99,23 @@ export class CacheService {
 			this.cacheManager.set(
 				cacheKey,
 				cachedList.filter((f) => f[key] != identifier),
+				this.cacheTTL,
+			);
+		}
+	}
+
+	async updateCacheAfterdeleteWithIdentifiers<T>(
+		cacheKey: string,
+		key: string[],
+		identifier: any[],
+	): Promise<void> {
+		const cachedList = await this.cacheManager.get<T[]>(cacheKey);
+		if (cachedList && cachedList.length > 0) {
+			this.cacheManager.set(
+				cacheKey,
+				cachedList.filter((f) => {
+					return key.every((k, index) => f[k] != identifier[index]);
+				}),
 				this.cacheTTL,
 			);
 		}

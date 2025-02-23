@@ -60,10 +60,10 @@ export class Property {
 	@Column({ nullable: true, select: false })
 	archivedDate?: Date;
 
-	@CreateDateColumn()
+	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdDate?: Date;
 
-	@UpdateDateColumn()
+	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	updatedDate?: Date;
 
 	@ManyToOne(() => PropertyCategory, { eager: true })
@@ -143,7 +143,7 @@ export class Property {
 		onDelete: 'SET NULL',
 		onUpdate: 'CASCADE',
 	})
-	@JoinColumn({ name: 'ownerUid', referencedColumnName: 'firebaseId' })
+	@JoinColumn({ name: 'ownerUid', referencedColumnName: 'profileUuid' })
 	owner?: UserProfile;
 
 	@Index('IDX_MANAGER', ['managerUid'])
@@ -151,7 +151,7 @@ export class Property {
 		onDelete: 'SET NULL',
 		onUpdate: 'CASCADE',
 	})
-	@JoinColumn({ name: 'managerUid', referencedColumnName: 'firebaseId' })
+	@JoinColumn({ name: 'managerUid', referencedColumnName: 'profileUuid' })
 	manager?: UserProfile;
 
 	@Column({ default: false })

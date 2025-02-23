@@ -79,7 +79,7 @@ export class LeaseService implements ILeaseService {
 		if (cachedLeases) return cachedLeases;
 		const [entities, count] = await this.leaseRepository.getOrganizationLeases(
 			currentUser.organizationId,
-			currentUser.uid,
+			currentUser.kUid,
 			getLeaseDto,
 			currentUser.organizationRole === UserRoles.ORG_OWNER,
 		);
@@ -144,7 +144,7 @@ export class LeaseService implements ILeaseService {
 		);
 		return leaseListDto;
 	}
-	async getAllUnitLeases(unitId: number): Promise<LeaseDto[]> {
+	async getAllUnitLeases(unitId: string): Promise<LeaseDto[]> {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
@@ -156,8 +156,8 @@ export class LeaseService implements ILeaseService {
 				return filter(
 					cachedLeases,
 					(lease: LeaseDto) =>
-						lease.property.managerUid !== currentUser.uid ||
-						lease.property.ownerUid !== currentUser.uid,
+						lease.property.managerUid !== currentUser.kUid ||
+						lease.property.ownerUid !== currentUser.kUid,
 				);
 			return cachedLeases;
 		}
@@ -169,13 +169,13 @@ export class LeaseService implements ILeaseService {
 			return filter(
 				mappedLeases,
 				(lease: LeaseDto) =>
-					lease.property.managerUid !== currentUser.uid ||
-					lease.property.ownerUid !== currentUser.uid,
+					lease.property.managerUid !== currentUser.kUid ||
+					lease.property.ownerUid !== currentUser.kUid,
 			);
 		return mappedLeases;
 	}
 
-	async getLeaseById(id: number): Promise<LeaseDetailsDto> {
+	async getLeaseById(id: string): Promise<LeaseDetailsDto> {
 		const cacheKey = `${this.cacheKeyPrefix}/${id}`;
 		const cachedLease = await this.cacheManager.get<LeaseDetailsDto>(cacheKey);
 		if (cachedLease) return cachedLease;
@@ -187,7 +187,7 @@ export class LeaseService implements ILeaseService {
 	}
 
 	async updateLeaseById(
-		id: number,
+		id: string,
 		leaseDto: UpdateLeaseDto,
 	): Promise<LeaseDetailsDto> {
 		const updatedLease = await this.leaseRepository.updateLease(id, leaseDto);
@@ -225,7 +225,7 @@ export class LeaseService implements ILeaseService {
 			EVENTS.LEASE_CREATED,
 			currentUser.organizationId,
 			leaseDto,
-			currentUser.uid,
+			currentUser.kUid,
 			currentUser.email,
 			currentUser.name,
 			createdLease.id,
@@ -233,11 +233,11 @@ export class LeaseService implements ILeaseService {
 		);
 	}
 
-	async deleteLease(leaseId: number): Promise<void> {
+	async deleteLease(leaseId: string): Promise<void> {
 		await this.leaseRepository.delete(leaseId);
 	}
 
-	async renewLease(leaseId: number): Promise<void> {
+	async renewLease(leaseId: string): Promise<void> {
 		const leaseDto: UpdateLeaseDto = {
 			status: LeaseStatus.ACTIVE,
 			endDate: DateTime.utc().toISO(),
@@ -272,7 +272,7 @@ export class LeaseService implements ILeaseService {
 
 	async addTenantToLease(
 		tenantDtos: CreateTenantDto[],
-		leaseId: number,
+		leaseId: string,
 	): Promise<LeaseDetailsDto> {
 		try {
 			const updatedLease = await this.leaseRepository.addTenantToLease(
@@ -297,7 +297,7 @@ export class LeaseService implements ILeaseService {
 		}
 	}
 
-	async terminateLease(leaseId: number): Promise<void> {
+	async terminateLease(leaseId: string): Promise<void> {
 		const leaseDto: UpdateLeaseDto = {
 			status: LeaseStatus.TERMINATED,
 			endDate: DateTime.utc().toISO(),
@@ -363,7 +363,7 @@ export class LeaseService implements ILeaseService {
 		currentUserId: string,
 		currentUserEmail: string,
 		currentUserName: string,
-		leaseId?: number,
+		leaseId?: string,
 		tenantCount: number = 0,
 	) {
 		this.eventEmitter.emitAsync(event, {

@@ -103,7 +103,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		);
 	}
 
-	async getUnitLeases(unitId: number, includeArchived: boolean = false) {
+	async getUnitLeases(unitId: string, includeArchived: boolean = false) {
 		const queryBuilder = this.createQueryBuilder('lease')
 			.leftJoinAndSelect('lease.tenants', 'tenant')
 			.leftJoinAndSelect('lease.unit', 'unit')
@@ -132,7 +132,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		return result;
 	}
 
-	async getLeaseById(id: number) {
+	async getLeaseById(id: string) {
 		const lease = await this.createQueryBuilder('lease')
 			.innerJoin('lease.unit', 'unit')
 			.innerJoin('unit.property', 'property')
@@ -161,7 +161,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		return lease;
 	}
 
-	async updateLease(id: number, leaseDto: UpdateLeaseDto): Promise<Lease> {
+	async updateLease(id: string, leaseDto: UpdateLeaseDto): Promise<Lease> {
 		if (leaseDto.startDate)
 			leaseDto.startDate = DateTime.fromISO(leaseDto.startDate).toSQL({
 				includeOffset: false,
@@ -259,7 +259,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		return await queryBuilder.getManyAndCount();
 	}
 
-	async addTenantToLease(tenantDtos: CreateTenantDto[], leaseId: number) {
+	async addTenantToLease(tenantDtos: CreateTenantDto[], leaseId: string) {
 		await this.manager.transaction(async (transactionalEntityManager) => {
 			const tenants: TenantUser[] = tenantDtos.map((tenant) => ({
 				...tenant,

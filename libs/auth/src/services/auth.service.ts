@@ -99,11 +99,11 @@ export abstract class AuthService {
 
 		const updatedUserPreferences =
 			await this.userPreferencesService.updateUserPreferences(
-				currentUser.uid,
+				currentUser.kUid,
 				preferences,
 			);
 		if (updatedUserPreferences) {
-			const cacheKey = `${this.cacheKeyPrefix}/user/${currentUser.uid}`;
+			const cacheKey = `${this.cacheKeyPrefix}/user/${currentUser.kUid}`;
 			await this.cacheManager.del(cacheKey);
 		}
 		return updatedUserPreferences;
@@ -139,9 +139,9 @@ export abstract class AuthService {
 		}
 	}
 
-	async setCustomClaims(uuid: string, claims: any) {
+	async setCustomClaims(uid: string, claims: any) {
 		try {
-			await this.auth.setCustomUserClaims(uuid, claims);
+			await this.auth.setCustomUserClaims(uid, claims);
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
@@ -406,7 +406,7 @@ export abstract class AuthService {
 
 	async checkUserExist(email: string): Promise<boolean> {
 		try {
-			return await this.userProfilesRepository.checkUerExist(email);
+			return await this.userProfilesRepository.checkUserExist(email);
 		} catch (err) {
 			throw err;
 		}
@@ -435,10 +435,10 @@ export abstract class AuthService {
 	async getUserInfo(): Promise<any> {
 		try {
 			this.currentUser = this.cls.get('currentUser');
-			if (!this.currentUser.uid) {
+			if (!this.currentUser.uid && !this.currentUser.kUid) {
 				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
 			}
-			const cacheKey = `${this.cacheKeyPrefix}/user/${this.currentUser.uid}`;
+			const cacheKey = `${this.cacheKeyPrefix}/user/${this.currentUser.kUid}`;
 
 			switch (this.currentUser.systemRole) {
 				case UserRoles.LANDLORD:
@@ -452,6 +452,7 @@ export abstract class AuthService {
 					break;
 			}
 			const user = await this.userProfilesRepository.getUserLoginInfo(
+				this.currentUser.kUid,
 				this.currentUser.uid,
 			);
 			const userData = this.mapper.map(user, UserProfile, AuthUserResponseDto);
@@ -466,6 +467,7 @@ export abstract class AuthService {
 		cacheKey: string = `${this.cacheKeyPrefix}/user/${currentUser.uid}`,
 	): Promise<LandlordUserDetailsResponseDto> {
 		const userDetails = await this.userProfilesRepository.getLandLordUserInfo(
+			currentUser.kUid,
 			currentUser.uid,
 		);
 		if (!userDetails) {
@@ -481,7 +483,7 @@ export abstract class AuthService {
 			);
 		const notificationsSubscription =
 			await this.notificationSubService.getAUserSubscriptionDetails(
-				currentUser.uid,
+				currentUser.kUid,
 			);
 		const userData = await this.mapLandlordUserToDto(
 			userDetails,
@@ -520,22 +522,15 @@ export abstract class AuthService {
 		return plainToInstance(LandlordUserDetailsResponseDto, {
 			email: user.email,
 			entitlements: entitlementsResolve(currentUser.entitlements),
-			firstName: user.first_name
-				? user.first_name
-				: user.profile_first_name
-					? user.profile_first_name
-					: '',
+			firstName: user.profile_first_name,
 			id: user.id,
+			profileUuid: user.profile_uuid,
+			firebaseId: user.firebase_id,
 			isAccountVerified: user.is_account_verified,
 			isPrivacyPolicyAgreed: user.is_privacy_policy_agreed,
 			isTermsAndConditionAccepted: user.is_terms_and_condition_accepted,
-			lastName: user.last_name
-				? user.last_name
-				: user.profile_last_name
-					? user.profile_last_name
-					: '',
+			lastName: user.profile_last_name,
 			organization: user.organization,
-			organizationId: user.org_id,
 			organizationUuid: user.org_uuid,
 			phone: user.phone,
 			preferences: user.user_preferences,

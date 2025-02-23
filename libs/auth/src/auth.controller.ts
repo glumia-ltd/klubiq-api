@@ -13,7 +13,7 @@ import {
 	ApiSecurity,
 	ApiTags,
 } from '@nestjs/swagger';
-import { Auth, Roles } from './decorators/auth.decorator';
+import { Auth } from './decorators/auth.decorator';
 import {
 	InviteUserDto,
 	OrgUserSignUpDto,
@@ -24,7 +24,6 @@ import {
 	VerifyEmailDto,
 } from './dto/requests/user-login.dto';
 import { AuthType } from './types/firebase.types';
-import { UserRoles } from '@app/common/config/config.constants';
 import { LandlordAuthService } from './services/landlord-auth.service';
 import { AdminAuthService } from './services/admin-auth.service';
 import { CreateSuperAdminDTO } from './dto/requests/admin-user.dto';
@@ -55,13 +54,6 @@ export class AuthController {
 	}
 
 	@Auth(AuthType.Bearer)
-	@Roles(
-		UserRoles.ADMIN,
-		UserRoles.STAFF,
-		UserRoles.SUPER_ADMIN,
-		UserRoles.TENANT,
-		UserRoles.LANDLORD,
-	)
 	@Get('user')
 	@ApiOkResponse({
 		description: 'Gets user data',
@@ -75,13 +67,6 @@ export class AuthController {
 	}
 
 	@Auth(AuthType.Bearer)
-	@Roles(
-		UserRoles.ADMIN,
-		UserRoles.STAFF,
-		UserRoles.SUPER_ADMIN,
-		UserRoles.TENANT,
-		UserRoles.LANDLORD,
-	)
 	@Get('verify-token')
 	async verifyToken(): Promise<any> {
 		try {
@@ -124,7 +109,6 @@ export class AuthController {
 	}
 
 	@Auth(AuthType.Bearer)
-	@Roles(UserRoles.ORG_OWNER)
 	@HttpCode(HttpStatus.OK)
 	@Post('landlord/invite')
 	@ApiOkResponse({

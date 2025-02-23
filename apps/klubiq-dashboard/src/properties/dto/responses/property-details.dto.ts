@@ -94,7 +94,7 @@ export class PropertyManagerDto {
 
 	@Expose()
 	@IsString()
-	firebaseId: string;
+	userId: string;
 }
 
 export class PropertyDetailsDto {

@@ -114,4 +114,6 @@ export class CreateOrganizationDto {
 	})
 	@IsUrl()
 	website?: string;
+
+	orgType: 'individual' | 'company' | 'ngo' | 'government' | 'other' | 'self';
 }

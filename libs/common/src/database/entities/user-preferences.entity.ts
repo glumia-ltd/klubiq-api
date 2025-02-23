@@ -15,14 +15,14 @@ export class UserPreferences extends AbstractEntity {
 	@Column('jsonb', { nullable: true })
 	preferences: Record<string, any>;
 
-	@CreateDateColumn({ type: 'timestamp' })
+	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdAt?: Date;
 
-	@UpdateDateColumn({ type: 'timestamp' })
+	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	updatedAt?: Date;
 
 	@OneToOne(() => UserProfile, (profile) => profile.preferences)
 	@Index('IDX_USER_PREFERENCES_PROFILE')
-	@JoinColumn({ name: 'userId', referencedColumnName: 'firebaseId' })
+	@JoinColumn({ name: 'userId', referencedColumnName: 'profileUuid' })
 	profile?: UserProfile;
 }

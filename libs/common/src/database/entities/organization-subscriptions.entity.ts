@@ -22,10 +22,10 @@ export class OrganizationSubscriptions {
 	@Column()
 	subscription_plan_id?: number;
 
-	@CreateDateColumn({ type: 'timestamp without time zone' })
+	@CreateDateColumn({ type: 'timestamp with time zone' })
 	start_date?: Date;
 
-	@Column({ type: 'timestamp without time zone' })
+	@Column({ type: 'timestamp with time zone' })
 	end_date?: Date;
 
 	@Column()

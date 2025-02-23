@@ -322,7 +322,7 @@ export class PropertiesService implements IPropertyMetrics {
 			const property =
 				await this.propertyRepository.getAPropertyInAnOrganization(
 					currentUser.organizationId,
-					currentUser.uid,
+					currentUser.kUid,
 					currentUser.organizationRole === UserRoles.ORG_OWNER,
 					uuid,
 				);
@@ -355,7 +355,7 @@ export class PropertiesService implements IPropertyMetrics {
 			const property = await this.propertyRepository.updateProperty(
 				uuid,
 				currentUser.organizationId,
-				currentUser.uid,
+				currentUser.kUid,
 				updateData,
 				currentUser.organizationRole === UserRoles.ORG_OWNER,
 			);
@@ -385,7 +385,7 @@ export class PropertiesService implements IPropertyMetrics {
 			await this.propertyRepository.deleteProperty(
 				deleteData.uuid,
 				currentUser.organizationId,
-				currentUser.uid,
+				currentUser.kUid,
 			);
 			const deletedTime = DateTime.utc()
 				.setZone(this.cls.get('clientTimeZoneName'))
@@ -419,7 +419,7 @@ export class PropertiesService implements IPropertyMetrics {
 			await this.propertyRepository.archiveProperty(
 				propertyUuid,
 				currentUser.organizationId,
-				currentUser.uid,
+				currentUser.kUid,
 			);
 			this.eventEmitter.emit('property.archived', {
 				organizationId: currentUser.organizationId,
@@ -461,7 +461,7 @@ export class PropertiesService implements IPropertyMetrics {
 			if (!createDto.isMultiUnit) {
 				createDto.units[0].unitNumber = padEnd(createDto.name, 4, '-1');
 			}
-			createDto.managerUid = currentUser.uid;
+			createDto.managerUid = currentUser.kUid;
 			const createdProperty = await this.propertyRepository.createProperty(
 				createDto,
 				isDraft,
@@ -470,7 +470,7 @@ export class PropertiesService implements IPropertyMetrics {
 				organizationId: currentUser.organizationId,
 				name: createdProperty.name,
 				totalUnits: createDto.units?.length || 1,
-				propertyManagerId: createdProperty.manager?.firebaseId,
+				propertyManagerId: createdProperty.manager?.profileUuid,
 				propertyManagerEmail: currentUser.email,
 				propertyId: createdProperty.uuid,
 				propertyManagerName: currentUser.name,
@@ -514,7 +514,7 @@ export class PropertiesService implements IPropertyMetrics {
 			const [entities, count] =
 				await this.propertyRepository.getOrganizationProperties(
 					currentUser.organizationId,
-					currentUser.uid,
+					currentUser.kUid,
 					currentUser.organizationRole === UserRoles.ORG_OWNER,
 					getPropertyDto,
 				);
@@ -628,7 +628,7 @@ export class PropertiesService implements IPropertyMetrics {
 				unitIds,
 				currentUser.organizationId,
 				propertyUuid,
-				currentUser.uid,
+				currentUser.kUid,
 				currentUser.organizationRole === UserRoles.ORG_OWNER,
 			);
 		} catch (error) {

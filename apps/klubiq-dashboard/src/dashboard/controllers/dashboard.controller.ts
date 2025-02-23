@@ -11,17 +11,8 @@ import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import { Response } from 'express';
 import { DashboardService } from '../services/dashboard.service';
-import {
-	Actions,
-	AppFeature,
-	UserRoles,
-} from '@app/common/config/config.constants';
-import {
-	Ability,
-	Auth,
-	Feature,
-	Roles,
-} from '@app/auth/decorators/auth.decorator';
+import { Permissions, AppFeature } from '@app/common/config/config.constants';
+import { Permission, Auth, Feature } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 import {
 	DashboardMetricsDto,
@@ -37,8 +28,12 @@ import { DownloadRevenueDataDto } from '../dto/requests/download-dto';
 export class DashboardController {
 	constructor(private readonly dashboardService: DashboardService) {}
 
-	@Roles(UserRoles.ORG_OWNER, UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
-	@Ability(Actions.WRITE, Actions.VIEW)
+	@Permission(
+		Permissions.READ,
+		Permissions.CREATE,
+		Permissions.UPDATE,
+		Permissions.DELETE,
+	)
 	@Get('metrics')
 	@ApiOkResponse()
 	async metrics(): Promise<DashboardMetricsDto> {
@@ -57,8 +52,12 @@ export class DashboardController {
 		}
 	}
 
-	@Roles(UserRoles.ORG_OWNER, UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
-	@Ability(Actions.WRITE, Actions.VIEW)
+	@Permission(
+		Permissions.READ,
+		Permissions.CREATE,
+		Permissions.UPDATE,
+		Permissions.DELETE,
+	)
 	@Get('revenue-report')
 	@ApiOkResponse()
 	async getRevenueReport(
@@ -74,8 +73,12 @@ export class DashboardController {
 		}
 	}
 
-	@Roles(UserRoles.ORG_OWNER, UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
-	@Ability(Actions.WRITE, Actions.VIEW)
+	@Permission(
+		Permissions.READ,
+		Permissions.CREATE,
+		Permissions.UPDATE,
+		Permissions.DELETE,
+	)
 	@Post('download-revenue-report')
 	@ApiOkResponse()
 	async downloadRevenueReport(

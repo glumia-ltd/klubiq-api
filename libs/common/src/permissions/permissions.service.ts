@@ -5,7 +5,6 @@ import { InjectMapper } from '@automapper/nestjs';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CacheService } from '../services/cache.service';
-import { ViewPermissionDto } from '../dto/responses/feature-permission.dto';
 import { Permission } from '../database/entities/permission.entity';
 import {
 	CreatePermissionDto,
@@ -25,24 +24,18 @@ export class PermissionsService {
 	) {}
 
 	// gets all app permissions
-	async getPermissions(): Promise<ViewPermissionDto[]> {
+	async getPermissions(): Promise<Permission[]> {
 		try {
-			const cachedPermissionList =
-				await this.cacheService.getCache<ViewPermissionDto>(
-					this.permissionsCacheKey,
-				);
+			const cachedPermissionList = await this.cacheService.getCache<Permission>(
+				this.permissionsCacheKey,
+			);
 			if (!cachedPermissionList) {
 				const permissions = await this.permissionsRepository.findAll();
-				const data = await this.mapper.mapArrayAsync(
+				await this.cacheService.setCache<Permission[]>(
 					permissions,
-					Permission,
-					ViewPermissionDto,
-				);
-				await this.cacheService.setCache<ViewPermissionDto[]>(
-					data,
 					this.permissionsCacheKey,
 				);
-				return data;
+				return permissions;
 			}
 			return cachedPermissionList;
 		} catch (err) {
@@ -52,10 +45,10 @@ export class PermissionsService {
 	}
 
 	// gets a permission by Id
-	async getPermissionById(id: number): Promise<ViewPermissionDto> {
+	async getPermissionById(id: number): Promise<Permission> {
 		try {
 			const cachedPermission =
-				await this.cacheService.getCacheByIdentifier<ViewPermissionDto>(
+				await this.cacheService.getCacheByIdentifier<Permission>(
 					this.permissionsCacheKey,
 					'id',
 					id,
@@ -64,12 +57,11 @@ export class PermissionsService {
 				const permission = await this.permissionsRepository.findOneWithId({
 					id,
 				});
-				const viewData = this.mapper.map(
+				await this.cacheService.setCache<Permission>(
 					permission,
-					Permission,
-					ViewPermissionDto,
+					this.permissionsCacheKey,
 				);
-				return viewData;
+				return permission;
 			}
 			return cachedPermission;
 		} catch (err) {
@@ -79,22 +71,15 @@ export class PermissionsService {
 	}
 
 	// This creates a new permission
-	async createPermission(
-		createDto: CreatePermissionDto,
-	): Promise<ViewPermissionDto> {
+	async createPermission(createDto: CreatePermissionDto): Promise<Permission> {
 		try {
 			const permission =
 				await this.permissionsRepository.createEntity(createDto);
-			const viewData = this.mapper.map(
-				permission,
-				Permission,
-				ViewPermissionDto,
-			);
-			await this.cacheService.updateCacheAfterCreate<ViewPermissionDto>(
+			await this.cacheService.updateCacheAfterCreate<Permission>(
 				this.permissionsCacheKey,
-				viewData,
+				permission,
 			);
-			return viewData;
+			return permission;
 		} catch (err) {
 			this.logger.error('Error creating permission', err);
 			throw new Error(`Error creating permission. Error: ${err}`);
@@ -105,11 +90,11 @@ export class PermissionsService {
 	async update(
 		id: number,
 		updateDto: UpdatePermissionDto,
-	): Promise<ViewPermissionDto> {
+	): Promise<Permission> {
 		try {
 			await this.permissionsRepository.update({ id }, updateDto);
 			const updated =
-				await this.cacheService.updateCacheAfterUpsert<ViewPermissionDto>(
+				await this.cacheService.updateCacheAfterUpsert<Permission>(
 					this.permissionsCacheKey,
 					'id',
 					id,
@@ -118,11 +103,7 @@ export class PermissionsService {
 			if (!updated) {
 				const updatedPermission =
 					await this.permissionsRepository.findOneWithId({ id });
-				return this.mapper.map(
-					updatedPermission,
-					Permission,
-					ViewPermissionDto,
-				);
+				return updatedPermission;
 			}
 			return updated;
 		} catch (err) {
@@ -132,15 +113,14 @@ export class PermissionsService {
 	}
 
 	// This deletes a permission
-	async delete(id: number): Promise<boolean> {
+	async delete(id: number): Promise<void> {
 		try {
-			await this.cacheService.updateCacheAfterdelete<ViewPermissionDto>(
+			await this.permissionsRepository.delete({ id });
+			await this.cacheService.updateCacheAfterdelete<Permission>(
 				this.permissionsCacheKey,
 				'id',
 				id,
 			);
-			const deleted = await this.permissionsRepository.delete({ id });
-			return deleted.affected == 1;
 		} catch (err) {
 			this.logger.error('Error deleting permission', err);
 			throw new Error(`Error deleting permission. Error: ${err}`);

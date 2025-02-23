@@ -4,12 +4,16 @@ import {
 	PrimaryGeneratedColumn,
 	Column,
 	OneToMany,
-	ManyToMany,
-	JoinTable,
+	Index,
+	JoinColumn,
+	ManyToOne,
+	CreateDateColumn,
+	UpdateDateColumn,
 } from 'typeorm';
 
-import { FeaturePermission } from './feature-permission.entity';
 import { AutoMap } from '@automapper/classes';
+import { Organization } from './organization.entity';
+import { RoleFeaturePermissions } from './role-feature-permission.entity';
 
 @Entity({ schema: 'poo' })
 export class OrganizationRole {
@@ -20,6 +24,10 @@ export class OrganizationRole {
 	@AutoMap()
 	@Column({ length: 255, unique: true })
 	name: string;
+
+	@Column({ nullable: true })
+	@Index('idx_role_organization_uuid')
+	organizationUuid?: string;
 
 	@AutoMap()
 	@Column({ length: 50, nullable: true })
@@ -32,22 +40,30 @@ export class OrganizationRole {
 	@OneToMany(() => OrganizationUser, (orgUser) => orgUser.orgRole)
 	users?: OrganizationUser[];
 
-	@AutoMap(() => [FeaturePermission])
-	@ManyToMany(
-		() => FeaturePermission,
-		(featurePermission) => featurePermission.organizationRoles,
-		{ eager: true },
-	)
-	@JoinTable({
-		name: 'role_feature_permissions',
-		joinColumn: {
-			name: 'roleId',
-			referencedColumnName: 'id',
-		},
-		inverseJoinColumn: {
-			name: 'featurePermissionId',
-			referencedColumnName: 'featurePermissionId',
-		},
+	@AutoMap(() => [RoleFeaturePermissions])
+	@OneToMany(() => RoleFeaturePermissions, (rfp) => rfp.role)
+	roleFeaturePermissions: RoleFeaturePermissions[];
+
+	@ManyToOne(() => Organization, (organization) => organization.roles, {
+		onDelete: 'CASCADE',
 	})
-	featurePermissions?: FeaturePermission[];
+	@JoinColumn({ name: 'organizationUuid' })
+	organization?: Organization;
+
+	@CreateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
+	createdDate?: Date;
+
+	@UpdateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
+	updatedDate?: Date;
+
+	@Column({ default: false })
+	isKlubiqInternal?: boolean;
 }

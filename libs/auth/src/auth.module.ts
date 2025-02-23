@@ -9,9 +9,7 @@ import { FirebaseErrorMessageHelper } from './helpers/firebase-error-helper';
 import { JwtService } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { HttpModule } from '@nestjs/axios';
-// import { CacheService } from '@app/common/services/cache.service';
 import { LandlordAuthService } from './services/landlord-auth.service';
-
 import _firebaseConfig from '../../../config.json';
 import { AdminAuthService } from './services/admin-auth.service';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
@@ -20,6 +18,11 @@ import { OrganizationSettingsService } from '@app/common/services/organization-s
 import { RepositoriesModule } from '@app/common/repositories/repositories.module';
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
 import { NotificationsModule } from '@app/notifications/notifications.module';
+import { AccessControlService } from './services/access-control.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Permission } from '@app/common/database/entities/permission.entity';
+import { RoleFeaturePermissions } from '@app/common/database/entities/role-feature-permission.entity';
+import { Feature, OrganizationUser } from '@app/common';
 interface FirebaseConfig {
 	type: string;
 	project_id: string;
@@ -67,6 +70,12 @@ const firebaseAdminProvider = {
 		SubscriptionModule,
 		RepositoriesModule,
 		NotificationsModule,
+		TypeOrmModule.forFeature([
+			Feature,
+			Permission,
+			OrganizationUser,
+			RoleFeaturePermissions,
+		]),
 	],
 	providers: [
 		AdminAuthService,
@@ -81,8 +90,9 @@ const firebaseAdminProvider = {
 		UserProfilesRepository,
 		OrganizationSettingsService,
 		UserPreferencesService,
+		AccessControlService,
 	],
-	exports: [LandlordAuthService],
+	exports: [LandlordAuthService, AccessControlService],
 	controllers: [AuthController],
 })
 export class AuthModule {}

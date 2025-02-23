@@ -65,10 +65,10 @@ export class TenantUser {
 	@Column({ nullable: true })
 	dateOfBirth?: Date;
 
-	@CreateDateColumn()
+	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdDate?: Date;
 
-	@UpdateDateColumn()
+	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	updatedDate?: Date;
 
 	@OneToMany(

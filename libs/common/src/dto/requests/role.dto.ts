@@ -1,5 +1,5 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsArray, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsString, IsUUID } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
 
 export class CreateRoleDto {
@@ -17,6 +17,15 @@ export class CreateRoleDto {
 	@ApiProperty()
 	@IsString()
 	alias?: string;
+
+	@AutoMap()
+	@ApiProperty()
+	@IsUUID()
+	organizationUuid?: string;
+
+	@ApiProperty()
+	@IsBoolean()
+	isKlubiqInternal?: boolean;
 }
 
 export class UpdateRoleDto extends PartialType(CreateRoleDto) {}

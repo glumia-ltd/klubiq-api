@@ -9,11 +9,7 @@ import { FirebaseException } from '../exception/firebase.exception';
 import { InviteUserDto } from '../dto/requests/user-login.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-//import { SignUpResponseDto } from '../dto/responses/auth-response.dto';
 import { OrganizationRepository } from '../../../../apps/klubiq-dashboard/src/organization/repositories/organization.repository';
-// import {
-// 	CreateUserEventTypes,
-// } from '@app/common/config/config.constants';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
 import { EmailTemplates } from '@app/common/email/types/email.types';
 import { ErrorMessages } from '@app/common/config/error.constant';
@@ -21,16 +17,12 @@ import { Mapper } from '@automapper/core';
 import { FirebaseErrorMessageHelper } from '../helpers/firebase-error-helper';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-//import { CacheService } from '@app/common/services/cache.service';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { AuthService } from './auth.service';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
 import { DateTime } from 'luxon';
 import { CreateSuperAdminDTO } from '../dto/requests/admin-user.dto';
-import { ViewSystemRoleDto } from '@app/common/dto/responses/org-role.dto';
-import { CacheKeys, UserRoles } from '@app/common/config/config.constants';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
-import { Role } from '@app/common/database/entities/role.entity';
 import { UserRecord } from 'firebase-admin/auth';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
@@ -94,7 +86,7 @@ export class AdminAuthService extends AuthService {
 				throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
 			}
 			fbid = user.uid;
-			const adminUser = this.createAdminUser(user, UserRoles.SUPER_ADMIN);
+			const adminUser = this.createAdminUser(user);
 			fbid = null;
 			return adminUser;
 		} catch (error) {
@@ -103,31 +95,17 @@ export class AdminAuthService extends AuthService {
 		}
 	}
 
-	private async createAdminUser(
-		firebaseUser: UserRecord,
-		role: UserRoles,
-	): Promise<any> {
+	private async createAdminUser(firebaseUser: UserRecord): Promise<any> {
 		const entityManager = this.organizationRepository.manager;
 		return entityManager.transaction(async (transactionalEntityManager) => {
-			const systemRole =
-				(await this.cacheService.getCacheByIdentifier<ViewSystemRoleDto>(
-					CacheKeys.SYSTEM_ROLES,
-					'name',
-					role,
-				)) ??
-				(await transactionalEntityManager.findOne(Role, {
-					where: { name: role },
-				}));
-
 			const userProfile = new UserProfile();
 			userProfile.email = firebaseUser.email;
 			userProfile.firebaseId = firebaseUser.uid;
-			userProfile.systemRole = systemRole;
 			userProfile.isPrivacyPolicyAgreed = true;
 			userProfile.isTermsAndConditionAccepted = true;
 			await transactionalEntityManager.save(userProfile);
 			await this.setCustomClaims(userProfile.firebaseId, {
-				systemRole: systemRole.name,
+				kUid: userProfile.profileUuid,
 			});
 			return userProfile;
 		});

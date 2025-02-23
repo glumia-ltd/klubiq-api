@@ -16,13 +16,13 @@ export const featurePermissionResolver: Resolver<
 	Record<string, string>
 > = {
 	resolve: (data): Record<string, string> => {
-		const resolved = data.organizationUser?.orgRole?.featurePermissions?.map(
-			(fp) => {
+		const resolved =
+			data.organizationUser?.orgRole?.roleFeaturePermissions?.map((fp) => {
 				return {
-					[fp.feature.name]: fp.permission.name,
+					[fp.featurePermission.feature.name]:
+						fp.featurePermission.permission.name,
 				};
-			},
-		);
+			});
 		return resolved ? Object.assign({}, ...resolved) : {};
 	},
 };
@@ -42,20 +42,8 @@ export class OrgUserProfile extends AutomapperProfile {
 					mapFrom((s) => s.firebaseId),
 				),
 				forMember(
-					(d) => d.firstName,
-					mapFrom((s) => s.organizationUser?.firstName),
-				),
-				forMember(
-					(d) => d.lastName,
-					mapFrom((s) => s.organizationUser?.lastName),
-				),
-				forMember(
 					(d) => d.organizationUserUuid,
 					mapFrom((s) => s.organizationUser?.organizationUserUuid),
-				),
-				forMember(
-					(d) => d.organizationUserId,
-					mapFrom((s) => s.organizationUser?.organizationUserId),
 				),
 				forMember(
 					(d) => d.isAccountVerified,
@@ -66,16 +54,8 @@ export class OrgUserProfile extends AutomapperProfile {
 					mapFrom((s) => s.organizationUser?.orgRole?.name),
 				),
 				forMember(
-					(d) => d.systemRole,
-					mapFrom((s) => s.systemRole?.name),
-				),
-				forMember(
 					(d) => d.company,
 					mapFrom((s) => s.organizationUser?.organization?.name),
-				),
-				forMember(
-					(d) => d.companyId,
-					mapFrom((s) => s.organizationUser?.organization?.organizationId),
 				),
 				forMember(
 					(d) => d.companyUuid,

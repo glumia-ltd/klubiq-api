@@ -81,7 +81,7 @@ export class LeaseTasksService {
             INSERT INTO poo.transaction (
             "leaseId",
             "amount",
-            "transactionType",
+            "type",
             "revenueType",
             "status",
             "transactionDate",

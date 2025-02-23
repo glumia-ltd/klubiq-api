@@ -8,7 +8,6 @@ import {
 	PrimaryGeneratedColumn,
 } from 'typeorm';
 import { OrganizationRole } from './organization-role.entity';
-import { Role } from './role.entity';
 
 @Entity({ schema: 'kdo' })
 export class UserInvitation {
@@ -30,21 +29,14 @@ export class UserInvitation {
 	})
 	orgRole?: OrganizationRole;
 
-	@ManyToOne(() => Role, { eager: true, onDelete: 'CASCADE' })
-	@JoinColumn({
-		name: 'systemRoleId',
-		referencedColumnName: 'id',
-	})
-	systemRole: Role;
-
 	@Index()
 	@Column({ unique: true })
 	firebaseUid: string;
 
-	@Column({ type: 'timestamp' })
+	@Column({ type: 'timestamptz' })
 	invitedAt: string;
 
-	@Column({ type: 'timestamp', nullable: true })
+	@Column({ type: 'timestamptz', nullable: true })
 	acceptedAt?: string;
 
 	@Column({ type: 'simple-array', nullable: true })

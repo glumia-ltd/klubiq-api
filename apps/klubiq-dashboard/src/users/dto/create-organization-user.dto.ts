@@ -3,7 +3,6 @@ import {
 	IsBoolean,
 	IsDate,
 	IsEmail,
-	IsNumber,
 	IsString,
 	IsStrongPassword,
 } from 'class-validator';
@@ -57,11 +56,6 @@ export class CreateOrganizationUserDto {
 }
 
 export class UserResponseDto {
-	@AutoMap()
-	@ApiProperty()
-	@IsNumber()
-	profileId: number;
-
 	@AutoMap()
 	@ApiProperty()
 	@IsString()
@@ -191,16 +185,6 @@ export class UserResponseDto {
 	@ApiProperty()
 	@IsString()
 	userUuid: string;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsNumber()
-	userId: number;
-
-	@AutoMap()
-	@ApiProperty()
-	@IsNumber()
-	organizationId: number;
 
 	@AutoMap()
 	@ApiProperty()

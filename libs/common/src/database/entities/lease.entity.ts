@@ -3,7 +3,6 @@ import {
 	CreateDateColumn,
 	DeleteDateColumn,
 	Entity,
-	Generated,
 	Index,
 	JoinColumn,
 	JoinTable,
@@ -27,13 +26,8 @@ import { Unit } from './unit.entity';
 	'paymentFrequency',
 ])
 export class Lease {
-	@PrimaryGeneratedColumn()
-	id?: number;
-
-	@Generated('uuid')
-	@Column({ unique: true })
-	@Index('idx_lease_uuid')
-	uuid?: string;
+	@PrimaryGeneratedColumn('uuid')
+	id?: string;
 
 	@Index()
 	@Column({ length: 255, unique: true, nullable: false })
@@ -88,10 +82,10 @@ export class Lease {
 	@Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
 	lateFeeAmount?: number;
 
-	@CreateDateColumn()
+	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdDate?: Date;
 
-	@UpdateDateColumn()
+	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	updatedDate?: Date;
 
 	@DeleteDateColumn({ nullable: true })
