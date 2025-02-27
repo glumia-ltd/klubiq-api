@@ -37,6 +37,7 @@ import { SubscriptionLimitGuard } from '@app/common/guards/subscription-limit.gu
 import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 import { FileUploadService } from '@app/common/services/file-upload.service';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
+import * as examples from '../../openAPI.examples.json';
 
 @ApiTags('properties')
 @ApiBearerAuth()
@@ -56,25 +57,21 @@ export class PropertiesController {
 		description: 'Returns details of the created property',
 		type: PropertyDetailsDto,
 	})
-	@ApiBody({
-		description: 'Property details to create',
-		type: CreatePropertyDto,
-	})
+	@ApiBody(examples.resources['create-property'])
 	async createProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
-			const data = await this.propertyService.createProperty(propertyData);
+			/*************  ✨ Codeium Command ⭐  *************/
+			/**
+	 * Creates a new property and returns the created property details.
+/******  895421c2-d4e3-4011-ab92-fb387ab2ba9c  *******/ const data =
+				await this.propertyService.createProperty(propertyData);
 			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
 	}
 
-	@Permission(
-		Permissions.READ,
-		Permissions.CREATE,
-		Permissions.UPDATE,
-		Permissions.DELETE,
-	)
+	@Permission(Permissions.READ)
 	@Get()
 	@ApiOkResponse({
 		description:
@@ -91,12 +88,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Permission(
-		Permissions.READ,
-		Permissions.CREATE,
-		Permissions.UPDATE,
-		Permissions.DELETE,
-	)
+	@Permission(Permissions.READ)
 	@Get(':propertyUuid')
 	@ApiOkResponse({
 		description: "Returns a property by it's property uuid",
@@ -113,7 +105,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Permission(Permissions.CREATE)
+	@Permission(Permissions.UPDATE)
 	@HttpCode(HttpStatus.OK)
 	@Put(':propertyUuid')
 	@ApiOkResponse({
@@ -139,7 +131,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Permission(Permissions.CREATE)
+	@Permission(Permissions.DELETE)
 	@HttpCode(HttpStatus.OK)
 	@Delete(':propertyUuid')
 	@ApiOkResponse({
@@ -159,7 +151,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Permission(Permissions.CREATE)
+	@Permission(Permissions.UPDATE, Permissions.DELETE)
 	@HttpCode(HttpStatus.OK)
 	@Delete(':propertyUuid/units')
 	@ApiOkResponse({
@@ -188,7 +180,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Permission(Permissions.CREATE)
+	@Permission(Permissions.UPDATE, Permissions.DELETE)
 	@HttpCode(HttpStatus.OK)
 	@Put(':propertyUuid/archive')
 	@ApiOkResponse({
@@ -202,7 +194,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Permission(Permissions.CREATE)
+	@Permission(Permissions.CREATE, Permissions.UPDATE)
 	@HttpCode(HttpStatus.OK)
 	@Post(':propertyUuid/units')
 	@ApiOkResponse({
@@ -231,7 +223,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Permission(Permissions.CREATE)
+	@Permission(Permissions.CREATE, Permissions.UPDATE)
 	@HttpCode(HttpStatus.OK)
 	@Post(':propertyUuid/assignToManagerOrOwner')
 	@ApiOkResponse({
@@ -275,12 +267,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Permission(
-		Permissions.READ,
-		Permissions.CREATE,
-		Permissions.UPDATE,
-		Permissions.DELETE,
-	)
+	@Permission(Permissions.READ)
 	@Get('view/list')
 	@ApiOkResponse({
 		description: "Returns a view list of an organization's properties",

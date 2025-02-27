@@ -24,16 +24,11 @@ import { DownloadRevenueDataDto } from '../dto/requests/download-dto';
 @ApiTags('dashboard')
 @Controller('dashboard')
 @Auth(AuthType.Bearer)
-@Feature(AppFeature.SETTING)
+@Feature(AppFeature.DASHBOARD)
 export class DashboardController {
 	constructor(private readonly dashboardService: DashboardService) {}
 
-	@Permission(
-		Permissions.READ,
-		Permissions.CREATE,
-		Permissions.UPDATE,
-		Permissions.DELETE,
-	)
+	@Permission(Permissions.READ)
 	@Get('metrics')
 	@ApiOkResponse()
 	async metrics(): Promise<DashboardMetricsDto> {
@@ -52,12 +47,7 @@ export class DashboardController {
 		}
 	}
 
-	@Permission(
-		Permissions.READ,
-		Permissions.CREATE,
-		Permissions.UPDATE,
-		Permissions.DELETE,
-	)
+	@Permission(Permissions.READ)
 	@Get('revenue-report')
 	@ApiOkResponse()
 	async getRevenueReport(
@@ -73,12 +63,7 @@ export class DashboardController {
 		}
 	}
 
-	@Permission(
-		Permissions.READ,
-		Permissions.CREATE,
-		Permissions.UPDATE,
-		Permissions.DELETE,
-	)
+	@Permission(Permissions.CREATE)
 	@Post('download-revenue-report')
 	@ApiOkResponse()
 	async downloadRevenueReport(

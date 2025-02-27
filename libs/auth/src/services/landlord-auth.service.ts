@@ -333,7 +333,6 @@ export class LandlordAuthService extends AuthService {
 				kUid: userProfile.profileUuid,
 				organizationRole: invitation.orgRole.name,
 				organizationId: organization.organizationUuid,
-				entitlements: await this.getRolesPermission(invitation.orgRole),
 			});
 			return invitation;
 		});
@@ -354,26 +353,16 @@ export class LandlordAuthService extends AuthService {
 				createEventType,
 				createUserDto.organizationCountry,
 			);
-			const cachedOrgRole =
-				await this.cacheService.getCacheByIdentifier<OrganizationRole>(
-					CacheKeys.ORG_ROLES,
-					'name',
-					UserRoles.ORG_OWNER,
-				);
-			const organizationRole = !!cachedOrgRole
-				? cachedOrgRole
-				: await this.getOrgRole(
-						transactionalEntityManager,
-						UserRoles.ORG_OWNER,
-					);
 
 			/// CREATE ORGANIZATION USER
 			const user = new OrganizationUser();
 			user.organization = organization;
-			user.orgRole = organizationRole;
+			user.orgRole = createUserDto.role;
 
 			///CREATE NEW USER PROFILE
 			const userProfile = new UserProfile();
+			userProfile.firstName = createUserDto.firstName;
+			userProfile.lastName = createUserDto.lastName;
 			userProfile.email = createUserDto.email;
 			userProfile.firebaseId = fireUser.uid;
 			userProfile.organizationUser = user;
@@ -385,7 +374,7 @@ export class LandlordAuthService extends AuthService {
 			// await this.subscribeOrgToBasicPlan(organization, transactionalEntityManager);
 			await this.setCustomClaims(userProfile.firebaseId, {
 				kUid: userProfile.profileUuid,
-				organizationRole: organizationRole.name,
+				organizationRole: createUserDto.role.name,
 				organizationId: organization.organizationUuid,
 			});
 			return userProfile;

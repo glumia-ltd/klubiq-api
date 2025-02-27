@@ -6,9 +6,12 @@ import {
 	HttpCode,
 	Get,
 	Query,
+	Param,
+	ParseUUIDPipe,
 } from '@nestjs/common';
 import {
 	ApiBearerAuth,
+	ApiExcludeEndpoint,
 	ApiOkResponse,
 	ApiSecurity,
 	ApiTags,
@@ -27,6 +30,8 @@ import { AuthType } from './types/firebase.types';
 import { LandlordAuthService } from './services/landlord-auth.service';
 import { AdminAuthService } from './services/admin-auth.service';
 import { CreateSuperAdminDTO } from './dto/requests/admin-user.dto';
+import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
+import { OrganizationSubscriptionService } from '@app/common';
 
 @ApiTags('auth')
 @ApiBearerAuth()
@@ -37,6 +42,8 @@ export class AuthController {
 	constructor(
 		private readonly landlordAuthService: LandlordAuthService,
 		private readonly adminAuthService: AdminAuthService,
+		private readonly organizationSettingsService: OrganizationSettingsService,
+		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
 	) {}
 
 	@HttpCode(HttpStatus.OK)
@@ -60,7 +67,37 @@ export class AuthController {
 	})
 	async user(): Promise<any> {
 		try {
-			return this.landlordAuthService.getUserInfo();
+			return this.landlordAuthService.getOrgUserInfo();
+		} catch (err) {
+			throw err;
+		}
+	}
+
+	@Auth(AuthType.Bearer)
+	@Get('org/:orgId/settings')
+	@ApiOkResponse({
+		description: 'Gets user org settings',
+	})
+	async getOrgSettings(
+		@Param('orgId', ParseUUIDPipe) orgId: string,
+	): Promise<any> {
+		try {
+			return this.organizationSettingsService.getOrganizationSettings(orgId);
+		} catch (err) {
+			throw err;
+		}
+	}
+
+	@Auth(AuthType.Bearer)
+	@Get('org/:orgId/subscription')
+	@ApiOkResponse({
+		description: 'Gets user org subscription',
+	})
+	async getOrgSubscription(
+		@Param('orgId', ParseUUIDPipe) orgId: string,
+	): Promise<any> {
+		try {
+			return this.organizationSubscriptionService.getSubscription(orgId);
 		} catch (err) {
 			throw err;
 		}
@@ -170,11 +207,12 @@ export class AuthController {
 		return await this.landlordAuthService.updateUserPreferences(preferences);
 	}
 
-	// @Auth(AuthType.ApiKey)
-	// @HttpCode(HttpStatus.OK)
-	// @Post('upadte-config')
-	// @ApiOkResponse()
-	// async updateFBAppConfig() {
-	// 	return await this.landlordAuthService.enableTOTPMFA();
-	// }
+	@Auth(AuthType.ApiKey)
+	@HttpCode(HttpStatus.OK)
+	@ApiExcludeEndpoint()
+	@Post('update-config')
+	@ApiOkResponse()
+	async updateFBAppConfig() {
+		return await this.landlordAuthService.enableTOTPMFA();
+	}
 }

@@ -6,12 +6,9 @@ import {
 	ExecutionContext,
 	//ForbiddenException,
 	Logger,
-	Inject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AccessControlService } from '../services/access-control.service';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
 import { FEATURES_KEY, PERMISSIONS_KEY } from '../decorators/auth.decorator';
 import { ActiveUserData } from '../types/firebase.types';
 
@@ -21,7 +18,6 @@ export class RolesGuard implements CanActivate {
 	constructor(
 		private reflector: Reflector,
 		private accessControlService: AccessControlService,
-		@Inject(REQUEST) private readonly request: Request,
 	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {

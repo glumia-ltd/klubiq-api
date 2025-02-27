@@ -13,14 +13,11 @@ import { FirebaseException } from '../exception/firebase.exception';
 import {
 	InviteUserDto,
 	ResetPasswordDto,
-	//UpdateFirebaseUserDto,
 } from '../dto/requests/user-login.dto';
 import {
-	AuthUserResponseDto,
 	LandlordUserDetailsResponseDto,
 	TokenResponseDto,
 } from '../dto/responses/auth-response.dto';
-import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { ROLE_ALIAS, UserRoles } from '@app/common/config/config.constants';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
 import { ErrorMessages } from '@app/common/config/error.constant';
@@ -36,17 +33,14 @@ import { createHmac } from 'crypto';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
 import { ActiveUserData, RolesAndEntitlements } from '../types/firebase.types';
 import { plainToInstance } from 'class-transformer';
-import { map } from 'lodash';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CacheService } from '@app/common/services/cache.service';
 import ShortUniqueId from 'short-unique-id';
 import { DateTime } from 'luxon';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
-import { OrganizationSettings } from '@app/common/database/entities/organization-settings.entity';
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
-import { OrganizationSubscriptionDto } from '@app/common/dto/responses/organization-subscription.dto';
 import { NotificationsSubscriptionService } from '@app/notifications/services/notifications-subscription.service';
 @Injectable()
 export abstract class AuthService {
@@ -432,7 +426,7 @@ export abstract class AuthService {
 		}
 	}
 
-	async getUserInfo(): Promise<any> {
+	async getOrgUserInfo(): Promise<any> {
 		try {
 			this.currentUser = this.cls.get('currentUser');
 			if (!this.currentUser.uid && !this.currentUser.kUid) {
@@ -440,57 +434,31 @@ export abstract class AuthService {
 			}
 			const cacheKey = `${this.cacheKeyPrefix}/user/${this.currentUser.kUid}`;
 
-			switch (this.currentUser.systemRole) {
-				case UserRoles.LANDLORD:
-					const cachedUser =
-						await this.cacheManager.get<LandlordUserDetailsResponseDto>(
-							cacheKey,
-						);
-					if (cachedUser) return cachedUser;
-					else return await this.getLandlordUser(this.currentUser, cacheKey);
-				case UserRoles.ADMIN:
-					break;
-			}
-			const user = await this.userProfilesRepository.getUserLoginInfo(
-				this.currentUser.kUid,
-				this.currentUser.uid,
-			);
-			const userData = this.mapper.map(user, UserProfile, AuthUserResponseDto);
-			return userData;
+			const cachedUser =
+				await this.cacheManager.get<LandlordUserDetailsResponseDto>(cacheKey);
+			if (cachedUser) return cachedUser;
+			else return await this.getUserDetails(this.currentUser, cacheKey);
 		} catch (err) {
 			throw err;
 		}
 	}
-
-	private async getLandlordUser(
+	private async getUserDetails(
 		currentUser: ActiveUserData,
-		cacheKey: string = `${this.cacheKeyPrefix}/user/${currentUser.uid}`,
+		cacheKey: string = `${this.cacheKeyPrefix}/user/${currentUser.kUid}`,
 	): Promise<LandlordUserDetailsResponseDto> {
 		const userDetails = await this.userProfilesRepository.getLandLordUserInfo(
 			currentUser.kUid,
 			currentUser.uid,
 		);
+		console.log('userDetails', userDetails);
 		if (!userDetails) {
 			throw new NotFoundException('User not found');
 		}
-		const userOrgSettings =
-			await this.organizationSettingsService.getOrganizationSettings(
-				userDetails?.org_uuid,
-			);
-		const orgSubscription =
-			await this.organizationSubscriptionService.getSubscription(
-				currentUser.organizationId,
-			);
 		const notificationsSubscription =
 			await this.notificationSubService.getAUserSubscriptionDetails(
 				currentUser.kUid,
 			);
-		const userData = await this.mapLandlordUserToDto(
-			userDetails,
-			currentUser,
-			userOrgSettings,
-			orgSubscription,
-		);
+		const userData = await this.mapLandlordUserToDto(userDetails, currentUser);
 		userData.notificationSubscription = notificationsSubscription;
 		await this.cacheManager.set(cacheKey, userData, 3600);
 		return userData;
@@ -499,29 +467,9 @@ export abstract class AuthService {
 	private async mapLandlordUserToDto(
 		user: any,
 		currentUser: ActiveUserData,
-		userOrgSettings?: OrganizationSettings,
-		activeSubscription?: OrganizationSubscriptionDto,
 	): Promise<LandlordUserDetailsResponseDto> {
-		const entitlementsResolve = (data: string[]): Record<string, string> => {
-			const resolved = map(data, (item) => {
-				const entitlements = item.split(':');
-				return {
-					[entitlements[0]]: entitlements[1],
-				};
-			});
-			return resolved ? Object.assign({}, ...resolved) : {};
-		};
-		const orgSettings =
-			userOrgSettings && userOrgSettings.settings
-				? userOrgSettings.settings
-				: {};
-		const orgSubscription = {
-			isFreeTrial: activeSubscription.is_free_trial,
-			planId: activeSubscription.subscription_plan_id,
-		};
 		return plainToInstance(LandlordUserDetailsResponseDto, {
 			email: user.email,
-			entitlements: entitlementsResolve(currentUser.entitlements),
 			firstName: user.profile_first_name,
 			id: user.id,
 			profileUuid: user.profile_uuid,
@@ -539,8 +487,8 @@ export abstract class AuthService {
 				ROLE_ALIAS()[currentUser.organizationRole] ||
 				currentUser.organizationRole,
 			uuid: user.uuid,
-			orgSettings,
-			orgSubscription,
+			// orgSettings,
+			// orgSubscription,
 		});
 	}
 

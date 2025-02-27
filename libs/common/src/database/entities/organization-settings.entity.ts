@@ -15,10 +15,10 @@ export class OrganizationSettings extends AbstractEntity {
 	@Column('jsonb', { nullable: true })
 	settings: Record<string, any>;
 
-	@CreateDateColumn({ type: 'timestamp with time zone' })
+	@CreateDateColumn({ type: 'timestamp with time zone', select: false })
 	createdAt?: Date;
 
-	@UpdateDateColumn({ type: 'timestamp with time zone' })
+	@UpdateDateColumn({ type: 'timestamp with time zone', select: false })
 	updatedAt?: Date;
 
 	@OneToOne(() => Organization, (organization) => organization.settings)

@@ -57,7 +57,6 @@ import { FeaturePermission } from '@app/common/database/entities/feature-permiss
 @ApiTags('public')
 @ApiBearerAuth()
 @ApiSecurity('ApiKey')
-@Auth(AuthType.None)
 @Controller('public')
 @Feature(AppFeature.SETTING)
 export class PublicController {
@@ -168,6 +167,7 @@ export class PublicController {
 	}
 
 	//#region PERMISSIONS
+	@Auth(AuthType.None)
 	@Get('permissions')
 	@ApiOkResponse({
 		description: 'Get all permissions',
@@ -183,6 +183,7 @@ export class PublicController {
 	}
 	//#region FEATURES
 	@Get('features')
+	@Auth(AuthType.None)
 	@ApiOkResponse({ description: 'Get all features', type: [ViewFeatureDto] })
 	async getAppFeatures(): Promise<ViewFeatureDto[]> {
 		try {
@@ -194,6 +195,7 @@ export class PublicController {
 	}
 
 	@Get('features/:id')
+	@Auth(AuthType.None)
 	@ApiOkResponse({ description: 'Get feature by id', type: ViewFeatureDto })
 	async getFeature(@Param('id') id: number): Promise<ViewFeatureDto> {
 		try {
@@ -254,6 +256,7 @@ export class PublicController {
 	//#endregion
 
 	//#region  REGION ----- FEATURE-PERMISSION
+	@Auth(AuthType.None)
 	@Get('features-permissions')
 	@ApiOkResponse({ description: 'Get all features permissions' })
 	async getFeaturesPermissions(): Promise<FeaturePermission[]> {
@@ -265,6 +268,7 @@ export class PublicController {
 		}
 	}
 
+	@Auth(AuthType.None)
 	@Get('features-permissions/:featureId/:permissionId')
 	@ApiOkResponse({ description: 'Get a feature-permission' })
 	async getFeaturesPermission(
@@ -323,6 +327,7 @@ export class PublicController {
 	//#endregion
 
 	//#region   REGION ----- ORGANIZATION-ROLE
+	@Auth(AuthType.None)
 	@Get('organization-roles')
 	@ApiOkResponse({ description: 'Get all organization roles' })
 	async getOrgRoles(): Promise<OrganizationRole[]> {
@@ -334,6 +339,7 @@ export class PublicController {
 		}
 	}
 
+	@Auth(AuthType.None)
 	@Get('organization-roles/:id')
 	@ApiOkResponse({ description: 'Get an organization role' })
 	async getOrgRole(@Param('id') id: number): Promise<OrganizationRole> {

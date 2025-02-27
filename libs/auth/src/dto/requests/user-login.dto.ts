@@ -7,6 +7,7 @@ import {
 import {
 	IsArray,
 	IsEmail,
+	IsInt,
 	IsNumber,
 	IsObject,
 	IsOptional,
@@ -132,6 +133,14 @@ export class OrganizationCountryDto {
 	language: string;
 }
 
+export class RoleTypeDto {
+	@IsInt()
+	id: number;
+
+	@IsString()
+	name: string;
+}
+
 /**
  * Represents the data transfer object for signing up an organization user.
  * Extends the partial type of UserSignUpDto.
@@ -149,6 +158,12 @@ export class OrgUserSignUpDto extends PartialType(UserSignUpDto) {
 	})
 	@IsObject()
 	organizationCountry: OrganizationCountryDto;
+
+	@ApiProperty({
+		type: RoleTypeDto,
+	})
+	@IsObject()
+	role: RoleTypeDto;
 }
 
 /**

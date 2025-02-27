@@ -120,4 +120,12 @@ export class CacheService {
 			);
 		}
 	}
+
+	async invalidateCache(cacheKey: string): Promise<void> {
+		const keys = await this.cacheManager.store.keys();
+		const keysToDelete = keys.filter((k) => k.startsWith(cacheKey));
+		keysToDelete.forEach(async (key) => {
+			await this.cacheManager.del(key);
+		});
+	}
 }

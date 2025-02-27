@@ -58,7 +58,6 @@ import { CommonConfigService } from './common-config';
 				TENANT_ROLE_ID: Joi.number().required(),
 				LEASE_MANAGER_ROLE_ID: Joi.number().required(),
 				PROPERTY_OWNER_ROLE_ID: Joi.number().required(),
-				ORG_CUSTOM_ROLE_ID: Joi.number().required(),
 				REDIS_PORT: Joi.number().required(),
 				WORKER_PORT: Joi.number().required(),
 				APP_PORT: Joi.number().required(),

@@ -25,7 +25,7 @@ export class OrganizationRole {
 	@Column({ length: 255, unique: true })
 	name: string;
 
-	@Column({ nullable: true })
+	@Column({ nullable: true, select: false })
 	@Index('idx_role_organization_uuid')
 	organizationUuid?: string;
 
@@ -42,7 +42,7 @@ export class OrganizationRole {
 
 	@AutoMap(() => [RoleFeaturePermissions])
 	@OneToMany(() => RoleFeaturePermissions, (rfp) => rfp.role)
-	roleFeaturePermissions: RoleFeaturePermissions[];
+	roleFeaturePermissions?: RoleFeaturePermissions[];
 
 	@ManyToOne(() => Organization, (organization) => organization.roles, {
 		onDelete: 'CASCADE',

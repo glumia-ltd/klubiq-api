@@ -106,7 +106,7 @@ export class AccessControlService {
 				profile: { profileUuid: userUuid },
 				organization: { organizationUuid },
 			},
-			relations: ['role'], // Eager load the role.
+			relations: ['orgRole'], // Eager load the role.
 		});
 
 		if (!organizationUser || !organizationUser.orgRole) {

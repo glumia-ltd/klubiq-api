@@ -167,9 +167,9 @@ export class LandlordUserDetailsResponseDto {
 	@IsString()
 	email: string;
 
-	@Expose()
-	@IsJSON()
-	entitlements: Record<string, string>;
+	// @Expose()
+	// @IsJSON()
+	// entitlements: Record<string, string>;
 
 	@Expose()
 	@IsString()
@@ -210,17 +210,17 @@ export class LandlordUserDetailsResponseDto {
 	@IsOptional()
 	preferences?: Record<string, any>;
 
-	@Expose()
-	@IsJSON()
-	@IsOptional()
-	orgSettings?: Record<string, any>;
+	// @Expose()
+	// @IsJSON()
+	// @IsOptional()
+	// orgSettings?: Record<string, any>;
 
-	@Expose()
-	@IsOptional()
-	orgSubscription?: {
-		isFreeTrial: boolean;
-		planId: number;
-	};
+	// @Expose()
+	// @IsOptional()
+	// orgSubscription?: {
+	// 	isFreeTrial: boolean;
+	// 	planId: number;
+	// };
 
 	@Expose()
 	@IsJSON()

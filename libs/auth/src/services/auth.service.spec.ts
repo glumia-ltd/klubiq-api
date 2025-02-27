@@ -27,6 +27,10 @@ const mockCreateUserPayload = {
 		currencySymbol: '₦',
 		language: 'en',
 	}, // Adjust this according to the actual structure of OrganizationCountryDto
+	role: {
+		id: 0,
+		name: 'Test',
+	},
 };
 jest.mock('firebase-admin');
 
