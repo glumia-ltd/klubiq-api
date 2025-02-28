@@ -5,6 +5,7 @@ docker-compose.yaml
 /node_modules
 /build
 
+/db-build
 docker-compose.yaml
 *.conf
 config.json

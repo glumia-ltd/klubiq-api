@@ -1,10 +1,10 @@
 {
   "name": "klubiq-api",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "klubiq-api project",
   "author": "Glumia Solutions",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "PROPRIETARY",
   "scripts": {
     "build": "nest build",
     "build:app": "nest build klubiq-dashboard",

@@ -1,0 +1,45 @@
+name: Run Database Migration
+on:
+  workflow_dispatch:
+env:
+  DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+  DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+  DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+  DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+  DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+  SYNCHRONIZE_DB: ${{ secrets.SYNCHRONIZE_DB }}
+  NODE_ENV: ${{ secrets.ENV }}
+
+jobs:
+  migration:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: copy and run migration via ssh
+        uses: easingthemes/ssh-deploy@main
+        with:
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USERNAME }}
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
+          TARGET: ${{ vars.DB_TARGET_DIR }}
+          SCRIPT_BEFORE: |
+            sudo chown $USER ${{ vars.DB_TARGET_DIR }}
+            cd ${{ vars.DB_TARGET_DIR }}
+          SCRIPT_AFTER: |
+            cd ${{ vars.DB_TARGET_DIR }}       
+            export DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+            export DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+            export DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+            export DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            export DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            export SYNCHRONIZE_DB=${{ secrets.SYNCHRONIZE_DB }}
+            export NODE_ENV=${{ secrets.ENV }}
+            echo "Running NPM INSTALL"
+            npm install
+            echo "Running NPM BUILD"
+            npm run build
+            echo "Running NPM GENERATE MIGRATION"
+            npm run generate:migration
+            echo "Running NPM REVERT MIGRATION"
+            npm run migration:revert
