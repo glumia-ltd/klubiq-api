@@ -4,7 +4,7 @@ on:
     branches:
       - dev
     paths:
-      - 'apps/klubiq-db/**'
+      - 'klubiq-db/**'
 env:
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
