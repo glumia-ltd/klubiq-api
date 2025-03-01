@@ -126,25 +126,33 @@ export class OrganizationSubscriptionService {
 	async getSubscription(
 		organizationUuId: string,
 	): Promise<OrganizationSubscriptionDto> {
-		const cachedSubscription =
-			await this.cacheService.getCacheByKey<OrganizationSubscriptionDto>(
-				`${this.cacheKey}:${organizationUuId}`,
-			);
-		if (!cachedSubscription) {
-			const subscription = await this.subscriptionRepository.findOneByCondition(
-				{
-					organizationUuid: organizationUuId,
-					is_active: true,
-				},
-			);
-			const mappedSubscription = this.mapPlainToDto(subscription);
-			await this.cacheService.setCache(
-				mappedSubscription,
-				`${this.cacheKey}-${organizationUuId}`,
-			);
-			return mappedSubscription;
+		try {
+			const cachedSubscription =
+				await this.cacheService.getCacheByKey<OrganizationSubscriptionDto>(
+					`${this.cacheKey}:${organizationUuId}`,
+				);
+			if (!cachedSubscription) {
+				const subscription =
+					await this.subscriptionRepository.findOneByCondition({
+						organizationUuid: organizationUuId,
+						is_active: true,
+					});
+				if (!subscription) {
+					throw new BadRequestException(
+						`Subscription not found for organization ${organizationUuId}`,
+					);
+				}
+				const mappedSubscription = this.mapPlainToDto(subscription);
+				await this.cacheService.setCache(
+					mappedSubscription,
+					`${this.cacheKey}-${organizationUuId}`,
+				);
+				return mappedSubscription;
+			}
+			return cachedSubscription;
+		} catch (error) {
+			this.logger.error('Error getting subscription', error);
 		}
-		return cachedSubscription;
 	}
 	async getSubscriptionLimits(
 		organizationUuId: string,

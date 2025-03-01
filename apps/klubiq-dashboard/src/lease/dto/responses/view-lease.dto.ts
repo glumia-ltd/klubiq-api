@@ -49,7 +49,7 @@ export class LeaseListPropertyDto {
 export class LeaseDto {
 	@Expose()
 	@IsNumber()
-	id: number;
+	id: string;
 
 	@Expose()
 	@IsString()
@@ -89,7 +89,7 @@ export class LeaseDto {
 export class LeaseDetailsDto {
 	@Expose()
 	@IsString()
-	id: number;
+	id: string;
 
 	@Expose()
 	@IsString()

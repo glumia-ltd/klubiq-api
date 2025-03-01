@@ -1,45 +1,74 @@
-import { ErrorMessages } from '@app/common/config/error.constant';
-import { UserRoles } from '@app/common/config/config.constants';
+//import { ErrorMessages } from '@app/common/config/error.constant';
+import { Permissions, AppFeature } from '@app/common/config/config.constants';
 import {
 	Injectable,
 	CanActivate,
 	ExecutionContext,
-	ForbiddenException,
+	//ForbiddenException,
+	Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-//import { AuthService } from '../services/auth.service';
-import { LandlordAuthService } from '../services/landlord-auth.service';
-import { ROLES_KEY } from '../decorators/auth.decorator';
+import { AccessControlService } from '../services/access-control.service';
+import { FEATURES_KEY, PERMISSIONS_KEY } from '../decorators/auth.decorator';
+import { ActiveUserData } from '../types/firebase.types';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
+	private readonly logger = new Logger(RolesGuard.name);
 	constructor(
 		private reflector: Reflector,
-		private authService: LandlordAuthService,
+		private accessControlService: AccessControlService,
 	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const requiredRoles = this.reflector.get<UserRoles[]>(
-			ROLES_KEY,
+		const feature = this.reflector.get<AppFeature>(
+			FEATURES_KEY,
+			context.getClass(),
+		);
+		const requiredPermissions = this.reflector.get<Permissions[]>(
+			PERMISSIONS_KEY,
 			context.getHandler(),
 		);
 
-		if (!requiredRoles) {
-			return true; // No roles required, allow access
+		if (!requiredPermissions || !feature) {
+			return true; // No specific permissions or feature required, allow access.
 		}
 
 		const request = context.switchToHttp().getRequest();
-		const token = request.headers.authorization?.split(' ')[1];
-		if (!token) {
-			throw new ForbiddenException(ErrorMessages.FORBIDDEN); // No token provided, deny access
+		const user = request.user as ActiveUserData;
+		if (!user || !user.kUid || !user.organizationId) {
+			// Check that both are present.
+			this.logger.warn(
+				'No user or organization ID found in Firebase claims, denying access.',
+			);
+			return false; // No user or organization authenticated, deny access.
+		}
+		const userUuid = user.kUid;
+		const organizationUuid = user.organizationId;
+		// Check if the user has *all* the required permissions for the feature.
+		for (const permission of requiredPermissions) {
+			try {
+				const hasPermission = await this.accessControlService.hasPermission(
+					userUuid,
+					organizationUuid,
+					feature,
+					permission,
+				);
+				if (!hasPermission) {
+					this.logger.warn(
+						`User ${userUuid} lacks permission ${permission} for feature ${feature}`,
+					);
+					return false; // User lacks at least one required permission.
+				}
+			} catch (error) {
+				this.logger.error(
+					`Error checking permission: ${error.message}`,
+					error.stack,
+				);
+				return false; // Handle the error appropriately (e.g., deny access).
+			}
 		}
 
-		const userRoles = await this.authService.getUserRolesFromToken(token);
-
-		const hasRequiredRole = requiredRoles.some((role) =>
-			userRoles.roles.includes(role),
-		);
-
-		return hasRequiredRole;
+		return true; // User has all required permissions, allow access.
 	}
 }

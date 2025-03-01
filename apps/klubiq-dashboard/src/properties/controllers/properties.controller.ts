@@ -20,22 +20,13 @@ import {
 	ApiTags,
 } from '@nestjs/swagger';
 import { PropertiesService } from '../services/properties.service';
-import {
-	Actions,
-	AppFeature,
-	UserRoles,
-} from '@app/common/config/config.constants';
+import { Permissions, AppFeature } from '@app/common/config/config.constants';
 import { CreatePropertyDto } from '../dto/requests/create-property.dto';
 import {
 	DeletePropertyDto,
 	UpdatePropertyDto,
 } from '../dto/requests/update-property.dto';
-import {
-	Auth,
-	Feature,
-	Roles,
-	Ability,
-} from '@app/auth/decorators/auth.decorator';
+import { Auth, Feature, Permission } from '@app/auth/decorators/auth.decorator';
 import { AuthType } from '@app/auth/types/firebase.types';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
 import { PropertyManagerAssignmentDto } from '../dto/requests/property-manager.dto';
@@ -46,11 +37,11 @@ import { SubscriptionLimitGuard } from '@app/common/guards/subscription-limit.gu
 import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 import { FileUploadService } from '@app/common/services/file-upload.service';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
+import * as examples from '../../openAPI.examples.json';
 
 @ApiTags('properties')
 @ApiBearerAuth()
 @Auth(AuthType.Bearer)
-@Roles(UserRoles.LANDLORD)
 @Controller('properties')
 @Feature(AppFeature.PROPERTY)
 export class PropertiesController {
@@ -59,27 +50,28 @@ export class PropertiesController {
 		private readonly fileUploadService: FileUploadService,
 	) {}
 
-	@Ability(Actions.WRITE)
+	@Permission(Permissions.CREATE)
 	@UseGuards(SubscriptionLimitGuard)
 	@Post()
 	@ApiCreatedResponse({
 		description: 'Returns details of the created property',
 		type: PropertyDetailsDto,
 	})
-	@ApiBody({
-		description: 'Property details to create',
-		type: CreatePropertyDto,
-	})
+	@ApiBody(examples.resources['create-property'])
 	async createProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
-			const data = await this.propertyService.createProperty(propertyData);
+			/*************  ✨ Codeium Command ⭐  *************/
+			/**
+	 * Creates a new property and returns the created property details.
+/******  895421c2-d4e3-4011-ab92-fb387ab2ba9c  *******/ const data =
+				await this.propertyService.createProperty(propertyData);
 			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
 	}
 
-	@Ability(Actions.WRITE, Actions.VIEW)
+	@Permission(Permissions.READ)
 	@Get()
 	@ApiOkResponse({
 		description:
@@ -96,7 +88,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Ability(Actions.WRITE, Actions.VIEW)
+	@Permission(Permissions.READ)
 	@Get(':propertyUuid')
 	@ApiOkResponse({
 		description: "Returns a property by it's property uuid",
@@ -113,7 +105,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Ability(Actions.WRITE)
+	@Permission(Permissions.UPDATE)
 	@HttpCode(HttpStatus.OK)
 	@Put(':propertyUuid')
 	@ApiOkResponse({
@@ -139,7 +131,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Ability(Actions.WRITE)
+	@Permission(Permissions.DELETE)
 	@HttpCode(HttpStatus.OK)
 	@Delete(':propertyUuid')
 	@ApiOkResponse({
@@ -159,7 +151,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Ability(Actions.WRITE)
+	@Permission(Permissions.UPDATE, Permissions.DELETE)
 	@HttpCode(HttpStatus.OK)
 	@Delete(':propertyUuid/units')
 	@ApiOkResponse({
@@ -188,7 +180,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Ability(Actions.WRITE)
+	@Permission(Permissions.UPDATE, Permissions.DELETE)
 	@HttpCode(HttpStatus.OK)
 	@Put(':propertyUuid/archive')
 	@ApiOkResponse({
@@ -202,7 +194,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Ability(Actions.WRITE)
+	@Permission(Permissions.CREATE, Permissions.UPDATE)
 	@HttpCode(HttpStatus.OK)
 	@Post(':propertyUuid/units')
 	@ApiOkResponse({
@@ -231,7 +223,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Ability(Actions.WRITE)
+	@Permission(Permissions.CREATE, Permissions.UPDATE)
 	@HttpCode(HttpStatus.OK)
 	@Post(':propertyUuid/assignToManagerOrOwner')
 	@ApiOkResponse({
@@ -256,7 +248,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Ability(Actions.WRITE)
+	@Permission(Permissions.CREATE)
 	@HttpCode(HttpStatus.OK)
 	@Post('signed-url')
 	@ApiOkResponse({
@@ -275,7 +267,7 @@ export class PropertiesController {
 		}
 	}
 
-	@Ability(Actions.WRITE, Actions.VIEW)
+	@Permission(Permissions.READ)
 	@Get('view/list')
 	@ApiOkResponse({
 		description: "Returns a view list of an organization's properties",

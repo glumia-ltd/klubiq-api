@@ -2,7 +2,7 @@ import { SetMetadata } from '@nestjs/common';
 import {
 	UserRoles,
 	AppFeature,
-	Actions,
+	Permissions,
 } from '@app/common/config/config.constants';
 import { AuthType } from '../types/firebase.types';
 
@@ -10,9 +10,9 @@ export const FEATURES_KEY = 'features';
 export const Feature = (feature: AppFeature) =>
 	SetMetadata(FEATURES_KEY, feature);
 
-export const ABILITY_KEY = 'abilities';
-export const Ability = (...abilities: Actions[]) =>
-	SetMetadata(ABILITY_KEY, abilities);
+export const PERMISSIONS_KEY = 'permissions';
+export const Permission = (...permissions: Permissions[]) =>
+	SetMetadata(PERMISSIONS_KEY, permissions);
 
 export const ROLES_KEY = 'roles';
 export const Roles = (...roles: UserRoles[]) => SetMetadata(ROLES_KEY, roles);

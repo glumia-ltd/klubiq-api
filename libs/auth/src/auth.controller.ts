@@ -6,14 +6,17 @@ import {
 	HttpCode,
 	Get,
 	Query,
+	Param,
+	ParseUUIDPipe,
 } from '@nestjs/common';
 import {
 	ApiBearerAuth,
+	ApiExcludeEndpoint,
 	ApiOkResponse,
 	ApiSecurity,
 	ApiTags,
 } from '@nestjs/swagger';
-import { Auth, Roles } from './decorators/auth.decorator';
+import { Auth } from './decorators/auth.decorator';
 import {
 	InviteUserDto,
 	OrgUserSignUpDto,
@@ -24,10 +27,11 @@ import {
 	VerifyEmailDto,
 } from './dto/requests/user-login.dto';
 import { AuthType } from './types/firebase.types';
-import { UserRoles } from '@app/common/config/config.constants';
 import { LandlordAuthService } from './services/landlord-auth.service';
 import { AdminAuthService } from './services/admin-auth.service';
 import { CreateSuperAdminDTO } from './dto/requests/admin-user.dto';
+import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
+import { OrganizationSubscriptionService } from '@app/common';
 
 @ApiTags('auth')
 @ApiBearerAuth()
@@ -38,6 +42,8 @@ export class AuthController {
 	constructor(
 		private readonly landlordAuthService: LandlordAuthService,
 		private readonly adminAuthService: AdminAuthService,
+		private readonly organizationSettingsService: OrganizationSettingsService,
+		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
 	) {}
 
 	@HttpCode(HttpStatus.OK)
@@ -55,33 +61,49 @@ export class AuthController {
 	}
 
 	@Auth(AuthType.Bearer)
-	@Roles(
-		UserRoles.ADMIN,
-		UserRoles.STAFF,
-		UserRoles.SUPER_ADMIN,
-		UserRoles.TENANT,
-		UserRoles.LANDLORD,
-	)
 	@Get('user')
 	@ApiOkResponse({
 		description: 'Gets user data',
 	})
 	async user(): Promise<any> {
 		try {
-			return this.landlordAuthService.getUserInfo();
+			return this.landlordAuthService.getOrgUserInfo();
 		} catch (err) {
 			throw err;
 		}
 	}
 
 	@Auth(AuthType.Bearer)
-	@Roles(
-		UserRoles.ADMIN,
-		UserRoles.STAFF,
-		UserRoles.SUPER_ADMIN,
-		UserRoles.TENANT,
-		UserRoles.LANDLORD,
-	)
+	@Get('org/:orgId/settings')
+	@ApiOkResponse({
+		description: 'Gets user org settings',
+	})
+	async getOrgSettings(
+		@Param('orgId', ParseUUIDPipe) orgId: string,
+	): Promise<any> {
+		try {
+			return this.organizationSettingsService.getOrganizationSettings(orgId);
+		} catch (err) {
+			throw err;
+		}
+	}
+
+	@Auth(AuthType.Bearer)
+	@Get('org/:orgId/subscription')
+	@ApiOkResponse({
+		description: 'Gets user org subscription',
+	})
+	async getOrgSubscription(
+		@Param('orgId', ParseUUIDPipe) orgId: string,
+	): Promise<any> {
+		try {
+			return this.organizationSubscriptionService.getSubscription(orgId);
+		} catch (err) {
+			throw err;
+		}
+	}
+
+	@Auth(AuthType.Bearer)
 	@Get('verify-token')
 	async verifyToken(): Promise<any> {
 		try {
@@ -124,7 +146,6 @@ export class AuthController {
 	}
 
 	@Auth(AuthType.Bearer)
-	@Roles(UserRoles.ORG_OWNER)
 	@HttpCode(HttpStatus.OK)
 	@Post('landlord/invite')
 	@ApiOkResponse({
@@ -186,11 +207,12 @@ export class AuthController {
 		return await this.landlordAuthService.updateUserPreferences(preferences);
 	}
 
-	// @Auth(AuthType.ApiKey)
-	// @HttpCode(HttpStatus.OK)
-	// @Post('upadte-config')
-	// @ApiOkResponse()
-	// async updateFBAppConfig() {
-	// 	return await this.landlordAuthService.enableTOTPMFA();
-	// }
+	@Auth(AuthType.ApiKey)
+	@HttpCode(HttpStatus.OK)
+	@ApiExcludeEndpoint()
+	@Post('update-config')
+	@ApiOkResponse()
+	async updateFBAppConfig() {
+		return await this.landlordAuthService.enableTOTPMFA();
+	}
 }

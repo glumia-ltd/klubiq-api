@@ -28,7 +28,10 @@ import {
 } from '../dto/requests/get-property.dto';
 import { find, indexOf, map } from 'lodash';
 import { DateTime } from 'luxon';
-import { PropertyCountData } from '../dto/responses/property-count.dto';
+import {
+	PropertyCountData,
+	UnitStatusCounts,
+} from '../dto/responses/property-count.dto';
 import { PropertyManagerAssignmentDto } from '../dto/requests/property-manager.dto';
 import { PropertyCategory } from '@app/common/database/entities/property-category.entity';
 import { PropertyPurpose } from '@app/common/database/entities/property-purpose.entity';
@@ -68,9 +71,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 			.set({
 				manager: managerDto.isPropertyOwner
 					? null
-					: { firebaseId: managerDto.uid },
+					: { profileUuid: managerDto.uid },
 				owner: managerDto.isPropertyOwner
-					? { firebaseId: managerDto.uid }
+					? { profileUuid: managerDto.uid }
 					: null,
 			})
 			.where('uuid = :propertyUuid', { propertyUuid })
@@ -145,7 +148,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 					status: { id: statusId },
 					address: savedAddress,
 					organization: { organizationUuid: orgUuid },
-					manager: { firebaseId: createData.managerUid },
+					manager: { profileUuid: createData.managerUid },
 					isDraft,
 				});
 				const savedProperty = await transactionalEntityManager.save(property);
@@ -311,8 +314,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 		}
 		if (
 			!isOrgOwner &&
-			(property.owner?.firebaseId !== userId ||
-				property.manager?.firebaseId !== userId)
+			(property.owner?.profileUuid !== userId ||
+				property.manager?.profileUuid !== userId)
 		) {
 			throw new UnauthorizedException(
 				'You are not authorized to view this property',
@@ -386,7 +389,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 	}
 
 	//UPDATE UNIT AND IT'S IMAGES
-	async updateUnit(id: number, data: UpdateUnitDto) {
+	async updateUnit(id: string, data: UpdateUnitDto) {
 		await this.manager.update(Unit, id, data);
 		const updatedUnit = await this.manager.findOne(Unit, {
 			where: { id },
@@ -467,8 +470,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 				}
 				if (
 					!isOrgOwner &&
-					(property.owner?.firebaseId !== userId ||
-						property.manager?.firebaseId !== userId)
+					(property.owner?.profileUuid !== userId ||
+						property.manager?.profileUuid !== userId)
 				) {
 					throw new Error('You are not authorized to update this property');
 				}
@@ -556,24 +559,39 @@ export class PropertyRepository extends BaseRepository<Property> {
 		return queryResult;
 	}
 
-	async getTotalOccupiedUnits(
+	async getUnitStatusCounts(
 		organizationUuid: string,
 		pastDays: number = 0,
-	): Promise<number> {
+	): Promise<UnitStatusCounts> {
+		/* The above code is written in TypeScript and it seems to be using a multi-line comment syntax ( */
+		let occupiedUnits = 0;
+		let vacantUnits = 0;
 		const interval = `'${pastDays} days'`;
-		const query = `
-			SELECT COUNT(u.id) AS total_occupied_units
+		const dateRangeCondition =
+			pastDays > 0
+				? ` AND (l."startDate" <= (CURRENT_DATE - INTERVAL ${interval}) AND l."endDate" >= (CURRENT_DATE - INTERVAL ${interval}));`
+				: ';';
+		let query = `
+			SELECT 
+				COUNT(CASE WHEN u.status = '${UnitStatus.OCCUPIED}' AND l.status IN ('${LeaseStatus.ACTIVE}', '${LeaseStatus.EXPIRING}') THEN 1 END) AS total_occupied_units,
+				COUNT(CASE WHEN u.status = '${UnitStatus.VACANT}' THEN 1 END) AS total_vacant_units
 			FROM poo.unit u
-			INNER JOIN poo.lease l ON u.id = l."unitId" AND l."organizationUuid" = $1
-			WHERE u.status = '${UnitStatus.OCCUPIED}' OR l.status IN ('${LeaseStatus.ACTIVE}', '${LeaseStatus.EXPIRING}')
-			AND (l."startDate" <= (CURRENT_DATE - INTERVAL ${interval}) AND l."endDate" >= (CURRENT_DATE - INTERVAL ${interval}));`;
-		const occupiedUnitsQuery = await this.manager.query(query, [
-			organizationUuid,
-		]);
-		const queryResult = occupiedUnitsQuery.length
-			? parseInt(occupiedUnitsQuery[0].total_occupied_units ?? 0, 10)
-			: 0;
-		return queryResult;
+			LEFT JOIN poo.lease l ON u.id = l."unitId"
+			WHERE l."organizationUuid" = $1`;
+		query += dateRangeCondition;
+		const unitStatusQuery = await this.manager.query(query, [organizationUuid]);
+
+		if (unitStatusQuery.length) {
+			occupiedUnits = parseInt(
+				unitStatusQuery[0].total_occupied_units ?? 0,
+				10,
+			);
+			vacantUnits = parseInt(unitStatusQuery[0].total_vacant_units ?? 0, 10);
+		}
+		return {
+			occupied: occupiedUnits,
+			vacant: vacantUnits,
+		};
 	}
 	async getTotalUnitsInMaintenance(
 		organizationUuid: string,
@@ -623,7 +641,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 
 	// 7. Delete a unit and its associated images
 	async deleteUnit(
-		id: number,
+		id: string,
 		orgUuid: string,
 		userId: string,
 		isOrgOwner: boolean,
@@ -640,9 +658,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 		}
 		if (
 			(!isOrgOwner &&
-				(!unit.property.owner || unit.property.owner.firebaseId !== userId)) ||
+				(!unit.property.owner || unit.property.owner.profileUuid !== userId)) ||
 			!unit.property.manager ||
-			unit.property.manager.firebaseId !== userId
+			unit.property.manager.profileUuid !== userId
 		) {
 			throw new Error('You are not authorized to update this property');
 		}
@@ -664,9 +682,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 		}
 		if (
 			(!isOrgOwner &&
-				(!property.owner || property.owner.firebaseId !== userId)) ||
+				(!property.owner || property.owner.profileUuid !== userId)) ||
 			!property.manager ||
-			property.manager.firebaseId !== userId
+			property.manager.profileUuid !== userId
 		) {
 			throw new Error('You are not authorized to update this property');
 		}

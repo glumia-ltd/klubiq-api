@@ -6,3 +6,7 @@ export class PropertyCountData {
 	archivedProperties?: number;
 	draftProperties?: number;
 }
+export class UnitStatusCounts {
+	vacant: number;
+	occupied: number;
+}

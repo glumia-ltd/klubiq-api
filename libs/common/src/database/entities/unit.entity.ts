@@ -17,8 +17,8 @@ import { UnitStatus } from '@app/common/config/config.constants';
 
 @Entity({ schema: 'poo' })
 export class Unit {
-	@PrimaryGeneratedColumn({ type: 'bigint' })
-	id: number;
+	@PrimaryGeneratedColumn('uuid')
+	id: string;
 
 	@Column({ type: 'varchar', length: 50 })
 	unitNumber: string;
@@ -64,10 +64,10 @@ export class Unit {
 	@Index('IDX_PROPERTY_UUID', ['propertyUuid'])
 	property: Property;
 
-	@CreateDateColumn()
+	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdAt: Date;
 
-	@UpdateDateColumn()
+	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	updatedAt: Date;
 
 	@OneToMany(() => Lease, (lease) => lease.unit)

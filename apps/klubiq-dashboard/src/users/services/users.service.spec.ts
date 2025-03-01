@@ -105,7 +105,7 @@ describe('UsersService', () => {
 			it('should return the organization user object', async () => {
 				const testFirebaseId = 'XAVERIK34566';
 				userRepo.findOneByCondition.mockReturnValue(mockOrganizationUser);
-				const user = await service.getUserByFireBaseId(testFirebaseId);
+				const user = await service.getUserByEmailOrUuid(testFirebaseId);
 				expect(user).toEqual(mockOrganizationUser);
 				expect(user.firebaseId).toEqual(testFirebaseId);
 				expect(user).toBeInstanceOf(Object);
@@ -117,7 +117,7 @@ describe('UsersService', () => {
 				const testFirebaseId = 'XXXXXXXXXX9234343';
 				userRepo.findOneByCondition.mockReturnValue(undefined);
 				try {
-					await service.getUserByFireBaseId(testFirebaseId);
+					await service.getUserByEmailOrUuid(testFirebaseId);
 				} catch (err) {
 					expect(err.message).toEqual('No data found');
 					expect(err).toBeInstanceOf(NotFoundException);
@@ -142,7 +142,7 @@ describe('UsersService', () => {
 				const testEmail = 'XXXXXXXXXXXXXXXX@test.com';
 				userRepo.findOneByCondition.mockReturnValue(undefined);
 				try {
-					await service.getUserByFireBaseId(testEmail);
+					await service.getUserByEmailOrUuid(testEmail);
 				} catch (err) {
 					expect(err.message).toEqual('No data found');
 					expect(err).toBeInstanceOf(NotFoundException);

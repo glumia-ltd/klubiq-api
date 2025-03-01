@@ -33,7 +33,7 @@ export class CreateLeaseDto {
 	tenantsIds?: number[];
 
 	@IsNumber()
-	unitId: number;
+	unitId: string;
 
 	@IsNumber()
 	rentDueDay: number;

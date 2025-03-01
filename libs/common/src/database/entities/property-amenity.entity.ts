@@ -1,4 +1,10 @@
-import { Entity, Column, Index } from 'typeorm';
+import {
+	Entity,
+	Column,
+	Index,
+	CreateDateColumn,
+	UpdateDateColumn,
+} from 'typeorm';
 import { AutoMap } from '@automapper/classes';
 import { AbstractEntity } from './abstract-entity';
 
@@ -11,4 +17,10 @@ export class Amenity extends AbstractEntity {
 
 	@Column({ default: true })
 	isPrivate: boolean;
+
+	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
+	createdAt?: Date;
+
+	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
+	updatedAt?: Date;
 }

@@ -1,21 +1,10 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CacheService } from '../services/cache.service';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Role } from '../database/entities/role.entity';
-import {
-	OrgRoleResponseDto,
-	ViewSystemRoleDto,
-} from '../dto/responses/org-role.dto';
-import {
-	CreateRoleDto,
-	CreateRoleFeaturePermission,
-	UpdateRoleDto,
-	UpdateRoleFeaturePermissionDto,
-} from '../dto/requests/role.dto';
-import { RolesRepository } from '../repositories/roles.repository';
+import { CreateRoleDto, UpdateRoleDto } from '../dto/requests/role.dto';
 import { OrganizationRolesRepository } from '../repositories/organization-roles.repository';
 import { CacheKeys } from '../config/config.constants';
 import { OrganizationRole } from '../database/entities/organization-role.entity';
@@ -28,157 +17,41 @@ export class RolesService {
 	private readonly cacheService = new CacheService(this.cacheManager);
 	constructor(
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
-		private rolesRepository: RolesRepository,
 		private orgRolesRepository: OrganizationRolesRepository,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 	) {}
 
-	//#region SYSTEM ROLES
-	async getSystemRoles(): Promise<ViewSystemRoleDto[]> {
-		try {
-			const cachedData = await this.cacheService.getCache<ViewSystemRoleDto>(
-				this.systemRoleCacheKey,
-			);
-			if (cachedData) return cachedData;
-			const roles = await this.rolesRepository.findAll();
-
-			const data = await this.mapper.mapArrayAsync(
-				roles,
-				Role,
-				ViewSystemRoleDto,
-			);
-			await this.cacheService.setCache(data, this.systemRoleCacheKey);
-			return data;
-		} catch (error) {
-			this.logger.error('Error getting system roles', error);
-			throw error;
-		}
-	}
-
-	async getSystemRoleById(id: number): Promise<ViewSystemRoleDto> {
-		try {
-			const cachedData =
-				await this.cacheService.getCacheByIdentifier<ViewSystemRoleDto>(
-					this.systemRoleCacheKey,
-					'id',
-					id,
-				);
-			if (!cachedData) {
-				const systemRole = await this.rolesRepository.findOneWithId({ id });
-				const data = await this.mapper.mapAsync(
-					systemRole,
-					Role,
-					ViewSystemRoleDto,
-				);
-				await this.cacheService.setCache(data, this.systemRoleCacheKey);
-				return data;
-			}
-			return cachedData;
-		} catch (error) {
-			this.logger.error('Error getting system role by id', error);
-			throw error;
-		}
-	}
-
-	async createSystemRole(
-		createRoleDto: CreateRoleDto,
-	): Promise<ViewSystemRoleDto> {
-		try {
-			const systemRole = await this.rolesRepository.createEntity(createRoleDto);
-			const data = await this.mapper.mapAsync(
-				systemRole,
-				Role,
-				ViewSystemRoleDto,
-			);
-			await this.cacheService.updateCacheAfterCreate<ViewSystemRoleDto>(
-				this.systemRoleCacheKey,
-				data,
-			);
-			return data;
-		} catch (error) {
-			this.logger.error('Error creating system role', error);
-			throw error;
-		}
-	}
-
-	async updateSystemRole(
-		id: number,
-		updateDto: UpdateRoleDto,
-	): Promise<ViewSystemRoleDto> {
-		try {
-			await this.rolesRepository.update({ id }, updateDto);
-			const updated =
-				await this.cacheService.updateCacheAfterUpsert<ViewSystemRoleDto>(
-					this.systemRoleCacheKey,
-					'id',
-					id,
-					updateDto,
-				);
-			if (!updated) {
-				const updatedRole = await this.rolesRepository.findOneWithId({ id });
-				return await this.mapper.mapAsync(updatedRole, Role, ViewSystemRoleDto);
-			}
-			return updated;
-		} catch (error) {
-			this.logger.error('Error updating system role', error);
-			throw error;
-		}
-	}
-
-	async deleteSystemRole(id: number): Promise<boolean> {
-		try {
-			const deleted = await this.rolesRepository.delete({ id });
-			await this.cacheService.updateCacheAfterdelete<ViewSystemRoleDto>(
-				this.systemRoleCacheKey,
-				'id',
-				id,
-			);
-			return deleted.affected == 1;
-		} catch (error) {
-			this.logger.error('Error deleting system role', error);
-			throw error;
-		}
-	}
-	//#endregion
-
 	//#region ORG ROLES
-	async getOrgRoles(): Promise<OrgRoleResponseDto[]> {
+
+	async createRole(createRoleDto: CreateRoleDto): Promise<OrganizationRole> {
 		try {
-			const cachedData = await this.cacheService.getCache<OrgRoleResponseDto>(
+			const orgRole = await this.orgRolesRepository.createRole(createRoleDto);
+			await this.cacheService.updateCacheAfterCreate<OrganizationRole>(
 				this.orgRoleCacheKey,
+				orgRole,
 			);
-			if (cachedData) return cachedData;
-			const roles = await this.orgRolesRepository.findAll();
-			const data = await this.mapper.mapArrayAsync(
-				roles,
-				OrganizationRole,
-				OrgRoleResponseDto,
-			);
-			await this.cacheService.setCache(data, this.orgRoleCacheKey);
-			return data;
+			return orgRole;
 		} catch (error) {
-			this.logger.error('Error getting org roles', error);
+			this.logger.error('Error creating org role', error);
 			throw error;
 		}
 	}
 
-	async getOrgRoleById(id: number): Promise<OrgRoleResponseDto> {
+	async getRoleById(id: number): Promise<OrganizationRole> {
 		try {
 			const cachedData =
-				await this.cacheService.getCacheByIdentifier<OrgRoleResponseDto>(
+				await this.cacheService.getCacheByIdentifier<OrganizationRole>(
 					this.orgRoleCacheKey,
 					'id',
 					id,
 				);
 			if (!cachedData) {
-				const orgRole = await this.orgRolesRepository.findOneWithId({ id });
-				const data = await this.mapper.mapAsync(
-					orgRole,
-					OrganizationRole,
-					OrgRoleResponseDto,
-				);
-				await this.cacheService.setCache(data, this.orgRoleCacheKey);
-				return data;
+				const role = await this.orgRolesRepository.getRoleById(id);
+				if (!role) {
+					throw new NotFoundException(`Role with ID "${id}" not found`);
+				}
+				await this.cacheService.setCache(role, this.orgRoleCacheKey);
+				return role;
 			}
 			return cachedData;
 		} catch (error) {
@@ -187,65 +60,57 @@ export class RolesService {
 		}
 	}
 
-	async createOrgRole(
-		createRoleDto: CreateRoleFeaturePermission,
-	): Promise<OrgRoleResponseDto> {
+	async getAllRoles(): Promise<OrganizationRole[]> {
 		try {
-			const created =
-				await this.orgRolesRepository.createRoleWithFeaturePermission(
-					createRoleDto,
-				);
-			const data = await this.mapper.mapAsync(
-				created,
-				OrganizationRole,
-				OrgRoleResponseDto,
-			);
-			await this.cacheService.updateCacheAfterCreate<OrgRoleResponseDto>(
+			const cachedData = await this.cacheService.getCache<OrganizationRole>(
 				this.orgRoleCacheKey,
-				data,
 			);
-			return data;
+			if (cachedData) return cachedData;
+			const roles = await this.orgRolesRepository.getAllRoles();
+			await this.cacheService.setCache(roles, this.orgRoleCacheKey);
+			return roles;
 		} catch (error) {
-			this.logger.error('Error creating org role', error);
+			this.logger.error('Error getting org roles', error);
 			throw error;
 		}
 	}
 
-	async updateOrgRole(
+	async updateRole(
 		id: number,
-		updateDto: UpdateRoleFeaturePermissionDto,
-	): Promise<OrgRoleResponseDto> {
+		updateRoleDto: UpdateRoleDto,
+	): Promise<OrganizationRole> {
 		try {
-			const updatedRole =
-				await this.orgRolesRepository.saveRoleFeaturePermissions(id, updateDto);
-			const data = await this.mapper.mapAsync(
-				updatedRole,
-				OrganizationRole,
-				OrgRoleResponseDto,
-			);
-			await this.cacheService.updateCacheAfterUpsert<OrgRoleResponseDto>(
+			const role = await this.orgRolesRepository.updateRole(id, updateRoleDto);
+			if (!role) {
+				throw new NotFoundException(`Role with ID "${id}" not found`);
+			}
+			await this.cacheService.updateCacheAfterUpsert<OrganizationRole>(
 				this.orgRoleCacheKey,
 				'id',
 				id,
-				data,
+				role,
 			);
-			return data;
+			return role;
 		} catch (error) {
-			this.logger.error(`Error updating org role: ${id}`, error);
+			this.logger.error('Error updating org role', error);
 			throw error;
 		}
 	}
 
-	async deleteOrgRole(id: number): Promise<void> {
+	async deleteRole(id: number): Promise<void> {
 		try {
-			await this.orgRolesRepository.deleteRoleWithFeaturePermission(id);
-			await this.cacheService.updateCacheAfterdelete<OrgRoleResponseDto>(
+			const role = await this.getRoleById(id); // Check if role exists
+			if (!role) {
+				throw new NotFoundException(`Role with ID "${id}" not found`);
+			}
+			await this.orgRolesRepository.deleteRole(id);
+			await this.cacheService.updateCacheAfterdelete<OrganizationRole>(
 				this.orgRoleCacheKey,
 				'id',
 				id,
 			);
 		} catch (error) {
-			this.logger.error('Error deleting org role', error);
+			this.logger.error('Error deleting system role', error);
 			throw error;
 		}
 	}

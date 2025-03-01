@@ -32,15 +32,23 @@ export class Transaction {
 	amount: number;
 
 	@Column({ type: 'enum', enum: TransactionType })
-	transactionType: TransactionType;
+	type: TransactionType;
 
 	@Column({ type: 'enum', enum: RevenueType, nullable: true })
 	revenueType: RevenueType;
 
-	@CreateDateColumn({ select: false })
+	@CreateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
 	createdDate?: Date;
 
-	@CreateDateColumn({ select: false })
+	@CreateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
 	updatedDate?: Date;
 
 	@DeleteDateColumn({ nullable: true })

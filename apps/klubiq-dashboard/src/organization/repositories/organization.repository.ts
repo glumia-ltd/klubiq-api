@@ -46,10 +46,13 @@ export class OrganizationRepository extends BaseRepository<Organization> {
 		}
 	}
 
-	async findOrgByName(name: string): Promise<Organization> {
+	async findOrgByName(
+		name: string,
+		orgType: string = 'company',
+	): Promise<Organization> {
 		let organization = await this.findOneBy({ name: name });
 		if (!organization) {
-			organization = await this.createEntity({ name: name });
+			organization = await this.createEntity({ name: name, orgType });
 		}
 		return organization;
 	}

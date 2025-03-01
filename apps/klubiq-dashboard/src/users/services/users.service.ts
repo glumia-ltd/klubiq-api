@@ -5,7 +5,6 @@ import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { UsersRepository } from '../repositories/users.repository';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
-import { RolesRepository } from '@app/common/repositories/roles.repository';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { OrganizationUser } from '@app/common/database/entities/organization-user.entity';
 import { UpdateUserDto } from '../dto/update-organization-user.dto';
@@ -21,13 +20,8 @@ export class UsersService {
 		@InjectEntityManager() private entityManager: EntityManager,
 		private readonly usersRepository: UsersRepository,
 		private readonly userProfilesRepository: UserProfilesRepository,
-		private readonly rolesRepository: RolesRepository,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
 	) {}
-
-	async getUserByFireBaseId(firebaseId: string) {
-		return this.usersRepository.findOneByCondition({ firebaseId: firebaseId });
-	}
 
 	async findByEmail(email: string) {
 		return this.userProfilesRepository.findOneByCondition({ email: email });
@@ -39,12 +33,11 @@ export class UsersService {
 		});
 	}
 
-	async getUserByEmailOrFirebaseId(
+	async getUserByEmailOrUuid(
 		identifier: string,
 	): Promise<UserResponseDto | null> {
 		try {
-			const user =
-				await this.usersRepository.getUserByFirebaseIdOrEmail(identifier);
+			const user = await this.usersRepository.getUserByEmailOrUuid(identifier);
 
 			return this.mapper.map(user, OrganizationUser, UserResponseDto);
 		} catch (error) {
@@ -85,9 +78,9 @@ export class UsersService {
 		}
 	}
 
-	async findOne(id: number) {
+	async findOne(id: string) {
 		return await this.usersRepository.findOneByCondition({
-			organizationUserId: id,
+			organizationUserUuid: id,
 		});
 	}
 
@@ -116,7 +109,7 @@ export class UsersService {
 			users,
 			(result, user) => {
 				const userProfile: UserDetailsDto = {
-					userId: user.organizationUser_firebaseId,
+					userId: user.profile_profileUuid,
 					firstName: user.organizationUser_firstName || user.profile_firstName,
 					lastName: user.organizationUser_lastName || user.profile_lastName,
 					email: user.profile_email,
@@ -139,7 +132,7 @@ export class UsersService {
 			users,
 			(result, user) => {
 				const userProfile: UserDetailsDto = {
-					userId: user.organizationUser_firebaseId,
+					userId: user.profile_profileUuid,
 					firstName: user.organizationUser_firstName || user.profile_firstName,
 					lastName: user.organizationUser_lastName || user.profile_lastName,
 					email: user.profile_email,

@@ -8,10 +8,10 @@ import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics
 export const LEASE_SERVICE_INTERFACE = 'LEASE SERVICE INTERFACE';
 export interface ILeaseService {
 	createLease(leaseDto: CreateLeaseDto): Promise<void>;
-	getAllUnitLeases(unitId: number): Promise<LeaseDto[]>;
-	getLeaseById(id: number): Promise<LeaseDetailsDto>;
+	getAllUnitLeases(unitId: string): Promise<LeaseDto[]>;
+	getLeaseById(id: string): Promise<LeaseDetailsDto>;
 	updateLeaseById(
-		id: number,
+		id: string,
 		leaseDto: UpdateLeaseDto,
 	): Promise<LeaseDetailsDto>;
 	getOrganizationLeases(getLeaseDto?: GetLeaseDto): Promise<PageDto<LeaseDto>>;

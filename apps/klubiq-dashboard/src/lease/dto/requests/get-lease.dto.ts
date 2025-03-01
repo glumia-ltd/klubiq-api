@@ -36,7 +36,7 @@ export class LeaseFilterDto {
 	propertyId?: string;
 
 	@IsOptional()
-	unitId?: number;
+	unitId?: string;
 }
 
 export class GetLeaseDto extends IntersectionType(

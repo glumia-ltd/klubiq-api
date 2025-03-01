@@ -1,12 +1,13 @@
 {
   "name": "klubiq-api",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "klubiq-api project",
   "author": "Glumia Solutions",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "PROPRIETARY",
   "scripts": {
     "build": "nest build",
+    "build:app": "nest build klubiq-dashboard",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start:dashboard": "nest start klubiq-dashboard",
     "start:queue": "nest start klubiq-queue --watch",
@@ -51,6 +52,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cloudinary": "^2.5.0",
+    "dataloader": "^2.2.3",
     "firebase-admin": "^12.0.0",
     "helmet": "^7.1.0",
     "joi": "^17.12.2",

@@ -24,17 +24,17 @@ export class Notifications {
 	@Column({ nullable: true })
 	actionText: string;
 
-	@CreateDateColumn()
+	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdAt: Date;
 
 	@Column('jsonb', { nullable: true })
 	data: Record<string, any>;
 
 	@Index('idx_notification_delivered_at')
-	@Column({ type: 'timestamp without time zone', nullable: true })
+	@Column({ type: 'timestamp with time zone', nullable: true })
 	deliveredAt: Date;
 
-	@Column({ type: 'timestamp without time zone', nullable: true })
+	@Column({ type: 'timestamp with time zone', nullable: true })
 	expiresAt: Date;
 
 	@PrimaryGeneratedColumn('uuid')
@@ -48,7 +48,7 @@ export class Notifications {
 	isRead: boolean;
 
 	@Column({ nullable: true })
-	leaseId: number;
+	leaseId: string;
 
 	@Column({ type: 'text' })
 	message: string;
@@ -67,7 +67,7 @@ export class Notifications {
 	})
 	priority?: NotificationPriority;
 
-	@Column({ type: 'timestamp without time zone', nullable: true })
+	@Column({ type: 'timestamp with time zone', nullable: true })
 	readAt: Date;
 
 	@Column({ type: 'varchar' })
@@ -77,11 +77,11 @@ export class Notifications {
 	@Column({ type: 'varchar' })
 	type: string;
 
-	@UpdateDateColumn()
+	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	updatedAt: Date;
 
 	@Column({ nullable: true })
-	unitId: number;
+	unitId: string;
 
 	@Column({ nullable: true })
 	@Index('idx_notification_user_id')
@@ -102,7 +102,7 @@ export class Notifications {
 	@ManyToOne(() => UserProfile, {
 		onDelete: 'CASCADE',
 	})
-	@JoinColumn({ name: 'userId', referencedColumnName: 'firebaseId' })
+	@JoinColumn({ name: 'userId', referencedColumnName: 'profileUuid' })
 	user?: UserProfile;
 
 	@ManyToOne(() => Property, {

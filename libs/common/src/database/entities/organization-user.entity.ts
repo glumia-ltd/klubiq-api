@@ -4,7 +4,7 @@ import {
 	DeleteDateColumn,
 	Column,
 	OneToOne,
-	Generated,
+	// Generated,
 	JoinColumn,
 	ManyToOne,
 	CreateDateColumn,
@@ -23,28 +23,9 @@ export class OrganizationUser {
 	organizationUserUuid?: string;
 
 	@AutoMap()
-	@Index('IDX_ORG_USER_ID')
-	@Generated('increment')
-	@Column({ unique: true })
-	organizationUserId?: number;
-
-	@AutoMap()
-	@Index('IDX_ORG_USER_FIREBASE_ID')
-	@Column({ unique: true })
-	firebaseId: string;
-
-	@AutoMap()
 	@Column({ default: true })
 	@Index('IDX_ORG_USER_ACTIVE')
 	isActive?: boolean;
-
-	@AutoMap()
-	@Column({ length: 100 })
-	firstName: string;
-
-	@AutoMap()
-	@Column({ length: 100 })
-	lastName: string;
 
 	@Column({ default: false })
 	isDeleted?: boolean;
@@ -54,7 +35,7 @@ export class OrganizationUser {
 	isAccountVerified?: boolean;
 
 	@AutoMap(() => UserProfile)
-	@OneToOne(() => UserProfile, { cascade: ['update'] })
+	@OneToOne(() => UserProfile, { cascade: ['update', 'remove'] })
 	@JoinColumn({
 		name: 'profileUuid',
 		referencedColumnName: 'profileUuid',
@@ -63,7 +44,7 @@ export class OrganizationUser {
 	profile?: UserProfile;
 
 	@AutoMap(() => OrganizationRole)
-	@ManyToOne(() => OrganizationRole, { eager: true })
+	@ManyToOne(() => OrganizationRole, { eager: true, onDelete: 'RESTRICT' })
 	@JoinColumn({
 		name: 'roleId',
 		referencedColumnName: 'id',
@@ -72,7 +53,7 @@ export class OrganizationUser {
 	orgRole?: OrganizationRole;
 
 	@AutoMap(() => Organization)
-	@ManyToOne(() => Organization, { eager: true })
+	@ManyToOne(() => Organization, { eager: true, onDelete: 'CASCADE' })
 	@JoinColumn({
 		name: 'organizationUuid',
 		referencedColumnName: 'organizationUuid',
@@ -80,12 +61,12 @@ export class OrganizationUser {
 	@Index('IDX_ORG_USER_ORGANIZATION')
 	organization?: Organization;
 
-	@DeleteDateColumn()
+	@DeleteDateColumn({ type: 'timestamptz' })
 	deletedDate?: Date;
 
-	@CreateDateColumn()
+	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdDate?: Date;
 
-	@UpdateDateColumn()
+	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	updatedDate?: Date;
 }

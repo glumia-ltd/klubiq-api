@@ -23,7 +23,6 @@ import { SignUpResponseDto } from '../dto/responses/auth-response.dto';
 import { EntityManager } from 'typeorm';
 import { OrganizationRepository } from '../../../../apps/klubiq-dashboard/src/organization/repositories/organization.repository';
 import { OrganizationRole } from '@app/common/database/entities/organization-role.entity';
-import { Role } from '@app/common/database/entities/role.entity';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import {
 	CacheKeys,
@@ -39,11 +38,6 @@ import { Mapper } from '@automapper/core';
 import { FirebaseErrorMessageHelper } from '../helpers/firebase-error-helper';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-//import { CacheService } from '@app/common/services/cache.service';
-import {
-	OrgRoleResponseDto,
-	ViewSystemRoleDto,
-} from '@app/common/dto/responses/org-role.dto';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { AuthService } from './auth.service';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
@@ -160,11 +154,6 @@ export class LandlordAuthService extends AuthService {
 	}
 
 	//PRIVATE METHODS
-	private async getSystemRole(entityManager: EntityManager): Promise<Role> {
-		return await entityManager.findOne(Role, {
-			where: { name: UserRoles.LANDLORD },
-		});
-	}
 
 	private async getBasicSubscription(
 		entityManager: EntityManager,
@@ -280,8 +269,8 @@ export class LandlordAuthService extends AuthService {
 	private async getRolesPermission(
 		orgRole: OrganizationRole,
 	): Promise<string[]> {
-		const permissions = orgRole.featurePermissions?.map((fp) => {
-			return `${fp.feature.name}:${fp.permission.name}`;
+		const permissions = orgRole.roleFeaturePermissions?.map((fp) => {
+			return `${fp.featurePermission.feature.name}:${fp.featurePermission.permission.name}`;
 		});
 		return permissions;
 	}
@@ -297,21 +286,12 @@ export class LandlordAuthService extends AuthService {
 				transactionalEntityManager,
 				createEventType,
 			);
-			const systemRole =
-				(await this.cacheService.getCacheByIdentifier<ViewSystemRoleDto>(
-					CacheKeys.SYSTEM_ROLES,
-					'name',
-					UserRoles.LANDLORD,
-				)) ?? (await this.getSystemRole(transactionalEntityManager));
 			const orgRole = await transactionalEntityManager.findOneBy(
 				OrganizationRole,
 				{ id: invitedUserDto.orgRoleId },
 			);
 
 			const user = new OrganizationUser();
-			user.firstName = invitedUserDto.firstName;
-			user.lastName = invitedUserDto.lastName;
-			user.firebaseId = fireUser.uid;
 			user.organization = organization;
 			user.orgRole = orgRole;
 
@@ -322,7 +302,6 @@ export class LandlordAuthService extends AuthService {
 			userProfile.lastName = invitedUserDto.lastName;
 			userProfile.firebaseId = fireUser.uid;
 			userProfile.organizationUser = user;
-			userProfile.systemRole = systemRole;
 			userProfile.isPrivacyPolicyAgreed = true;
 			userProfile.isTermsAndConditionAccepted = true;
 			userProfile.propertiesOwned = !!invitedUserDto.propertiesToOwn
@@ -336,7 +315,6 @@ export class LandlordAuthService extends AuthService {
 			const invitation = new UserInvitation();
 			invitation.organization = organization;
 			invitation.firebaseUid = fireUser.uid;
-			invitation.systemRole = systemRole;
 			invitation.orgRole = orgRole;
 			invitation.invitedAt = this.timestamp;
 			invitation.propertyToManageIds = !!invitedUserDto.propertiesToManage
@@ -352,10 +330,9 @@ export class LandlordAuthService extends AuthService {
 			await transactionalEntityManager.save(userProfile);
 			await transactionalEntityManager.save(invitation);
 			await this.setCustomClaims(userProfile.firebaseId, {
-				systemRole: systemRole.name,
+				kUid: userProfile.profileUuid,
 				organizationRole: invitation.orgRole.name,
 				organizationId: organization.organizationUuid,
-				entitlements: await this.getRolesPermission(invitation.orgRole),
 			});
 			return invitation;
 		});
@@ -377,39 +354,18 @@ export class LandlordAuthService extends AuthService {
 				createUserDto.organizationCountry,
 			);
 
-			const systemRole =
-				(await this.cacheService.getCacheByIdentifier<ViewSystemRoleDto>(
-					CacheKeys.SYSTEM_ROLES,
-					'name',
-					UserRoles.LANDLORD,
-				)) ?? (await this.getSystemRole(transactionalEntityManager));
-			const cachedOrgRole =
-				await this.cacheService.getCacheByIdentifier<OrgRoleResponseDto>(
-					CacheKeys.ORG_ROLES,
-					'name',
-					UserRoles.ORG_OWNER,
-				);
-			const organizationRole = !!cachedOrgRole
-				? { id: cachedOrgRole.id, name: cachedOrgRole.name }
-				: await this.getOrgRole(
-						transactionalEntityManager,
-						UserRoles.ORG_OWNER,
-					);
-
 			/// CREATE ORGANIZATION USER
 			const user = new OrganizationUser();
-			user.firstName = createUserDto.firstName;
-			user.lastName = createUserDto.lastName;
-			user.firebaseId = fireUser.uid;
 			user.organization = organization;
-			user.orgRole = organizationRole;
+			user.orgRole = createUserDto.role;
 
 			///CREATE NEW USER PROFILE
 			const userProfile = new UserProfile();
+			userProfile.firstName = createUserDto.firstName;
+			userProfile.lastName = createUserDto.lastName;
 			userProfile.email = createUserDto.email;
 			userProfile.firebaseId = fireUser.uid;
 			userProfile.organizationUser = user;
-			userProfile.systemRole = systemRole;
 			userProfile.isPrivacyPolicyAgreed = true;
 			userProfile.isTermsAndConditionAccepted = true;
 
@@ -417,10 +373,9 @@ export class LandlordAuthService extends AuthService {
 			await transactionalEntityManager.save(userProfile);
 			// await this.subscribeOrgToBasicPlan(organization, transactionalEntityManager);
 			await this.setCustomClaims(userProfile.firebaseId, {
-				systemRole: systemRole.name,
-				organizationRole: organizationRole.name,
+				kUid: userProfile.profileUuid,
+				organizationRole: createUserDto.role.name,
 				organizationId: organization.organizationUuid,
-				entitlements: await this.getRolesPermission(organizationRole),
 			});
 			return userProfile;
 		});

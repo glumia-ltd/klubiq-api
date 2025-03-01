@@ -11,8 +11,7 @@ import { SubscribeToPlanDto } from '@app/common/dto/requests/plan-subscriptions.
 import { SubscriptionPlanService } from '@app/common/services/subscription-plan.service';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthType } from '@app/auth/types/firebase.types';
-import { Auth, Roles } from '@app/auth/decorators/auth.decorator';
-import { UserRoles } from '@app/common/config/config.constants';
+import { Auth } from '@app/auth/decorators/auth.decorator';
 import { SubscriptionLimitsDto } from '@app/common/dto/responses/subscription-limits.dto';
 import { OrganizationSubscriptionDto } from '@app/common/dto/responses/organization-subscription.dto';
 
@@ -20,7 +19,6 @@ import { OrganizationSubscriptionDto } from '@app/common/dto/responses/organizat
 @Auth(AuthType.Bearer)
 @ApiTags('subscriptions')
 @Controller('subscriptions')
-@Roles(UserRoles.ORG_OWNER)
 export class SubscriptionController {
 	constructor(
 		private readonly organizationSubscriptionService: OrganizationSubscriptionService,

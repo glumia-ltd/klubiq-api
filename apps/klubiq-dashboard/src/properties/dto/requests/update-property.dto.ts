@@ -15,7 +15,7 @@ import { UnitStatus } from '@app/common/config/config.constants';
 export class UpdateUnitDto {
 	@IsNumber()
 	@IsOptional()
-	id?: number;
+	id?: string;
 
 	@IsString()
 	@IsOptional()

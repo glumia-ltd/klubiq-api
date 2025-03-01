@@ -64,28 +64,14 @@ export class OrganizationService {
 	async getOrganizationByUuId(uuid: string) {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			if (!currentUser) {
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
 			uuid = currentUser.organizationId;
 
 			this.logger.verbose(`Getting organization by id: ${uuid}`);
 			const org = await this.organizationRepository.getOrganizationByUUID(uuid);
-			const orgDetails = await this.mapPlainToClass(org);
-			return orgDetails;
-		} catch (err) {
-			this.logger.error('Error getting organization', err);
-			throw new Error(`Error getting organization. Error: ${err}`);
-		}
-	}
-
-	// This gets the organization by id
-	async getOrganizationById(id: number) {
-		try {
-			this.logger.verbose(`Getting organization by id: ${id}`);
-			const org = await this.organizationRepository.findOneWithId({
-				organizationId: id,
-			});
-			const orgDetails = await this.mapPlainToClass(org);
-			return orgDetails;
+			return await this.mapPlainToClass(org);
 		} catch (err) {
 			this.logger.error('Error getting organization', err);
 			throw new Error(`Error getting organization. Error: ${err}`);

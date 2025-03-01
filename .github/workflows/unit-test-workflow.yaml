@@ -61,7 +61,6 @@ env:
   TENANT_ROLE_ID: ${{ secrets.TENANT_ROLE_ID }}
   LEASE_MANAGER_ROLE_ID: ${{ secrets.LEASE_MANAGER_ROLE_ID }}
   PROPERTY_OWNER_ROLE_ID: ${{ secrets.PROPERTY_OWNER_ROLE_ID }}
-  ORG_CUSTOM_ROLE_ID: ${{ secrets.ORG_CUSTOM_ROLE_ID }}
   REDIS_PORT: ${{ secrets.REDIS_PORT }}
   WORKER_PORT: ${{ secrets.WORKER_PORT }}
   APP_PORT: ${{ secrets.APP_PORT }}

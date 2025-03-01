@@ -4,6 +4,7 @@ import { CommonProfile } from '../profiles/common-profile';
 import { FeaturePermissionService } from './feature-permission.service';
 import { RolesService } from './roles.service';
 import { RepositoriesModule } from '../repositories/repositories.module';
+import { RoleFeaturePermissionService } from './role-feature-permission.service';
 
 @Module({
 	imports: [RepositoriesModule],
@@ -12,7 +13,13 @@ import { RepositoriesModule } from '../repositories/repositories.module';
 		FeaturePermissionService,
 		PermissionsService,
 		RolesService,
+		RoleFeaturePermissionService,
 	],
-	exports: [PermissionsService, RolesService, FeaturePermissionService],
+	exports: [
+		PermissionsService,
+		RolesService,
+		FeaturePermissionService,
+		RoleFeaturePermissionService,
+	],
 })
 export class PermissionsModule {}

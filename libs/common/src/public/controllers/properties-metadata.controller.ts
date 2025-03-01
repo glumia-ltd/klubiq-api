@@ -14,14 +14,14 @@ import { PropertiesTypeService } from '@app/common/services/properties-type.serv
 import { PropertyPurpose } from '@app/common/database/entities/property-purpose.entity';
 import { PropertyStatus } from '@app/common/database/entities/property-status.entity';
 import { PropertyType } from '@app/common/database/entities/property-type.entity';
-import { UserRoles } from '@app/common/config/config.constants';
 import {
 	CreatePropertyMetadataDto,
 	UpdatePropertyMetadataDto,
 } from '../../dto/requests/create-property-metadata.dto';
 import { PropertiesCategoryService } from '../../services/properties-category.service';
 import { PropertyMetadataDto } from '../../dto/responses/properties-metadata.dto';
-import { Auth, AuthType, Roles } from '@app/auth';
+import { AuthType } from '@app/auth/types/firebase.types';
+import { Auth } from '@app/auth/decorators/auth.decorator';
 import { PropertiesAmenityService } from '@app/common/services/properties-amenity.service';
 import { ViewDataDto } from '@app/common/dto/responses/responses.dto';
 import { CreateDto } from '@app/common/dto/requests/requests.dto';
@@ -30,7 +30,6 @@ import { CreateDto } from '@app/common/dto/requests/requests.dto';
 @Auth(AuthType.Bearer)
 @ApiTags('property-metadata')
 @Controller('property-metadata')
-@Roles(UserRoles.LANDLORD)
 export class PropertyMetadataController {
 	constructor(
 		private readonly propertyCategoryService: PropertiesCategoryService,
@@ -41,7 +40,7 @@ export class PropertyMetadataController {
 	) {}
 
 	//#region PROPERTY-CATEGORIES
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+
 	@Post('property-categories')
 	@ApiOkResponse({
 		description: 'Creates a new property category',
@@ -77,7 +76,6 @@ export class PropertyMetadataController {
 		return propertyCategories;
 	}
 
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Put('property-categories/:id')
 	@ApiOkResponse({
 		description: 'Updates a new property category that matches the category id',
@@ -93,7 +91,6 @@ export class PropertyMetadataController {
 		);
 	}
 
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('property-categories/:id')
 	@ApiOkResponse({
 		description: 'Deletes a property category that matches the category id',
@@ -105,7 +102,7 @@ export class PropertyMetadataController {
 	//#endregion
 
 	//#region  PROPERTY PURPOSES
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+
 	@Post('property-purposes')
 	@ApiOkResponse({
 		description: 'Creates a new property Purpose',
@@ -141,7 +138,6 @@ export class PropertyMetadataController {
 		return propertypurpose;
 	}
 
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Put('property-purposes/:id')
 	@ApiOkResponse({
 		description: 'Updates a new property Purpose that matches the Purpose id',
@@ -157,7 +153,6 @@ export class PropertyMetadataController {
 		);
 	}
 
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('property-purposes/:id')
 	@ApiOkResponse({
 		description: 'Deletes a property Purpose that matches the Purpose id',
@@ -169,7 +164,7 @@ export class PropertyMetadataController {
 	//#endregion
 
 	//#region  PROPERTY STATUSES
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+
 	@Post('property-statuses')
 	@ApiOkResponse({
 		description: 'Creates a new property Status',
@@ -205,7 +200,6 @@ export class PropertyMetadataController {
 		return propertyStatus;
 	}
 
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Put('property-statuses/:id')
 	@ApiOkResponse({
 		description: 'Updates a new property Status that matches the Status id',
@@ -221,7 +215,6 @@ export class PropertyMetadataController {
 		);
 	}
 
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('property-statuses/:id')
 	@ApiOkResponse({
 		description: 'Deletes a property Status that matches the Status id',
@@ -233,7 +226,7 @@ export class PropertyMetadataController {
 	//#endregion
 
 	//#region PROPERTY TYPES
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
+
 	@Post('property-types')
 	@ApiOkResponse({
 		description: 'Creates a new property Type',
@@ -264,7 +257,6 @@ export class PropertyMetadataController {
 		return propertytypes;
 	}
 
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Put('property-types/:id')
 	@ApiOkResponse({
 		description: 'Updates a new property Type that matches the Type id',
@@ -280,7 +272,6 @@ export class PropertyMetadataController {
 		);
 	}
 
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Delete('property-types/:id')
 	@ApiOkResponse({
 		description: 'Deletes a property Type that matches the Type id',
@@ -303,7 +294,6 @@ export class PropertyMetadataController {
 		return propertyAmenities;
 	}
 
-	@Roles(UserRoles.ADMIN, UserRoles.SUPER_ADMIN)
 	@Post('property-amenities')
 	@ApiOkResponse({
 		description: 'Creates a new property amenity',

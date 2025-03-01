@@ -21,10 +21,10 @@ export class CreateNotificationDto {
 	data?: Record<string, any>;
 
 	@IsNumber()
-	leaseId?: number;
+	leaseId?: string;
 
 	@IsNumber()
-	unitId?: number;
+	unitId?: string;
 
 	@IsString()
 	propertyId?: string;

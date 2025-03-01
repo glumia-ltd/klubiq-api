@@ -13,7 +13,7 @@ import { Type } from 'class-transformer';
 export class CreateUnitDto {
 	@IsNumber()
 	@IsOptional()
-	id?: number;
+	id?: string;
 
 	@IsString()
 	@IsOptional()

@@ -1,4 +1,6 @@
-import { Auth, AuthType } from '@app/auth';
+import { AuthType } from '@app/auth/types/firebase.types';
+import { Auth } from '@app/auth/decorators/auth.decorator';
+
 import { Controller, Get, Query } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags } from '@nestjs/swagger';

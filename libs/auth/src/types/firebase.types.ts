@@ -40,11 +40,11 @@ export enum AuthType {
 export interface ActiveUserData {
 	name: string;
 	email: string;
-	systemRole: string;
 	organizationRole?: string;
 	organizationId?: string;
-	uid?: string;
+	uid: string;
 	entitlements: string[];
+	kUid: string;
 }
 export interface RolesAndEntitlements {
 	roles: UserRoles[];

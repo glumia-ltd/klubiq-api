@@ -15,11 +15,19 @@ export class PropertyAddress {
 	@PrimaryGeneratedColumn({ type: 'bigint' })
 	id?: number;
 
-	@CreateDateColumn({ select: false })
+	@CreateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
 	@Exclude()
 	createdDate?: Date;
 
-	@UpdateDateColumn({ select: false })
+	@UpdateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
 	@Exclude()
 	updatedDate?: Date;
 

@@ -28,14 +28,6 @@ export class OrgUserMapProfile extends AutomapperProfile {
 					mapFrom((s) => s.orgRole?.name),
 				),
 				forMember(
-					(d) => d.systemRoleName,
-					mapFrom((s) => s.profile?.systemRole?.name),
-				),
-				forMember(
-					(d) => d.organizationId,
-					mapFrom((s) => s.organization?.organizationId),
-				),
-				forMember(
 					(d) => d.organizationName,
 					mapFrom((s) => s.organization?.name),
 				),

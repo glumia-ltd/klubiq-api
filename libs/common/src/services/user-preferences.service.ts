@@ -31,7 +31,7 @@ export class UserPreferencesService {
 			return cachedUserPreferences;
 		}
 		const userPreferences = await this.userPreferencesRepository.findOne({
-			where: { profile: { firebaseId: userId } },
+			where: { profile: { profileUuid: userId } },
 		});
 		if (userPreferences) {
 			await this.cacheManager.set(
@@ -51,7 +51,7 @@ export class UserPreferencesService {
 		let userPreferences = await this.getUserPreferences(userId);
 		if (!userPreferences) {
 			userPreferences = this.userPreferencesRepository.create({
-				profile: { firebaseId: userId },
+				profile: { profileUuid: userId },
 				preferences,
 			});
 		} else {

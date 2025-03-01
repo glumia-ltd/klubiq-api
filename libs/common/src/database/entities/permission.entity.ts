@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+	Entity,
+	PrimaryGeneratedColumn,
+	Column,
+	OneToMany,
+	CreateDateColumn,
+	UpdateDateColumn,
+} from 'typeorm';
 
 import { FeaturePermission } from './feature-permission.entity';
 import { AutoMap } from '@automapper/classes';
@@ -26,4 +33,18 @@ export class Permission {
 		(featurePermission) => featurePermission.permission,
 	)
 	featurePermissions?: FeaturePermission[];
+
+	@CreateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
+	createdDate?: Date;
+
+	@UpdateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
+	updatedDate?: Date;
 }

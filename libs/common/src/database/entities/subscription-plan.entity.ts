@@ -61,10 +61,10 @@ export class SubscriptionPlan {
 	@Column({ default: false })
 	multi_currency_support: boolean;
 
-	@CreateDateColumn()
+	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdAt?: Date;
 
-	@UpdateDateColumn()
+	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	updatedAt?: Date;
 
 	@OneToMany(
