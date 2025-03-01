@@ -32,8 +32,10 @@ import { Notifications } from './entity/notifications.entity';
 import { OrganizationTenants } from './entity/organization-tenants.entity';
 import { DeletedFilesRecords } from './entity/deleted-files.entity';
 import { RoleFeaturePermissions } from './entity/role-feature-permission.entity';
+
 dotenv.config()
 
+// Database connection
 export const AppDataSource = new DataSource({
     type: "postgres",
     host: process.env.DATABASE_HOST,
