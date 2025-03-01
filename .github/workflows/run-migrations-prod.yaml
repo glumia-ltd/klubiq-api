@@ -63,7 +63,11 @@ jobs:
             export DATABASE_NAME=${{ secrets.DATABASE_NAME }}
             export SYNCHRONIZE_DB=${{ secrets.SYNCHRONIZE_DB }}
             export NODE_ENV=${{ secrets.ENV }}
+            echo "Running NPM INSTALL"
+            npm install
             echo "Running NPM GENERATE MIGRATION"
             npm run generate:migration
             echo "Running NPM MIGRATION"
             npm run migration
+            echo "CLEANING UP"
+            rm -rf node_modules
