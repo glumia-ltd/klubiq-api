@@ -37,7 +37,6 @@ import { SubscriptionLimitGuard } from '@app/common/guards/subscription-limit.gu
 import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 import { FileUploadService } from '@app/common/services/file-upload.service';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
-import { schema } from '../../open-api/schema';
 
 @ApiTags('properties')
 @ApiBearerAuth()
@@ -58,7 +57,6 @@ export class PropertiesController {
 		description: 'Returns details of the created property',
 		type: PropertyDetailsDto,
 	})
-	@ApiBody(schema.resources.createProperty)
 	async createProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
 			return await this.propertyService.createProperty(propertyData);
