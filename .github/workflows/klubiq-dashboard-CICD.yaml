@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - dev
+    paths:
+      - '!klubiq-db/**'
+      - '!.github/workflows/run-migrations-staging.yaml'
+      - '!.github/workflows/run-migrations-prod.yaml'
     #paths:
     #- 'apps/klubiq-dashboard/**'
     #- 'libs/**'

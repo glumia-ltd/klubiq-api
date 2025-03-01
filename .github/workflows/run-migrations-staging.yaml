@@ -5,6 +5,7 @@ on:
       - dev
     paths:
       - 'klubiq-db/**'
+      - '.github/workflows/run-migrations-staging.yaml'
 env:
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
@@ -25,6 +26,7 @@ jobs:
           sparse-checkout: klubiq-db
       - name: Build prject
         run: |
+          cd klubiq-db
           npm install
           npm run build
       - name: Archive production artifacts
