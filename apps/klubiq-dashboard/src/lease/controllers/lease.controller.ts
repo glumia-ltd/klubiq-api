@@ -15,6 +15,7 @@ import {
 	ApiBearerAuth,
 	ApiBody,
 	ApiCreatedResponse,
+	ApiNoContentResponse,
 	ApiOkResponse,
 	ApiParam,
 	ApiTags,
@@ -40,12 +41,8 @@ export class LeaseController {
 	constructor(private readonly leaseService: LeaseService) {}
 
 	@Get('unit/:unitId')
-	@Permission(
-		Permissions.READ,
-		Permissions.CREATE,
-		Permissions.UPDATE,
-		Permissions.DELETE,
-	)
+	@Permission(Permissions.READ)
+	@HttpCode(HttpStatus.OK)
 	@ApiOkResponse({
 		description: 'Gets a property unit leases',
 		type: () => LeaseDto,
@@ -58,8 +55,7 @@ export class LeaseController {
 	@ApiParam({ description: 'Unit Id', name: 'unitId', type: String })
 	async getPropertyLeases(@Param('unitId') unitId: string) {
 		try {
-			const result = await this.leaseService.getAllUnitLeases(unitId);
-			return result;
+			return await this.leaseService.getAllUnitLeases(unitId);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -67,6 +63,7 @@ export class LeaseController {
 
 	@Post()
 	@Permission(Permissions.CREATE)
+	@HttpCode(HttpStatus.CREATED)
 	@ApiCreatedResponse({
 		description: 'Creates a new lease',
 		type: () => LeaseDto,
@@ -80,7 +77,7 @@ export class LeaseController {
 	}
 
 	@Patch(':id')
-	@Permission(Permissions.CREATE)
+	@Permission(Permissions.UPDATE)
 	@HttpCode(HttpStatus.OK)
 	@ApiOkResponse({
 		description: 'Updates a lease',
@@ -88,20 +85,15 @@ export class LeaseController {
 	})
 	async updateLease(@Param('id') id: string, @Body() leaseDto: UpdateLeaseDto) {
 		try {
-			const result = await this.leaseService.updateLeaseById(id, leaseDto);
-			return result;
+			return await this.leaseService.updateLeaseById(id, leaseDto);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
 	}
 
 	@Get(':id')
-	@Permission(
-		Permissions.READ,
-		Permissions.CREATE,
-		Permissions.UPDATE,
-		Permissions.DELETE,
-	)
+	@Permission(Permissions.READ)
+	@HttpCode(HttpStatus.OK)
 	@ApiOkResponse({
 		description: 'Gets a lease by Id',
 		type: () => LeaseDetailsDto,
@@ -109,20 +101,14 @@ export class LeaseController {
 	@ApiParam({ description: 'Lease Id', name: 'id', type: Number })
 	async getLeaseById(@Param('id') id: string) {
 		try {
-			const result = await this.leaseService.getLeaseById(id);
-			return result;
+			return await this.leaseService.getLeaseById(id);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
 	}
 
 	@Get()
-	@Permission(
-		Permissions.READ,
-		Permissions.CREATE,
-		Permissions.UPDATE,
-		Permissions.DELETE,
-	)
+	@Permission(Permissions.READ)
 	@ApiOkResponse({
 		description: 'Gets an organization leases',
 		schema: {
@@ -139,8 +125,7 @@ export class LeaseController {
 	})
 	async getLeases(@Query() getLeaseDto: GetLeaseDto) {
 		try {
-			const result = await this.leaseService.getOrganizationLeases(getLeaseDto);
-			return result;
+			return await this.leaseService.getOrganizationLeases(getLeaseDto);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -148,6 +133,7 @@ export class LeaseController {
 
 	@Post(':id/addTenants')
 	@Permission(Permissions.CREATE)
+	@HttpCode(HttpStatus.CREATED)
 	@ApiCreatedResponse({
 		description: 'add tenants to lease',
 		type: () => LeaseDto,
@@ -165,8 +151,7 @@ export class LeaseController {
 		@Body() tenantDtos: CreateTenantDto[],
 	) {
 		try {
-			const result = await this.leaseService.addTenantToLease(tenantDtos, id);
-			return result;
+			return await this.leaseService.addTenantToLease(tenantDtos, id);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -174,26 +159,27 @@ export class LeaseController {
 
 	@Post('upload-url')
 	@Permission(Permissions.CREATE)
+	@HttpCode(HttpStatus.OK)
+	@ApiOkResponse({ description: 'Gets a presigned url for document upload' })
 	async getPresignedUrlForDocument(@Body() fileData: FileUploadDto) {
 		try {
-			const result =
-				await this.leaseService.getPreSignedUploadUrlForDocuments(fileData);
-			return result;
+			return await this.leaseService.getPreSignedUploadUrlForDocuments(
+				fileData,
+			);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
 	}
 
 	@Patch('terminate/:id')
-	@Permission(Permissions.CREATE)
+	@Permission(Permissions.DELETE, Permissions.UPDATE)
 	@HttpCode(HttpStatus.NO_CONTENT)
-	@ApiOkResponse({
+	@ApiNoContentResponse({
 		description: 'Terminates a lease',
 	})
 	async terminateLease(@Param('id') id: string) {
 		try {
-			const result = await this.leaseService.terminateLease(id);
-			return result;
+			await this.leaseService.terminateLease(id);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -202,13 +188,12 @@ export class LeaseController {
 	@Patch('renew/:id')
 	@Permission(Permissions.CREATE)
 	@HttpCode(HttpStatus.NO_CONTENT)
-	@ApiOkResponse({
+	@ApiNoContentResponse({
 		description: 'Renews a lease',
 	})
 	async renewLease(@Param('id') id: string) {
 		try {
-			const result = await this.leaseService.renewLease(id);
-			return result;
+			await this.leaseService.renewLease(id);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}

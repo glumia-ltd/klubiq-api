@@ -37,7 +37,7 @@ import { SubscriptionLimitGuard } from '@app/common/guards/subscription-limit.gu
 import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 import { FileUploadService } from '@app/common/services/file-upload.service';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
-import * as examples from '../../openAPI.examples.json';
+import { schema } from '../../open-api/schema';
 
 @ApiTags('properties')
 @ApiBearerAuth()
@@ -53,19 +53,15 @@ export class PropertiesController {
 	@Permission(Permissions.CREATE)
 	@UseGuards(SubscriptionLimitGuard)
 	@Post()
+	@HttpCode(HttpStatus.CREATED)
 	@ApiCreatedResponse({
 		description: 'Returns details of the created property',
 		type: PropertyDetailsDto,
 	})
-	@ApiBody(examples.resources['create-property'])
+	@ApiBody(schema.resources.createProperty)
 	async createProperty(@Body() propertyData: CreatePropertyDto) {
 		try {
-			/*************  ✨ Codeium Command ⭐  *************/
-			/**
-	 * Creates a new property and returns the created property details.
-/******  895421c2-d4e3-4011-ab92-fb387ab2ba9c  *******/ const data =
-				await this.propertyService.createProperty(propertyData);
-			return data;
+			return await this.propertyService.createProperty(propertyData);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -78,11 +74,12 @@ export class PropertiesController {
 			'Returns paginated list of properties in an organization based on query params',
 		type: PageDto<PropertyListDto>,
 	})
+	@HttpCode(HttpStatus.OK)
 	async getOrganizationProperties(@Query() getPropertyDto: GetPropertyDto) {
 		try {
-			const data =
-				await this.propertyService.getOrganizationProperties(getPropertyDto);
-			return data;
+			return await this.propertyService.getOrganizationProperties(
+				getPropertyDto,
+			);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -94,12 +91,12 @@ export class PropertiesController {
 		description: "Returns a property by it's property uuid",
 		type: PropertyDetailsDto,
 	})
+	@HttpCode(HttpStatus.OK)
 	async getPropertyById(
 		@Param('propertyUuid') propertyUuid: string,
 	): Promise<PropertyDetailsDto> {
 		try {
-			const data = await this.propertyService.getPropertyById(propertyUuid);
-			return data;
+			return await this.propertyService.getPropertyById(propertyUuid);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -121,11 +118,10 @@ export class PropertiesController {
 		@Body() updateData: UpdatePropertyDto,
 	) {
 		try {
-			const data = await this.propertyService.updateProperty(
+			return await this.propertyService.updateProperty(
 				propertyUuid,
 				updateData,
 			);
-			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -213,11 +209,10 @@ export class PropertiesController {
 		@Body() unitsDto: CreateUnitDto[],
 	) {
 		try {
-			const data = await this.propertyService.addUnitsToProperty(
+			return await this.propertyService.addUnitsToProperty(
 				propertyUuid,
 				unitsDto,
 			);
-			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -238,11 +233,10 @@ export class PropertiesController {
 		@Body() managerDto: PropertyManagerAssignmentDto,
 	) {
 		try {
-			const data = await this.propertyService.assignPropertyToManagerOrOwner(
+			return await this.propertyService.assignPropertyToManagerOrOwner(
 				propertyUuid,
 				managerDto,
 			);
-			return data;
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -260,8 +254,7 @@ export class PropertiesController {
 	})
 	async getPresignedUrlForPropertyImage(@Body() fileData: FileUploadDto) {
 		try {
-			const result = await this.fileUploadService.getUploadSignature(fileData);
-			return result;
+			return await this.fileUploadService.getUploadSignature(fileData);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
@@ -275,9 +268,7 @@ export class PropertiesController {
 	})
 	async getOrganizationPropertiesViewList() {
 		try {
-			const data =
-				await this.propertyService.getPropertyGroupedUnitsByOrganization();
-			return data;
+			return await this.propertyService.getPropertyGroupedUnitsByOrganization();
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
