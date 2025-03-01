@@ -88,11 +88,11 @@ jobs:
         with:
           name: artifacts
           path: |
-            dist
-            env-export.sh
-            config.json
-            package.json
-            package-lock.json
+            dist/
+            # env-export.sh
+            # config.json
+            # package.json
+            # package-lock.json
 
   deploy:
     runs-on: ubuntu-latest
@@ -118,7 +118,6 @@ jobs:
             cd ${{ secrets.TARGET_DIR }}
           SCRIPT_AFTER: |
             cd ${{ secrets.TARGET_DIR }}
-
             export DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             export DATABASE_PORT=${{ secrets.DATABASE_PORT }}
             export DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
