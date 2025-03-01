@@ -66,5 +66,3 @@ jobs:
             npm run generate:migration
             echo "Running NPM MIGRATION"
             npm run migration
-            echo "Cleaning up files"
-            rm -rf ${{ vars.DB_TARGET_DIR }}/*

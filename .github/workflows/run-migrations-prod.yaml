@@ -5,6 +5,7 @@ on:
       - prod
     paths:
       - 'klubiq-db/**'
+      - '.github/workflows/run-migrations-prod.yaml'
 env:
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
@@ -19,15 +20,35 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{github.env}}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           sparse-checkout: klubiq-db
+      - name: Build prject
+        run: |
+          cd klubiq-db
+          npm install
+          npm run build
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: |
+            klubiq-db/build/
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: artifacts/build/
       - name: copy and run migration via ssh
         uses: easingthemes/ssh-deploy@main
         with:
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USERNAME }}
           SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
+          SOURCE: 'artifacts/'
+          EXCLUDE: '/node_modules/, node_modules, /node_modules'
           TARGET: ${{ vars.DB_TARGET_DIR }}
           SCRIPT_BEFORE: |
             sudo chown $USER ${{ vars.DB_TARGET_DIR }}
@@ -41,13 +62,7 @@ jobs:
             export DATABASE_NAME=${{ secrets.DATABASE_NAME }}
             export SYNCHRONIZE_DB=${{ secrets.SYNCHRONIZE_DB }}
             export NODE_ENV=${{ secrets.ENV }}
-            echo "Running NPM INSTALL"
-            npm install
-            echo "Running NPM BUILD"
-            npm run build
             echo "Running NPM GENERATE MIGRATION"
             npm run generate:migration
             echo "Running NPM MIGRATION"
             npm run migration
-            echo "Cleaning up files"
-            rm -rf ${{ vars.DB_TARGET_DIR }}/*
