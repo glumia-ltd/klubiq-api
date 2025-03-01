@@ -35,12 +35,13 @@ jobs:
           name: artifacts
           path: |
             klubiq-db/build/
+            klubiq-db/package*.json
       
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: artifacts
-          path: artifacts/build/
+          path: artifacts/
       - name: copy and run migration via ssh
         uses: easingthemes/ssh-deploy@main
         with:

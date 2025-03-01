@@ -93,10 +93,10 @@ jobs:
           name: artifacts
           path: |
             dist/
-            # env-export.sh
-            # config.json
-            # package.json
-            # package-lock.json
+            env-export.sh
+            config.json
+            package.json
+            package-lock.json
 
   deploy:
     runs-on: ubuntu-latest
@@ -115,7 +115,7 @@ jobs:
           REMOTE_USER: ${{ secrets.SSH_USERNAME }}
           SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
           SOURCE: 'artifacts/'
-          EXCLUDE: '/node_modules/, node_modules, /node_modules'
+          EXCLUDE: '/node_modules/, node_modules, /node_modules, .github, .github/**, .git, .git/**'
           TARGET: ${{ secrets.TARGET_DIR }}
           SCRIPT_BEFORE: |
             sudo chown $USER ${{ secrets.TARGET_DIR }}

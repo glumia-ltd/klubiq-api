@@ -35,12 +35,13 @@ jobs:
           name: artifacts
           path: |
             klubiq-db/build/
+            klubiq-db/package*.json
       
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: artifacts
-          path: artifacts/build/
+          path: artifacts/
       - name: copy and run migration via ssh
         uses: easingthemes/ssh-deploy@main
         with:
@@ -48,7 +49,7 @@ jobs:
           REMOTE_USER: ${{ secrets.SSH_USERNAME }}
           SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_CERT }}
           SOURCE: 'artifacts/'
-          EXCLUDE: '/node_modules/, node_modules, /node_modules'
+          EXCLUDE: '/node_modules/, node_modules, /node_modules, .github, .github/**, .git, .git/**'
           TARGET: ${{ vars.DB_TARGET_DIR }}
           SCRIPT_BEFORE: |
             sudo chown $USER ${{ vars.DB_TARGET_DIR }}
