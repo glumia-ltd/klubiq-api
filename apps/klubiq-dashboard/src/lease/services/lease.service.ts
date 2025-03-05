@@ -57,10 +57,10 @@ export class LeaseService implements ILeaseService {
 		const currentUser = this.cls.get('currentUser');
 		const leaseListKeys =
 			(await this.cacheManager.get<string[]>(
-				`${currentUser.organizationId}/getLeaseListKeys`,
+				`${currentUser.organizationId}:getLeaseListKeys`,
 			)) || [];
 		await this.cacheManager.set(
-			`${currentUser.organizationId}/getLeaseListKeys`,
+			`${currentUser.organizationId}:getLeaseListKeys`,
 			[...leaseListKeys, cacheKey],
 			this.cacheTTL,
 		);
@@ -73,10 +73,12 @@ export class LeaseService implements ILeaseService {
 		if (!currentUser) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
-		const cacheKey = `${this.cacheKeyPrefix}-${currentUser.organizationId}/${this.cls.get('requestUrl')}`;
+		const cacheKey = `${this.cacheKeyPrefix}:${currentUser.organizationId}:${this.cls.get('requestUrl')}`;
 		const cachedLeases =
 			await this.cacheManager.get<PageDto<LeaseDto>>(cacheKey);
-		if (cachedLeases) return cachedLeases;
+		if (cachedLeases) {
+			return cachedLeases;
+		}
 		const [entities, count] = await this.leaseRepository.getOrganizationLeases(
 			currentUser.organizationId,
 			currentUser.kUid,
@@ -95,7 +97,7 @@ export class LeaseService implements ILeaseService {
 	}
 
 	private async mapLeaseRawToDto(leases: any[]): Promise<LeaseDto[]> {
-		const leaseListDto = leases.map((lease) =>
+		return leases.map((lease) =>
 			plainToInstance(
 				LeaseDto,
 				{
@@ -121,11 +123,10 @@ export class LeaseService implements ILeaseService {
 				{ excludeExtraneousValues: true },
 			),
 		);
-		return leaseListDto;
 	}
 
 	private async mapLeaseListToDto(leases: Lease[]): Promise<LeaseDto[]> {
-		const leaseListDto = leases.map((lease) =>
+		return leases.map((lease) =>
 			plainToInstance(
 				LeaseDto,
 				{
@@ -142,43 +143,46 @@ export class LeaseService implements ILeaseService {
 				{ excludeExtraneousValues: true },
 			),
 		);
-		return leaseListDto;
 	}
 	async getAllUnitLeases(unitId: string): Promise<LeaseDto[]> {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
-		const cacheKey = `${this.cacheKeyPrefix}/property/${unitId}`;
+		const cacheKey = `${this.cacheKeyPrefix}:property:${unitId}`;
 		const cachedLeases = await this.cacheManager.get<LeaseDto[]>(cacheKey);
 		if (cachedLeases) {
-			if (currentUser.organizationRole !== UserRoles.ORG_OWNER)
+			if (currentUser.organizationRole !== UserRoles.ORG_OWNER) {
 				return filter(
 					cachedLeases,
 					(lease: LeaseDto) =>
 						lease.property.managerUid !== currentUser.kUid ||
 						lease.property.ownerUid !== currentUser.kUid,
 				);
+			}
 			return cachedLeases;
 		}
 		const leases = await this.leaseRepository.getUnitLeases(unitId);
 		const mappedLeases = await this.mapLeaseRawToDto(leases);
 		await this.cacheManager.set(cacheKey, mappedLeases, this.cacheTTL);
 		this.updateOrgCacheKeys(cacheKey);
-		if (currentUser.organizationRole !== UserRoles.ORG_OWNER)
+		if (currentUser.organizationRole !== UserRoles.ORG_OWNER) {
 			return filter(
 				mappedLeases,
 				(lease: LeaseDto) =>
 					lease.property.managerUid !== currentUser.kUid ||
 					lease.property.ownerUid !== currentUser.kUid,
 			);
+		}
 		return mappedLeases;
 	}
 
 	async getLeaseById(id: string): Promise<LeaseDetailsDto> {
-		const cacheKey = `${this.cacheKeyPrefix}/${id}`;
+		const cacheKey = `${this.cacheKeyPrefix}:${id}`;
 		const cachedLease = await this.cacheManager.get<LeaseDetailsDto>(cacheKey);
-		if (cachedLease) return cachedLease;
+		if (cachedLease) {
+			return cachedLease;
+		}
 		const lease = await this.leaseRepository.getLeaseById(id);
 		const mappedLease = await this.mapLeaseDetailRawToDto(lease);
 		await this.cacheManager.set(cacheKey, mappedLease, this.cacheTTL);
@@ -191,8 +195,7 @@ export class LeaseService implements ILeaseService {
 		leaseDto: UpdateLeaseDto,
 	): Promise<LeaseDetailsDto> {
 		const updatedLease = await this.leaseRepository.updateLease(id, leaseDto);
-		const mappedLease = await this.mapLeaseDetailsToDto(updatedLease);
-		return mappedLease;
+		return await this.mapLeaseDetailsToDto(updatedLease);
 	}
 
 	async createLease(leaseDto: CreateLeaseDto): Promise<void> {
@@ -248,10 +251,12 @@ export class LeaseService implements ILeaseService {
 		organizationUuid: string,
 	): Promise<RentOverdueLeaseDto> {
 		try {
-			const cacheKey = `${this.cacheKeyPrefix}-overdue-metrics/${organizationUuid}`;
+			const cacheKey = `${this.cacheKeyPrefix}:overdue-metrics:${organizationUuid}`;
 			const cachedOverdueRentData =
 				await this.cacheManager.get<RentOverdueLeaseDto>(cacheKey);
-			if (cachedOverdueRentData) return cachedOverdueRentData;
+			if (cachedOverdueRentData) {
+				return cachedOverdueRentData;
+			}
 			const totalOverdueRents =
 				await this.leaseRepository.getOverdueRentData(organizationUuid);
 			await this.cacheManager.set(
@@ -279,16 +284,14 @@ export class LeaseService implements ILeaseService {
 				tenantDtos,
 				leaseId,
 			);
-			const mappedLease = await this.mapLeaseDetailRawToDto(updatedLease);
-			return mappedLease;
+			return await this.mapLeaseDetailRawToDto(updatedLease);
 		} catch (error) {
 			throw new Error(error.message);
 		}
 	}
 	async getPreSignedUploadUrlForDocuments(data: FileUploadDto): Promise<any> {
 		try {
-			const url = await this.uploadService.getUploadSignature(data);
-			return url;
+			return await this.uploadService.getUploadSignature(data);
 		} catch (error) {
 			this.logger.error(
 				`Error generating pre-signed URL for property image: ${error.message}`,

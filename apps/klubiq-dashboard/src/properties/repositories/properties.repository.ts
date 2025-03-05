@@ -553,10 +553,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 				WHERE (P."organizationUuid" = $1)
 				GROUP BY P."organizationUuid"`;
 		const totalUnitsQuery = await this.manager.query(query, [orgUuid]);
-		const queryResult = totalUnitsQuery.length
+		return totalUnitsQuery.length
 			? parseInt(totalUnitsQuery[0].total_units, 10)
 			: 0;
-		return queryResult;
 	}
 
 	async getUnitStatusCounts(
@@ -693,7 +692,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 	}
 
 	async getPropertyGroupedUnitsByOrganization(orgUuid: string) {
-		const query = await this.createQueryBuilder('property')
+		return await this.createQueryBuilder('property')
 			.leftJoinAndSelect('property.units', 'units')
 			.select([
 				'property.uuid',
@@ -703,6 +702,5 @@ export class PropertyRepository extends BaseRepository<Property> {
 			])
 			.where('property.organizationUuid = :orgUuid', { orgUuid })
 			.getMany();
-		return query;
 	}
 }

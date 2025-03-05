@@ -54,9 +54,11 @@ export class DashboardService {
 		invalidateCache: boolean = false,
 	): Promise<PropertyMetrics> {
 		const currentUser = this.cls.get('currentUser');
-		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
 
-		const cacheKey = `${this.cacheKeyPrefix}/${CacheKeys.PROPERTY_METRICS}/${currentUser.organizationId}`;
+		const cacheKey = `${this.cacheKeyPrefix}:${CacheKeys.PROPERTY_METRICS}:${currentUser.organizationId}`;
 		if (invalidateCache) {
 			await this.cacheManager.del(cacheKey);
 		}
@@ -73,7 +75,7 @@ export class DashboardService {
 		await this.cacheManager.set(cacheKey, propertyMetrics, this.cacheTTL);
 		this.updateOrgCacheKeys(
 			cacheKey,
-			`${currentUser.organizationId}/getPropertyListKeys`,
+			`${currentUser.organizationId}:getPropertyListKeys`,
 		);
 		return propertyMetrics;
 	}
@@ -84,7 +86,7 @@ export class DashboardService {
 	): Promise<RevenueResponseDto> {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const cacheKey = `${this.cacheKeyPrefix}/${CacheKeys.REVENUE_METRICS}/${startDateStr}to${endDateStr}/${currentUser.organizationId}`;
+		const cacheKey = `${this.cacheKeyPrefix}:${CacheKeys.REVENUE_METRICS}:${startDateStr}to${endDateStr}:${currentUser.organizationId}`;
 		const cachedRevenueMetrics =
 			await this.cacheManager.get<RevenueResponseDto>(cacheKey);
 		if (cachedRevenueMetrics) {
@@ -105,7 +107,7 @@ export class DashboardService {
 		await this.cacheManager.set(cacheKey, result, this.cacheTTL);
 		this.updateOrgCacheKeys(
 			cacheKey,
-			`${currentUser.organizationId}/transactionListKeys`,
+			`${currentUser.organizationId}:transactionListKeys`,
 		);
 		return result;
 	}
@@ -113,7 +115,7 @@ export class DashboardService {
 	async getTransactionMetricsData(): Promise<TransactionMetricsDto> {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const cacheKey = `${this.cacheKeyPrefix}/${CacheKeys.TRANSACTION_METRICS}/${currentUser.organizationId}`;
+		const cacheKey = `${this.cacheKeyPrefix}:${CacheKeys.TRANSACTION_METRICS}:${currentUser.organizationId}`;
 		const cachedTransactionMetrics =
 			await this.cacheManager.get<TransactionMetricsDto>(cacheKey);
 		if (cachedTransactionMetrics) {
@@ -126,7 +128,7 @@ export class DashboardService {
 		await this.cacheManager.set(cacheKey, result, this.cacheTTL);
 		this.updateOrgCacheKeys(
 			cacheKey,
-			`${currentUser.organizationId}/transactionListKeys`,
+			`${currentUser.organizationId}:transactionListKeys`,
 		);
 		return result;
 	}
@@ -167,7 +169,7 @@ export class DashboardService {
 	async getLeaseMetricsData(): Promise<LeaseMetricsDto> {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const cacheKey = `${this.cacheKeyPrefix}/${CacheKeys.LEASE_METRICS}/${currentUser.organizationId}`;
+		const cacheKey = `${this.cacheKeyPrefix}:${CacheKeys.LEASE_METRICS}:${currentUser.organizationId}`;
 		const cachedLeaseMetrics =
 			await this.cacheManager.get<LeaseMetricsDto>(cacheKey);
 		if (cachedLeaseMetrics) {
@@ -219,16 +221,17 @@ export class DashboardService {
 		await this.cacheManager.set(cacheKey, leaseMetrics, this.cacheTTL);
 		this.updateOrgCacheKeys(
 			cacheKey,
-			`${currentUser.organizationId}/getLeaseListKeys`,
+			`${currentUser.organizationId}:getLeaseListKeys`,
 		);
 		return leaseMetrics;
 	}
 	async getOverdueRentSummary(): Promise<RentOverdueLeaseDto> {
 		const currentUser = this.cls.get('currentUser');
-		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const overdueRentSummary = await this.leaseService.getTotalOverdueRents(
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		return await this.leaseService.getTotalOverdueRents(
 			currentUser.organizationId,
 		);
-		return overdueRentSummary;
 	}
 }

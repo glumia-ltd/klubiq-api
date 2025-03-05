@@ -97,7 +97,7 @@ export abstract class AuthService {
 				preferences,
 			);
 		if (updatedUserPreferences) {
-			const cacheKey = `${this.cacheKeyPrefix}/user/${currentUser.kUid}`;
+			const cacheKey = `${this.cacheKeyPrefix}:user:${currentUser.kUid}`;
 			await this.cacheManager.del(cacheKey);
 		}
 		return updatedUserPreferences;
@@ -127,9 +127,7 @@ export abstract class AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -139,9 +137,7 @@ export abstract class AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -162,36 +158,30 @@ export abstract class AuthService {
 		displayName: string;
 	}): Promise<any> {
 		try {
-			const userRecord = await this.auth.createUser({
+			return await this.auth.createUser({
 				email: newUser.email,
 				emailVerified: false,
 				password: newUser.password,
 				displayName: newUser.displayName,
 			});
-			return userRecord;
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
 			this.logger.error(
 				`Firebase Error creating user: ${newUser.email} - ${firebaseErrorMessage}`,
 			);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
 	// GETS FIREBASE USER
 	async getUser(uid: string) {
 		try {
-			const userRecord = await this.auth.getUser(uid);
-			return userRecord;
+			return await this.auth.getUser(uid);
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -220,9 +210,7 @@ export abstract class AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -254,9 +242,7 @@ export abstract class AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -308,9 +294,7 @@ export abstract class AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -320,9 +304,7 @@ export abstract class AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -336,9 +318,7 @@ export abstract class AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -365,9 +345,7 @@ export abstract class AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -387,14 +365,11 @@ export abstract class AuthService {
 						}),
 					),
 			);
-			const jwtToken = await this.auth.createCustomToken(data.localId);
-			return jwtToken;
+			return await this.auth.createCustomToken(data.localId);
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -432,12 +407,15 @@ export abstract class AuthService {
 			if (!this.currentUser.uid && !this.currentUser.kUid) {
 				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
 			}
-			const cacheKey = `${this.cacheKeyPrefix}/user/${this.currentUser.kUid}`;
+			const cacheKey = `${this.cacheKeyPrefix}:user:${this.currentUser.kUid}`;
 
 			const cachedUser =
 				await this.cacheManager.get<LandlordUserDetailsResponseDto>(cacheKey);
-			if (cachedUser) return cachedUser;
-			else return await this.getUserDetails(this.currentUser, cacheKey);
+			if (cachedUser) {
+				return cachedUser;
+			} else {
+				return await this.getUserDetails(this.currentUser, cacheKey);
+			}
 		} catch (err) {
 			throw err;
 		}
@@ -450,7 +428,6 @@ export abstract class AuthService {
 			currentUser.kUid,
 			currentUser.uid,
 		);
-		console.log('userDetails', userDetails);
 		if (!userDetails) {
 			throw new NotFoundException('User not found');
 		}
@@ -494,31 +471,27 @@ export abstract class AuthService {
 
 	async createInvitedUser(invitedUserDto: InviteUserDto): Promise<any> {
 		try {
-			const userRecord = await this.auth.createUser({
+			return await this.auth.createUser({
 				email: invitedUserDto.email,
 				displayName: `${invitedUserDto.firstName} ${invitedUserDto.lastName}`,
 			});
-			return userRecord;
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
 			this.logger.error(
 				`Firebase Error creating user: ${invitedUserDto.email} - ${firebaseErrorMessage}`,
 			);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
 	async getInvitationToken(invitedUserDto: InviteUserDto): Promise<string> {
 		const secret = this.configService.get<string>('KLUBIQ_ADMIN_API_KEY');
-		const token = createHmac('sha256', secret)
+		return createHmac('sha256', secret)
 			.update(
 				`${invitedUserDto.email}|${invitedUserDto.firstName}||${invitedUserDto.lastName}`,
 			)
 			.digest('hex');
-		return token;
 	}
 
 	abstract getActionCodeSettings(baseUrl: string, continueUrl: string): any;
