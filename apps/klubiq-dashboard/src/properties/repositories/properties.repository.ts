@@ -562,24 +562,22 @@ export class PropertyRepository extends BaseRepository<Property> {
 		organizationUuid: string,
 		pastDays: number = 0,
 	): Promise<UnitStatusCounts> {
-		/* The above code is written in TypeScript and it seems to be using a multi-line comment syntax ( */
 		let occupiedUnits = 0;
 		let vacantUnits = 0;
-		const interval = `'${pastDays} days'`;
-		const dateRangeCondition =
-			pastDays > 0
-				? ` AND (l."startDate" <= (CURRENT_DATE - INTERVAL ${interval}) AND l."endDate" >= (CURRENT_DATE - INTERVAL ${interval}));`
-				: ';';
 		let query = `
 			SELECT 
-				COUNT(CASE WHEN u.status = '${UnitStatus.OCCUPIED}' AND l.status IN ('${LeaseStatus.ACTIVE}', '${LeaseStatus.EXPIRING}') THEN 1 END) AS total_occupied_units,
+				COUNT(CASE WHEN u.status = '${UnitStatus.OCCUPIED}' AND (l.status IN ('${LeaseStatus.ACTIVE}', '${LeaseStatus.EXPIRING}') OR l.status IS NULL) THEN 1 END) AS total_occupied_units,
 				COUNT(CASE WHEN u.status = '${UnitStatus.VACANT}' THEN 1 END) AS total_vacant_units
 			FROM poo.unit u
 			LEFT JOIN poo.lease l ON u.id = l."unitId"
-			WHERE l."organizationUuid" = $1`;
-		query += dateRangeCondition;
-		const unitStatusQuery = await this.manager.query(query, [organizationUuid]);
+			INNER JOIN poo.property p ON u."propertyUuid" = p.uuid
+			WHERE p."organizationUuid" = $1`;
 
+		if (pastDays > 0) {
+			query += ` AND (l."startDate" <= (CURRENT_DATE - INTERVAL '${pastDays} days') AND l."endDate" >= (CURRENT_DATE - INTERVAL '${pastDays} days'))`;
+		}
+		query += ';';
+		const unitStatusQuery = await this.manager.query(query, [organizationUuid]);
 		if (unitStatusQuery.length) {
 			occupiedUnits = parseInt(
 				unitStatusQuery[0].total_occupied_units ?? 0,
