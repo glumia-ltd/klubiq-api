@@ -58,7 +58,7 @@ export class PropertyEventsListener {
 	@OnEvent(EVENTS.PROPERTY_ASSIGNED)
 	async handlePropertyAssignedEvent(payload: PropertyEvent) {
 		await this.helperService.deleteItemFromCache(
-			`properties/${payload.propertyId}`,
+			`properties:${payload.propertyId}`,
 		);
 		await this.createEmailNotification(
 			payload,

@@ -64,16 +64,16 @@ export class HelperService {
 
 	private getPropertyRelatedCacheKeys(organizationId: string) {
 		return [
-			`${organizationId}/getPropertyListKeys`,
-			`dashboard/${CacheKeys.PROPERTY_METRICS}/${organizationId}`,
-			`properties-grouped-units/${organizationId}`,
+			`${organizationId}:getPropertyListKeys`,
+			`dashboard:${CacheKeys.PROPERTY_METRICS}:${organizationId}`,
+			`properties:grouped-units:${organizationId}`,
 		];
 	}
 
 	private getLeaseRelatedCacheKeys(organizationId: string) {
 		return [
-			`${organizationId}/getLeaseListKeys`,
-			`dashboard/${CacheKeys.LEASE_METRICS}/${organizationId}`,
+			`${organizationId}:getLeaseListKeys`,
+			`dashboard:${CacheKeys.LEASE_METRICS}:${organizationId}`,
 		];
 	}
 
@@ -127,7 +127,7 @@ export class HelperService {
 			};
 			users = [...users, recipients];
 		}
-		const notificationRecipients = transform(
+		return transform(
 			users,
 			(result, user) => {
 				result.userIds.push(user.userId);
@@ -149,7 +149,6 @@ export class HelperService {
 			},
 			{ userIds: [], emailRecipients: [], notificationDtos: [] },
 		);
-		return notificationRecipients;
 	}
 
 	async getNotificationRecipientsByRoles(
@@ -198,7 +197,7 @@ export class HelperService {
 			};
 			users = [...users, recipients];
 		}
-		const notificationRecipients = transform(
+		return transform(
 			users,
 			(result, user) => {
 				result.userIds.push(user.userId);
@@ -220,7 +219,6 @@ export class HelperService {
 			},
 			{ userIds: [], emailRecipients: [], notificationDtos: [] },
 		);
-		return notificationRecipients;
 	}
 	queueOption() {
 		return {

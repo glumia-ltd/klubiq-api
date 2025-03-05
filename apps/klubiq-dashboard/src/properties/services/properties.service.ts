@@ -60,9 +60,7 @@ export class PropertiesService implements IPropertyMetrics {
 	) {}
 	async getTotalUnits(organizationUuid: string): Promise<number> {
 		try {
-			const totalUnits =
-				await this.propertyRepository.getTotalUnits(organizationUuid);
-			return totalUnits;
+			return await this.propertyRepository.getTotalUnits(organizationUuid);
 		} catch (error) {
 			this.logger.error('Error getting total properties', error);
 		}
@@ -72,12 +70,10 @@ export class PropertiesService implements IPropertyMetrics {
 		days?: number,
 	): Promise<number> {
 		try {
-			const vacantProperties =
-				await this.propertyRepository.getTotalUnitsInMaintenance(
-					organizationUuid,
-					days,
-				);
-			return vacantProperties;
+			return await this.propertyRepository.getTotalUnitsInMaintenance(
+				organizationUuid,
+				days,
+			);
 		} catch (error) {
 			this.logger.error('Error getting total maintenance properties', error);
 		}
@@ -129,7 +125,6 @@ export class PropertiesService implements IPropertyMetrics {
 				singleUnits: propertyCountData.singleUnits,
 				occupancyRateLastMonth: occupancyRateDaysAgo,
 				maintenanceUnitsLastMonth: maintenanceUnitsDaysAgo,
-				//rentOverdue: rentOverdueData,
 				occupancyRatePercentageDifference:
 					occupancyRateDaysAgo > 0 && occupancyRate > 0
 						? this.util.getPercentageIncreaseOrDecrease(
@@ -173,8 +168,7 @@ export class PropertiesService implements IPropertyMetrics {
 		totalUnits: number,
 	): Promise<number> {
 		try {
-			const occupancyRate = occupiedUnits / totalUnits;
-			return occupancyRate;
+			return occupiedUnits / totalUnits;
 		} catch (error) {
 			this.logger.error('Error getting occupancy rate', error);
 		}
@@ -279,12 +273,12 @@ export class PropertiesService implements IPropertyMetrics {
 				occupiedUnitCount,
 				vacantUnitCount,
 				totalTenants,
-				bedrooms: !property.isMultiUnit ? units?.[0]?.bedrooms : null,
-				bathrooms: !property.isMultiUnit ? units?.[0]?.bathrooms : null,
-				toilets: !property.isMultiUnit ? units?.[0]?.toilets : null,
+				bedrooms: property.isMultiUnit ? null : units?.[0]?.bedrooms,
+				bathrooms: property.isMultiUnit ? null : units?.[0]?.bathrooms,
+				toilets: property.isMultiUnit ? null : units?.[0]?.toilets,
 				units: units,
 				images: images,
-				area: !property.isMultiUnit ? units?.[0]?.area : null,
+				area: property.isMultiUnit ? null : units?.[0]?.area,
 			},
 			{ excludeExtraneousValues: true, groups: ['private'] },
 		);
@@ -294,10 +288,10 @@ export class PropertiesService implements IPropertyMetrics {
 		const currentUser = this.cls.get('currentUser');
 		const propertyListKeys =
 			(await this.cacheManager.get<string[]>(
-				`${currentUser.organizationId}/getPropertyListKeys`,
+				`${currentUser.organizationId}:getPropertyListKeys`,
 			)) || [];
 		await this.cacheManager.set(
-			`${currentUser.organizationId}/getPropertyListKeys`,
+			`${currentUser.organizationId}:getPropertyListKeys`,
 			[...propertyListKeys, cacheKey],
 			this.cacheTTL,
 		);
@@ -314,11 +308,15 @@ export class PropertiesService implements IPropertyMetrics {
 	async getPropertyById(uuid: string): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			const cacheKey = `${this.cacheKeyPrefix}/${uuid}`;
+			if (!currentUser) {
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
+			const cacheKey = `${this.cacheKeyPrefix}:${uuid}`;
 			const cachedProperty =
 				await this.cacheManager.get<PropertyDetailsDto>(cacheKey);
-			if (cachedProperty) return cachedProperty;
+			if (cachedProperty) {
+				return cachedProperty;
+			}
 			const property =
 				await this.propertyRepository.getAPropertyInAnOrganization(
 					currentUser.organizationId,
@@ -443,20 +441,25 @@ export class PropertiesService implements IPropertyMetrics {
 	): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser)
+			if (!currentUser) {
 				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
-			if (createDto.orgUuid && createDto.orgUuid !== currentUser.organizationId)
+			}
+			if (
+				createDto.orgUuid &&
+				createDto.orgUuid !== currentUser.organizationId
+			) {
 				throw new ForbiddenException(ErrorMessages.NO_ORG_CREATE_PROPERTY);
+			}
 			if (
 				!this.commonConfigService.isDevelopmentEnvironment() &&
 				!this.organizationSubscriptionService.canAddUnit(
 					currentUser.organizationId,
 					createDto.units?.length,
 				)
-			)
+			) {
 				throw new PreconditionFailedException(ErrorMessages.UNIT_LIMIT_REACHED);
-			createDto.isMultiUnit =
-				createDto?.isMultiUnit ?? createDto.units?.length > 1;
+			}
+			createDto?.isMultiUnit ?? createDto.units?.length > 1;
 			createDto.orgUuid = currentUser.organizationId;
 			if (!createDto.isMultiUnit) {
 				createDto.units[0].unitNumber = padEnd(createDto.name, 4, '-1');
@@ -504,8 +507,10 @@ export class PropertiesService implements IPropertyMetrics {
 	): Promise<PageDto<PropertyListDto>> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-			const cacheKey = `${this.cacheKeyPrefix}/${currentUser.organizationId}${this.cls.get('requestUrl')}`;
+			if (!currentUser) {
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
+			const cacheKey = `${this.cacheKeyPrefix}:${currentUser.organizationId}:${this.cls.get('requestUrl')}`;
 			const cachedProperties =
 				await this.cacheManager.get<PageDto<PropertyListDto>>(cacheKey);
 			if (cachedProperties) {
@@ -551,17 +556,18 @@ export class PropertiesService implements IPropertyMetrics {
 	): Promise<Unit[]> {
 		try {
 			const orgId = this.cls.get('currentUser').organizationId;
-			if (!orgId) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			if (!orgId) {
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
 			if (
 				!this.commonConfigService.isDevelopmentEnvironment() &&
 				!this.organizationSubscriptionService.canAddUnit(orgId, unitsDto.length)
 			)
 				throw new PreconditionFailedException(ErrorMessages.UNIT_LIMIT_REACHED);
-			const units = await this.propertyRepository.addUnitsToAProperty(
+			return await this.propertyRepository.addUnitsToAProperty(
 				propertyUuid,
 				unitsDto,
 			);
-			return units;
 		} catch (error) {
 			this.logger.error('Error adding Unit to Property', error);
 			throw new BadRequestException(`Error adding Unit to Property.`, {
@@ -577,8 +583,9 @@ export class PropertiesService implements IPropertyMetrics {
 	): Promise<boolean> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser.organizationId)
+			if (!currentUser.organizationId) {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
 			const assigned =
 				await this.propertyRepository.assignPropertyToManagerOrOwner(
 					propertyUuid,
@@ -622,8 +629,9 @@ export class PropertiesService implements IPropertyMetrics {
 	): Promise<void> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser.organizationId)
+			if (!currentUser.organizationId) {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
 			await this.propertyRepository.deleteUnits(
 				unitIds,
 				currentUser.organizationId,
@@ -647,12 +655,15 @@ export class PropertiesService implements IPropertyMetrics {
 	 */
 	async getPropertyGroupedUnitsByOrganization(): Promise<PropertyDetailsDto[]> {
 		const currentUser = this.cls.get('currentUser');
-		if (!currentUser.organizationId)
+		if (!currentUser.organizationId) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const cacheKey = `${this.cacheKeyPrefix}-grouped-units/${currentUser.organizationId}`;
+		}
+		const cacheKey = `${this.cacheKeyPrefix}:grouped-units:${currentUser.organizationId}`;
 		const cachedProperties =
 			await this.cacheManager.get<PropertyDetailsDto[]>(cacheKey);
-		if (cachedProperties) return cachedProperties;
+		if (cachedProperties) {
+			return cachedProperties;
+		}
 		const properties =
 			await this.propertyRepository.getPropertyGroupedUnitsByOrganization(
 				currentUser.organizationId,
