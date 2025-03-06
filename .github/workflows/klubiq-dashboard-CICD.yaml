@@ -101,7 +101,7 @@ jobs:
         with:
           name: artifacts
           path: |
-            dist/
+            dist
             env-export.sh
             config.json
             package.json
