@@ -3,19 +3,19 @@ on:
   push:
     branches:
       - dev
-    paths:
-      - '!klubiq-db/**'
-      - '!.github/workflows/run-migrations-staging.yaml'
-      - '!.github/workflows/run-migrations-prod.yaml'
-      - '.github/workflows/klubiq-dashboard-CICD.yaml'
-      - 'apps/klubiq-dashboard/**'
-      - 'apps/klubiq-queue/**'
-      - 'libs/**'
-      - '.nest-cli.json'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.json'
-      - 'tsconfig.build.json'
+    # paths:
+    #   - '!klubiq-db/**'
+    #   - '!.github/workflows/run-migrations-staging.yaml'
+    #   - '!.github/workflows/run-migrations-prod.yaml'
+    #   - '.github/workflows/klubiq-dashboard-CICD.yaml'
+    #   - 'apps/klubiq-dashboard/**'
+    #   - 'apps/klubiq-queue/**'
+    #   - 'libs/**'
+    #   - '.nest-cli.json'
+    #   - 'package.json'
+    #   - 'package-lock.json'
+    #   - 'tsconfig.json'
+    #   - 'tsconfig.build.json'
     #paths:
     #- 'apps/klubiq-dashboard/**'
     #- 'libs/**'
