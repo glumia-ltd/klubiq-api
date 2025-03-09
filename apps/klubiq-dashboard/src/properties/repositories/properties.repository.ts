@@ -1,9 +1,4 @@
-import {
-	Injectable,
-	Logger,
-	NotFoundException,
-	UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Amenity } from '@app/common/database/entities/property-amenity.entity';
 import { BaseRepository } from '@app/common/repositories/base.repository';
 import {
@@ -282,10 +277,9 @@ export class PropertyRepository extends BaseRepository<Property> {
 	async getAPropertyInAnOrganization(
 		orgUuid: string,
 		userId: string,
-		isOrgOwner: boolean,
 		propertyUuid: string,
 	) {
-		const propertyData = this.createQueryBuilder('property')
+		const propertyData = await this.createQueryBuilder('property')
 			.leftJoinAndSelect('property.purpose', 'pp')
 			.leftJoinAndSelect('property.status', 'ps')
 			.leftJoinAndSelect('property.type', 'pt')
@@ -299,7 +293,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 			.leftJoinAndSelect(
 				'units.leases',
 				'unitLeases',
-				'unitLeases.endDate >= NOW()',
+				'unitLeases.status IN (:...statuses)',
+				{ statuses: [LeaseStatus.ACTIVE, LeaseStatus.EXPIRING] },
 			)
 			.leftJoinAndSelect('unitLeases.tenants', 'lease_tenants')
 			.where('property.uuid = :propertyUuid', {
@@ -307,21 +302,21 @@ export class PropertyRepository extends BaseRepository<Property> {
 			})
 			.andWhere('property.organizationUuid = :organizationUuid', {
 				organizationUuid: orgUuid,
-			});
-		const property = await propertyData.getOne();
-		if (!property) {
+			})
+			.andWhere(
+				new Brackets((qb) => {
+					qb.where('property.ownerUid = :ownerUid', {
+						ownerUid: userId,
+					}).orWhere('property.managerUid = :managerUid', {
+						managerUid: userId,
+					});
+				}),
+			)
+			.getOne();
+		if (!propertyData) {
 			throw new NotFoundException('Property not found');
 		}
-		if (
-			!isOrgOwner &&
-			(property.owner?.profileUuid !== userId ||
-				property.manager?.profileUuid !== userId)
-		) {
-			throw new UnauthorizedException(
-				'You are not authorized to view this property',
-			);
-		}
-		return property;
+		return propertyData;
 	}
 	async saveDraftProperty(
 		propertyUuid: string,

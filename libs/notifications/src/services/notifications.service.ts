@@ -52,6 +52,18 @@ export class NotificationsService {
 		// );
 	}
 
+	async getUnreadNotificationsCount(userId: string) {
+		if (!userId) {
+			this.currentUser = this.cls.get('currentUser');
+			userId = this.currentUser.kUid;
+		}
+		return await this.notificationsRepository.count({
+			where: {
+				userId,
+				isRead: false,
+			},
+		});
+	}
 	async createNotifications(createNotificationsDto: CreateNotificationDto[]) {
 		const Notifications = this.notificationsRepository.create(
 			createNotificationsDto,
@@ -92,10 +104,7 @@ export class NotificationsService {
 		if (isRead) {
 			query.andWhere('notifications.isRead = :isRead', { isRead });
 		}
-		const notifications = await query
-			.orderBy('notifications.createdAt', 'DESC')
-			.getMany();
-		return notifications;
+		return await query.orderBy('notifications.createdAt', 'DESC').getMany();
 		// const data = this.groupNotificationsByDate(notifications)
 		// return data;
 	}

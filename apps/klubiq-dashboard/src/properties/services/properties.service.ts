@@ -25,7 +25,11 @@ import { PageMetaDto } from '@app/common/dto/pagination/page-meta.dto';
 import { GetPropertyDto } from '../dto/requests/get-property.dto';
 import { IPropertyMetrics } from '../interfaces/property-metrics.service.interface';
 import { PropertyMetrics } from '@app/common/dto/responses/dashboard-metrics.dto';
-import { CacheTTl, UserRoles } from '@app/common/config/config.constants';
+import {
+	CacheTTl,
+	UnitStatus,
+	UserRoles,
+} from '@app/common/config/config.constants';
 import { Util } from '@app/common/helpers/util';
 import { PropertyManagerAssignmentDto } from '../dto/requests/property-manager.dto';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
@@ -234,6 +238,34 @@ export class PropertiesService implements IPropertyMetrics {
 			{ excludeExtraneousValues: true },
 		);
 	}
+
+	private async mapPlainUnitDetailToDto(unit: Unit): Promise<UnitDto> {
+		console.log('unit data', unit);
+		const totalRent = reduce(
+			unit.leases,
+			(sum, lease) => sum + lease.rentAmount,
+			0,
+		);
+		const totalTenants = reduce(
+			unit.leases,
+			(sum, lease) => sum + lease?.tenants?.length,
+			0,
+		);
+		return plainToInstance(
+			UnitDto,
+			{
+				...unit,
+				rentAmount: Number(totalRent).toFixed(2) || 0,
+				totalTenants,
+				bedrooms: unit.bedrooms,
+				bathrooms: unit.bathrooms,
+				toilets: unit.toilets,
+				area: unit.area,
+				lease: unit.leases?.[0],
+			},
+			{ excludeExtraneousValues: true, groups: ['private'] },
+		);
+	}
 	private async mapPlainPropertyDetailToDto(
 		property: Property,
 	): Promise<PropertyDetailsDto> {
@@ -262,7 +294,7 @@ export class PropertiesService implements IPropertyMetrics {
 		// Calculate occupied unit count
 		const occupiedUnitCount = filter(
 			units,
-			(unit) => unit?.leases?.length > 0,
+			(unit) => unit?.status === UnitStatus.OCCUPIED,
 		)?.length;
 		const vacantUnitCount = property.unitCount - occupiedUnitCount;
 		return plainToInstance(
@@ -276,7 +308,9 @@ export class PropertiesService implements IPropertyMetrics {
 				bedrooms: property.isMultiUnit ? null : units?.[0]?.bedrooms,
 				bathrooms: property.isMultiUnit ? null : units?.[0]?.bathrooms,
 				toilets: property.isMultiUnit ? null : units?.[0]?.toilets,
-				units: units,
+				units: await Promise.all(
+					units?.map((unit) => this.mapPlainUnitDetailToDto(unit)),
+				),
 				images: images,
 				area: property.isMultiUnit ? null : units?.[0]?.area,
 			},
@@ -321,7 +355,6 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.propertyRepository.getAPropertyInAnOrganization(
 					currentUser.organizationId,
 					currentUser.kUid,
-					currentUser.organizationRole === UserRoles.ORG_OWNER,
 					uuid,
 				);
 			const propertyDetails = await this.mapPlainPropertyDetailToDto(property);
@@ -379,7 +412,9 @@ export class PropertiesService implements IPropertyMetrics {
 	async deleteProperty(deleteData: DeletePropertyDto): Promise<void> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			if (!currentUser) {
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
 			await this.propertyRepository.deleteProperty(
 				deleteData.uuid,
 				currentUser.organizationId,
@@ -413,7 +448,9 @@ export class PropertiesService implements IPropertyMetrics {
 	async archiveProperty(propertyUuid: string): Promise<void> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			if (!currentUser) {
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
 			await this.propertyRepository.archiveProperty(
 				propertyUuid,
 				currentUser.organizationId,

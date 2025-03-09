@@ -60,7 +60,6 @@ export class LeaseEventsListener {
 	) {
 		payload.actionLink = `${this.clientBaseUrl}lease/${payload.leaseId}`;
 		payload.actionText = 'View Lease';
-		payload.rent = payload.rent;
 		const template = EVENT_TEMPLATE(payload)[leaseEvent];
 		const notificationRecipients =
 			await this.helperService.getNotificationRecipientsByRoles(

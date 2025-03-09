@@ -67,9 +67,19 @@ export class UnitDto {
 	rentAmount?: number;
 
 	@Expose({ groups: ['private'] })
+	@IsNumber()
+	@IsOptional()
+	totalTenants?: number;
+
+	// @Expose({ groups: ['private'] })
+	// @ValidateNested({ each: true })
+	// @Type(() => LeaseDto)
+	// leases?: LeaseDto[];
+
+	@Expose({ groups: ['private'] })
 	@ValidateNested({ each: true })
 	@Type(() => LeaseDto)
-	leases?: LeaseDto[];
+	lease?: LeaseDto;
 
 	@Expose({ groups: ['private'] })
 	@ValidateNested({ each: true })
