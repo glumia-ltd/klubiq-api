@@ -47,42 +47,39 @@ export class NotificationsSubscriptionService {
 				...subscriptionDto.subscription,
 			};
 		}
-		const result =
-			await this.notificationsSubscriptionRepository.save(userSubscription);
-		return result;
+		return await this.notificationsSubscriptionRepository.save(
+			userSubscription,
+		);
 	}
 
 	async getUserSubscriptionDetails(userIds: string[]) {
-		const usersSubscriptions = await this.notificationsSubscriptionRepository
+		return await this.notificationsSubscriptionRepository
 			.createQueryBuilder('notificationSubscription')
 			.select('notificationSubscription.subscription')
 			.where('notificationSubscription.userId IN (:...userIds)', {
 				userIds,
 			})
 			.getMany();
-		return usersSubscriptions;
 	}
 
 	async getAUserSubscriptionDetails(userId: string) {
-		const usersSubscriptions = await this.notificationsSubscriptionRepository
+		return await this.notificationsSubscriptionRepository
 			.createQueryBuilder('notificationSubscription')
 			.select('notificationSubscription.subscription')
 			.where('notificationSubscription.userId = :userId', {
 				userId,
 			})
 			.getOne();
-		return usersSubscriptions;
 	}
 
 	async getOrganizationSubscriptionDetails(organizationUuid: string) {
-		const userSubscription = await this.notificationsSubscriptionRepository
+		return await this.notificationsSubscriptionRepository
 			.createQueryBuilder('notificationSubscription')
 			.select('notificationSubscription.subscription')
 			.where('notificationSubscription.organizationUuid = :organizationUuid', {
 				organizationUuid,
 			})
 			.getMany();
-		return userSubscription;
 	}
 
 	async deleteSubscription(id: string) {

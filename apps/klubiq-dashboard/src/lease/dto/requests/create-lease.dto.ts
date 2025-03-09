@@ -11,6 +11,7 @@ import {
 	IsNumber,
 	IsOptional,
 	IsString,
+	IsUUID,
 } from 'class-validator';
 
 export class CreateLeaseDto {
@@ -32,7 +33,7 @@ export class CreateLeaseDto {
 	@IsOptional()
 	tenantsIds?: number[];
 
-	@IsNumber()
+	@IsUUID()
 	unitId: string;
 
 	@IsNumber()

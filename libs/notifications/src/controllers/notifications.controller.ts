@@ -88,4 +88,12 @@ export class NotificationsController {
 			notificationDto,
 		);
 	}
+
+	@Auth(AuthType.Bearer)
+	@ApiExcludeEndpoint()
+	@ApiOkResponse({ description: 'Get unread notifications count' })
+	@Get('count')
+	async getUnreadNotificationsCount(@Query('userId') userId: string) {
+		return await this.notificationsService.getUnreadNotificationsCount(userId);
+	}
 }

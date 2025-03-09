@@ -30,7 +30,6 @@ import { PageDto } from '@app/common/dto/pagination/page.dto';
 import { GetLeaseDto } from '../dto/requests/get-lease.dto';
 import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
-import { String } from 'lodash';
 
 @ApiTags('leases')
 @ApiBearerAuth()

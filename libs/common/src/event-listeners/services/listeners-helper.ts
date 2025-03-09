@@ -74,6 +74,7 @@ export class HelperService {
 		return [
 			`${organizationId}:getLeaseListKeys`,
 			`dashboard:${CacheKeys.LEASE_METRICS}:${organizationId}`,
+			`dashboard:${CacheKeys.PROPERTY_METRICS}:${organizationId}`,
 		];
 	}
 

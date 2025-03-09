@@ -131,7 +131,9 @@ export class PublicController {
 	async getOrganizationPropertiesAndTenantsViewList(
 		@Param('orgId') orgId: string,
 	) {
-		if (!orgId) return [];
+		if (!orgId) {
+			return [];
+		}
 		const propertyList =
 			await this.publicService.getOrganizationPropertiesViewList();
 		const tenantList = await this.publicService.getOrganizationTenants(orgId);
