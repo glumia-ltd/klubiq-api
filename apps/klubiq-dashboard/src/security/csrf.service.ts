@@ -9,6 +9,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 @Injectable()
 export class CsrfService {
+	private readonly cacheTTL = 86400000;
 	constructor(
 		private readonly generators: Generators,
 		@InjectRepository(Organization)
@@ -48,7 +49,7 @@ export class CsrfService {
 		if (!tenant) {
 			throw new Error(`No secret found for tenant: ${tenantId}`);
 		}
-		await this.cacheManager.set(cacheKey, tenant.csrfSecret, 600);
+		await this.cacheManager.set(cacheKey, tenant.csrfSecret, this.cacheTTL);
 		return tenant.csrfSecret;
 	}
 }
