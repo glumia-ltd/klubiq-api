@@ -165,6 +165,10 @@ export class LandlordUserDetailsResponseDto {
 
 	@Expose()
 	@IsString()
+	tenantId: string;
+
+	@Expose()
+	@IsString()
 	email: string;
 
 	// @Expose()

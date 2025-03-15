@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+	MiddlewareConsumer,
+	Module,
+	NestModule,
+	RequestMethod,
+} from '@nestjs/common';
 import { DatabaseModule } from '@app/common/database/database.module';
 import { RepositoriesModule } from '@app/common/repositories/repositories.module';
 import { PermissionsModule } from '@app/common/permissions/permissions.module';
@@ -31,6 +36,13 @@ import { DevtoolsModule } from '@nestjs/devtools-integration';
 import { EventListenerModule } from '@app/common/event-listeners/event-listener.module';
 import { KdoDBSchemaModule } from '@app/common/database/kdo-db-schema.module';
 import { SchedulersModule } from '@app/schedulers/schedulers.module';
+import { CsrfService } from './security/csrf.service';
+import { Generators } from '@app/common/helpers/generators';
+import { OrganizationRepository } from './organization/repositories/organization.repository';
+import { CsrfMiddleware } from './security/csrf.middleware';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { filteredRoutes } from './security/security-helpers';
 
 @Module({
 	imports: [
@@ -69,6 +81,8 @@ import { SchedulersModule } from '@app/schedulers/schedulers.module';
 		LeaseRepository,
 		UsersRepository,
 		UsersService,
+		// CsrfService,
+		// Generators,
 		{
 			provide: APP_GUARD,
 			useClass: AuthenticationGuard,
@@ -81,7 +95,22 @@ import { SchedulersModule } from '@app/schedulers/schedulers.module';
 			provide: CacheService,
 			useFactory: () => new CacheService(null),
 		},
+		{
+			provide: CsrfService,
+			useFactory: (repo: OrganizationRepository, cacheManager: Cache) =>
+				new CsrfService(new Generators(null), repo, cacheManager),
+			inject: [OrganizationRepository, CACHE_MANAGER],
+		},
 	],
 	//exports: [UsersModule],
 })
-export class KlubiqDashboardModule {}
+export class KlubiqDashboardModule implements NestModule {
+	configure(consumer: MiddlewareConsumer) {
+		consumer
+			.apply(CsrfMiddleware)
+			.forRoutes(
+				{ path: 'dashboard/metrics', method: RequestMethod.GET },
+				...filteredRoutes,
+			);
+	}
+}

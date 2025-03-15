@@ -53,8 +53,7 @@ export class AuthController {
 	})
 	async verifyEmail(@Body() data: VerifyEmailDto): Promise<any> {
 		try {
-			const response = await this.landlordAuthService.verifyEmail(data.oobCode);
-			return response;
+			return await this.landlordAuthService.verifyEmail(data.oobCode);
 		} catch (err) {
 			throw err;
 		}
