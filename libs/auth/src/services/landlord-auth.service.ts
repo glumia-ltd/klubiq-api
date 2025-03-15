@@ -51,7 +51,7 @@ import ShortUniqueId from 'short-unique-id';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
 import { NotificationsSubscriptionService } from '@app/notifications/services/notifications-subscription.service';
-
+import { Generators } from '@app/common/helpers/generators';
 @Injectable()
 export class LandlordAuthService extends AuthService {
 	private readonly emailVerificationBaseUrl: string;
@@ -61,7 +61,7 @@ export class LandlordAuthService extends AuthService {
 	protected readonly suid = new ShortUniqueId();
 	protected readonly landlordRoleId: number;
 	protected readonly orgOwnerRoleId: number;
-
+	protected readonly generators = new Generators(this.configService);
 	constructor(
 		@Inject(CACHE_MANAGER) protected cacheManager: Cache,
 		@Inject('FIREBASE_ADMIN') firebaseAdminApp: admin.app.App,
@@ -142,14 +142,11 @@ export class LandlordAuthService extends AuthService {
 
 	async createCustomToken(firebaseId: string): Promise<any> {
 		try {
-			const jwtToken = await this.auth.createCustomToken(firebaseId);
-			return jwtToken;
+			return await this.auth.createCustomToken(firebaseId);
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -184,6 +181,8 @@ export class LandlordAuthService extends AuthService {
 			if (createEventType === CreateUserEventTypes.CREATE_ORG_USER) {
 				const newOrganization = new Organization();
 				newOrganization.name = name;
+				newOrganization.tenantId = this.generators.generateSecureULID();
+				newOrganization.csrfSecret = this.generators.generateCsrfSecret();
 				if (orgCountryDto) {
 					newOrganization.country = orgCountryDto.name;
 					newOrganization.countryPhoneCode = orgCountryDto.dialCode;
@@ -203,12 +202,9 @@ export class LandlordAuthService extends AuthService {
 				return entityManager.save(newOrganization);
 			} else if (createEventType === CreateUserEventTypes.INVITE_ORG_USER) {
 				const existingOrganization = await entityManager.findOne(Organization, {
-					where: { name: name },
+					where: { name: name, organizationUuid: organizationId },
 				});
-				if (
-					!existingOrganization ||
-					existingOrganization.organizationUuid !== organizationId
-				) {
+				if (!existingOrganization) {
 					throw new NotFoundException('Organization not found');
 				}
 				return existingOrganization;
@@ -269,10 +265,9 @@ export class LandlordAuthService extends AuthService {
 	private async getRolesPermission(
 		orgRole: OrganizationRole,
 	): Promise<string[]> {
-		const permissions = orgRole.roleFeaturePermissions?.map((fp) => {
+		return orgRole.roleFeaturePermissions?.map((fp) => {
 			return `${fp.featurePermission.feature.name}:${fp.featurePermission.permission.name}`;
 		});
-		return permissions;
 	}
 	private async inviteOrganizationUser(
 		fireUser: any,
@@ -304,10 +299,10 @@ export class LandlordAuthService extends AuthService {
 			userProfile.organizationUser = user;
 			userProfile.isPrivacyPolicyAgreed = true;
 			userProfile.isTermsAndConditionAccepted = true;
-			userProfile.propertiesOwned = !!invitedUserDto.propertiesToOwn
+			userProfile.propertiesOwned = invitedUserDto.propertiesToOwn
 				? [...invitedUserDto.propertiesToOwn]
 				: null;
-			userProfile.propertiesManaged = !!invitedUserDto.propertiesToManage
+			userProfile.propertiesManaged = invitedUserDto.propertiesToManage
 				? [...invitedUserDto.propertiesToManage]
 				: null;
 
@@ -317,14 +312,12 @@ export class LandlordAuthService extends AuthService {
 			invitation.firebaseUid = fireUser.uid;
 			invitation.orgRole = orgRole;
 			invitation.invitedAt = this.timestamp;
-			invitation.propertyToManageIds = !!invitedUserDto.propertiesToManage
+			invitation.propertyToManageIds = invitedUserDto.propertiesToManage
 				? map(invitedUserDto.propertiesToManage, 'uuid')
 				: null;
-			invitation.propertyToOwnIds = !!invitedUserDto.propertiesToOwn
+			invitation.propertyToOwnIds = invitedUserDto.propertiesToOwn
 				? map(invitedUserDto.propertiesToOwn, 'uuid')
 				: null;
-			invitation.token = this.suid.stamp(20, DateTime.utc().toJSDate());
-
 			/// TRANSACTION SAVES DATA
 			await transactionalEntityManager.save(user);
 			await transactionalEntityManager.save(userProfile);
@@ -376,6 +369,7 @@ export class LandlordAuthService extends AuthService {
 				kUid: userProfile.profileUuid,
 				organizationRole: createUserDto.role.name,
 				organizationId: organization.organizationUuid,
+				tenantId: organization.tenantId,
 			});
 			return userProfile;
 		});
@@ -418,9 +412,7 @@ export class LandlordAuthService extends AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			const errorMessage = firebaseErrorMessage
-				? firebaseErrorMessage
-				: err.message;
+			const errorMessage = firebaseErrorMessage || err.message;
 
 			this.logger.error('Error generating password reset email:', err);
 
@@ -453,9 +445,7 @@ export class LandlordAuthService extends AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 
@@ -491,9 +481,7 @@ export class LandlordAuthService extends AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 

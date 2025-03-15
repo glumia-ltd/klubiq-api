@@ -35,7 +35,7 @@ import { PropertyManagerAssignmentDto } from '../dto/requests/property-manager.d
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 import { Unit } from '@app/common/database/entities/unit.entity';
 import { plainToInstance } from 'class-transformer';
-import { filter, padEnd, reduce } from 'lodash';
+import { filter, padEnd, reduce, transform } from 'lodash';
 import {
 	PropertyDetailsDto,
 	UnitDto,
@@ -206,24 +206,26 @@ export class PropertiesService implements IPropertyMetrics {
 	private async mapPlainPropertyToPropertyListDto(
 		plainProperty: Property[],
 	): Promise<PropertyListDto[]> {
-		return plainToInstance(
+		const propertyComponents = (units: Unit[]) => {
+			return transform(
+				units,
+				(result, unit) => {
+					result['rooms'] += unit.rooms;
+					result['offices'] += unit.offices;
+					result['bedrooms'] += unit.bedrooms;
+					result['bathrooms'] += unit.bathrooms;
+					result['toilets'] += unit.toilets;
+				},
+				{ rooms: 0, offices: 0, bedrooms: 0, bathrooms: 0, toilets: 0 },
+			);
+		};
+		const propertyListDto = plainToInstance(
 			PropertyListDto,
-			plainProperty.map((property) => {
-				const rooms = property.isMultiUnit ? null : property.mainUnit?.rooms;
-				const offices = property.isMultiUnit
-					? null
-					: property.mainUnit?.offices;
+			plainProperty.map(async (property) => {
+				const components = propertyComponents(await property.units);
+				const { rooms, offices, bedrooms, bathrooms, toilets } = components;
 				const floor = property.isMultiUnit ? null : property.mainUnit?.floor;
 				const mainImage = property.mainPhoto;
-				const bedrooms = property.isMultiUnit
-					? null
-					: property.mainUnit?.bedrooms;
-				const bathrooms = property.isMultiUnit
-					? null
-					: property.mainUnit?.bathrooms;
-				const toilets = property.isMultiUnit
-					? null
-					: property.mainUnit?.toilets;
 				return {
 					...property,
 					mainImage,
@@ -237,6 +239,7 @@ export class PropertiesService implements IPropertyMetrics {
 			}),
 			{ excludeExtraneousValues: true },
 		);
+		return await Promise.all(propertyListDto);
 	}
 
 	private async mapPlainUnitDetailToDto(unit: Unit): Promise<UnitDto> {
@@ -318,7 +321,7 @@ export class PropertiesService implements IPropertyMetrics {
 		);
 	}
 
-	private async updateOrgCacheKeys(cacheKey: string) {
+	private async updateOrgPropertiesCacheKeys(cacheKey: string) {
 		const currentUser = this.cls.get('currentUser');
 		const propertyListKeys =
 			(await this.cacheManager.get<string[]>(
@@ -359,7 +362,7 @@ export class PropertiesService implements IPropertyMetrics {
 				);
 			const propertyDetails = await this.mapPlainPropertyDetailToDto(property);
 			await this.cacheManager.set(cacheKey, propertyDetails, this.cacheTTL);
-			await this.updateOrgCacheKeys(cacheKey);
+			await this.updateOrgPropertiesCacheKeys(cacheKey);
 			return propertyDetails;
 		} catch (error) {
 			this.logger.error('Error getting Property Data', error);
@@ -568,7 +571,7 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.mapPlainPropertyToPropertyListDto(entities);
 			const propertiesPageData = new PageDto(mappedEntities, pageMetaDto);
 			await this.cacheManager.set(cacheKey, propertiesPageData, this.cacheTTL);
-			await this.updateOrgCacheKeys(cacheKey);
+			await this.updateOrgPropertiesCacheKeys(cacheKey);
 			return propertiesPageData;
 		} catch (error) {
 			this.logger.error('Error retrieving organization properties', error);

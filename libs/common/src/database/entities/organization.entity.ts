@@ -31,7 +31,7 @@ export class Organization {
 
 	@AutoMap()
 	@Index()
-	@Column({ length: 100, unique: true, nullable: true })
+	@Column({ length: 100, nullable: true })
 	name: string;
 
 	@AutoMap()
@@ -161,4 +161,11 @@ export class Organization {
 		default: 'individual',
 	})
 	orgType: string;
+
+	@Index('idx_tenant_id')
+	@Column({ nullable: true, unique: true })
+	tenantId?: string;
+
+	@Column({ nullable: true })
+	csrfSecret?: string;
 }

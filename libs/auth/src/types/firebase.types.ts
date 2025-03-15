@@ -45,6 +45,7 @@ export interface ActiveUserData {
 	uid: string;
 	entitlements: string[];
 	kUid: string;
+	tenantId?: string;
 }
 export interface RolesAndEntitlements {
 	roles: UserRoles[];

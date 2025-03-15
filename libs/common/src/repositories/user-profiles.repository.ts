@@ -47,6 +47,7 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 				'profile.isPrivacyPolicyAgreed AS is_privacy_policy_agreed',
 				'profile.isTermsAndConditionAccepted AS is_terms_and_condition_accepted',
 				'organization.organizationUuid AS org_uuid',
+				'organization.tenantId AS tenant_id',
 				'organization.name AS organization',
 				'preferences.preferences AS user_preferences',
 			])

@@ -64,6 +64,7 @@ export class CustomLogging {
 					...metadata,
 					message,
 					error: {},
+					ip: req.headers['x-forwarded-for'] || req.ip,
 				};
 				if (err) {
 					logData.error = err.stack || err;

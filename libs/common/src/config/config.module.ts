@@ -65,6 +65,7 @@ import { CommonConfigService } from './common-config';
 				EMAIL_COPYRIGHT_TEXT: Joi.string().optional(),
 				EMAIL_COPYRIGHT_LINK: Joi.string().optional(),
 				EMAIL_PRIVACY_LINK: Joi.string().optional(),
+				APP_SECRET: Joi.string().required(),
 			}),
 		}),
 		AutomapperModule.forRoot([
@@ -81,7 +82,7 @@ import { CommonConfigService } from './common-config';
 				idGenerator: (request: any) =>
 					request.headers['x-correlation-id'] ?? uuidv4(),
 				setup: (cls, req) => {
-					cls.set('clientName', req.headers['x-client-name']);
+					cls.set('clientName', req.headers['x-client-id']);
 					cls.set('clientTimeZoneOffset', req.headers['x-client-tzo']);
 					cls.set('clientTimeZoneName', req.headers['x-client-tz-name']);
 					cls.set('jwtToken', req.headers.authorization?.split(' ')[1]);

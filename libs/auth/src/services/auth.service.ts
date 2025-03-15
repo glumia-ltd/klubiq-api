@@ -457,6 +457,7 @@ export abstract class AuthService {
 			lastName: user.profile_last_name,
 			organization: user.organization,
 			organizationUuid: user.org_uuid,
+			tenantId: user.tenant_id,
 			phone: user.phone,
 			preferences: user.user_preferences,
 			profilePicUrl: user.profile_pic_url,

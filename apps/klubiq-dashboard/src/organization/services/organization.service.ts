@@ -1,6 +1,12 @@
 import { Organization } from '@app/common/database/entities/organization.entity';
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	Inject,
+	Injectable,
+	Logger,
+} from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { OrganizationRepository } from '../repositories/organization.repository';
@@ -29,6 +35,7 @@ export class OrganizationService {
 		@InjectEntityManager() private entityManager: EntityManager,
 		private readonly organizationRepository: OrganizationRepository,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
+		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 
 	private async mapPlainToClass(
@@ -68,13 +75,49 @@ export class OrganizationService {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			}
 			uuid = currentUser.organizationId;
-
+			const cacheKey = `${this.cacheKeyPrefix}:${uuid}`;
+			const cachedProperty =
+				await this.cacheManager.get<OrganizationResponseDto>(cacheKey);
+			if (cachedProperty) {
+				return cachedProperty;
+			}
 			this.logger.verbose(`Getting organization by id: ${uuid}`);
 			const org = await this.organizationRepository.getOrganizationByUUID(uuid);
-			return await this.mapPlainToClass(org);
+			const orgResponse = await this.mapPlainToClass(org);
+			await this.cacheManager.set(cacheKey, orgResponse, this.cacheTTL);
+			await this.updateOrgCacheKeys(cacheKey);
+			return orgResponse;
 		} catch (err) {
 			this.logger.error('Error getting organization', err);
 			throw new Error(`Error getting organization. Error: ${err}`);
+		}
+	}
+
+	async getOrganizationCsrfToken(id: string, isIdentifierUuid?: boolean) {
+		try {
+			if (!id) {
+				throw new BadRequestException(ErrorMessages.BAD_REQUEST);
+			}
+			const cacheKey = `tokens:${this.cacheKeyPrefix}:${id}`;
+			const cachedProperty = await this.cacheManager.get<string>(cacheKey);
+			if (cachedProperty) {
+				return cachedProperty;
+			}
+			const org = await this.entityManager
+				.createQueryBuilder(Organization, 'organization')
+				.where(
+					isIdentifierUuid
+						? 'organization.organizationUuid = :id'
+						: 'organization.tenantId = :id',
+					{ id },
+				)
+				.getOne();
+			const csrfToken = org.csrfSecret;
+			await this.cacheManager.set(cacheKey, csrfToken, this.cacheTTL);
+			return csrfToken;
+		} catch (err) {
+			this.logger.error('Error getting organization CSRF token', err);
+			throw new Error(`Error getting organization CSRF token. Error: ${err}`);
 		}
 	}
 
@@ -181,5 +224,17 @@ export class OrganizationService {
 			this.logger.error(`Error updating new organization - ${orgUuid}`, err);
 			throw new Error(`Error updating new organization. Error: ${err}`);
 		}
+	}
+	private async updateOrgCacheKeys(cacheKey: string) {
+		const currentUser = this.cls.get('currentUser');
+		const orgListKeys =
+			(await this.cacheManager.get<string[]>(
+				`${currentUser.organizationId}:orgListKeys`,
+			)) || [];
+		await this.cacheManager.set(
+			`${currentUser.organizationId}:orgListKeys`,
+			[...orgListKeys, cacheKey],
+			this.cacheTTL,
+		);
 	}
 }

@@ -84,7 +84,7 @@ env:
   EMAIL_COPYRIGHT_TEXT: ${{ vars.EMAIL_COPYRIGHT_TEXT }}
   EMAIL_PRIVACY_LINK: ${{ vars.EMAIL_PRIVACY_LINK }}
   EMAIL_COPYRIGHT_LINK: ${{ vars.EMAIL_COPYRIGHT_LINK }}
-
+  APP_SECRET: ${{ secrets.APP_SECRET }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -185,6 +185,7 @@ jobs:
             export EMAIL_COPYRIGHT_TEXT=${{ vars.EMAIL_COPYRIGHT_TEXT }}
             export EMAIL_PRIVACY_LINK=${{ vars.EMAIL_PRIVACY_LINK }}
             export EMAIL_COPYRIGHT_LINK=${{ vars.EMAIL_COPYRIGHT_LINK }}
+            export APP_SECRET=${{ secrets.APP_SECRET }}
 
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
 
