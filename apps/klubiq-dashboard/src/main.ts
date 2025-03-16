@@ -108,8 +108,8 @@ async function bootstrap() {
 
 	/// APP SETTINGS
 	app.enableCors({
-		// origin: ['http://localhost', '/.klubiq.com$/'],
-		origin: true,
+		origin: ['http://localhost', 'https://*.klubiq.com'],
+		//origin: true,
 		optionsSuccessStatus: 204,
 	});
 	app.enableVersioning({
