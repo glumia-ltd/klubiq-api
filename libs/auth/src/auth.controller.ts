@@ -73,6 +73,15 @@ export class AuthController {
 	}
 
 	@Auth(AuthType.Bearer)
+	@Post('signout')
+	@ApiOkResponse({
+		description: 'Signs out user',
+	})
+	async signOut(): Promise<void> {
+		await this.landlordAuthService.signOut();
+	}
+
+	@Auth(AuthType.Bearer)
 	@Get('org/:orgId/settings')
 	@ApiOkResponse({
 		description: 'Gets user org settings',

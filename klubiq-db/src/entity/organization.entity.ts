@@ -156,4 +156,11 @@ export class Organization {
 		default: 'individual',
 	})
 	orgType: string;
+
+	@Index('idx_tenant_id')
+	@Column({ nullable: true, unique: true })
+	tenantId?: string;
+
+	@Column({ nullable: true })
+	csrfSecret?: string;
 }

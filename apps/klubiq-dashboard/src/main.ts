@@ -38,6 +38,7 @@ async function bootstrap() {
 						"'self'",
 						'https://identitytoolkit.googleapis.com',
 						'https://securetoken.googleapis.com',
+						'https://*.klubiq.com',
 					], // Allow connections to your API
 					fontSrc: [
 						"'self'",
