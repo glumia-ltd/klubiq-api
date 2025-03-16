@@ -30,5 +30,4 @@ export const filteredRoutes = [
 	'*.xml',
 	'*.yaml',
 	'*.env',
-	'',
 ];

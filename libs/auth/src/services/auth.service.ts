@@ -85,6 +85,17 @@ export abstract class AuthService {
 	// 	return tAuth;
 	// }
 
+	async signOut(): Promise<void> {
+		this.currentUser = this.cls.get('currentUser');
+		if (this.currentUser) {
+			this.cacheManager.del(
+				`${this.cacheKeyPrefix}:user:${this.currentUser.kUid}`,
+			);
+			await this.auth.revokeRefreshTokens(this.currentUser.uid);
+			this.cls.set('currentUser', null);
+		}
+	}
+
 	async updateUserPreferences(preferences: any) {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) {

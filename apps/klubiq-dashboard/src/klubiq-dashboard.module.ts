@@ -1,9 +1,4 @@
-import {
-	MiddlewareConsumer,
-	Module,
-	NestModule,
-	RequestMethod,
-} from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { DatabaseModule } from '@app/common/database/database.module';
 import { RepositoriesModule } from '@app/common/repositories/repositories.module';
 import { PermissionsModule } from '@app/common/permissions/permissions.module';
@@ -106,11 +101,6 @@ import { filteredRoutes } from './security/security-helpers';
 })
 export class KlubiqDashboardModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
-		consumer
-			.apply(CsrfMiddleware)
-			.forRoutes(
-				{ path: 'dashboard/metrics', method: RequestMethod.GET },
-				...filteredRoutes,
-			);
+		consumer.apply(CsrfMiddleware).forRoutes(...filteredRoutes);
 	}
 }
