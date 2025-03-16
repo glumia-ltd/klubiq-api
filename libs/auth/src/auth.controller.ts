@@ -74,6 +74,7 @@ export class AuthController {
 
 	@Auth(AuthType.Bearer)
 	@Post('signout')
+	@HttpCode(HttpStatus.OK)
 	@ApiOkResponse({
 		description: 'Signs out user',
 	})

@@ -16,6 +16,15 @@ export class HttpResponseInterceptor implements NestInterceptor {
 			.handle()
 			.pipe(map((data: any) => this.responseHandler(data, context)));
 	}
+	requestHandler(request: Request): any {
+		if (request.path === '/api/auth/signout') {
+			request.session.destroy((err) => {
+				if (err) {
+					console.error('Session destruction error:', err);
+				}
+			});
+		}
+	}
 	responseHandler(data: any, context: ExecutionContext): any {
 		const ctx = context.switchToHttp();
 		const response = ctx.getResponse<Response>();
@@ -24,7 +33,6 @@ export class HttpResponseInterceptor implements NestInterceptor {
 		const status = statusCode < 300 ? 'success' : 'error';
 		const messageCopy =
 			statusCode < 300 ? 'The request was successful' : 'Error sending request';
-
 		return {
 			status,
 			path: request.path,
