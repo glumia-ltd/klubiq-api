@@ -190,7 +190,7 @@ jobs:
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
 
             # Check if the process is running
-            if pm2 status ${{ env.APP }} | grep -q "online"; then
+            if pm2 status ${{ env.APP }} | grep -q "online" || pm2 status ${{ env.APP }} | grep -q "${{ env.APP }}" ; then
                 echo "Process '${{ env.APP }}' is already running."
                 pm2 restart ${{ env.APP }} -a --update-env --watch
 
@@ -199,7 +199,7 @@ jobs:
                 pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-dashboard/main.js --name ${{ env.APP }} -a --update-env --watch
             fi
 
-            if pm2 status ${{ env.QUEUE_APP }} | grep -q "online"; then
+            if pm2 status ${{ env.QUEUE_APP }} | grep -q "online" || pm2 status ${{ env.QUEUE_APP }} | grep -q "${{ env.QUEUE_APP }}"; then
                 echo "Process '${{ env.QUEUE_APP }}' is already running."
                 pm2 restart ${{ env.QUEUE_APP }} -a --update-env --watch
             else
