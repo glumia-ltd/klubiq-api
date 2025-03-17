@@ -27,34 +27,36 @@ async function bootstrap() {
 	});
 	const configService = app.get(ConfigService);
 	app.use(
-		helmet({
-			contentSecurityPolicy: {
-				directives: {
-					defaultSrc: ["'self'"],
-					scriptSrc: ["'self'", "'unsafe-inline'"], // Adjust as needed
-					styleSrc: ["'self'", "'unsafe-inline'"], // Adjust as needed
-					imgSrc: ["'self'", 'data:', 'https:'], // Allow images from self, data URIs, and HTTPS
-					connectSrc: [
-						"'self'",
-						'https://identitytoolkit.googleapis.com',
-						'https://securetoken.googleapis.com',
-						'https://*.klubiq.com',
-					], // Allow connections to your API
-					fontSrc: [
-						"'self'",
-						'https://fonts.gstatic.com',
-						'https://fonts.googleapis.com',
-					], // Allow fonts from Google Fonts
-					objectSrc: ["'none'"], // Disallow <object>, <embed>, <applet> elements
-					upgradeInsecureRequests: [], // Automatically upgrade HTTP requests to HTTPS
-				},
-			},
-			referrerPolicy: { policy: 'no-referrer' }, // Set referrer policy
-			frameguard: { action: 'deny' }, // Prevent clickjacking
-			hsts: { maxAge: 31536000, includeSubDomains: true, preload: true }, // HTTP Strict Transport Security
-			noSniff: true, // Prevent MIME type sniffing
-			xssFilter: true, // Enable XSS filter
-		}),
+		helmet(),
+		// 	{
+		// 	contentSecurityPolicy: {
+		// 		directives: {
+		// 			defaultSrc: ["'self'"],
+		// 			scriptSrc: ["'self'"], // Adjust as needed
+		// 			styleSrc: ["'self'"], // Adjust as needed
+		// 			imgSrc: ["'self'", 'data:', 'https:'], // Allow images from self, data URIs, and HTTPS
+		// 			// connectSrc: [
+		// 			// 	"'self'",
+		// 			// 	'https://identitytoolkit.googleapis.com',
+		// 			// 	'https://securetoken.googleapis.com',
+		// 			// 	'https://*.klubiq.com',
+		// 			// ], // Allow connections to your API
+		// 			// fontSrc: [
+		// 			// 	"'self'",
+		// 			// 	'https://fonts.gstatic.com',
+		// 			// 	'https://fonts.googleapis.com',
+		// 			// ], // Allow fonts from Google Fonts
+		// 			// objectSrc: ["'none'"], // Disallow <object>, <embed>, <applet> elements
+		// 			// upgradeInsecureRequests: [], // Automatically upgrade HTTP requests to HTTPS
+		// 		},
+		// 		// Add reportUri to monitor CSP violations
+		// 	},
+		// 	referrerPolicy: { policy: 'no-referrer' }, // Set referrer policy
+		// 	frameguard: { action: 'deny' }, // Prevent clickjacking
+		// 	hsts: { maxAge: 31536000, includeSubDomains: true, preload: true }, // HTTP Strict Transport Security
+		// 	noSniff: true, // Prevent MIME type sniffing
+		// 	xssFilter: true, // Enable XSS filter
+		// }
 	);
 	app.use(
 		session({
@@ -77,6 +79,8 @@ async function bootstrap() {
 		.setTitle('Klubiq PMS')
 		.setDescription('Klubiq PMS API')
 		.setVersion('1.0')
+		.addServer('https://devapi.klubiq.com/')
+		.addServer('http://localhost:3000/')
 		//.addTag('Klubiq')
 		.setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
 		.addBearerAuth()
@@ -108,8 +112,8 @@ async function bootstrap() {
 
 	/// APP SETTINGS
 	app.enableCors({
-		origin: ['http://localhost', 'https://*.klubiq.com'],
-		//origin: true,
+		//origin: ['http://localhost', 'https://*.klubiq.com'],
+		origin: true,
 		optionsSuccessStatus: 204,
 	});
 	app.enableVersioning({
