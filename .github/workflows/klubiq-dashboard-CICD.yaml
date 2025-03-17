@@ -206,3 +206,4 @@ jobs:
                 echo "Process '${{ env.QUEUE_APP }}' is not running. Starting a new process..."
                 pm2 start ${{ secrets.TARGET_DIR }}/dist/apps/klubiq-queue/main.js --name ${{ env.QUEUE_APP }} -a --update-env --watch
             fi
+            pm2 save
