@@ -90,21 +90,6 @@ async function bootstrap() {
 			name: 'Authorization',
 			scheme: 'ApiKeyAuth',
 		})
-
-		// TODO: Add OAuth2
-		// .addOAuth2({
-		// 	type: 'oauth2',
-		// 	flows: {
-		// 		implicit: {
-		// 			authorizationUrl: 'https://auth.klubiq.com/oauth/authorize',
-		// 			scopes: {
-		// 				read: 'read',
-		// 				write: 'write',
-		// 			},
-		// 		},
-		// 	},
-		// })
-		//.addServer('/api')
 		.build();
 	const document = SwaggerModule.createDocument(app, config, options);
 	SwaggerModule.setup('swagger', app, document);
