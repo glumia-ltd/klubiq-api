@@ -25,7 +25,7 @@ export class UserPreferencesService {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		const cachedUserPreferences = await this.cacheManager.get<UserPreferences>(
-			`${this.cacheKey}_${userId}`,
+			`${this.cacheKey}:${userId}`,
 		);
 		if (cachedUserPreferences) {
 			return cachedUserPreferences;
@@ -35,7 +35,7 @@ export class UserPreferencesService {
 		});
 		if (userPreferences) {
 			await this.cacheManager.set(
-				`${this.cacheKey}_${userId}`,
+				`${this.cacheKey}:${userId}`,
 				userPreferences,
 			);
 		}
@@ -62,7 +62,7 @@ export class UserPreferencesService {
 		}
 		const updatedResult =
 			await this.userPreferencesRepository.save(userPreferences);
-		await this.cacheManager.set(`${this.cacheKey}_${userId}`, updatedResult);
+		await this.cacheManager.set(`${this.cacheKey}:${userId}`, updatedResult);
 		return updatedResult;
 	}
 }

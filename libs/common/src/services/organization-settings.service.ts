@@ -20,11 +20,14 @@ export class OrganizationSettingsService {
 
 	async getOrganizationSettings(orgId: string): Promise<any> {
 		const currentUser = this.cls.get('currentUser');
-		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		if (currentUser.organizationId !== orgId)
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		if (currentUser.organizationId !== orgId) {
 			throw new ForbiddenException(ErrorMessages.NOT_FOUND);
+		}
 		const cachedOrganizationSettings = await this.cacheManager.get<any>(
-			`${this.cacheKey}_${orgId}`,
+			`${this.cacheKey}:${orgId}`,
 		);
 		if (cachedOrganizationSettings) {
 			return cachedOrganizationSettings;
@@ -35,11 +38,11 @@ export class OrganizationSettingsService {
 			});
 		if (organizationSettings) {
 			await this.cacheManager.set(
-				`${this.cacheKey}_${orgId}`,
-				organizationSettings.settings,
+				`${this.cacheKey}:${orgId}`,
+				organizationSettings?.settings,
 			);
 		}
-		return organizationSettings.settings;
+		return organizationSettings?.settings;
 	}
 
 	async updateOrganizationSettings(
@@ -47,9 +50,12 @@ export class OrganizationSettingsService {
 		settings: Record<string, any>,
 	): Promise<OrganizationSettings> {
 		const currentUser = this.cls.get('currentUser');
-		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		if (currentUser.organizationId !== orgId)
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		if (currentUser.organizationId !== orgId) {
 			throw new ForbiddenException(ErrorMessages.NOT_FOUND);
+		}
 		let organizationSettings = await this.getOrganizationSettings(orgId);
 		if (!organizationSettings) {
 			organizationSettings = this.organizationSettingsRepository.create({
@@ -64,7 +70,7 @@ export class OrganizationSettingsService {
 		}
 		const result =
 			await this.organizationSettingsRepository.save(organizationSettings);
-		await this.cacheManager.set(`${this.cacheKey}_${orgId}`, result);
+		await this.cacheManager.set(`${this.cacheKey}:${orgId}`, result);
 		return result;
 	}
 }
