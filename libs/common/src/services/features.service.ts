@@ -58,8 +58,7 @@ export class FeaturesService {
 				);
 			if (!cachedFeature) {
 				const feature = await this.featuresRepository.findOneWithId({ id });
-				const viewData = this.mapper.map(feature, Feature, ViewFeatureDto);
-				return viewData;
+				return this.mapper.map(feature, Feature, ViewFeatureDto);
 			}
 			return cachedFeature;
 		} catch (err) {

@@ -22,6 +22,7 @@ export class OrganizationSettingsService {
 		const currentUser = this.cls.get('currentUser');
 		if (!currentUser) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			5;
 		}
 		if (currentUser.organizationId !== orgId) {
 			throw new ForbiddenException(ErrorMessages.NOT_FOUND);

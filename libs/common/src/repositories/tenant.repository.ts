@@ -15,13 +15,7 @@ export class TenantRepository extends BaseRepository<TenantUser> {
 		const userData = await this.manager
 			.createQueryBuilder(OrganizationTenants, 'org_tenants')
 			.leftJoin('org_tenants.tenant', 'tenant')
-			.select([
-				'tenant.id',
-				'tenant.firstName',
-				'tenant.lastName',
-				'tenant.companyName',
-				'tenant.email',
-			])
+			.select(['tenant.id', 'tenant.isActive', 'tenant.companyName'])
 			.where('org_tenants.organizationUuid = :orgUuid', { orgUuid })
 			.getMany();
 		return userData;

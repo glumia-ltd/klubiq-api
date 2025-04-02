@@ -12,7 +12,8 @@
 		"dotenv": "^16.4.5",
 		"pg": "^8.4.0",
 		"reflect-metadata": "^0.1.13",
-		"typeorm": "0.3.20"
+		"typeorm": "0.3.20",
+		"@app/common": "file:../libs/common"
 	},
   "scripts": {
 		"build": "npx tsc",

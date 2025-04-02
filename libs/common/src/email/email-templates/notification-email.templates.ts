@@ -4,7 +4,7 @@ import { emailHtmlHead } from './email-statics';
 export const propertyCreatedEmailTemplate = (): EmailTemplate => ({
 	html: `  <!DOCTYPE html>
       <html lang="en">
-        ${emailHtmlHead('New Property Added to Your Organization')}
+        ${emailHtmlHead('New Property Added')}
           <body class="">
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
       <tr>
@@ -24,7 +24,7 @@ export const propertyCreatedEmailTemplate = (): EmailTemplate => ({
           <div class="content">
 
             <!-- START CENTERED WHITE CONTAINER -->
-            <span class="preheader">🧱 New Property Added to Your Organization.</span>
+            <span class="preheader">New Property Added to Your Organization.</span>
             <table role="presentation" class="main">
 
               <!-- START MAIN CONTENT AREA -->
@@ -40,7 +40,7 @@ export const propertyCreatedEmailTemplate = (): EmailTemplate => ({
                           <li><strong>Property Address:</strong> {{ property_address }}</li>
                           <li><strong>Number of Units:</strong> {{ unit_count }}</li>
                         </ul>
-                        <p>This new property is now available within your organization’s dashboard. You can start managing its units, leases, and other related tasks directly through Klubiq.</p>                        
+                        <p>This new property is now available within your property portfolio. You can start managing its units, leases, and other related tasks directly through Klubiq.</p>                        
                         <p><strong>Next Steps: </strong></p>
                         <ul>
                           <li><strong>Manage Units:</strong> Review or update the details of each unit associated with this property.</li>

@@ -25,6 +25,9 @@ export class UserProfile {
 	@Column({ length: 100, nullable: true })
 	firstName?: string;
 
+	@Column({ type: 'varchar', length: 50, nullable: true })
+	title?: string;
+
 	@AutoMap()
 	@Column({ length: 100, nullable: true })
 	lastName?: string;

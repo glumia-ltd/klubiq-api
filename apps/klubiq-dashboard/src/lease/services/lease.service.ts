@@ -308,6 +308,10 @@ export class LeaseService implements ILeaseService {
 		await this.leaseRepository.updateLease(leaseId, leaseDto);
 	}
 
+	async sendTenantsInvitation() {
+		//TODO: Implement Logic to send invitation emails to Tenants
+	}
+
 	private async mapLeaseDetailRawToDto(lease: any): Promise<LeaseDetailsDto> {
 		const rentDueRecord = RENT_DUE_ON(lease.rent_due_day, lease.start_date);
 		const start = DateTime.fromISO(lease.start_date);

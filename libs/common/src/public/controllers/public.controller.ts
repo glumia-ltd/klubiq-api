@@ -177,8 +177,7 @@ export class PublicController {
 	})
 	async getPermissions(): Promise<ViewPermissionDto[]> {
 		try {
-			const permissions = await this.permissionService.getPermissions();
-			return permissions;
+			return await this.permissionService.getPermissions();
 		} catch (error) {
 			throw error;
 		}
@@ -189,8 +188,7 @@ export class PublicController {
 	@ApiOkResponse({ description: 'Get all features', type: [ViewFeatureDto] })
 	async getAppFeatures(): Promise<ViewFeatureDto[]> {
 		try {
-			const features = await this.featuresService.getAppFeatures();
-			return features;
+			return await this.featuresService.getAppFeatures();
 		} catch (error) {
 			throw error;
 		}
@@ -201,8 +199,7 @@ export class PublicController {
 	@ApiOkResponse({ description: 'Get feature by id', type: ViewFeatureDto })
 	async getFeature(@Param('id') id: number): Promise<ViewFeatureDto> {
 		try {
-			const featureData = await this.featuresService.getFeatureById(id);
-			return featureData;
+			return await this.featuresService.getFeatureById(id);
 		} catch (error) {
 			throw error;
 		}
@@ -217,8 +214,7 @@ export class PublicController {
 		@Body() createFeatureDto: CreateFeatureDto,
 	): Promise<ViewFeatureDto> {
 		try {
-			const feature = await this.featuresService.create(createFeatureDto);
-			return feature;
+			return await this.featuresService.create(createFeatureDto);
 		} catch (error) {
 			throw error;
 		}
@@ -234,8 +230,7 @@ export class PublicController {
 		@Body() updateFeatureDto: UpdateFeatureDto,
 	) {
 		try {
-			const feature = await this.featuresService.update(id, updateFeatureDto);
-			return feature;
+			return await this.featuresService.update(id, updateFeatureDto);
 		} catch (error) {
 			throw error;
 		}
@@ -249,8 +244,7 @@ export class PublicController {
 	})
 	async deleteFeature(@Param('id') id: number) {
 		try {
-			const isDeleted = await this.featuresService.delete(id);
-			return isDeleted;
+			return await this.featuresService.delete(id);
 		} catch (error) {
 			throw error;
 		}

@@ -28,6 +28,7 @@ import { OrganizationSettingsService } from '@app/common/services/organization-s
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
 import { NotificationsSubscriptionService } from '@app/notifications/services/notifications-subscription.service';
+import { TenantRepository } from '@app/common/repositories/tenant.repository';
 
 @Injectable()
 export class AdminAuthService extends AuthService {
@@ -50,6 +51,7 @@ export class AdminAuthService extends AuthService {
 		protected readonly userPreferencesService: UserPreferencesService,
 		protected readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		protected readonly notificationSubService: NotificationsSubscriptionService,
+		protected readonly tenantRepository: TenantRepository,
 	) {
 		super(
 			firebaseAdminApp,
@@ -64,6 +66,7 @@ export class AdminAuthService extends AuthService {
 			userPreferencesService,
 			organizationSubscriptionService,
 			notificationSubService,
+			tenantRepository,
 		);
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
@@ -219,9 +222,7 @@ export class AdminAuthService extends AuthService {
 		} catch (err) {
 			const firebaseErrorMessage =
 				this.errorMessageHelper.parseFirebaseError(err);
-			throw new FirebaseException(
-				firebaseErrorMessage ? firebaseErrorMessage : err.message,
-			);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
 	override async inviteUser(invitedUserDto: InviteUserDto): Promise<any> {
