@@ -24,22 +24,31 @@ jobs:
         uses: actions/checkout@v4
         # with:
           # sparse-checkout: klubiq-db
-      - name: Install dependencies
-        run: npm install
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+            node-version: '22'
+
+      - name: Install root dependencies
+        run: npm ci
+
       - name: Build Common Library
         run: npm run build --workspace=libs/common
+ 
       - name: Build Database project
         run: |
           cd klubiq-db
-          npm install
+          npm ci
           npm run build
+
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
           name: artifacts
           path: |
-            klubiq-db/build/
+            klubiq-db/build/migrations/
             klubiq-db/package*.json
+            klubiq-db/node_modules
       
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -56,10 +65,14 @@ jobs:
           EXCLUDE: '/node_modules/, node_modules, /node_modules, .github, .github/**, .git, .git/**'
           TARGET: ${{ vars.DB_TARGET_DIR }}
           SCRIPT_BEFORE: |
+            if [ ! -d "${{ vars.DB_TARGET_DIR }}" ]; then
+              mkdir -p ${{ vars.DB_TARGET_DIR }}
+            fi
             sudo chown $USER ${{ vars.DB_TARGET_DIR }}
             cd ${{ vars.DB_TARGET_DIR }}
           SCRIPT_AFTER: |
-            cd ${{ vars.DB_TARGET_DIR }}      
+            cd ${{ vars.DB_TARGET_DIR }}
+            set -e # Exit on any error      
             export DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             export DATABASE_PORT=${{ secrets.DATABASE_PORT }}
             export DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
@@ -68,10 +81,10 @@ jobs:
             export SYNCHRONIZE_DB=${{ secrets.SYNCHRONIZE_DB }}
             export NODE_ENV=${{ secrets.ENV }}
             echo "Running NPM INSTALL"
-            npm install
+            npm ci || exit 1
             echo "Running NPM GENERATE MIGRATION"
-            npm run generate:migration
+            npm run generate:migration || exit 1
             echo "Running NPM MIGRATION"
-            npm run migration
+            npm run migration || exit 1
             echo "CLEANING UP"
             rm -rf node_modules
