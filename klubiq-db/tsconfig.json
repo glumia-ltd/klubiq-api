@@ -1,19 +1,21 @@
 {
-   "compilerOptions": {
-      "paths": {
-         "@app/common/*": ["../libs/common/src/*"],
-         "@app/*": ["../libs/*"]
-      },
-      "lib": [
-         "es5",
-         "es6"
-      ],
-      "target": "es5",
-      "module": "commonjs",
-      "moduleResolution": "node",
-      "outDir": "./build",
-      "emitDecoratorMetadata": true,
-      "experimentalDecorators": true,
-      "sourceMap": true
-   }
+	"compilerOptions": {
+		"paths": {
+			"@app/common/*": ["../libs/common/src/*"]
+		},
+		"lib": ["es5", "es6"],
+		"target": "es5",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"outDir": "./build",
+		"declaration": true,
+		"removeComments": true,
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"allowSyntheticDefaultImports": true,
+		"sourceMap": true,
+		"baseUrl": "./",
+		"incremental": true,
+		"skipLibCheck": true
+	}
 }
