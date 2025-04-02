@@ -22,8 +22,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          sparse-checkout: klubiq-db
+        # with:
+          # sparse-checkout: klubiq-db
       - name: Build prject
         run: |
           cd klubiq-db
