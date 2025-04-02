@@ -5,6 +5,7 @@ on:
       - dev
     paths:
       - 'klubiq-db/**'
+      - 'libs/common/**'
       - '.github/workflows/run-migrations-staging.yaml'
 env:
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
