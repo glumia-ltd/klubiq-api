@@ -34,7 +34,7 @@ jobs:
         run: npm ci
 
       - name: Build Common Library
-        run: npm run build --workspace=libs/common
+        run: npm run build:libs:common
  
       - name: Build Database project
         run: |
