@@ -24,7 +24,11 @@ jobs:
         uses: actions/checkout@v4
         # with:
           # sparse-checkout: klubiq-db
-      - name: Build prject
+      - name: Install dependencies
+        run: npm install
+      - name: Build Common Library
+        run: npm run build --workspace=libs/common
+      - name: Build Database project
         run: |
           cd klubiq-db
           npm install

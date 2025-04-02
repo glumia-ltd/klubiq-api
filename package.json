@@ -134,5 +134,9 @@
       "^@app/notifications(|/.*)$": "<rootDir>/libs/notifications/src/$1",
       "^@app/schedulers(|/.*)$": "<rootDir>/libs/schedulers/src/$1"
     }
-  }
+  },
+  "workspaces": [
+    "libs/*",
+    "apps/*"
+  ]
 }
