@@ -13,6 +13,7 @@ import { FirebaseException } from '../exception/firebase.exception';
 import {
 	InviteUserDto,
 	ResetPasswordDto,
+	TenantSignUpDto,
 } from '../dto/requests/user-login.dto';
 import {
 	LandlordUserDetailsResponseDto,
@@ -42,6 +43,9 @@ import { OrganizationSettingsService } from '@app/common/services/organization-s
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
 import { NotificationsSubscriptionService } from '@app/notifications/services/notifications-subscription.service';
+import { TenantRepository } from '@app/common/repositories/tenant.repository';
+import { UserProfile } from '@app/common/database/entities/user-profile.entity';
+import { TenantUser } from '@app/common/database/entities/tenant.entity';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
@@ -64,6 +68,7 @@ export abstract class AuthService {
 		protected readonly userPreferencesService: UserPreferencesService,
 		protected readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		protected readonly notificationSubService: NotificationsSubscriptionService,
+		protected readonly tenantRepository: TenantRepository,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -96,8 +101,8 @@ export abstract class AuthService {
 		}
 	}
 
-	async updateUserPreferences(preferences: any) {
-		const currentUser = this.cls.get('currentUser');
+	async updateUserPreferences(preferences: any): Promise<any> {
+		const currentUser = this.cls.get<ActiveUserData>('currentUser');
 		if (!currentUser) {
 			throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
 		}
@@ -495,6 +500,38 @@ export abstract class AuthService {
 			);
 			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
+	}
+
+	/// TENANT AUTH SECTION
+	private async createTenantPersona(
+		fireUser: any,
+		createUserDto: TenantSignUpDto,
+	): Promise<UserProfile> {
+		const entityManager = this.tenantRepository.manager;
+		return entityManager.transaction(async (transactionalEntityManager) => {
+			///CREATE NEW USER PROFILE
+
+			const tenant = transactionalEntityManager.create(TenantUser, {
+				isActive: true,
+				role: createUserDto.role,
+			});
+			await transactionalEntityManager.save(tenant);
+
+			const profile_deets = transactionalEntityManager.create(UserProfile, {
+				email: createUserDto.email,
+				firebaseId: fireUser.uid,
+				isPrivacyPolicyAgreed: true,
+				isTermsAndConditionAccepted: true,
+				tenantUser: tenant,
+			});
+			const saved_profile_deets =
+				await transactionalEntityManager.save(profile_deets);
+			await this.setCustomClaims(saved_profile_deets.firebaseId, {
+				kUid: saved_profile_deets.profileUuid,
+				organizationRole: createUserDto.role.name,
+			});
+			return saved_profile_deets;
+		});
 	}
 
 	async getInvitationToken(invitedUserDto: InviteUserDto): Promise<string> {

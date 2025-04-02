@@ -82,7 +82,7 @@ export class LeaseEventsListener {
 			rent_amount:
 				this.currencyFormat.format(Number(payload.rent)) || payload.rent,
 			payment_frequency: payload.paymentFrequency,
-			view_lease_link: payload.actionLink,
+			view_lease_details_link: payload.actionLink,
 			copyright: this.emailCopyrightText,
 			first_payment_date: payload.firstPaymentDate,
 			event_date: payload.eventTimestamp || new Date().toUTCString(),

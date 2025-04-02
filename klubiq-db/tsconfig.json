@@ -1,5 +1,9 @@
 {
    "compilerOptions": {
+      "paths": {
+         "@app/common/*": ["../libs/common/src/*"],
+         "@app/*": ["../libs/*"]
+      },
       "lib": [
          "es5",
          "es6"

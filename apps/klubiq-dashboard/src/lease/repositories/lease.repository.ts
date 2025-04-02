@@ -10,7 +10,7 @@ import {
 	GetLeaseDto,
 	LeaseFilterDto,
 } from '../dto/requests/get-lease.dto';
-import { indexOf } from 'lodash';
+import { forEach, indexOf } from 'lodash';
 import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 import { TenantUser } from '@app/common/database/entities/tenant.entity';
 import ShortUniqueId from 'short-unique-id';
@@ -21,6 +21,7 @@ import {
 	PaymentFrequency,
 } from '@app/common/config/config.constants';
 import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics.dto';
+import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 
 @Injectable()
 export class LeaseRepository extends BaseRepository<Lease> {
@@ -79,13 +80,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 							id: In(tenantsIds),
 						})
 					: [];
-				if (newTenants?.length) {
-					const newTenantsData = await transactionalEntityManager.save(
-						TenantUser,
-						newTenants,
-					);
-					tenantsData.push(...newTenantsData);
-				}
+
 				const lease = transactionalEntityManager.create(Lease, {
 					startDate: newLeaseStartDate,
 					endDate: DateTime.fromISO(leaseData.endDate).toSQL({
@@ -98,6 +93,9 @@ export class LeaseRepository extends BaseRepository<Lease> {
 					...leaseData,
 				});
 				const savedLease = await transactionalEntityManager.save(lease);
+				if (newTenants?.length && newTenants?.length > 0) {
+					this.addTenantToLease(newTenants, savedLease.id, false);
+				}
 				return savedLease;
 			},
 		);
@@ -259,24 +257,45 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		return await queryBuilder.getManyAndCount();
 	}
 
-	async addTenantToLease(tenantDtos: CreateTenantDto[], leaseId: string) {
+	async addTenantToLease(
+		tenantDtos: CreateTenantDto[],
+		leaseId: string,
+		returnLeaseDetail: boolean = true,
+	) {
 		await this.manager.transaction(async (transactionalEntityManager) => {
-			const tenants: TenantUser[] = tenantDtos.map((tenant) => ({
-				...tenant,
-				dateOfBirth: DateTime.fromISO(tenant.dateOfBirth).toJSDate(),
-			}));
-
-			const tenantUsers = await transactionalEntityManager.save(
+			const newTenantPersonas: TenantUser[] = [];
+			forEach(tenantDtos, async (new_tenant) => {
+				let user_profile = await transactionalEntityManager.findOneBy(
+					UserProfile,
+					{ email: new_tenant.email },
+				);
+				if (!user_profile) {
+					user_profile = await transactionalEntityManager.save(UserProfile, {
+						firstName: new_tenant.firstName,
+						lastName: new_tenant.lastName,
+						dateOfBirth: DateTime.fromISO(new_tenant.dateOfBirth).toJSDate(),
+					});
+				}
+				const tenant_deets: TenantUser = {
+					companyName: new_tenant.companyName,
+					isActive: true,
+					profile: Promise.resolve(user_profile),
+				};
+				newTenantPersonas.push(tenant_deets);
+			});
+			const newTenantsData = await transactionalEntityManager.save(
 				TenantUser,
-				tenants,
+				newTenantPersonas,
 			);
 			await transactionalEntityManager
 				.createQueryBuilder()
 				.relation(Lease, 'tenants')
 				.of(leaseId)
-				.add(tenantUsers);
+				.add(newTenantsData);
 		});
-		return await this.getLeaseById(leaseId);
+		if (returnLeaseDetail) {
+			return await this.getLeaseById(leaseId);
+		}
 	}
 
 	async getPropertyLeaseMetrics(

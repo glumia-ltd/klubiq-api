@@ -23,7 +23,7 @@ import {
  * @remarks
  * This class is used to encapsulate the user's email and password for login.
  */
-export class userLoginDto {
+export class UserLoginDto {
 	@ApiProperty({
 		description: "User's email",
 		example: 'john.doe@test.com',
@@ -43,7 +43,7 @@ export class userLoginDto {
 /**
  * Represents a user sign up data transfer object.
  */
-export class UserSignUpDto extends PartialType(userLoginDto) {
+export class UserSignUpDto extends PartialType(UserLoginDto) {
 	@ApiProperty({
 		description: "User's first name",
 		example: 'John',
@@ -320,4 +320,12 @@ export class PropertyInvitationDto {
 	@ApiProperty()
 	@IsString()
 	name: string;
+}
+
+export class TenantSignUpDto extends PartialType(UserLoginDto) {
+	@ApiProperty({
+		type: RoleTypeDto,
+	})
+	@IsObject()
+	role: RoleTypeDto;
 }

@@ -70,15 +70,16 @@ export class PublicService {
 		orgTenants: OrganizationTenants[],
 	): Promise<TenantDto[]> {
 		const tenants = map(orgTenants, async (orgTenant) => {
-			const tenant = await orgTenant.tenant;
+			const { tenant } = orgTenant;
+			const profile = await tenant.profile;
 			return plainToInstance(
 				TenantDto,
 				{
 					id: tenant.id,
-					title: tenant.title,
-					email: tenant.email,
-					firstName: tenant.firstName,
-					lastName: tenant.lastName,
+					title: profile.title,
+					email: profile.email,
+					firstName: profile.firstName,
+					lastName: profile.lastName,
 					companyName: tenant.companyName,
 				},
 				{ excludeExtraneousValues: true },

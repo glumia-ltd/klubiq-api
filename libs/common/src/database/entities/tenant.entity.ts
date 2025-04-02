@@ -9,38 +9,27 @@ import {
 	CreateDateColumn,
 	Index,
 	OneToMany,
+	ManyToOne,
 } from 'typeorm';
 import { AutoMap } from '@automapper/classes';
 import { UserProfile } from './user-profile.entity';
 import { Lease } from './lease.entity';
 import { OrganizationTenants } from './organization-tenants.entity';
+import { OrganizationRole } from './organization-role.entity';
 
 @Entity({ schema: 'kdo' })
 export class TenantUser {
 	@AutoMap()
-	@PrimaryGeneratedColumn({ type: 'bigint' })
-	id?: number;
-
-	@AutoMap()
-	@Column({ type: 'varchar', length: 50, nullable: true })
-	title?: string;
-
-	@AutoMap()
-	@Index()
-	@Column({ unique: true })
-	email?: string;
-
-	@AutoMap()
-	@Column({ type: 'varchar', length: 255, nullable: true })
-	firstName?: string;
-
-	@AutoMap()
-	@Column({ type: 'varchar', length: 255, nullable: true })
-	lastName?: string;
+	@PrimaryGeneratedColumn('uuid')
+	id?: string;
 
 	@AutoMap()
 	@Column({ type: 'varchar', length: 255, unique: true, nullable: true })
 	companyName?: string;
+
+	@Column({ default: true })
+	@Index('IDX_TENANT_USER_ACTIVE')
+	isActive?: boolean;
 
 	@AutoMap()
 	@Column({ type: 'text', nullable: true })
@@ -50,20 +39,17 @@ export class TenantUser {
 	@OneToOne(() => UserProfile, {
 		cascade: ['remove', 'update'],
 		nullable: true,
+		lazy: true,
 	})
 	@JoinColumn({
 		name: 'profileUuid',
 		referencedColumnName: 'profileUuid',
 	})
-	profile?: UserProfile;
+	profile?: Promise<UserProfile>;
 
 	@AutoMap(() => [Lease])
 	@ManyToMany(() => Lease, (lease) => lease.tenants)
 	leases?: Lease[];
-
-	@AutoMap()
-	@Column({ nullable: true })
-	dateOfBirth?: Date;
 
 	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdDate?: Date;
@@ -76,4 +62,12 @@ export class TenantUser {
 		(organizationTenant) => organizationTenant.tenant,
 	)
 	organizationTenants?: OrganizationTenants[];
+
+	@ManyToOne(() => OrganizationRole, { eager: true, onDelete: 'RESTRICT' })
+	@JoinColumn({
+		name: 'roleId',
+		referencedColumnName: 'id',
+	})
+	@Index('IDX_TENANT_USER_ROLE')
+	role?: OrganizationRole;
 }
