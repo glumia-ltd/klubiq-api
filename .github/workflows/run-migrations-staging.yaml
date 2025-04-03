@@ -100,7 +100,7 @@ jobs:
       - name: Build Database project
         run: |
           cd klubiq-db
-          npm ci
+          npm install
           npm run build
 
       - name: Archive production artifacts
