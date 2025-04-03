@@ -89,7 +89,10 @@ jobs:
           echo $GOOGLE_SERVICES_JSON | base64 --decode > config.json
 
       - name: Install root dependencies
-        run: npm ci
+        env:
+          HUSKY: 0
+          HUSKY_SKIP_INSTALL: 1
+        run: npm install
 
       - name: Build Common Library
         run: npm run build:libs:common
