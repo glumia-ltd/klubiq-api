@@ -24,6 +24,9 @@ export class UserProfile {
 	@Column({ length: 100, nullable: true })
 	firstName?: string;
 
+	@Column({ type: 'varchar', length: 50, nullable: true })
+	title?: string;
+
 	
 	@Column({ length: 100, nullable: true })
 	lastName?: string;
@@ -50,51 +53,49 @@ export class UserProfile {
 	@Column({ nullable: true })
 	countryPhoneCode?: string;
 
-	
+
 	@Column({ nullable: true })
 	street?: string;
 
-	
+
 	@Column({ nullable: true })
 	addressLine2?: string;
 
-	
+
 	@Column({ nullable: true })
 	state?: string;
 
-	
+
 	@Column({ nullable: true })
 	city?: string;
 
-	
+
 	@Column({ nullable: true })
 	country?: string;
 
-	
+
 	@Column({ nullable: true })
 	postalCode?: string;
 
-	
+
 	@Column({ nullable: true })
 	formOfIdentity?: string;
 
-	
+
 	@Column({ nullable: true })
 	dateOfBirth?: Date;
 
-	
+
 	@Column({ nullable: true })
 	gender?: string;
 
-	
+
 	@Column({ type: 'text', nullable: true })
 	bio?: string;
 
-	
 	@Column({ default: false })
 	isTermsAndConditionAccepted?: boolean;
 
-	
 	@Column({ default: false })
 	isPrivacyPolicyAgreed?: boolean;
 
@@ -105,13 +106,16 @@ export class UserProfile {
 	)
 	organizationUser?: OrganizationUser;
 
+
 	@OneToOne(() => TenantUser, (tenantUser) => tenantUser.profile, {
 		eager: true,
 	})
 	tenantUser?: TenantUser;
 
+
 	@OneToMany(() => Property, (property) => property.manager)
 	propertiesManaged?: Property[];
+
 
 	@OneToMany(() => Property, (property) => property.owner)
 	propertiesOwned?: Property[];
@@ -121,6 +125,7 @@ export class UserProfile {
 
 	@UpdateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	updatedDate?: Date;
+
 
 	@OneToOne(() => UserPreferences, (preferences) => preferences.profile, {
 		eager: true,
@@ -138,7 +143,7 @@ export class UserProfile {
 	)
 	notificationSubscription?: NotificationSubscription;
 
-	
 	@Column({ default: false })
 	isKYCVerified?: boolean;
 }
+

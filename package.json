@@ -8,7 +8,6 @@
   "scripts": {
     "build": "nest build",
     "build:app": "nest build klubiq-dashboard",
-    "build:libs:common": "nest build common",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start:dashboard": "nest start klubiq-dashboard",
     "start:queue": "nest start klubiq-queue --watch",
@@ -135,10 +134,5 @@
       "^@app/notifications(|/.*)$": "<rootDir>/libs/notifications/src/$1",
       "^@app/schedulers(|/.*)$": "<rootDir>/libs/schedulers/src/$1"
     }
-  },
-  "workspaces": [
-    "libs/*",
-    "apps/*",
-    "klubiq-db"
-  ]
+  }
 }

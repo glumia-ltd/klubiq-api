@@ -1,8 +1,5 @@
 {
 	"compilerOptions": {
-		"paths": {
-			"@app/common/*": ["../libs/common/src/*"]
-		},
 		"lib": ["es5", "es6"],
 		"target": "es5",
 		"module": "commonjs",
