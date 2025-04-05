@@ -5,7 +5,7 @@ import {
 	HttpException,
 	Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { ClsServiceManager } from 'nestjs-cls';
 import { StatusCodeToKlubiqErrorCode } from '../config/error.constant';
 
@@ -17,6 +17,7 @@ export class HttpExceptionFilter<T extends HttpException>
 	private readonly cls = ClsServiceManager.getClsService();
 	async catch(exception: T, host: ArgumentsHost) {
 		const ctx = host.switchToHttp();
+		const request = ctx.getRequest<Request>();
 		const response = ctx.getResponse<Response>();
 		const status = exception.getStatus();
 		const exceptionResponse = exception.getResponse();
@@ -27,11 +28,13 @@ export class HttpExceptionFilter<T extends HttpException>
 				: (exceptionResponse as object);
 		this.logger.log({
 			level: 'error',
+			err_context: exception.initName,
 			message: exceptionResponse.toString(),
 			error,
-			klubiqCode: errCustomCode,
+			Klubiq_code: errCustomCode,
+			ip_address: request.headers['x-forwarded-for'] || request.ip,
 			status,
-			requestId: this.cls.getId(),
+			request_id: this.cls.getId(),
 			stack: exception.stack,
 		});
 		response
