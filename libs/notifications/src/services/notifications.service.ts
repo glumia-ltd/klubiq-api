@@ -52,17 +52,22 @@ export class NotificationsService {
 		// );
 	}
 
-	async getUnreadNotificationsCount(userId: string) {
+	async getUnreadNotificationsCount(userId: string, days: number = 14) {
 		if (!userId) {
 			this.currentUser = this.cls.get('currentUser');
 			userId = this.currentUser.kUid;
 		}
-		return await this.notificationsRepository.count({
-			where: {
-				userId,
-				isRead: false,
-			},
-		});
+		return await this.notificationsRepository
+			.createQueryBuilder('notifications')
+			.where('notifications.userId = :userId', { userId })
+			.andWhere('notifications.createdAt >= :date', {
+				date: DateTime.utc().minus({ days }).toJSDate(),
+			})
+			.andWhere('notifications.expiresAt >= :currentDate', {
+				currentDate: DateTime.utc().toJSDate(),
+			})
+			.andWhere('notifications.isRead = :isRead', { isRead: false })
+			.getCount();
 	}
 	async createNotifications(createNotificationsDto: CreateNotificationDto[]) {
 		const Notifications = this.notificationsRepository.create(
