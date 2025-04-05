@@ -41,7 +41,7 @@ jobs:
         with:
           name: artifacts
           path: |
-            klubiq-db/build/migrations/
+            klubiq-db/build/
             klubiq-db/package*.json
             klubiq-db/node_modules
       
