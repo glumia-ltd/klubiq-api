@@ -85,6 +85,7 @@ export class LeaseService implements ILeaseService {
 			getLeaseDto,
 			currentUser.organizationRole === UserRoles.ORG_OWNER,
 		);
+		console.log('Lease Entities: ', entities);
 		const pageMetaDto = new PageMetaDto({
 			itemCount: count,
 			pageOptionsDto: getLeaseDto,
@@ -106,10 +107,17 @@ export class LeaseService implements ILeaseService {
 					startDate: lease.startdate,
 					endDate: lease.enddate,
 					status: lease.status,
+					//May throw an error. Expecting tenants to be an array of objects with id and profile
 					tenants: [
 						{
-							firstName: lease.tenant_firstname || null,
-							lastName: lease.tenant_lastname || null,
+							id: lease.tenant_id,
+							profile: {
+								firstName: lease.tenant_firstname || null,
+								lastName: lease.tenant_lastname || null,
+								email: lease.tenant_email || null,
+								profileUuid: lease.tenant_profileuuid || null,
+								profilePicUrl: lease.tenant_profilepicurl || null,
+							},
 						},
 					],
 					unitNumber: lease.unit_unitnumber,
@@ -135,7 +143,20 @@ export class LeaseService implements ILeaseService {
 					startDate: lease.startDate,
 					endDate: lease.endDate,
 					status: lease.status,
-					tenants: lease.tenants,
+					tenants: lease.tenants.map(async (tenant) => {
+						const tenantProfile = await tenant.profile;
+						const profile = {
+							firstName: tenantProfile.firstName,
+							lastName: tenantProfile.lastName,
+							email: tenantProfile.email,
+							profileUuid: tenantProfile.profileUuid,
+							profilePicUrl: tenantProfile.profilePicUrl,
+						};
+						return {
+							id: tenant.id,
+							profile: profile,
+						};
+					}),
 					unitNumber: lease.unit.unitNumber,
 					unitId: lease.unit.id,
 					property: lease.unit.property,

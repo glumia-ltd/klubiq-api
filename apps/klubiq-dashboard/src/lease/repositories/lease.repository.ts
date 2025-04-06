@@ -112,8 +112,12 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				'lease.endDate AS endDate',
 				'lease.rentAmount AS rentAmount',
 				'lease.status AS status',
-				'tenant.firstName AS tenant_firstName',
-				'tenant.lastName AS tenant_lastName',
+				'tenant.id AS tenant_id',
+				'profile.firstName AS tenant_firstName',
+				'profile.lastName AS tenant_lastName',
+				'profile.email AS tenant_email',
+				'profile.profileUuid AS tenant_profileUuid',
+				'profile.profilePicUrl AS tenant_profilePicUrl',
 				'property.name AS property_name',
 				'property.organizationUuid AS property_organizationUuid',
 				'property.managerUid AS property_managerUid',
@@ -137,6 +141,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 			.leftJoin('property.address', 'address')
 			.innerJoin('property.type', 'type')
 			.leftJoin('lease.tenants', 'tenant')
+			.leftJoin('tenant.profile', 'profile')
 			.select([
 				'lease.id AS id',
 				'lease.status AS status',
@@ -150,9 +155,13 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				'type.name AS property_type',
 				'unit.unitNumber AS unit_number',
 				'property.isMultiUnit AS is_multi_unit_property',
-				"TO_CHAR(public.calculate_next_rent_due_date(lease.startDate, lease.endDate, lease.rentDueDay, lease.paymentFrequency, lease.customPaymentFrequency, lease.lastPaymentDate)::DATE, 'YYYY-MM-DD')AS next_payment_date",
-				'tenant.firstName AS tenant_first_name',
-				'tenant.lastName AS tenant_last_name',
+				"TO_CHAR(poo.calculate_next_rent_due_date(lease.startDate, lease.endDate, lease.rentDueDay, lease.paymentFrequency, lease.customPaymentFrequency, lease.lastPaymentDate)::DATE, 'YYYY-MM-DD')AS next_payment_date",
+				'tenant.id AS tenant_id',
+				'profile.firstName AS tenant_firstName',
+				'profile.lastName AS tenant_lastName',
+				'profile.email AS tenant_email',
+				'profile.profileUuid AS tenant_profileUuid',
+				'profile.profilePicUrl AS tenant_profilePicUrl',
 			])
 			.where('lease.id = :id', { id })
 			.getRawOne();
@@ -215,6 +224,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 	): Promise<[Lease[], number]> {
 		const queryBuilder = this.createQueryBuilder('lease')
 			.leftJoinAndSelect('lease.tenants', 'tenant')
+			.leftJoinAndSelect('tenant.profile', 'profile')
 			.leftJoinAndSelect('lease.unit', 'unit')
 			.leftJoinAndSelect('unit.property', 'property')
 			.select([
@@ -227,8 +237,12 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				'lease.endDate',
 				'lease.rentAmount',
 				'lease.status',
-				'tenant.firstName',
-				'tenant.lastName',
+				'tenant.id',
+				'profile.firstName',
+				'profile.lastName',
+				'profile.email',
+				'profile.profileUuid',
+				'profile.profilePicUrl',
 				'property.name',
 				'property.organizationUuid',
 				'property.managerUid',
@@ -404,7 +418,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 			WHERE
 				mp.total_due > COALESCE(lp.total_paid, 0)
 				AND l."endDate" >= 	CURRENT_DATE
-				AND COALESCE(l."nextDueDate", public.calculate_next_rent_due_date(l."startDate",l."endDate", l."rentDueDay", l."paymentFrequency", l."customPaymentFrequency", l."lastPaymentDate")) <= CURRENT_DATE
+				AND COALESCE(l."nextDueDate", poo.calculate_next_rent_due_date(l."startDate",l."endDate", l."rentDueDay", l."paymentFrequency", l."customPaymentFrequency", l."lastPaymentDate")) <= CURRENT_DATE
 				AND l."isArchived" = false
 				AND  l."organizationUuid" = $1;`;
 		const overdueRentsResult = await this.manager.query(query, [

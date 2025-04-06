@@ -20,7 +20,7 @@ export class PropertyLeaseMetrics {
 	occupiedUnitCount: number;
 	propertyLeaseCount: number;
 }
-export class LeaseListTenantDto {
+export class TenantProfileDto {
 	@Expose()
 	@IsString()
 	firstName: string;
@@ -28,6 +28,29 @@ export class LeaseListTenantDto {
 	@Expose()
 	@IsString()
 	lastName: string;
+
+	@Expose()
+	@IsString()
+	email: string;
+
+	@Expose()
+	@IsString()
+	profileUuid: string;
+
+	@Expose()
+	@IsString()
+	profilePicUrl: string;
+}
+
+export class LeaseListTenantDto {
+	@Expose()
+	@IsString()
+	id: string | number;
+
+	@Expose()
+	@ValidateNested()
+	@Type(() => TenantProfileDto)
+	profile: TenantProfileDto;
 }
 export class LeaseListPropertyDto {
 	@Expose()
