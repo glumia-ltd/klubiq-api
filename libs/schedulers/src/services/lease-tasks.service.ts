@@ -24,7 +24,7 @@ export class LeaseTasksService {
 			.leftJoinAndSelect('ls.unit', 'ut')
 			.leftJoinAndSelect('ut.property', 'pt')
 			.where(
-				`public.calculate_next_rent_due_date(ls.startDate,ls."endDate", ls.rentDueDay, ls.paymentFrequency, ls.customPaymentFrequency, ls.lastPaymentDate) <= :currentDate`,
+				`poo.calculate_next_rent_due_date(ls.startDate,ls."endDate", ls.rentDueDay, ls.paymentFrequency, ls.customPaymentFrequency, ls.lastPaymentDate) <= :currentDate`,
 				{ currentDate },
 			)
 			.andWhere('ls.endDate >= :currentDate', { currentDate })

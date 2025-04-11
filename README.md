@@ -1,30 +1,51 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
+  <a href="http://devapi.klubiq.com/" target="blank"><img src="https://bucket.mailersendapp.com/neqvygmrw5l0p7w2/z3m5jgrm6nx4dpyo/images/9be53249-1ae4-48a9-be3f-ad58c19f2dcf.png" width="200" alt="Klubiq Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+[Klubiq](https://github.com/glumia-ltd/klubiq-api) API repository written with [NestJS](https://github.com/nestjs/nest) Framework.
+
+## Project Structure
+
+We are using a monorepo nestjs structure. These are important folders to take note of:
+- .github (Here we have our github actions for CICD)
+- apps (Here we have our core applications running NestJs)
+  - klubiq-dashboard (This is our standalone main api project running in port: 3000)
+  - klubiq-queue (This is our standalone jobs and queue project using BullMQ running in port: 3001)
+- klubiq-db (This is a different project for database-TypeOrm. This project is not running live, it's used to track database changes for database migrations)
+- libs (This is our library folder with different libraries that are shared across our projects)
+  - auth => for auth business logics
+  - common => for common business logics used across our apps
+  - notifications => for notification business logics
+  - schedulers => for scheduled jobs
+
+## Getting your workspace ready
+The following steps are required before you can start the application. 
+ 1. Make sure to have postgresql and PgAdmin installed on your PC.
+ 2. Create the following on your local instance:
+  - Database: klubiq
+  - Schemas: kdo, and poo.
+  - Create a login user for your database. You will need this for the environment variables
+ 2. Create ```config.json``` and ```.env``` file at the root folder of the project 
+ 3. Retrieve environment variables, config values and other SQL scripts needed from your lead
+ 4. If you don't have redis running locally on your PC, download [docker dektop](htps://www.docker.com/products/docker-desktop/) so you can run redis in docker
+ 5. Create a ```docker-compose.yaml``` file at the root folder of the project. This is to run redis locally. Add the following scripts to the file:
+  ```
+  services:
+    redis:
+      container_name: cache
+      image: redis
+      ports:
+        - 6379:6379
+      volumes:
+        - redis:/data
+  volumes:
+    redis:
+      driver: local
+  ```
+  then execute this command: ```docker compose up -d```
 
 ## Installation
 
@@ -35,14 +56,20 @@ $ npm install
 ## Running the app
 
 ```bash
-# development
-$ npm run start
+# development mode - dashboard  project only
+$ npm run start:dashboard
 
-# watch mode
-$ npm run start:dev
+# development mode - queue  project only
+$ npm run start:queue
 
-# production mode
+# watch mode - both queue and dashboard project will run together
+$ npm run start:allDev
+
+# production mode - dashboard project
 $ npm run start:prod
+
+# production mode - Queue project
+$ npm run start:queue:prod
 ```
 
 ## Test
@@ -58,16 +85,3 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
