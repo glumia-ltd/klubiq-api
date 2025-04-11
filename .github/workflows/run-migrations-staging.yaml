@@ -19,7 +19,7 @@ env:
 jobs:
   migration:
     runs-on: ubuntu-latest
-    environment: staging
+    # environment: ${{  }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

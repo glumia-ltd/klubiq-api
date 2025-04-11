@@ -1,11 +1,11 @@
 name: Run Tests
 on:
   pull_request:
-    types: [opened, reopened]
-    branches:
-      - dev
-      - main
-      - release/**
+  #   types: [opened, reopened]
+  #   branches:
+  #     - dev
+  #     - main
+  #     - release/**
     #paths:
     # - '**.spec.ts'
 env:
