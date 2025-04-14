@@ -586,10 +586,7 @@ export abstract class AuthService {
 		}
 	}
 
-	async signInAndGetAccessToken(
-		email: string,
-		password: string,
-	): Promise<string> {
+	async signInAndGetAccessToken(email: string, password: string): Promise<any> {
 		try {
 			const signInData = await this.signInWithEmailPassword(email, password);
 			const refreshToken = signInData.refreshToken;
@@ -608,7 +605,10 @@ export abstract class AuthService {
 				);
 			}
 
-			return tokenData.access_token;
+			return {
+				...signInData,
+				access_token: tokenData.access_token,
+			};
 		} catch (error) {
 			this.logger.error(
 				'Error during Firebase sign-in and access token retrieval',
