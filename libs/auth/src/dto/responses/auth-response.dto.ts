@@ -142,6 +142,18 @@ export class TokenResponseDto {
 	project_id: string;
 }
 
+export class SignInByFireBaseResponseDto {
+	idToken: string;
+	expiresIn: string;
+	tokenType: string; // inferred – not in the object but commonly "Bearer"
+	refreshToken: string;
+	localId: string;
+	email: string;
+	displayName: string;
+	kind: string;
+	registered: boolean;
+}
+
 export class LandlordUserDetailsResponseDto {
 	@Expose()
 	@IsString()
