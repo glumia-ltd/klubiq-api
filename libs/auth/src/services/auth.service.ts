@@ -18,6 +18,7 @@ import {
 import {
 	LandlordUserDetailsResponseDto,
 	TokenResponseDto,
+	SignInByFireBaseResponseDto,
 } from '../dto/responses/auth-response.dto';
 import { ROLE_ALIAS, UserRoles } from '@app/common/config/config.constants';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
@@ -46,6 +47,7 @@ import { NotificationsSubscriptionService } from '@app/notifications/services/no
 import { TenantRepository } from '@app/common/repositories/tenant.repository';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { TenantUser } from '@app/common/database/entities/tenant.entity';
+
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
@@ -541,6 +543,83 @@ export abstract class AuthService {
 				`${invitedUserDto.email}|${invitedUserDto.firstName}||${invitedUserDto.lastName}`,
 			)
 			.digest('hex');
+	}
+
+	async signInWithEmailPassword(
+		email: string,
+		password: string,
+	): Promise<SignInByFireBaseResponseDto> {
+		try {
+			const url = `${this.configService.get<string>('GOOGLE_IDENTITY_ENDPOINT')}:signInWithPassword?key=${this.configService.get<string>('FIREBASE_API_KEY')}`;
+
+			const payload = {
+				email,
+				password,
+				returnSecureToken: true,
+			};
+
+			const response = this.httpService.post<SignInByFireBaseResponseDto>(
+				url,
+				payload,
+			);
+
+			const { data } = await firstValueFrom(
+				response.pipe(
+					catchError((error: AxiosError | any) => {
+						const firebaseError = error.message;
+						this.logger.error('Firebase sign-in error:', firebaseError);
+						throw new FirebaseException(
+							this.errorMessageHelper.parseFirebaseError(firebaseError),
+						);
+					}),
+				),
+			);
+
+			return data;
+		} catch (err) {
+			const message =
+				err instanceof FirebaseException
+					? err.message
+					: this.errorMessageHelper.parseFirebaseError(err) ||
+						'Unknown error during sign-in';
+			throw new FirebaseException(message);
+		}
+	}
+
+	async signInAndGetAccessToken(email: string, password: string): Promise<any> {
+		try {
+			const signInData = await this.signInWithEmailPassword(email, password);
+			const refreshToken = signInData.refreshToken;
+
+			if (!refreshToken) {
+				throw new FirebaseException(
+					'No refresh token returned from Firebase sign-in',
+				);
+			}
+
+			const tokenData = await this.exchangeRefreshToken(refreshToken);
+
+			if (!tokenData.access_token) {
+				throw new FirebaseException(
+					'No access token returned from refresh token exchange',
+				);
+			}
+
+			return {
+				...signInData,
+				access_token: tokenData.access_token,
+			};
+		} catch (error) {
+			this.logger.error(
+				'Error during Firebase sign-in and access token retrieval',
+				error,
+			);
+			const message =
+				error instanceof FirebaseException
+					? error.message
+					: 'Unexpected error during token exchange';
+			throw new FirebaseException(message);
+		}
 	}
 
 	abstract getActionCodeSettings(baseUrl: string, continueUrl: string): any;

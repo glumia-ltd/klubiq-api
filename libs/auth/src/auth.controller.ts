@@ -25,6 +25,7 @@ import {
 	ResetPasswordLinkDto,
 	SendVerifyEmailDto,
 	VerifyEmailDto,
+	UserLoginDto,
 } from './dto/requests/user-login.dto';
 import { AuthType } from './types/firebase.types';
 import { LandlordAuthService } from './services/landlord-auth.service';
@@ -70,6 +71,20 @@ export class AuthController {
 		} catch (err) {
 			throw err;
 		}
+	}
+
+	@Post('signin')
+	@HttpCode(HttpStatus.OK)
+	@ApiOkResponse({
+		description:
+			'Signs in user with email and password, and returns access token',
+		type: String,
+	})
+	async signIn(@Body() credentials: UserLoginDto): Promise<string> {
+		return this.landlordAuthService.signInAndGetAccessToken(
+			credentials.email,
+			credentials.password,
+		);
 	}
 
 	@Auth(AuthType.Bearer)
