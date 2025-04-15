@@ -40,23 +40,6 @@ export class UserLoginDto {
 	password: string;
 }
 
-export class UserSignInDto {
-	@ApiProperty({
-		description: "User's email",
-		example: 'john.doe@test.com',
-	})
-	@IsString()
-	@IsEmail()
-	email: string;
-
-	@ApiProperty({
-		description: "User's password",
-		example: 'password',
-	})
-	@IsString()
-	password: string;
-}
-
 /**
  * Represents a user sign up data transfer object.
  */
