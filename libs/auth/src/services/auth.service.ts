@@ -566,11 +566,9 @@ export abstract class AuthService {
 			const { data } = await firstValueFrom(
 				response.pipe(
 					catchError((error: AxiosError | any) => {
-						const firebaseError = error.message;
+						const firebaseError = error.response.data;
 						this.logger.error('Firebase sign-in error:', firebaseError);
-						throw new FirebaseException(
-							this.errorMessageHelper.parseFirebaseError(firebaseError),
-						);
+						throw new FirebaseException(firebaseError);
 					}),
 				),
 			);
