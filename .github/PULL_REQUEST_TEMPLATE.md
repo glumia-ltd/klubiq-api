@@ -13,6 +13,7 @@ KlA-999: Addding new Danger variation to Button Component
 
 - [ ] This PR introduce breaking changes
 - [ ] This PR changes existing data fields
+- [ ] This PR includes database changes
 
 ### Brief description of changes
 

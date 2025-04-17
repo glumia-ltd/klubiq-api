@@ -66,6 +66,8 @@ import { CommonConfigService } from './common-config';
 				EMAIL_COPYRIGHT_LINK: Joi.string().optional(),
 				EMAIL_PRIVACY_LINK: Joi.string().optional(),
 				APP_SECRET: Joi.string().required(),
+				FIREBASE_APP_NAME: Joi.string().required(),
+				KLUBIQ_API_APPCHECK_CLIENTS: Joi.string().optional(),
 			}),
 		}),
 		AutomapperModule.forRoot([
@@ -111,8 +113,7 @@ import { CommonConfigService } from './common-config';
 		{
 			provide: 'MAPPER',
 			useFactory: () => {
-				const mapper = createMapper({ strategyInitializer: classes() });
-				return mapper;
+				return createMapper({ strategyInitializer: classes() });
 			},
 		},
 	],

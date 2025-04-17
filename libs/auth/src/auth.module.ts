@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
 import { OrganizationRepository } from '../../../apps/klubiq-dashboard/src/organization/repositories/organization.repository';
 import { OrgUserProfile } from './profiles/org-user-profile';
@@ -23,6 +23,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Permission } from '@app/common/database/entities/permission.entity';
 import { RoleFeaturePermissions } from '@app/common/database/entities/role-feature-permission.entity';
 import { Feature, OrganizationUser } from '@app/common';
+import { AuthMiddleware } from './auth.middleware';
 interface FirebaseConfig {
 	type: string;
 	project_id: string;
@@ -35,6 +36,7 @@ interface FirebaseConfig {
 	auth_provider_x509_cert_url: string;
 	client_x509_cert_url: string;
 }
+const appCheckRoutes = ['auth/signin', 'auth/landlord/signup'];
 const firebaseAdminConfig = _firebaseConfig as FirebaseConfig;
 
 const firebase_params = {
@@ -53,7 +55,7 @@ const firebase_params = {
 const firebaseAdminProvider = {
 	provide: 'FIREBASE_ADMIN',
 	useFactory: () => {
-		const apps = admin.apps;
+		const { apps } = admin;
 		if (apps.length > 0) {
 			return apps[0];
 		} else {
@@ -68,6 +70,7 @@ const firebaseAdminProvider = {
 	imports: [
 		HttpModule,
 		SubscriptionModule,
+		ConfigModule,
 		RepositoriesModule,
 		NotificationsModule,
 		TypeOrmModule.forFeature([
@@ -95,4 +98,8 @@ const firebaseAdminProvider = {
 	exports: [LandlordAuthService, AccessControlService],
 	controllers: [AuthController],
 })
-export class AuthModule {}
+export class AuthModule implements NestModule {
+	configure(consumer: MiddlewareConsumer) {
+		consumer.apply(AuthMiddleware).forRoutes(...appCheckRoutes);
+	}
+}
