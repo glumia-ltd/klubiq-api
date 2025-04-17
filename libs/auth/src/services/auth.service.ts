@@ -109,9 +109,10 @@ export abstract class AuthService {
 	}
 	async getAppCheckToken(): Promise<any> {
 		const appId = this.configService.get('FIREBASE_APP_ID');
-		return await getAppCheck().createToken(appId, {
+		const appCheckToken = await getAppCheck().createToken(appId, {
 			ttlMillis: 1800000,
 		});
+		return { token: appCheckToken.token, appId: appId };
 	}
 
 	async updateUserPreferences(preferences: any): Promise<any> {
@@ -555,6 +556,26 @@ export abstract class AuthService {
 			)
 			.digest('hex');
 	}
+	async ensureAuthorizedFirebaseRequest(
+		url: string,
+		method: string,
+		body: any,
+	) {
+		const { token, appId } = await this.getAppCheckToken();
+		if (!token && !appId) {
+			throw new UnauthorizedException('No app check token found');
+		}
+		const headers = {
+			'x-firebase-gmpid': appId,
+			'x-firebase-appcheck': token,
+		};
+		return this.httpService.request<any>({
+			url,
+			method,
+			data: body,
+			headers,
+		});
+	}
 
 	async signInWithEmailPassword(
 		email: string,
@@ -562,18 +583,16 @@ export abstract class AuthService {
 	): Promise<SignInByFireBaseResponseDto> {
 		try {
 			const url = `${this.configService.get<string>('GOOGLE_IDENTITY_ENDPOINT')}:signInWithPassword?key=${this.configService.get<string>('FIREBASE_API_KEY')}`;
-
 			const payload = {
 				email,
 				password,
 				returnSecureToken: true,
 			};
-
-			const response = this.httpService.post<SignInByFireBaseResponseDto>(
+			const response = await this.ensureAuthorizedFirebaseRequest(
 				url,
+				'POST',
 				payload,
 			);
-
 			const { data } = await firstValueFrom(
 				response.pipe(
 					catchError((error: AxiosError | any) => {
@@ -583,7 +602,6 @@ export abstract class AuthService {
 					}),
 				),
 			);
-
 			return data;
 		} catch (err) {
 			const message =
