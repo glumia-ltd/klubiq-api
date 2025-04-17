@@ -9,6 +9,7 @@ import {
 import { ClsService } from 'nestjs-cls';
 import * as admin from 'firebase-admin';
 import * as auth from 'firebase-admin/auth';
+import { getAppCheck } from 'firebase-admin/app-check';
 import { FirebaseException } from '../exception/firebase.exception';
 import {
 	InviteUserDto,
@@ -101,6 +102,16 @@ export abstract class AuthService {
 			await this.auth.revokeRefreshTokens(this.currentUser.uid);
 			this.cls.set('currentUser', null);
 		}
+	}
+
+	async verifyAppCheckToken(appCheckToken: string): Promise<any> {
+		return await getAppCheck().verifyToken(appCheckToken);
+	}
+	async getAppCheckToken(): Promise<any> {
+		const appId = this.configService.get('FIREBASE_APP_ID');
+		return await getAppCheck().createToken(appId, {
+			ttlMillis: 1800000,
+		});
 	}
 
 	async updateUserPreferences(preferences: any): Promise<any> {

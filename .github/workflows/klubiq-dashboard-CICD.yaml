@@ -85,6 +85,8 @@ env:
   EMAIL_PRIVACY_LINK: ${{ vars.EMAIL_PRIVACY_LINK }}
   EMAIL_COPYRIGHT_LINK: ${{ vars.EMAIL_COPYRIGHT_LINK }}
   APP_SECRET: ${{ secrets.APP_SECRET }}
+  KLUBIQ_API_APPCHECK_CLIENTS: ${{ secrets.KLUBIQ_API_APPCHECK_CLIENTS }}
+  FIREBASE_APP_NAME: ${{ secrets.FIREBASE_APP_NAME }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -186,6 +188,8 @@ jobs:
             export EMAIL_PRIVACY_LINK=${{ vars.EMAIL_PRIVACY_LINK }}
             export EMAIL_COPYRIGHT_LINK=${{ vars.EMAIL_COPYRIGHT_LINK }}
             export APP_SECRET=${{ secrets.APP_SECRET }}
+            export KLUBIQ_API_APPCHECK_CLIENTS=${{ secrets.KLUBIQ_API_APPCHECK_CLIENTS }}
+            export FIREBASE_APP_NAME=${{ secrets.FIREBASE_APP_NAME }}
 
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
 

@@ -12,6 +12,7 @@ import {
 import {
 	ApiBearerAuth,
 	ApiExcludeEndpoint,
+	ApiHeader,
 	ApiOkResponse,
 	ApiSecurity,
 	ApiTags,
@@ -79,6 +80,11 @@ export class AuthController {
 		description:
 			'Signs in user with email and password, and returns access token',
 		type: String,
+	})
+	@ApiHeader({
+		name: 'X-client-id',
+		description: 'The client id',
+		required: false,
 	})
 	async signIn(@Body() credentials: UserLoginDto): Promise<string> {
 		return this.landlordAuthService.signInAndGetAccessToken(
@@ -154,9 +160,8 @@ export class AuthController {
 	@ApiOkResponse({
 		description: 'Creates a new Org user and returns the data an auth token',
 	})
-	async createUser(@Body() createUser: OrgUserSignUpDto) {
-		const userData = await this.landlordAuthService.createOrgOwner(createUser);
-		return userData;
+	async createLandlordUser(@Body() createUser: OrgUserSignUpDto) {
+		return await this.landlordAuthService.createOrgOwner(createUser);
 	}
 	@Auth(AuthType.ApiKey)
 	@Post('admin/signup')
@@ -164,9 +169,7 @@ export class AuthController {
 		description: 'Creates a new super Admin user',
 	})
 	async createAdmin(@Body() createUser: CreateSuperAdminDTO) {
-		const userData =
-			await this.adminAuthService.createDomainSuperAdmin(createUser);
-		return userData;
+		return await this.adminAuthService.createDomainSuperAdmin(createUser);
 	}
 
 	@Auth(AuthType.Bearer)
@@ -176,8 +179,7 @@ export class AuthController {
 		description: 'invites a new Org user',
 	})
 	async inviteUser(@Body() invitedUser: InviteUserDto) {
-		const result = await this.landlordAuthService.inviteUser(invitedUser);
-		return result;
+		return await this.landlordAuthService.inviteUser(invitedUser);
 	}
 
 	@HttpCode(HttpStatus.OK)
