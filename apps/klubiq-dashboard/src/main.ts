@@ -83,7 +83,9 @@ async function bootstrap() {
 
 		//.addTag('Klubiq')
 		.setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
+		.setExternalDoc('JSON Doc', '/swagger/v1/docs.json')
 		.addBearerAuth()
+		.addBasicAuth()
 		.addSecurity('ApiKey', {
 			type: 'apiKey',
 			in: 'header',
@@ -92,7 +94,9 @@ async function bootstrap() {
 		})
 		.build();
 	const document = SwaggerModule.createDocument(app, config, options);
-	SwaggerModule.setup('swagger', app, document);
+	SwaggerModule.setup('swagger', app, document, {
+		jsonDocumentUrl: 'swagger/v1/docs.json',
+	});
 	/// END SWAGGER CONFIGURATION
 
 	/// APP SETTINGS
