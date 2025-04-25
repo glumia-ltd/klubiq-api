@@ -22,8 +22,11 @@ import { AccessControlService } from './services/access-control.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Permission } from '@app/common/database/entities/permission.entity';
 import { RoleFeaturePermissions } from '@app/common/database/entities/role-feature-permission.entity';
-import { Feature, OrganizationUser } from '@app/common';
+import { Feature, FileUploadService, OrganizationUser } from '@app/common';
 import { AuthMiddleware } from './auth.middleware';
+import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.service';
+import { LeaseRepository } from 'apps/klubiq-dashboard/src/lease/repositories/lease.repository';
+import { LeaseTenantRepository } from 'apps/klubiq-dashboard/src/lease/repositories/leases-tenant.repositiory';
 interface FirebaseConfig {
 	type: string;
 	project_id: string;
@@ -92,8 +95,12 @@ const firebaseAdminProvider = {
 		OrganizationRepository,
 		UserProfilesRepository,
 		OrganizationSettingsService,
+		LeaseRepository,
+		LeaseTenantRepository,
 		UserPreferencesService,
 		AccessControlService,
+		LeaseService,
+		FileUploadService,
 	],
 	exports: [LandlordAuthService, AccessControlService],
 	controllers: [AuthController],

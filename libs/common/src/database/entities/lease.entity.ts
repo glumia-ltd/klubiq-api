@@ -5,7 +5,6 @@ import {
 	Entity,
 	Index,
 	JoinColumn,
-	JoinTable,
 	ManyToMany,
 	ManyToOne,
 	OneToMany,
@@ -98,17 +97,6 @@ export class Lease {
 	isArchived?: boolean;
 
 	@ManyToMany(() => TenantUser, (user) => user.leases)
-	@JoinTable({
-		name: 'leases_tenants',
-		joinColumn: {
-			name: 'leaseId',
-			referencedColumnName: 'id',
-		},
-		inverseJoinColumn: {
-			name: 'tenantId',
-			referencedColumnName: 'id',
-		},
-	})
 	tenants?: TenantUser[];
 
 	@Index('IDX_UNIT_UUID')
