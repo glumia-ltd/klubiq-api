@@ -575,19 +575,19 @@ export abstract class AuthService {
 		method: string,
 		body: any,
 	) {
-		// const { token, appId } = await this.getAppCheckToken();
-		// if (!token && !appId) {
-		// 	throw new UnauthorizedException('No app check token found');
-		// }
-		// const headers = {
-		// 	'x-firebase-gmpid': appId,
-		// 	'x-firebase-appcheck': token,
-		// };
+		const { token, appId } = await this.getAppCheckToken();
+		if (!token && !appId) {
+			throw new UnauthorizedException('No app check token found');
+		}
+		const headers = {
+			'x-firebase-gmpid': appId,
+			'x-firebase-appcheck': token,
+		};
 		return this.httpService.request<any>({
 			url,
 			method,
 			data: body,
-			//headers,
+			headers,
 		});
 	}
 
@@ -674,7 +674,6 @@ export abstract class AuthService {
 		});
 
 		await transactionalEntityManager.save(tenantUser);
-
 		const userProfile = transactionalEntityManager.create(UserProfile, {
 			email: createUserDto.email,
 			firebaseId: fireUser.uid,
