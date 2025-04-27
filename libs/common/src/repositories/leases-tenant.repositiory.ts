@@ -16,6 +16,7 @@ export class LeaseTenantRepository extends BaseRepository<LeaseTenant> {
 	async mapTenantToLease(
 		tenantId: string,
 		leaseId: string,
+		isPrimaryTenant: boolean,
 		manager: EntityManager = this.manager,
 	) {
 		if (!tenantId || !leaseId) {
@@ -41,6 +42,7 @@ export class LeaseTenantRepository extends BaseRepository<LeaseTenant> {
 		const leaseTenant = manager.create(LeaseTenant, {
 			tenant,
 			lease,
+			isPrimaryTenant,
 		});
 
 		return manager.save(LeaseTenant, leaseTenant);

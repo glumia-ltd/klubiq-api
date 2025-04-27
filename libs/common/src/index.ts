@@ -77,3 +77,5 @@ export * from './database/entities/notifications.entity';
 export * from './database/entities/organization-tenants.entity';
 export * from './database/entities/role-feature-permission.entity';
 export * from './database/entities/deleted-files.entity';
+export * from './database/entities/leases-tenants';
+export * from './repositories/leases-tenant.repositiory';

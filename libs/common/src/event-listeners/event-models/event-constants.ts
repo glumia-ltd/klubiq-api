@@ -15,7 +15,7 @@ export type EventTemplate = {
 };
 export const EVENT_TEMPLATE = (
 	payload: PropertyEvent,
-): Record<EVENTS, EventTemplate> => {
+): Record<EVENTS, EventTemplate | null> => {
 	return {
 		[EVENTS.PROPERTY_CREATED]: {
 			subject: 'New Property Created',
