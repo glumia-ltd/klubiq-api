@@ -25,9 +25,18 @@ export class HelperService {
 		this.orgAdminRoleId = this.configService.get<number>('ORG_OWNER_ROLE_ID');
 	}
 
+	/**
+	 * Deletes an item from cache
+	 * @param key
+	 */
 	async deleteItemFromCache(key: string) {
 		await this.cacheManager.del(key);
 	}
+
+	/**
+	 * Invalidates an organization's property cache
+	 * @param payload
+	 */
 	async invalidateOrganizationPropertyCache(payload: PropertyEvent) {
 		const propertyCacheKeys = this.getPropertyRelatedCacheKeys(
 			payload.organizationId,
@@ -42,6 +51,10 @@ export class HelperService {
 		});
 	}
 
+	/**
+	 * Invalidates an organization's lease cache
+	 * @param payload
+	 */
 	async invalidateOrganizationLeaseCache(payload: LeaseEvent) {
 		const leaseCacheKeys = this.getLeaseRelatedCacheKeys(
 			payload.organizationId,
@@ -56,12 +69,21 @@ export class HelperService {
 		});
 	}
 
+	/**
+	 * Delete filtered cache by keys
+	 * @param keys
+	 */
 	private deleteFilteredCacheKeys(keys: string[]) {
 		each(keys, async (key) => {
 			await this.cacheManager.del(key);
 		});
 	}
 
+	/**
+	 * Get property related cache keys for an organization
+	 * @param organizationId
+	 * @returns
+	 */
 	private getPropertyRelatedCacheKeys(organizationId: string) {
 		return [
 			`${organizationId}:getPropertyListKeys`,
@@ -70,6 +92,11 @@ export class HelperService {
 		];
 	}
 
+	/**
+	 * Get lease related cache keys for an organization
+	 * @param organizationId
+	 * @returns
+	 */
 	private getLeaseRelatedCacheKeys(organizationId: string) {
 		return [
 			`${organizationId}:getLeaseListKeys`,
@@ -78,6 +105,13 @@ export class HelperService {
 		];
 	}
 
+	/**
+	 * Get notification recipients
+	 * @param payload
+	 * @param template
+	 * @param eventType
+	 * @returns
+	 */
 	async getNotificationRecipients(
 		payload: PropertyEvent,
 		template: EventTemplate,
@@ -152,6 +186,14 @@ export class HelperService {
 		);
 	}
 
+	/**
+	 * Get notification recipients by roles
+	 * @param payload
+	 * @param template
+	 * @param eventType
+	 * @param roles
+	 * @returns
+	 */
 	async getNotificationRecipientsByRoles(
 		payload: PropertyEvent | LeaseEvent,
 		template: EventTemplate,

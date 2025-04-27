@@ -37,7 +37,7 @@ import { DateTime } from 'luxon';
 import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '@app/common/event-listeners/event-models/event-constants';
-import { LeaseTenantRepository } from '../../../../../libs/common/src/repositories/leases-tenant.repositiory';
+import { LeaseTenantRepository } from '@app/common/repositories/leases-tenant.repositiory';
 import { EntityManager } from 'typeorm';
 @Injectable()
 export class LeaseService implements ILeaseService {
@@ -297,6 +297,7 @@ export class LeaseService implements ILeaseService {
 			await this.leaseTenantRepository.mapTenantToLease(
 				tenantData.id,
 				createdLease.id,
+				true,
 				entityManager, // pass transaction manager here too
 			);
 

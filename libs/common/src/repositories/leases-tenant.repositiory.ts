@@ -3,7 +3,7 @@ import { BaseRepository } from '@app/common/repositories/base.repository';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { TenantUser } from '@app/common/database/entities/tenant.entity';
-import { LeaseTenant } from '@app/common/database/entities/leases-tenants';
+import { LeaseTenant } from '@app/common/database/entities/leases-tenants.entity';
 
 @Injectable()
 export class LeaseTenantRepository extends BaseRepository<LeaseTenant> {
@@ -16,6 +16,7 @@ export class LeaseTenantRepository extends BaseRepository<LeaseTenant> {
 	async mapTenantToLease(
 		tenantId: string,
 		leaseId: string,
+		isPrimaryTenant: boolean,
 		manager: EntityManager = this.manager,
 	) {
 		if (!tenantId || !leaseId) {
@@ -41,6 +42,7 @@ export class LeaseTenantRepository extends BaseRepository<LeaseTenant> {
 		const leaseTenant = manager.create(LeaseTenant, {
 			tenant,
 			lease,
+			isPrimaryTenant,
 		});
 
 		return manager.save(LeaseTenant, leaseTenant);

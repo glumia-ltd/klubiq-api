@@ -58,7 +58,7 @@ import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.ser
 export class LandlordAuthService extends AuthService {
 	private readonly emailVerificationBaseUrl: string;
 	private readonly emailAuthContinueUrl: string;
-	private readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
+	protected readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	protected readonly logger = new Logger(LandlordAuthService.name);
 	protected readonly suid = new ShortUniqueId();
 	protected readonly landlordRoleId: number;
@@ -68,7 +68,7 @@ export class LandlordAuthService extends AuthService {
 		@Inject(CACHE_MANAGER) protected cacheManager: Cache,
 		@Inject('FIREBASE_ADMIN') firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') mapper: Mapper,
-		private emailService: MailerSendService,
+		protected readonly emailService: MailerSendService,
 		private readonly organizationRepository: OrganizationRepository,
 		userProfilesRepository: UserProfilesRepository,
 		protected readonly errorMessageHelper: FirebaseErrorMessageHelper,
@@ -97,6 +97,7 @@ export class LandlordAuthService extends AuthService {
 			notificationSubService,
 			tenantRepository,
 			leaseService,
+			emailService,
 		);
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
@@ -324,6 +325,7 @@ export class LandlordAuthService extends AuthService {
 			invitation.propertyToOwnIds = invitedUserDto.propertiesToOwn
 				? map(invitedUserDto.propertiesToOwn, 'uuid')
 				: null;
+			invitation.token = await this.getInvitationToken(invitedUserDto);
 			/// TRANSACTION SAVES DATA
 			await transactionalEntityManager.save(user);
 			await transactionalEntityManager.save(userProfile);

@@ -3,7 +3,7 @@ import { BaseRepository } from '@app/common/repositories/base.repository';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { TenantUser } from '@app/common/database/entities/tenant.entity';
-import { LeaseTenant } from '@app/common/database/entities/leases-tenants';
+import { LeaseTenant } from '@app/common/database/entities/leases-tenants.entity';
 
 @Injectable()
 export class LeaseTenantRepository extends BaseRepository<LeaseTenant> {

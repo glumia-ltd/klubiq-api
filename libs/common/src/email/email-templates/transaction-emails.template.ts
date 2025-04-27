@@ -1,5 +1,5 @@
 import { EmailTemplate } from '../types/email.types';
-import { emailHtmlHead } from './email-statics';
+import { emailHtmlFooter, emailHtmlHead } from './email-statics';
 
 export const verifyEmailTemplate = (): EmailTemplate => ({
 	text: ` 
@@ -343,4 +343,102 @@ export const inviteOrgUserTemplate = (): EmailTemplate => ({
       </html>
     `,
 	subject: '🔑 Unlock Your Klubiq Access – Dive Into Property Management Fun!',
+});
+
+export const tenantInviteTemplate = (): EmailTemplate => ({
+	text: `
+  Hello {{ username }},
+  You have been added as a tenant to {{ property_details }} by your property manager {{ property_manager }}.
+
+  To access your tenant portal, please click the link below to activate your account:
+  {{ action_link }}
+
+  This link will expire in 72 hours for security purposes.
+
+  If you have any questions or need assistance, please contact your property manager.
+
+  Thank you,
+  The Klubiq Team
+  `,
+	html: `
+    <!DOCTYPE html>
+      <html lang="en">
+      ${emailHtmlHead('Activate Your Klubiq Tenant Account')}
+          <body class="">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
+      <tr>
+        <td>&nbsp;</td>
+        <td class="container">
+          <div class="header">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td class="align-center" width="100%">
+                  <a href="https://dev.klubiq.com">
+                  <img src="https://res.cloudinary.com/klubiq-prod/image/upload/v1745701412/klubiq/v1/logo/gfuhszi4je2adviyotae.webp" height="20" alt="Klubiq">
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="content">
+
+            <!-- START CENTERED WHITE CONTAINER -->
+            <span class="preheader">Activate Your Klubiq Tenant Account.</span>
+            <table role="presentation" class="main">
+
+              <!-- START MAIN CONTENT AREA -->
+              <tr>
+                <td class="wrapper">
+                  <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td>
+                        <p>Hello <strong>{{ username }},</strong></p>
+                        <p>
+                            You have been added as a tenant to {{ property_details }} by your property manager {{ property_manager }}.
+                        </p>
+                  <p>  To access your tenant portal, please click the link below to activate your account: </p>
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
+                          <tbody>
+                            <tr>
+                              <td align="center">
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                                  <tbody>
+                                    <tr>
+                                      <td> <a href="{{action_link}}" target="_blank">Activate Your Account</a> </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                 <p>This link will expire in 72 hours for security purposes.</p>
+                                 <p>If you have any questions or need assistance, please contact your property manager.</p>
+                                <p><strong>Thank you,</strong></p>
+                                <p>The Klubiq Team.</p>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            <!-- END MAIN CONTENT AREA -->
+            </table>
+
+            ${emailHtmlFooter('{{ copyright }}')}
+
+          <!-- END CENTERED WHITE CONTAINER -->
+          </div>
+        </td>
+        <td>&nbsp;</td>
+      </tr>
+    </table>
+  </body>
+      </html>
+    `,
+	subject: ``,
 });
