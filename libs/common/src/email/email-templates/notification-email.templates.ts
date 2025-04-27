@@ -1,5 +1,5 @@
 import { EmailTemplate } from '../types/email.types';
-import { emailHtmlHead } from './email-statics';
+import { emailHtmlFooter, emailHtmlHead } from './email-statics';
 
 export const propertyCreatedEmailTemplate = (): EmailTemplate => ({
 	html: `  <!DOCTYPE html>
@@ -269,17 +269,7 @@ export const propertyAssignedEmailTemplate = (): EmailTemplate => ({
             <!-- END MAIN CONTENT AREA -->
             </table>
 
-            <!-- START FOOTER -->
-            <div class="footer">
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td class="content-block">
-                    <span class="apple-link">{{ copyright }}</span>
-                  </td>
-                </tr>
-              </table>
-            </div>
-            <!-- END FOOTER -->
+            ${emailHtmlFooter('{{ copyright }}')}
 
           <!-- END CENTERED WHITE CONTAINER -->
           </div>

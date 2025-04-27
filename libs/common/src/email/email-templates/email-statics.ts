@@ -334,3 +334,19 @@ export const emailHtmlHead = (title: string) => {
     </head>
     `;
 };
+export const emailHtmlFooter = (copyright: string) => {
+	return `
+            <!-- START FOOTER -->
+            <div class="footer">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td class="content-block">
+                    <p class="apple-link">This is an automated email. Please do not reply directly to this email.</p>
+                    <p class="apple-link">${copyright}</p>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <!-- END FOOTER -->
+    `;
+};

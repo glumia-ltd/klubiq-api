@@ -1,6 +1,7 @@
 import {
 	inviteOrgUserTemplate,
 	resetPasswordEmailTemplate,
+	tenantInviteTemplate,
 	verifyEmailTemplate,
 } from '../email-templates/transaction-emails.template';
 import {
@@ -21,6 +22,7 @@ export enum EmailTypes {
 	PROPERTY_DELETED = 'property-deleted',
 	PROPERTY_ASSIGNED = 'property-assigned',
 	LEASE_CREATED = 'lease-created',
+	TENANT_INVITE = 'tenant-invite',
 }
 export interface EmailInterfaceParams {
 	from?: string;
@@ -73,4 +75,5 @@ export const EmailTemplates: Record<EmailTypes, EmailTemplate> = {
 	[EmailTypes.PROPERTY_DELETED]: propertyDeletedEmailTemplate(),
 	[EmailTypes.PROPERTY_ASSIGNED]: propertyAssignedEmailTemplate(),
 	[EmailTypes.LEASE_CREATED]: leaseCreatedEmailTemplate(),
+	[EmailTypes.TENANT_INVITE]: tenantInviteTemplate(),
 };
