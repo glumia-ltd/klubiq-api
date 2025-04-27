@@ -87,6 +87,8 @@ env:
   APP_SECRET: ${{ secrets.APP_SECRET }}
   KLUBIQ_API_APPCHECK_CLIENTS: ${{ secrets.KLUBIQ_API_APPCHECK_CLIENTS }}
   FIREBASE_APP_NAME: ${{ secrets.FIREBASE_APP_NAME }}
+  TENANT_EMAIL_VERIFICATION_BASE_URL: ${{ vars.TENANT_EMAIL_VERIFICATION_BASE_URL }}
+  TENANT_CONTINUE_URL_PATH: ${{ vars.TENANT_CONTINUE_URL_PATH }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -190,7 +192,8 @@ jobs:
             export APP_SECRET=${{ secrets.APP_SECRET }}
             export KLUBIQ_API_APPCHECK_CLIENTS=${{ secrets.KLUBIQ_API_APPCHECK_CLIENTS }}
             export FIREBASE_APP_NAME=${{ secrets.FIREBASE_APP_NAME }}
-
+            export TENANT_EMAIL_VERIFICATION_BASE_URL=${{ vars.TENANT_EMAIL_VERIFICATION_BASE_URL }}
+            export TENANT_CONTINUE_URL_PATH=${{ vars.TENANT_CONTINUE_URL_PATH }}
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
 
             # Check if the process is running
