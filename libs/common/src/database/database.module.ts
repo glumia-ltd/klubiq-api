@@ -23,7 +23,7 @@ import { Notifications } from './entities/notifications.entity';
 import { RoleFeaturePermissions } from './entities/role-feature-permission.entity';
 import { MainSeeder } from './seeder';
 import { Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { LeaseTenant } from './entities/leases-tenants';
+import { LeaseTenant } from './entities/leases-tenants.entity';
 
 /// WE HAVE 2 SCHEMA TYPES. => KDO and POO
 /// KDO = Klubiq Data Object

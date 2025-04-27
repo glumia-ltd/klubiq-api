@@ -35,13 +35,13 @@ import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.ser
 export class AdminAuthService extends AuthService {
 	private readonly emailVerificationBaseUrl: string;
 	private readonly emailAuthContinueUrl: string;
-	private readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
+	protected readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	protected readonly logger = new Logger(AdminAuthService.name);
 	constructor(
 		@Inject('FIREBASE_ADMIN') firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') mapper: Mapper,
 		@Inject(CACHE_MANAGER) protected cacheManager: Cache,
-		private emailService: MailerSendService,
+		protected readonly emailService: MailerSendService,
 		private readonly organizationRepository: OrganizationRepository,
 		userProfilesRepository: UserProfilesRepository,
 		protected readonly errorMessageHelper: FirebaseErrorMessageHelper,
@@ -70,6 +70,7 @@ export class AdminAuthService extends AuthService {
 			notificationSubService,
 			tenantRepository,
 			leaseService,
+			emailService,
 		);
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',

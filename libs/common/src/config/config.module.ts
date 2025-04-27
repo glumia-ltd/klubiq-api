@@ -68,6 +68,8 @@ import { CommonConfigService } from './common-config';
 				APP_SECRET: Joi.string().required(),
 				FIREBASE_APP_NAME: Joi.string().required(),
 				KLUBIQ_API_APPCHECK_CLIENTS: Joi.string().optional(),
+				TENANT_EMAIL_VERIFICATION_BASE_URL: Joi.string().required(),
+				TENANT_CONTINUE_URL_PATH: Joi.string().required(),
 			}),
 		}),
 		AutomapperModule.forRoot([

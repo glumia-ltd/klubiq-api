@@ -51,6 +51,10 @@ import { TenantUser } from '@app/common/database/entities/tenant.entity';
 import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.service';
 import { EntityManager } from 'typeorm';
 import { generateString } from '@nestjs/typeorm';
+import { TenantInvitation } from '@app/common/database/entities/tenant-invitation.entity';
+import { replace } from 'lodash';
+import { EmailTemplates } from '@app/common/email/types/email.types';
+import { MailerSendService } from '@app/common/email/email.service';
 
 @Injectable()
 export abstract class AuthService {
@@ -60,7 +64,10 @@ export abstract class AuthService {
 	private readonly cacheTTL = 90;
 	protected readonly cacheService = new CacheService(this.cacheManager);
 	protected readonly suid = new ShortUniqueId();
+	protected readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	private currentUser: ActiveUserData;
+	protected readonly tenantEmailVerificationBaseUrl: string;
+	protected readonly tenantEmailAuthContinueUrl: string;
 	constructor(
 		@Inject('FIREBASE_ADMIN') protected firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
@@ -76,9 +83,16 @@ export abstract class AuthService {
 		protected readonly notificationSubService: NotificationsSubscriptionService,
 		protected readonly tenantRepository: TenantRepository,
 		protected readonly leaseService: LeaseService,
+		protected readonly emailService: MailerSendService,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
+		);
+		this.tenantEmailVerificationBaseUrl = this.configService.get<string>(
+			'TENANT_EMAIL_VERIFICATION_BASE_URL',
+		);
+		this.tenantEmailAuthContinueUrl = this.configService.get<string>(
+			'TENANT_CONTINUE_URL_PATH',
 		);
 	}
 
@@ -716,6 +730,14 @@ export abstract class AuthService {
 						tenantUser,
 						transactionalEntityManager, // pass it to be reused
 					);
+					/// INVITATION DATA
+					const invitation = new TenantInvitation();
+					invitation.userId = userProfile.profileUuid;
+					invitation.firebaseUid = fireUser.uid;
+					invitation.invitedAt = this.timestamp;
+					invitation.token = await this.getInvitationToken(createUserDto);
+					await transactionalEntityManager.save(invitation);
+					await this.sendTenantInvitationEmail(createUserDto, invitation);
 				} catch (error) {
 					console.error('Error creating lease for tenant:', error);
 					throw new Error('Failed to create lease for tenant.');
@@ -726,6 +748,44 @@ export abstract class AuthService {
 		});
 	}
 
+	// THIS IS TO SEND INVITATION EMAIL TO A USER ADDED TO AN ORGANIZATION
+	async sendTenantInvitationEmail(
+		invitedUserDto: TenantSignUpDto,
+		invitation: TenantInvitation,
+	): Promise<void> {
+		try {
+			const currentUser = this.cls.get<ActiveUserData>('currentUser');
+			let resetPasswordLink = await this.auth.generatePasswordResetLink(
+				invitedUserDto.email,
+				this.getActionCodeSettings(
+					this.tenantEmailVerificationBaseUrl,
+					this.tenantEmailAuthContinueUrl,
+				),
+			);
+			resetPasswordLink += `&email=${invitedUserDto.email}&type=tenant-invitation&token=${invitation.token}`;
+			const actionUrl = replace(resetPasswordLink, '_auth_', 'reset-password');
+			const emailTemplate = EmailTemplates['tenant-invite'];
+			await this.emailService.sendTransactionalEmail(
+				{
+					email: invitedUserDto.email,
+					firstName: invitedUserDto.firstName,
+					lastName: invitedUserDto.lastName,
+				},
+				actionUrl,
+				emailTemplate,
+				{
+					username: `${invitedUserDto.firstName} ${invitedUserDto.lastName}`,
+					property_details: `${invitedUserDto.leaseDetails.propertyName} ${invitedUserDto.leaseDetails.unitNumber ? `Unit ${invitedUserDto.leaseDetails.unitNumber}` : ''}`,
+					property_manager: currentUser.name,
+					expires_after: '72hrs',
+				},
+			);
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
+		}
+	}
 	abstract getActionCodeSettings(baseUrl: string, continueUrl: string): any;
 
 	abstract generatePasswordResetEmail(email: string): void;
