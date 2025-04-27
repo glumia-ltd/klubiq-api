@@ -4,6 +4,7 @@ import {
 	IntersectionType,
 	PartialType,
 } from '@nestjs/swagger';
+import { CreateLeaseDto } from 'apps/klubiq-dashboard/src/lease/dto/requests/create-lease.dto';
 import {
 	IsArray,
 	IsEmail,
@@ -69,7 +70,7 @@ export class UserSignUpDto extends PartialType(UserLoginDto) {
 		minNumbers: 1,
 		minSymbols: 1,
 	})
-	password: string;
+	password?: string;
 }
 
 /**
@@ -322,10 +323,17 @@ export class PropertyInvitationDto {
 	name: string;
 }
 
-export class TenantSignUpDto extends PartialType(UserLoginDto) {
+export class TenantSignUpDto extends PartialType(UserSignUpDto) {
 	@ApiProperty({
 		type: RoleTypeDto,
 	})
 	@IsObject()
 	role: RoleTypeDto;
+
+	@IsString()
+	phoneNumber?: string;
+
+	@IsObject()
+	@IsOptional()
+	leaseDetails?: CreateLeaseDto;
 }

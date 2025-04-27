@@ -27,6 +27,7 @@ import {
 	SendVerifyEmailDto,
 	VerifyEmailDto,
 	UserLoginDto,
+	TenantSignUpDto,
 } from './dto/requests/user-login.dto';
 import { AuthType } from './types/firebase.types';
 import { LandlordAuthService } from './services/landlord-auth.service';
@@ -163,6 +164,7 @@ export class AuthController {
 	async createLandlordUser(@Body() createUser: OrgUserSignUpDto) {
 		return await this.landlordAuthService.createOrgOwner(createUser);
 	}
+
 	@Auth(AuthType.ApiKey)
 	@Post('admin/signup')
 	@ApiOkResponse({
@@ -240,5 +242,14 @@ export class AuthController {
 	@ApiOkResponse()
 	async updateFBAppConfig() {
 		return await this.landlordAuthService.enableTOTPMFA();
+	}
+
+	@Auth(AuthType.Bearer)
+	@Post('signup')
+	@ApiOkResponse({
+		description: 'Creates a new tenant account',
+	})
+	async createTenantUser(@Body() createUser: TenantSignUpDto) {
+		return await this.landlordAuthService.createTenant(createUser);
 	}
 }

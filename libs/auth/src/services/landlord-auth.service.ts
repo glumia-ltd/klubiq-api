@@ -53,6 +53,7 @@ import { UserPreferencesService } from '@app/common/services/user-preferences.se
 import { NotificationsSubscriptionService } from '@app/notifications/services/notifications-subscription.service';
 import { Generators } from '@app/common/helpers/generators';
 import { TenantRepository } from '@app/common/repositories/tenant.repository';
+import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.service';
 @Injectable()
 export class LandlordAuthService extends AuthService {
 	private readonly emailVerificationBaseUrl: string;
@@ -79,6 +80,7 @@ export class LandlordAuthService extends AuthService {
 		protected readonly userPreferencesService: UserPreferencesService,
 		protected readonly notificationSubService: NotificationsSubscriptionService,
 		protected readonly tenantRepository: TenantRepository,
+		protected readonly leaseService: LeaseService,
 	) {
 		super(
 			firebaseAdminApp,
@@ -94,6 +96,7 @@ export class LandlordAuthService extends AuthService {
 			organizationSubscriptionService,
 			notificationSubService,
 			tenantRepository,
+			leaseService,
 		);
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',

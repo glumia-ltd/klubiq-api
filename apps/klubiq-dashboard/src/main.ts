@@ -1,5 +1,4 @@
 import { NestFactory } from '@nestjs/core';
-import { WinstonModule } from 'nest-winston';
 import helmet from 'helmet';
 import {
 	SwaggerModule,
@@ -9,29 +8,36 @@ import {
 import { KlubiqDashboardModule } from './klubiq-dashboard.module';
 import { HttpExceptionFilter } from '@app/common/filters/http-exception.filter';
 import { HttpResponseInterceptor } from '@app/common/interceptors/http-response.interceptor';
-import { CustomLogging } from '@app/common/config/custom-logging';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import session from 'express-session';
+import express, { Request, Response } from 'express';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import swaggerUiDist from 'swagger-ui-dist';
+import { CustomLogging } from '@app/common';
+import { WinstonModule } from 'nest-winston';
 
 declare const module: any;
 
 async function bootstrap() {
 	//await repl(KlubiqDashboardModule);
-
 	const customLogger = new CustomLogging(new ConfigService()); // Create an instance of ConfigService
+	const app = await NestFactory.create<NestExpressApplication>(
+		KlubiqDashboardModule,
+		{
+			logger: WinstonModule.createLogger(customLogger.createLoggerConfig),
+			snapshot: true,
+		},
+	);
+	const expressApp = app.getHttpAdapter().getInstance();
 
-	const app = await NestFactory.create(KlubiqDashboardModule, {
-		logger: WinstonModule.createLogger(customLogger.createLoggerConfig),
-		snapshot: true,
-	});
 	const configService = app.get(ConfigService);
 	app.use(
 		helmet({
 			contentSecurityPolicy: {
 				directives: {
 					defaultSrc: ["'self'"],
-					scriptSrc: ["'self'"], // Adjust as needed
+					scriptSrc: ["'self'", , "'unsafe-inline'"], // Adjust as needed
 					styleSrc: ["'self'", "'unsafe-inline'"], // Adjust as needed
 					imgSrc: ["'self'", 'data:', 'https:'], // Allow images from self, data URIs, and HTTPS
 					connectSrc: [
@@ -74,13 +80,12 @@ async function bootstrap() {
 	const options: SwaggerDocumentOptions = {
 		operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
 	};
-	const config = new DocumentBuilder()
+	const swaggerConfig = new DocumentBuilder()
 		.setTitle('Klubiq PMS')
 		.setDescription('Klubiq PMS API')
 		.setVersion('1.0')
 		.addServer('http://localhost:3000/')
 		.addServer('https://devapi.klubiq.com/')
-
 		//.addTag('Klubiq')
 		.setContact('Glumia Support', 'glumia.ng', 'info@glumia.ng')
 		.addBearerAuth()
@@ -91,9 +96,68 @@ async function bootstrap() {
 			scheme: 'ApiKeyAuth',
 		})
 		.build();
-	const document = SwaggerModule.createDocument(app, config, options);
-	SwaggerModule.setup('swagger', app, document);
-	/// END SWAGGER CONFIGURATION
+
+	const document = SwaggerModule.createDocument(app, swaggerConfig, options);
+
+	// Serve filtered Swagger JSON
+	expressApp.get('/api-json', (req: Request, res: Response) => {
+		const doesQueryExist: any = req.query.role;
+		console.log({ doesQueryExist });
+
+		const excludedPaths = ['/api/auth/verify-email']; // I added this for test purposes. This will be referenced from env later on.
+		const filteredPaths: Record<string, any> = {};
+
+		Object.keys(document.paths).forEach((path) => {
+			if (shouldExcludeRoute(path, doesQueryExist, excludedPaths)) return;
+			filteredPaths[path] = document.paths[path];
+		});
+
+		const filteredDocument = {
+			...document,
+			paths: filteredPaths,
+		};
+
+		res.json(filteredDocument);
+	});
+
+	// Serve Swagger UI manually at /swagger
+	const swaggerUiPath = swaggerUiDist.getAbsoluteFSPath();
+	expressApp.use('/swagger-assets', express.static(swaggerUiPath));
+
+	expressApp.get('/swagger', (req: Request, res: Response) => {
+		const roleValue = req.query.role ?? '';
+		const swaggerUrl = `/api-json${roleValue ? `?role=${roleValue}` : ''}`;
+		res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Swagger UI</title>
+        <link rel="stylesheet" href="/swagger-assets/swagger-ui.css" />
+        <link rel="stylesheet" href="/swagger-assets/index.css" />
+        <style>html, body { margin: 0; padding: 0; height: 100%; }</style>
+      </head>
+      <body>
+        <div id="swagger-ui"></div>
+        <script src="/swagger-assets/swagger-ui-bundle.js"></script>
+        <script src="/swagger-assets/swagger-ui-standalone-preset.js"></script>
+        <script>
+          window.onload = function () {
+            SwaggerUIBundle({
+              url: '${swaggerUrl}',
+              dom_id: '#swagger-ui',
+              presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIStandalonePreset
+              ],
+              layout: "StandaloneLayout"
+            });
+          };
+        </script>
+      </body>
+      </html>
+    `);
+	});
 
 	/// APP SETTINGS
 	app.enableCors({
@@ -126,3 +190,15 @@ async function bootstrap() {
 	}
 }
 bootstrap();
+
+const shouldExcludeRoute = (
+	path: string,
+	roleValue: string,
+	excludedPaths: string[],
+): boolean => {
+	// value to check with to be agreed on
+	if (roleValue == 'isAdmin') {
+		return false;
+	}
+	return excludedPaths.some((excludedPath) => path.startsWith(excludedPath));
+};

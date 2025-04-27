@@ -48,6 +48,9 @@ import { NotificationsSubscriptionService } from '@app/notifications/services/no
 import { TenantRepository } from '@app/common/repositories/tenant.repository';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { TenantUser } from '@app/common/database/entities/tenant.entity';
+import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.service';
+import { EntityManager } from 'typeorm';
+import { generateString } from '@nestjs/typeorm';
 
 @Injectable()
 export abstract class AuthService {
@@ -72,6 +75,7 @@ export abstract class AuthService {
 		protected readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		protected readonly notificationSubService: NotificationsSubscriptionService,
 		protected readonly tenantRepository: TenantRepository,
+		protected readonly leaseService: LeaseService,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -450,6 +454,7 @@ export abstract class AuthService {
 			throw err;
 		}
 	}
+
 	private async getUserDetails(
 		currentUser: ActiveUserData,
 		cacheKey: string = `${this.cacheKeyPrefix}/user/${currentUser.kUid}`,
@@ -516,36 +521,45 @@ export abstract class AuthService {
 		}
 	}
 
-	/// TENANT AUTH SECTION
-	private async createTenantPersona(
-		fireUser: any,
-		createUserDto: TenantSignUpDto,
-	): Promise<UserProfile> {
-		const entityManager = this.tenantRepository.manager;
-		return entityManager.transaction(async (transactionalEntityManager) => {
-			///CREATE NEW USER PROFILE
+	async createTenant(createUserDto: TenantSignUpDto): Promise<UserProfile> {
+		const { email, firstName, lastName } = createUserDto;
+		const displayName = `${firstName} ${lastName}`;
+		let firebaseUserId: string | null = null;
 
-			const tenant = transactionalEntityManager.create(TenantUser, {
-				isActive: true,
-				role: createUserDto.role,
-			});
-			await transactionalEntityManager.save(tenant);
-
-			const profile_deets = transactionalEntityManager.create(UserProfile, {
-				email: createUserDto.email,
-				firebaseId: fireUser.uid,
-				isPrivacyPolicyAgreed: true,
-				isTermsAndConditionAccepted: true,
-				tenantUser: tenant,
-			});
-			const saved_profile_deets =
-				await transactionalEntityManager.save(profile_deets);
-			await this.setCustomClaims(saved_profile_deets.firebaseId, {
-				kUid: saved_profile_deets.profileUuid,
-				organizationRole: createUserDto.role.name,
-			});
-			return saved_profile_deets;
+		const existingUser = await this.userProfilesRepository.findOne({
+			where: { email },
 		});
+		if (existingUser) {
+			throw new FirebaseException('A user with this email already exists.');
+		}
+
+		try {
+			const fireUser = await this.createUser({
+				email,
+				password: generateString(),
+				displayName,
+			});
+			if (!fireUser) {
+				throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
+			}
+
+			firebaseUserId = fireUser.uid;
+
+			const userProfile = await this.createTenantPersona(
+				fireUser,
+				createUserDto,
+			);
+			if (!userProfile) {
+				throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
+			}
+			await this.sendVerificationEmail(email, firstName, lastName);
+			return userProfile;
+		} catch (error) {
+			if (firebaseUserId) {
+				await this.deleteUser(firebaseUserId);
+			}
+			throw new FirebaseException(error);
+		}
 	}
 
 	async getInvitationToken(invitedUserDto: InviteUserDto): Promise<string> {
@@ -647,6 +661,69 @@ export abstract class AuthService {
 					: 'Unexpected error during token exchange';
 			throw new FirebaseException(message);
 		}
+	}
+
+	private async createTenantUserWithProfile(
+		transactionalEntityManager: EntityManager,
+		fireUser: any,
+		createUserDto: TenantSignUpDto,
+	): Promise<{ tenantUser: TenantUser; userProfile: UserProfile }> {
+		const tenantUser = transactionalEntityManager.create(TenantUser, {
+			isActive: true,
+			role: createUserDto.role,
+		});
+
+		await transactionalEntityManager.save(tenantUser);
+		const userProfile = transactionalEntityManager.create(UserProfile, {
+			email: createUserDto.email,
+			firebaseId: fireUser.uid,
+			firstName: createUserDto.firstName,
+			lastName: createUserDto.lastName,
+			phoneNumber: createUserDto.phoneNumber,
+			isPrivacyPolicyAgreed: true,
+			isTermsAndConditionAccepted: true,
+			tenantUser,
+		});
+
+		const savedUserProfile = await transactionalEntityManager.save(userProfile);
+
+		await this.setCustomClaims(savedUserProfile.firebaseId, {
+			kUid: savedUserProfile.profileUuid,
+			organizationRole: createUserDto.role.name,
+		});
+
+		return { tenantUser, userProfile: savedUserProfile };
+	}
+
+	private async createTenantPersona(
+		fireUser: any,
+		createUserDto: TenantSignUpDto,
+	): Promise<UserProfile> {
+		const entityManager = this.tenantRepository.manager;
+
+		return entityManager.transaction(async (transactionalEntityManager) => {
+			const { tenantUser, userProfile } =
+				await this.createTenantUserWithProfile(
+					transactionalEntityManager,
+					fireUser,
+					createUserDto,
+				);
+
+			if (userProfile && createUserDto.leaseDetails) {
+				try {
+					await this.leaseService.createLeaseForTenantOnboarding(
+						createUserDto.leaseDetails,
+						tenantUser,
+						transactionalEntityManager, // pass it to be reused
+					);
+				} catch (error) {
+					console.error('Error creating lease for tenant:', error);
+					throw new Error('Failed to create lease for tenant.');
+				}
+			}
+
+			return userProfile;
+		});
 	}
 
 	abstract getActionCodeSettings(baseUrl: string, continueUrl: string): any;

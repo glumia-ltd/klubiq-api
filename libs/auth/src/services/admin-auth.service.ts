@@ -29,6 +29,7 @@ import { UserPreferencesService } from '@app/common/services/user-preferences.se
 import { OrganizationSubscriptionService } from '@app/common/services/organization-subscription.service';
 import { NotificationsSubscriptionService } from '@app/notifications/services/notifications-subscription.service';
 import { TenantRepository } from '@app/common/repositories/tenant.repository';
+import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.service';
 
 @Injectable()
 export class AdminAuthService extends AuthService {
@@ -52,6 +53,7 @@ export class AdminAuthService extends AuthService {
 		protected readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		protected readonly notificationSubService: NotificationsSubscriptionService,
 		protected readonly tenantRepository: TenantRepository,
+		protected readonly leaseService: LeaseService,
 	) {
 		super(
 			firebaseAdminApp,
@@ -67,6 +69,7 @@ export class AdminAuthService extends AuthService {
 			organizationSubscriptionService,
 			notificationSubService,
 			tenantRepository,
+			leaseService,
 		);
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
@@ -225,6 +228,7 @@ export class AdminAuthService extends AuthService {
 			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
+
 	override async inviteUser(invitedUserDto: InviteUserDto): Promise<any> {
 		let fbid: string;
 		try {
