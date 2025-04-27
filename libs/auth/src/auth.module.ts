@@ -26,7 +26,7 @@ import { Feature, FileUploadService, OrganizationUser } from '@app/common';
 import { AuthMiddleware } from './auth.middleware';
 import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.service';
 import { LeaseRepository } from 'apps/klubiq-dashboard/src/lease/repositories/lease.repository';
-import { LeaseTenantRepository } from 'apps/klubiq-dashboard/src/lease/repositories/leases-tenant.repositiory';
+import { LeaseTenantRepository } from '@app/common/repositories/leases-tenant.repositiory';
 interface FirebaseConfig {
 	type: string;
 	project_id: string;

@@ -5,7 +5,6 @@ import {
 	Entity,
 	Index,
 	JoinColumn,
-	JoinTable,
 	ManyToMany,
 	ManyToOne,
 	OneToMany,
@@ -15,7 +14,7 @@ import {
 import { Transaction } from './transaction.entity';
 import { TenantUser } from './tenant.entity';
 import { Unit } from './unit.entity';
-import { LeaseStatus, PaymentFrequency } from '../types/enums';
+import { LeaseStatus, PaymentFrequency } from 'src/types/enums';
 
 @Entity({ schema: 'poo' })
 @Index('idx_lease_dates_status', ['startDate', 'endDate', 'status'])
@@ -98,17 +97,6 @@ export class Lease {
 	isArchived?: boolean;
 
 	@ManyToMany(() => TenantUser, (user) => user.leases)
-	@JoinTable({
-		name: 'leases_tenants',
-		joinColumn: {
-			name: 'leaseId',
-			referencedColumnName: 'id',
-		},
-		inverseJoinColumn: {
-			name: 'tenantId',
-			referencedColumnName: 'id',
-		},
-	})
 	tenants?: TenantUser[];
 
 	@Index('IDX_UNIT_UUID')
