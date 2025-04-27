@@ -23,6 +23,7 @@ import { Notifications } from './entities/notifications.entity';
 import { RoleFeaturePermissions } from './entities/role-feature-permission.entity';
 import { MainSeeder } from './seeder';
 import { Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { LeaseTenant } from './entities/leases-tenants';
 
 /// WE HAVE 2 SCHEMA TYPES. => KDO and POO
 /// KDO = Klubiq Data Object
@@ -49,6 +50,7 @@ import { Logger, OnApplicationBootstrap } from '@nestjs/common';
 			NotificationSubscription,
 			Notifications,
 			RoleFeaturePermissions,
+			LeaseTenant,
 		]),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],

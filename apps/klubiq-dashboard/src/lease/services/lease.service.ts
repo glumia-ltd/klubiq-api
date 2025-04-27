@@ -37,6 +37,8 @@ import { DateTime } from 'luxon';
 import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '@app/common/event-listeners/event-models/event-constants';
+import { LeaseTenantRepository } from '../../../../../libs/common/src/repositories/leases-tenant.repositiory';
+import { EntityManager } from 'typeorm';
 @Injectable()
 export class LeaseService implements ILeaseService {
 	private readonly logger = new Logger(LeaseService.name);
@@ -49,6 +51,7 @@ export class LeaseService implements ILeaseService {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		@InjectRepository(LeaseRepository)
 		private readonly leaseRepository: LeaseRepository,
+		private readonly leaseTenantRepository: LeaseTenantRepository,
 		private readonly uploadService: FileUploadService,
 		private readonly eventEmitter: EventEmitter2,
 	) {}
@@ -255,6 +258,61 @@ export class LeaseService implements ILeaseService {
 			createdLease.id,
 			totalTenants,
 		);
+	}
+
+	async createLeaseForTenantOnboarding(
+		leaseDto: CreateLeaseDto,
+		tenantData: any,
+		transactionalEntityManager?: EntityManager,
+	): Promise<void> {
+		if (
+			leaseDto.paymentFrequency === PaymentFrequency.MONTHLY &&
+			(leaseDto.rentDueDay < 1 || leaseDto.rentDueDay > 31)
+		) {
+			throw new BadRequestException('Rent due day must be between 1 and 31');
+		}
+
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser.organizationId) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+
+		leaseDto.status =
+			DateTime.fromISO(leaseDto.startDate).toJSDate().getDate() >
+			DateTime.utc().toJSDate().getDate()
+				? LeaseStatus.INACTIVE
+				: LeaseStatus.ACTIVE;
+
+		const manager = transactionalEntityManager || this.leaseRepository.manager;
+
+		await manager.transaction(async (entityManager) => {
+			// Create lease within transaction
+			const createdLease = await this.leaseRepository.createLease(
+				leaseDto,
+				currentUser.organizationId,
+				true,
+			);
+
+			// Map tenant to lease within transaction
+			await this.leaseTenantRepository.mapTenantToLease(
+				tenantData.id,
+				createdLease.id,
+				entityManager, // pass transaction manager here too
+			);
+
+			const totalTenants = 1;
+
+			this.emitEvent(
+				EVENTS.LEASE_CREATED,
+				currentUser.organizationId,
+				leaseDto,
+				currentUser.kUid,
+				currentUser.email,
+				currentUser.name,
+				createdLease.id,
+				totalTenants,
+			);
+		});
 	}
 
 	async deleteLease(leaseId: string): Promise<void> {

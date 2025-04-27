@@ -3,7 +3,10 @@ import { BaseRepository } from '@app/common/repositories/base.repository';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm';
 import { DateTime } from 'luxon';
-import { CreateLeaseDto } from '../dto/requests/create-lease.dto';
+import {
+	CreateLeaseDto,
+	OnboardingLeaseDto,
+} from '../dto/requests/create-lease.dto';
 import { UpdateLeaseDto } from '../dto/requests/update-lease.dto';
 import {
 	DisplayOptions,
@@ -96,6 +99,58 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				if (newTenants?.length && newTenants?.length > 0) {
 					this.addTenantToLease(newTenants, savedLease.id, false);
 				}
+				return savedLease;
+			},
+		);
+	}
+
+	async createLeaseDuringOboarding(
+		leaseDto: OnboardingLeaseDto,
+		organizationUuid: string,
+		isDraft: boolean,
+	) {
+		const { unitId, startDate, ...leaseData } = leaseDto;
+		const newLeaseStartDate = DateTime.fromISO(startDate).toSQL({
+			includeOffset: false,
+		});
+		const activeStatuses = [`${LeaseStatus.ACTIVE}`, `${LeaseStatus.EXPIRING}`];
+		return await this.manager.transaction(
+			async (transactionalEntityManager) => {
+				const overlappingLease = await transactionalEntityManager
+					.createQueryBuilder(Lease, 'lease')
+					.where('lease."unitId" = :unitId', { unitId })
+					.andWhere(
+						':newLeaseStartDate BETWEEN lease."startDate" AND lease."endDate"',
+						{ newLeaseStartDate },
+					)
+					.andWhere('lease.status IN (:...statuses)', {
+						statuses: activeStatuses,
+					})
+					.getOne();
+				if (overlappingLease) {
+					throw new BadRequestException(
+						'The unit already has an active lease during the specified period.',
+					);
+				}
+				const unit = await transactionalEntityManager.findOneBy(Unit, {
+					id: unitId,
+				});
+				if (!unit) {
+					throw new BadRequestException('Invalid unit ID.');
+				}
+
+				const lease = transactionalEntityManager.create(Lease, {
+					startDate: newLeaseStartDate,
+					endDate: DateTime.fromISO(leaseData.endDate).toSQL({
+						includeOffset: false,
+					}),
+					unit,
+					isDraft,
+					organizationUuid,
+					...leaseData,
+				});
+				const savedLease = await transactionalEntityManager.save(lease);
+
 				return savedLease;
 			},
 		);
