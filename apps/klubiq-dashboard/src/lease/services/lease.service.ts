@@ -301,18 +301,19 @@ export class LeaseService implements ILeaseService {
 				entityManager, // pass transaction manager here too
 			);
 
-			const totalTenants = 1;
+			//const totalTenants = 1;
 
-			this.emitEvent(
-				EVENTS.LEASE_CREATED,
-				currentUser.organizationId,
-				leaseDto,
-				currentUser.kUid,
-				currentUser.email,
-				currentUser.name,
-				createdLease.id,
-				totalTenants,
-			);
+			//TODO: Remove this once we have a new event listener for tenant onboarding
+			// this.emitEvent(
+			// 	EVENTS.LEASE_CREATED,
+			// 	currentUser.organizationId,
+			// 	leaseDto,SSSSS
+			// 	currentUser.kUid,
+			// 	currentUser.email,
+			// 	currentUser.name,
+			// 	createdLease.id,
+			// 	totalTenants,
+			// );
 		});
 	}
 
