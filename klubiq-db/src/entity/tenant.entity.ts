@@ -46,7 +46,7 @@ export class TenantUser {
 
 
 	@OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.tenant)
-	leases?: Lease[];
+	leasesTenants?: LeasesTenants[];
 
 
 	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })

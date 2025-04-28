@@ -40,6 +40,10 @@ export class TenantProfileDto {
 	@Expose()
 	@IsString()
 	profilePicUrl: string;
+
+	@Expose()
+	@IsString()
+	phoneNumber: string;
 }
 
 export class LeaseListTenantDto {
@@ -51,6 +55,10 @@ export class LeaseListTenantDto {
 	@ValidateNested()
 	@Type(() => TenantProfileDto)
 	profile: TenantProfileDto;
+
+	@Expose()
+	@IsBoolean()
+	isPrimaryTenant: boolean;
 }
 export class LeaseListPropertyDto {
 	@Expose()

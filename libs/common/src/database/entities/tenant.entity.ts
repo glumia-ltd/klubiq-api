@@ -49,7 +49,7 @@ export class TenantUser {
 
 	@AutoMap(() => [Lease])
 	@OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.tenant)
-	leases?: Lease[];
+	leasesTenants?: LeasesTenants[];
 
 	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdDate?: Date;

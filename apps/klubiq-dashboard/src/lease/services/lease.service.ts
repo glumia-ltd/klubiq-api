@@ -87,7 +87,6 @@ export class LeaseService implements ILeaseService {
 			getLeaseDto,
 			currentUser.organizationRole === UserRoles.ORG_OWNER,
 		);
-		console.log('Lease Entities: ', entities);
 		const pageMetaDto = new PageMetaDto({
 			itemCount: count,
 			pageOptionsDto: getLeaseDto,
@@ -100,6 +99,7 @@ export class LeaseService implements ILeaseService {
 	}
 
 	private async mapLeaseRawToDto(leases: any[]): Promise<LeaseDto[]> {
+		console.log('Leases Raw Data before mapping: ', leases);
 		return leases.map((lease) =>
 			plainToInstance(
 				LeaseDto,
@@ -114,12 +114,14 @@ export class LeaseService implements ILeaseService {
 						{
 							id: lease.tenant_id,
 							profile: {
-								firstName: lease.tenant_firstname || null,
-								lastName: lease.tenant_lastname || null,
-								email: lease.tenant_email || null,
-								profileUuid: lease.tenant_profileuuid || null,
-								profilePicUrl: lease.tenant_profilepicurl || null,
+								firstName: lease.profile_firstname || null,
+								lastName: lease.profile_lastname || null,
+								email: lease.profile_email || null,
+								profileUuid: lease.profile_profileuuid || null,
+								profilePicUrl: lease.profile_profilepicurl || null,
+								phoneNumber: lease.profile_phonenumber || null,
 							},
+							isPrimaryTenant: lease.leasestenants_isprimarytenant || false,
 						},
 					],
 					unitNumber: lease.unit_unitnumber,
@@ -136,8 +138,30 @@ export class LeaseService implements ILeaseService {
 	}
 
 	private async mapLeaseListToDto(leases: Lease[]): Promise<LeaseDto[]> {
-		return leases.map((lease) =>
-			plainToInstance(
+		const mappedLeasesPromises = leases.map(async (lease) => {
+			// First resolve all tenant profiles for this lease
+			const resolvedTenants = await Promise.all(
+				lease.leasesTenants.map(async (leaseTenant) => {
+					const tenantProfile = await Promise.resolve(
+						leaseTenant.tenant.profile,
+					);
+					return {
+						id: leaseTenant.tenantId,
+						profile: {
+							firstName: tenantProfile.firstName,
+							lastName: tenantProfile.lastName,
+							email: tenantProfile.email,
+							profileUuid: tenantProfile.profileUuid,
+							profilePicUrl: tenantProfile.profilePicUrl,
+							phoneNumber: tenantProfile.phoneNumber,
+						},
+						isPrimaryTenant: leaseTenant.isPrimaryTenant,
+					};
+				}),
+			);
+
+			// Then create the DTO with resolved tenants
+			return plainToInstance(
 				LeaseDto,
 				{
 					id: lease.id,
@@ -145,27 +169,17 @@ export class LeaseService implements ILeaseService {
 					startDate: lease.startDate,
 					endDate: lease.endDate,
 					status: lease.status,
-					tenants: lease.tenants.map(async (tenant) => {
-						const tenantProfile = await tenant.profile;
-						const profile = {
-							firstName: tenantProfile.firstName,
-							lastName: tenantProfile.lastName,
-							email: tenantProfile.email,
-							profileUuid: tenantProfile.profileUuid,
-							profilePicUrl: tenantProfile.profilePicUrl,
-						};
-						return {
-							id: tenant.id,
-							profile: profile,
-						};
-					}),
+					tenants: resolvedTenants, // Now contains resolved tenant data
 					unitNumber: lease.unit.unitNumber,
 					unitId: lease.unit.id,
 					property: lease.unit.property,
 				},
 				{ excludeExtraneousValues: true },
-			),
-		);
+			);
+		});
+
+		// Finally, resolve all lease promises
+		return Promise.all(mappedLeasesPromises);
 	}
 	async getAllUnitLeases(unitId: string): Promise<LeaseDto[]> {
 		const currentUser = this.cls.get('currentUser');
@@ -207,6 +221,7 @@ export class LeaseService implements ILeaseService {
 			return cachedLease;
 		}
 		const lease = await this.leaseRepository.getLeaseById(id);
+		console.log('Lease Raw Data: ', lease);
 		const mappedLease = await this.mapLeaseDetailRawToDto(lease);
 		await this.cacheManager.set(cacheKey, mappedLease, this.cacheTTL);
 		this.updateOrgCacheKeys(cacheKey);
@@ -348,11 +363,19 @@ export class LeaseService implements ILeaseService {
 				endDate: lease.end_date,
 				status: lease.status,
 				paymentFrequency: lease.payment_frequency,
-				tenants: lease.tenant_first_name
+				tenants: lease.tenant_firstname
 					? [
 							{
-								firstName: lease.tenant_first_name || '',
-								lastName: lease.tenant_last_name || '',
+								id: lease.tenant_id,
+								profile: {
+									firstName: lease.tenant_firstname || null,
+									lastName: lease.tenant_lastname || null,
+									email: lease.tenant_email || null,
+									profileUuid: lease.tenant_profileuuid || null,
+									profilePicUrl: lease.tenant_profilepicurl || null,
+									phoneNumber: lease.tenant_phoneNumber || null,
+								},
+								isPrimaryTenant: lease.leasestenants_isprimarytenant || false,
 							},
 						]
 					: [],
