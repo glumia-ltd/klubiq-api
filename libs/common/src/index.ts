@@ -79,3 +79,4 @@ export * from './database/entities/role-feature-permission.entity';
 export * from './database/entities/deleted-files.entity';
 export * from './database/entities/leases-tenants.entity';
 export * from './repositories/leases-tenant.repositiory';
+export * from './database/entities/tenant-invitation.entity';

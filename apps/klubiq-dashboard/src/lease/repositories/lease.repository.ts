@@ -381,7 +381,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
     		    FROM poo.lease l
     		    LEFT JOIN (
     		        SELECT lt."leaseId", COUNT(DISTINCT lt."tenantId") AS "rentAmount"
-    		        FROM poo.lease_tenants lt
+    		        FROM poo.leases_tenants lt
     		        GROUP BY lt."leaseId"
     		    ) lt ON lt."leaseId" = l.id
     		    WHERE (l."propertyUuid" = :uuid OR l."unitId" IN (SELECT id FROM poo.unit WHERE "propertyUuid" = :uuid))

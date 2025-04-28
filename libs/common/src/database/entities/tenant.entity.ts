@@ -16,6 +16,7 @@ import { UserProfile } from './user-profile.entity';
 import { Lease } from './lease.entity';
 import { OrganizationTenants } from './organization-tenants.entity';
 import { OrganizationRole } from './organization-role.entity';
+import { LeasesTenants } from './leases-tenants.entity';
 
 @Entity({ schema: 'kdo' })
 export class TenantUser {
@@ -50,6 +51,10 @@ export class TenantUser {
 	@AutoMap(() => [Lease])
 	@ManyToMany(() => Lease, (lease) => lease.tenants)
 	leases?: Lease[];
+
+	@AutoMap(() => [Lease])
+	@OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.tenant)
+	leasesTenants?: LeasesTenants[];
 
 	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdDate?: Date;

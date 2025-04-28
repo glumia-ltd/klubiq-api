@@ -19,6 +19,7 @@ import { OrganizationSettingsRepository } from './organization-settings.reposito
 import { UserPreferenceRepository } from './user-preference.repository';
 import { TenantRepository } from './tenant.repository';
 import { RoleFeaturePermissionsRepository } from './roles-features-permission.repository';
+import { LeaseTenantRepository } from './leases-tenant.repositiory';
 
 @Module({
 	providers: [
@@ -109,6 +110,11 @@ import { RoleFeaturePermissionsRepository } from './roles-features-permission.re
 				new RoleFeaturePermissionsRepository(em),
 			inject: [EntityManager],
 		},
+		{
+			provide: LeaseTenantRepository,
+			useFactory: (em: EntityManager) => new LeaseTenantRepository(em),
+			inject: [EntityManager],
+		},
 	],
 	exports: [
 		UserProfilesRepository,
@@ -128,6 +134,7 @@ import { RoleFeaturePermissionsRepository } from './roles-features-permission.re
 		UserPreferenceRepository,
 		TenantRepository,
 		RoleFeaturePermissionsRepository,
+		LeaseTenantRepository,
 	],
 })
 export class RepositoriesModule {}

@@ -1,16 +1,16 @@
-import { Lease } from '@app/common/database/entities/lease.entity';
+import { Lease } from '../database/entities/lease.entity';
 import { BaseRepository } from '@app/common/repositories/base.repository';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { TenantUser } from '@app/common/database/entities/tenant.entity';
-import { LeaseTenant } from '@app/common/database/entities/leases-tenants.entity';
+import { TenantUser } from '../database/entities/tenant.entity';
+import { LeasesTenants } from '../database/entities/leases-tenants.entity';
 
 @Injectable()
-export class LeaseTenantRepository extends BaseRepository<LeaseTenant> {
+export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 	protected readonly logger = new Logger(LeaseTenantRepository.name);
 
 	constructor(manager: EntityManager) {
-		super(LeaseTenant, manager);
+		super(LeasesTenants, manager);
 	}
 
 	async mapTenantToLease(
@@ -39,12 +39,12 @@ export class LeaseTenantRepository extends BaseRepository<LeaseTenant> {
 			throw new BadRequestException('Lease not found.');
 		}
 
-		const leaseTenant = manager.create(LeaseTenant, {
+		const leasesTenants = manager.create(LeasesTenants, {
 			tenant,
 			lease,
 			isPrimaryTenant,
 		});
 
-		return manager.save(LeaseTenant, leaseTenant);
+		return manager.save(LeasesTenants, leasesTenants);
 	}
 }
