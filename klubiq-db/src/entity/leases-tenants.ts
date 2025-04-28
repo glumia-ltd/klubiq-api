@@ -5,6 +5,8 @@ import {
 	ManyToOne,
 	JoinColumn,
 	Index,
+	CreateDateColumn,
+	UpdateDateColumn,
 } from 'typeorm';
 import { Lease } from './lease.entity';
 import { TenantUser } from './tenant.entity';
@@ -42,4 +44,18 @@ export class LeaseTenant {
 
 	@Column({ type: 'boolean', default: false })
 	isPrimaryTenant: boolean;
+
+	@CreateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
+	createdDate?: Date;
+
+	@UpdateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
+	updatedDate?: Date;
 }

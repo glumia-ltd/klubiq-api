@@ -21,7 +21,11 @@ import {
 	TokenResponseDto,
 	SignInByFireBaseResponseDto,
 } from '../dto/responses/auth-response.dto';
-import { ROLE_ALIAS, UserRoles } from '@app/common/config/config.constants';
+import {
+	LeaseStatus,
+	ROLE_ALIAS,
+	UserRoles,
+} from '@app/common/config/config.constants';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
 import { ErrorMessages } from '@app/common/config/error.constant';
 import { Mapper } from '@automapper/core';
@@ -48,13 +52,16 @@ import { NotificationsSubscriptionService } from '@app/notifications/services/no
 import { TenantRepository } from '@app/common/repositories/tenant.repository';
 import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import { TenantUser } from '@app/common/database/entities/tenant.entity';
-import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.service';
 import { EntityManager } from 'typeorm';
 import { generateString } from '@nestjs/typeorm';
 import { TenantInvitation } from '@app/common/database/entities/tenant-invitation.entity';
 import { replace } from 'lodash';
 import { EmailTemplates } from '@app/common/email/types/email.types';
 import { MailerSendService } from '@app/common/email/email.service';
+import { OnboardingLeaseDto } from 'apps/klubiq-dashboard/src/lease/dto/requests/create-lease.dto';
+import { Lease } from '@app/common/database/entities/lease.entity';
+import { Unit } from '@app/common/database/entities/unit.entity';
+import { LeasesTenants } from '@app/common/database/entities/leases-tenants.entity';
 
 @Injectable()
 export abstract class AuthService {
@@ -82,7 +89,6 @@ export abstract class AuthService {
 		protected readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		protected readonly notificationSubService: NotificationsSubscriptionService,
 		protected readonly tenantRepository: TenantRepository,
-		protected readonly leaseService: LeaseService,
 		protected readonly emailService: MailerSendService,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
@@ -536,6 +542,8 @@ export abstract class AuthService {
 	}
 
 	async createTenant(createUserDto: TenantSignUpDto): Promise<UserProfile> {
+		this.currentUser = this.cls.get('currentUser');
+
 		const { email, firstName, lastName } = createUserDto;
 		const displayName = `${firstName} ${lastName}`;
 		let firebaseUserId: string | null = null;
@@ -562,6 +570,7 @@ export abstract class AuthService {
 			const userProfile = await this.createTenantPersona(
 				fireUser,
 				createUserDto,
+				this.currentUser.organizationId,
 			);
 			if (!userProfile) {
 				throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
@@ -677,6 +686,60 @@ export abstract class AuthService {
 		}
 	}
 
+	private async createLeaseForTenantOnboarding(
+		leaseDto: OnboardingLeaseDto,
+		organizationUuid: string,
+		transactionalEntityManager?: EntityManager,
+	): Promise<Lease> {
+		const { unitId, startDate, ...leaseData } = leaseDto;
+		const newLeaseStartDate = DateTime.fromISO(startDate).toSQL({
+			includeOffset: false,
+		});
+		const activeStatuses = [`${LeaseStatus.ACTIVE}`, `${LeaseStatus.EXPIRING}`];
+		const status =
+			DateTime.fromISO(leaseDto.startDate).toJSDate().getDate() >
+			DateTime.utc().toJSDate().getDate()
+				? LeaseStatus.INACTIVE
+				: LeaseStatus.ACTIVE;
+
+		return await transactionalEntityManager.transaction(async () => {
+			// Create lease within transaction
+			const overlappingLease = await transactionalEntityManager
+				.createQueryBuilder(Lease, 'lease')
+				.where('lease."unitId" = :unitId', { unitId })
+				.andWhere(
+					':newLeaseStartDate BETWEEN lease."startDate" AND lease."endDate"',
+					{ newLeaseStartDate },
+				)
+				.andWhere('lease.status IN (:...statuses)', {
+					statuses: activeStatuses,
+				})
+				.getOne();
+			if (overlappingLease) {
+				throw new BadRequestException(
+					'The unit already has an active lease during the specified period.',
+				);
+			}
+			const unit = await transactionalEntityManager.findOneBy(Unit, {
+				id: unitId,
+			});
+			if (!unit) {
+				throw new BadRequestException('Invalid unit ID.');
+			}
+
+			const lease = transactionalEntityManager.create(Lease, {
+				startDate: newLeaseStartDate,
+				endDate: DateTime.fromISO(leaseData.endDate).toSQL({
+					includeOffset: false,
+				}),
+				unit,
+				organizationUuid,
+				status,
+				...leaseData,
+			});
+			return await transactionalEntityManager.save(lease);
+		});
+	}
 	private async createTenantUserWithProfile(
 		transactionalEntityManager: EntityManager,
 		fireUser: any,
@@ -712,6 +775,7 @@ export abstract class AuthService {
 	private async createTenantPersona(
 		fireUser: any,
 		createUserDto: TenantSignUpDto,
+		organizationUuid: string,
 	): Promise<UserProfile> {
 		const entityManager = this.tenantRepository.manager;
 
@@ -725,19 +789,28 @@ export abstract class AuthService {
 
 			if (userProfile && createUserDto.leaseDetails) {
 				try {
-					await this.leaseService.createLeaseForTenantOnboarding(
+					const lease = await this.createLeaseForTenantOnboarding(
 						createUserDto.leaseDetails,
-						tenantUser,
-						transactionalEntityManager, // pass it to be reused
+						organizationUuid,
+						transactionalEntityManager,
+						// pass it to be reused
 					);
+					if (lease && tenantUser) {
+						const leaseTenant = new LeasesTenants();
+						leaseTenant.tenant = tenantUser;
+						leaseTenant.lease = lease;
+						leaseTenant.isPrimaryTenant = true;
+						await transactionalEntityManager.save(leaseTenant);
+
+						const invitation = new TenantInvitation();
+						invitation.userId = userProfile.profileUuid;
+						invitation.firebaseUid = fireUser.uid;
+						invitation.invitedAt = this.timestamp;
+						invitation.token = await this.getInvitationToken(createUserDto);
+						await transactionalEntityManager.save(invitation);
+						await this.sendTenantInvitationEmail(createUserDto, invitation);
+					}
 					/// INVITATION DATA
-					const invitation = new TenantInvitation();
-					invitation.userId = userProfile.profileUuid;
-					invitation.firebaseUid = fireUser.uid;
-					invitation.invitedAt = this.timestamp;
-					invitation.token = await this.getInvitationToken(createUserDto);
-					await transactionalEntityManager.save(invitation);
-					await this.sendTenantInvitationEmail(createUserDto, invitation);
 				} catch (error) {
 					console.error('Error creating lease for tenant:', error);
 					throw new Error('Failed to create lease for tenant.');

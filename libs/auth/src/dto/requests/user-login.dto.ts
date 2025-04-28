@@ -4,7 +4,7 @@ import {
 	IntersectionType,
 	PartialType,
 } from '@nestjs/swagger';
-import { CreateLeaseDto } from 'apps/klubiq-dashboard/src/lease/dto/requests/create-lease.dto';
+import { OnboardingLeaseDto } from 'apps/klubiq-dashboard/src/lease/dto/requests/create-lease.dto';
 import {
 	IsArray,
 	IsEmail,
@@ -64,6 +64,7 @@ export class UserSignUpDto extends PartialType(UserLoginDto) {
 		example: '123456789',
 	})
 	@IsString()
+	@IsOptional()
 	@IsStrongPassword({
 		minLength: 6,
 		minUppercase: 1,
@@ -331,9 +332,11 @@ export class TenantSignUpDto extends PartialType(UserSignUpDto) {
 	role: RoleTypeDto;
 
 	@IsString()
+	@ApiPropertyOptional()
+	@IsOptional()
 	phoneNumber?: string;
 
 	@IsObject()
 	@IsOptional()
-	leaseDetails?: CreateLeaseDto;
+	leaseDetails?: OnboardingLeaseDto;
 }

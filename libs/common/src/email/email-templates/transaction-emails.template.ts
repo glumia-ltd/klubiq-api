@@ -440,5 +440,5 @@ export const tenantInviteTemplate = (): EmailTemplate => ({
   </body>
       </html>
     `,
-	subject: ``,
+	subject: `Activate Your Klubiq Tenant Account`,
 });
