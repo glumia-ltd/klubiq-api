@@ -6,8 +6,8 @@ on:
   #     - dev
   #     - main
   #     - release/**
-    #paths:
-    # - '**.spec.ts'
+    paths:
+    - '**.spec.ts'
 env:
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}

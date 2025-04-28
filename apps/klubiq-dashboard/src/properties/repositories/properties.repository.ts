@@ -296,7 +296,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 				'unitLeases.status IN (:...statuses)',
 				{ statuses: [LeaseStatus.ACTIVE, LeaseStatus.EXPIRING] },
 			)
-			.leftJoinAndSelect('unitLeases.tenants', 'leases_tenants')
+			.leftJoinAndSelect('unitLeases.leasesTenants', 'leases_tenants')
 			.where('property.uuid = :propertyUuid', {
 				propertyUuid: propertyUuid,
 			})
