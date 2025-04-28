@@ -34,6 +34,7 @@ import { OrganizationTenants } from './entity/organization-tenants.entity';
 import { DeletedFilesRecords } from './entity/deleted-files.entity';
 import { RoleFeaturePermissions } from './entity/role-feature-permission.entity';
 import { LeasesTenants } from './entity/leases-tenants';
+import { TenantInvitation } from './entity/tenant-invitation.entity';
 
 dotenv.config();
 
@@ -82,7 +83,8 @@ export const AppDataSource = new DataSource({
 		OrganizationTenants,
 		DeletedFilesRecords,
 		RoleFeaturePermissions,
-		LeasesTenants
+		LeasesTenants,
+		TenantInvitation
 	],
 	migrations: ['build/migrations/*-changes.js'],
 	subscribers: [],
