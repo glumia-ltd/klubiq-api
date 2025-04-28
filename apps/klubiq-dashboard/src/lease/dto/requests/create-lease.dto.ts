@@ -13,6 +13,7 @@ import {
 	IsString,
 	IsUUID,
 } from 'class-validator';
+import { OmitType, PartialType } from '@nestjs/swagger';
 
 export class CreateLeaseDto {
 	@IsString()
@@ -69,49 +70,18 @@ export class CreateLeaseDto {
 	unitNumber: string;
 }
 
-export class OnboardingLeaseDto {
-	@IsDateString()
-	startDate: string;
-
-	@IsDateString()
-	@IsOptional()
-	endDate?: string;
-
-	@IsUUID()
-	unitId: string;
-
-	@IsNumber()
-	rentDueDay: number;
-
-	@IsNumber()
-	rentAmount: number;
-
-	@IsOptional()
-	@IsNumber()
-	securityDeposit?: number;
-
-	@IsOptional()
-	isDraft?: boolean;
-
-	@IsString()
-	@IsEnum(PaymentFrequency)
-	paymentFrequency: PaymentFrequency;
-
-	@IsString()
-	@IsEnum(LeaseStatus)
-	@IsOptional()
-	status?: LeaseStatus;
-
-	@IsString()
-	propertyName: string;
-
-	@IsString()
-	@IsOptional()
-	firstPaymentDate?: string;
-
-	@IsString()
-	unitNumber: string;
-}
+export class OnboardingLeaseDto extends PartialType(
+	OmitType(CreateLeaseDto, [
+		'tenantsIds',
+		'newTenants',
+		'status',
+		'firstPaymentDate',
+		'isDraft',
+		'rentDueDay',
+		'securityDeposit',
+		'paymentFrequency',
+	]),
+) {}
 
 export class LeaseTenantsDto {
 	@AutoMap()

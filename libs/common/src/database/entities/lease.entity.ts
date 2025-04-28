@@ -96,8 +96,8 @@ export class Lease {
 	@Column({ default: false })
 	isArchived?: boolean;
 
-	@OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.lease)
-	leasesTenants?: LeasesTenants[];
+	// @OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.lease)
+	// leasesTenants?: LeasesTenants[];
 
 	@OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.tenant)
 	tenants?: TenantUser[];
