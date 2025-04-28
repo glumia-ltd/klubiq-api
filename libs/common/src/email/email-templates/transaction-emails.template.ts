@@ -374,7 +374,7 @@ export const tenantInviteTemplate = (): EmailTemplate => ({
               <tr>
                 <td class="align-center" width="100%">
                   <a href="https://dev.klubiq.com">
-                  <img src="https://res.cloudinary.com/klubiq-prod/image/upload/v1745701412/klubiq/v1/logo/gfuhszi4je2adviyotae.webp" height="20" alt="Klubiq">
+                  <img src="https://res.cloudinary.com/klubiq-prod/image/upload/v1745701412/klubiq/v1/logo/p1fbtnfz4eawpouzbjgj.webp" height="20" alt="Klubiq">
                   </a>
                 </td>
               </tr>
