@@ -4,7 +4,6 @@ import {
 	Column,
 	JoinColumn,
 	OneToOne,
-	ManyToMany,
 	UpdateDateColumn,
 	CreateDateColumn,
 	Index,
@@ -49,12 +48,8 @@ export class TenantUser {
 	profile?: Promise<UserProfile>;
 
 	@AutoMap(() => [Lease])
-	@ManyToMany(() => Lease, (lease) => lease.tenants)
-	leases?: Lease[];
-
-	@AutoMap(() => [Lease])
 	@OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.tenant)
-	leasesTenants?: LeasesTenants[];
+	leases?: Lease[];
 
 	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdDate?: Date;

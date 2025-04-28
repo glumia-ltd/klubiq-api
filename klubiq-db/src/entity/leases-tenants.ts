@@ -13,7 +13,7 @@ import { TenantUser } from './tenant.entity';
 
 @Entity({ schema: 'poo' })
 @Index(['leaseId', 'tenantId'], { unique: true }) // for the composite unique index
-export class LeaseTenant {
+export class LeasesTenants {
 
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;

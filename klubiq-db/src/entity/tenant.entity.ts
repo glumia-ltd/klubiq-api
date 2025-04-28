@@ -4,7 +4,6 @@ import {
 	Column,
 	JoinColumn,
 	OneToOne,
-	ManyToMany,
 	UpdateDateColumn,
 	CreateDateColumn,
 	Index,
@@ -15,6 +14,7 @@ import { UserProfile } from './user-profile.entity';
 import { Lease } from './lease.entity';
 import { OrganizationTenants } from './organization-tenants.entity';
 import { OrganizationRole } from './organization-role.entity';
+import { LeasesTenants } from './leases-tenants';
 
 @Entity({ schema: 'kdo' })
 export class TenantUser {
@@ -44,8 +44,10 @@ export class TenantUser {
 	})
 	profile?: Promise<UserProfile>;
 
-	@ManyToMany(() => Lease, (lease) => lease.tenants)
+
+	@OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.tenant)
 	leases?: Lease[];
+
 
 	@CreateDateColumn({ type: 'timestamptz', default: () => 'NOW()' })
 	createdDate?: Date;
