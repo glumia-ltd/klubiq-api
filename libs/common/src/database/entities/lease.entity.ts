@@ -99,7 +99,7 @@ export class Lease {
 	// @OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.lease)
 	// leasesTenants?: LeasesTenants[];
 
-	@OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.tenant)
+	@OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.lease)
 	tenants?: TenantUser[];
 
 	@Index('IDX_UNIT_UUID')
