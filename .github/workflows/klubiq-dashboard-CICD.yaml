@@ -16,9 +16,10 @@ on:
     #   - 'package-lock.json'
     #   - 'tsconfig.json'
     #   - 'tsconfig.build.json'
-    #paths:
-    #- 'apps/klubiq-dashboard/**'
-    #- 'libs/**'
+    paths:
+    - 'apps/klubiq-dashboard/**'
+    - 'apps/klubiq-queue/**'
+    - 'libs/**'
   # workflow_run:
   #   workflows: ['Run Tests']
   #   types:
