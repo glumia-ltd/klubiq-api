@@ -99,7 +99,6 @@ export class LeaseService implements ILeaseService {
 	}
 
 	private async mapLeaseRawToDto(leases: any[]): Promise<LeaseDto[]> {
-		console.log('Leases Raw Data before mapping: ', leases);
 		return leases.map((lease) =>
 			plainToInstance(
 				LeaseDto,
@@ -221,7 +220,6 @@ export class LeaseService implements ILeaseService {
 			return cachedLease;
 		}
 		const lease = await this.leaseRepository.getLeaseById(id);
-		console.log('Lease Raw Data: ', lease);
 		const mappedLease = await this.mapLeaseDetailRawToDto(lease);
 		await this.cacheManager.set(cacheKey, mappedLease, this.cacheTTL);
 		this.updateOrgCacheKeys(cacheKey);
@@ -247,8 +245,6 @@ export class LeaseService implements ILeaseService {
 		if (!currentUser.organizationId) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
-		console.log('Start Date: ', leaseDto.startDate);
-		console.log('Now Date: ', DateTime.utc().toJSDate());
 		leaseDto.status =
 			DateTime.fromISO(leaseDto.startDate).toJSDate().getDate() >
 			DateTime.utc().toJSDate().getDate()
