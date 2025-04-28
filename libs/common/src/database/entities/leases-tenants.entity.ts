@@ -5,23 +5,21 @@ import {
 	ManyToOne,
 	JoinColumn,
 	Index,
+	UpdateDateColumn,
+	CreateDateColumn,
 } from 'typeorm';
 import { Lease } from './lease.entity';
 import { TenantUser } from './tenant.entity';
-import { AutoMap } from '@automapper/classes';
 
 @Entity({ schema: 'poo' })
 @Index(['leaseId', 'tenantId'], { unique: true }) // for the composite unique index
-export class LeaseTenant {
-	@AutoMap()
+export class LeasesTenants {
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
 
-	@AutoMap()
 	@Column({ type: 'uuid' })
 	leaseId: string;
 
-	@AutoMap(() => [Lease])
 	@ManyToOne(() => Lease, (lease) => lease.tenants, {
 		cascade: false,
 		onDelete: 'NO ACTION', // or 'SET NULL' if nullable
@@ -31,11 +29,9 @@ export class LeaseTenant {
 	@JoinColumn({ name: 'leaseId' })
 	lease: Lease;
 
-	@AutoMap()
 	@Column({ type: 'uuid' })
 	tenantId: string;
 
-	@AutoMap(() => [TenantUser])
 	@ManyToOne(() => TenantUser, (tenant) => tenant.leases, {
 		cascade: false,
 		onDelete: 'NO ACTION', // or 'SET NULL' if nullable
@@ -44,4 +40,21 @@ export class LeaseTenant {
 	})
 	@JoinColumn({ name: 'tenantId' })
 	tenant: TenantUser;
+
+	@Column({ type: 'boolean', default: false })
+	isPrimaryTenant: boolean;
+
+	@CreateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
+	createdDate?: Date;
+
+	@UpdateDateColumn({
+		type: 'timestamptz',
+		select: false,
+		default: () => 'NOW()',
+	})
+	updatedDate?: Date;
 }

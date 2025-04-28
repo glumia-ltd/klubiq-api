@@ -245,11 +245,11 @@ export class AuthController {
 	}
 
 	@Auth(AuthType.Bearer)
-	@Post('signup')
+	@Post('onboard-tenant')
 	@ApiOkResponse({
-		description: 'Creates a new tenant account',
+		description: 'Onboards a new tenant account for a lease',
 	})
-	async createTenantUser(@Body() createUser: TenantSignUpDto) {
+	async onboardTenantUser(@Body() createUser: TenantSignUpDto) {
 		return await this.landlordAuthService.createTenant(createUser);
 	}
 }

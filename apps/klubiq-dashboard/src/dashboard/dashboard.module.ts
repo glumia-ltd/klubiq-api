@@ -15,7 +15,7 @@ import { LEASE_SERVICE_INTERFACE } from '../lease/interfaces/lease.interface';
 import { LeaseService } from '../lease/services/lease.service';
 import { LeaseRepository } from '../lease/repositories/lease.repository';
 import { FileUploadService } from '@app/common/services/file-upload.service';
-import { LeaseTenantRepository } from '../../../../libs/common/src/repositories/leases-tenant.repositiory';
+//import { LeaseTenantRepository } from '@app/common/repositories/leases-tenant.repositiory';
 
 @Module({
 	imports: [RepositoriesModule, SubscriptionModule],
@@ -36,7 +36,7 @@ import { LeaseTenantRepository } from '../../../../libs/common/src/repositories/
 		},
 		PropertyRepository,
 		LeaseRepository,
-		LeaseTenantRepository,
+		//LeaseTenantRepository,
 		FileDownloadService,
 		FileUploadService,
 	],
