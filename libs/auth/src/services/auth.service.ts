@@ -575,7 +575,7 @@ export abstract class AuthService {
 			if (!userProfile) {
 				throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
 			}
-			await this.sendVerificationEmail(email, firstName, lastName);
+			//await this.sendVerificationEmail(email, firstName, lastName);
 			return userProfile;
 		} catch (error) {
 			if (firebaseUserId) {
