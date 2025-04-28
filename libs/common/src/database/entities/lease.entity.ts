@@ -12,7 +12,6 @@ import {
 } from 'typeorm';
 import { Transaction } from './transaction.entity';
 import { LeaseStatus, PaymentFrequency } from '../../config/config.constants';
-import { TenantUser } from './tenant.entity';
 import { Unit } from './unit.entity';
 import { LeasesTenants } from './leases-tenants.entity';
 
@@ -96,11 +95,8 @@ export class Lease {
 	@Column({ default: false })
 	isArchived?: boolean;
 
-	// @OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.lease)
-	// leasesTenants?: LeasesTenants[];
-
 	@OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.lease)
-	tenants?: TenantUser[];
+	leasesTenants?: LeasesTenants[];
 
 	@Index('IDX_UNIT_UUID')
 	@ManyToOne(() => Unit, (unit) => unit.leases, {

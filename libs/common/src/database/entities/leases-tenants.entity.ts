@@ -20,7 +20,7 @@ export class LeasesTenants {
 	@Column({ type: 'uuid' })
 	leaseId: string;
 
-	@ManyToOne(() => Lease, (lease) => lease.tenants, {
+	@ManyToOne(() => Lease, (lease) => lease.leasesTenants, {
 		cascade: false,
 		onDelete: 'NO ACTION', // or 'SET NULL' if nullable
 		nullable: false,
@@ -32,7 +32,7 @@ export class LeasesTenants {
 	@Column({ type: 'uuid' })
 	tenantId: string;
 
-	@ManyToOne(() => TenantUser, (tenant) => tenant.leases, {
+	@ManyToOne(() => TenantUser, (tenant) => tenant.leasesTenants, {
 		cascade: false,
 		onDelete: 'NO ACTION', // or 'SET NULL' if nullable
 		nullable: false,

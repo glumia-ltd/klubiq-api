@@ -11,9 +11,8 @@ import {
 	UpdateDateColumn,
 } from 'typeorm';
 import { Transaction } from './transaction.entity';
-import { TenantUser } from './tenant.entity';
 import { Unit } from './unit.entity';
-import { LeaseStatus, PaymentFrequency } from 'src/types/enums';
+import { LeaseStatus, PaymentFrequency } from '../types/enums';
 import { LeasesTenants } from './leases-tenants';
 
 @Entity({ schema: 'poo' })
@@ -97,7 +96,7 @@ export class Lease {
 	isArchived?: boolean;
 
 	@OneToMany(() => LeasesTenants, (leasesTenants) => leasesTenants.lease)
-	tenants?: TenantUser[];
+	leasesTenants?: LeasesTenants[];
 
 	@Index('IDX_UNIT_UUID')
 	@ManyToOne(() => Unit, (unit) => unit.leases, {

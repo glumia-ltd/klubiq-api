@@ -15,6 +15,7 @@ import {
 	ApiBearerAuth,
 	ApiBody,
 	ApiCreatedResponse,
+	ApiHeader,
 	ApiNoContentResponse,
 	ApiOkResponse,
 	ApiParam,
@@ -36,6 +37,11 @@ import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 @Auth(AuthType.Bearer)
 @Feature(AppFeature.LEASE)
 @Controller('leases')
+@ApiHeader({
+	name: 'x-tenant-id',
+	description: 'The organization tenant id',
+	required: false,
+})
 export class LeaseController {
 	constructor(private readonly leaseService: LeaseService) {}
 
@@ -97,7 +103,7 @@ export class LeaseController {
 		description: 'Gets a lease by Id',
 		type: () => LeaseDetailsDto,
 	})
-	@ApiParam({ description: 'Lease Id', name: 'id', type: Number })
+	@ApiParam({ description: 'Lease Id', name: 'id', type: String })
 	async getLeaseById(@Param('id') id: string) {
 		try {
 			return await this.leaseService.getLeaseById(id);

@@ -103,26 +103,55 @@ export class LeaseRepository extends BaseRepository<Lease> {
 
 	async getUnitLeases(unitId: string, includeArchived: boolean = false) {
 		const queryBuilder = this.createQueryBuilder('lease')
-			.leftJoinAndSelect('lease.tenants', 'tenant')
-			.leftJoinAndSelect('lease.unit', 'unit')
-			.leftJoinAndSelect('unit.property', 'property')
+			// Join with LeasesTenants (junction table)
+			.leftJoin('lease.leasesTenants', 'leasesTenants')
+			// Join with TenantUser (in kdo schema)
+			.leftJoin('leasesTenants.tenant', 'tenant')
+			// Join with UserProfile (in kdo schema)
+			.leftJoin('tenant.profile', 'profile')
+			// Join with Unit and Property (in poo schema)
+			.innerJoin('lease.unit', 'unit')
+			.innerJoin('unit.property', 'property')
 			.select([
+				// Lease fields (poo schema)
 				'lease.id as id',
 				'lease.startDate AS startDate',
 				'lease.endDate AS endDate',
 				'lease.rentAmount AS rentAmount',
 				'lease.status AS status',
-				'tenant.id AS tenant_id',
-				'profile.firstName AS tenant_firstName',
-				'profile.lastName AS tenant_lastName',
-				'profile.email AS tenant_email',
-				'profile.profileUuid AS tenant_profileUuid',
-				'profile.profilePicUrl AS tenant_profilePicUrl',
-				'property.name AS property_name',
-				'property.organizationUuid AS property_organizationUuid',
-				'property.managerUid AS property_managerUid',
-				'property.ownerUid AS property_ownerUid',
-				'unit.unitNumber AS unit_unitNumber',
+				'lease.createdDate AS createdDate',
+				'lease.updatedDate AS updatedDate',
+				'lease.paymentFrequency AS paymentFrequency',
+				'lease.nextDueDate AS nextDueDate',
+				'lease.rentDueDay AS rentDueDay',
+
+				// LeasesTenants fields (poo schema)
+				'leasesTenants.id as leasesTenants_id',
+				'leasesTenants.tenantId as leasesTenants_tenantId',
+				'leasesTenants.isPrimaryTenant as leasesTenants_isPrimaryTenant',
+
+				// TenantUser fields (kdo schema)
+				'tenant.id as tenant_id',
+				'tenant.isActive as tenant_isActive',
+
+				// UserProfile fields (kdo schema)
+				'profile.profileUuid as profile_profileUuid',
+				'profile.firstName as profile_firstName',
+				'profile.lastName as profile_lastName',
+				'profile.email as profile_email',
+				'profile.profilePicUrl as profile_profilePicUrl',
+				'profile.phoneNumber as profile_phoneNumber',
+
+				// Property fields (poo schema)
+				'property.uuid as property_uuid',
+				'property.name as property_name',
+				'property.organizationUuid as property_organizationUuid',
+				'property.managerUid as property_managerUid',
+				'property.ownerUid as property_ownerUid',
+
+				// Unit fields (poo schema)
+				'unit.id as unit_id',
+				'unit.unitNumber as unit_unitNumber',
 			])
 			.where('lease.unitId = :unitId', { unitId });
 		if (!includeArchived) {
@@ -136,12 +165,17 @@ export class LeaseRepository extends BaseRepository<Lease> {
 
 	async getLeaseById(id: string) {
 		const lease = await this.createQueryBuilder('lease')
+			// Join with LeasesTenants (junction table)
+			.leftJoin('lease.leasesTenants', 'leasesTenants')
+			// Join with TenantUser (in kdo schema)
+			.leftJoin('leasesTenants.tenant', 'tenant')
+			// Join with UserProfile (in kdo schema)
+			.leftJoin('tenant.profile', 'profile')
+			// Join with Unit and Property (in poo schema)
 			.innerJoin('lease.unit', 'unit')
 			.innerJoin('unit.property', 'property')
-			.leftJoin('property.address', 'address')
 			.innerJoin('property.type', 'type')
-			.leftJoin('lease.tenants', 'tenant')
-			.leftJoin('tenant.profile', 'profile')
+			.innerJoin('property.address', 'address')
 			.select([
 				'lease.id AS id',
 				'lease.status AS status',
@@ -162,6 +196,8 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				'profile.email AS tenant_email',
 				'profile.profileUuid AS tenant_profileUuid',
 				'profile.profilePicUrl AS tenant_profilePicUrl',
+				'profile.phoneNumber AS tenant_phoneNumber',
+				'leasesTenants.isPrimaryTenant AS leasesTenants_isPrimaryTenant',
 			])
 			.where('lease.id = :id', { id })
 			.getRawOne();
@@ -196,7 +232,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 						});
 					} else if (key === 'display') {
 						queryBuilder.andWhere(`lease.isArchived = :${key}`, {
-							[key]: value === DisplayOptions.ARCHIVED ? true : false,
+							[key]: !!(value === DisplayOptions.ARCHIVED),
 						});
 					} else if (key === 'unitId') {
 						queryBuilder.andWhere(`unit.id = :${key}`, {
@@ -223,33 +259,58 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		isOrgOwner: boolean = false,
 	): Promise<[Lease[], number]> {
 		const queryBuilder = this.createQueryBuilder('lease')
-			.leftJoinAndSelect('lease.tenants', 'tenant')
-			.leftJoinAndSelect('tenant.profile', 'profile')
-			.leftJoinAndSelect('lease.unit', 'unit')
-			.leftJoinAndSelect('unit.property', 'property')
+			// Join with LeasesTenants (junction table)
+			.leftJoin('lease.leasesTenants', 'leasesTenants')
+			// Join with TenantUser (in kdo schema)
+			.leftJoin('leasesTenants.tenant', 'tenant')
+			// Join with UserProfile (in kdo schema)
+			.leftJoin('tenant.profile', 'profile')
+			// Join with Unit and Property (in poo schema)
+			.innerJoin('lease.unit', 'unit')
+			.innerJoin('unit.property', 'property')
 			.select([
+				// Lease fields (poo schema)
 				'lease.id',
 				'lease.name',
-				'lease.isArchived',
-				'lease.isDraft',
-				'lease.createdDate',
 				'lease.startDate',
 				'lease.endDate',
 				'lease.rentAmount',
 				'lease.status',
+				'lease.isArchived',
+				'lease.isDraft',
+				'lease.createdDate',
+				'lease.updatedDate',
+				'lease.paymentFrequency',
+				'lease.nextDueDate',
+				'lease.rentDueDay',
+
+				// LeasesTenants fields (poo schema)
+				'leasesTenants.id',
+				'leasesTenants.tenantId',
+				'leasesTenants.isPrimaryTenant',
+
+				// TenantUser fields (kdo schema)
 				'tenant.id',
+				'tenant.isActive',
+
+				// UserProfile fields (kdo schema)
+				'profile.profileUuid',
 				'profile.firstName',
 				'profile.lastName',
 				'profile.email',
-				'profile.profileUuid',
 				'profile.profilePicUrl',
+				'profile.phoneNumber',
+
+				// Property fields (poo schema)
+				'property.uuid',
 				'property.name',
 				'property.organizationUuid',
 				'property.managerUid',
 				'property.ownerUid',
-				'property.uuid',
-				'unit.unitNumber',
+
+				// Unit fields (poo schema)
 				'unit.id',
+				'unit.unitNumber',
 			])
 			.where('property.organizationUuid = :orgUuid', { orgUuid });
 		if (!isOrgOwner) {

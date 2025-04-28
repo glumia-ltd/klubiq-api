@@ -251,7 +251,7 @@ export class PropertiesService implements IPropertyMetrics {
 		);
 		const totalTenants = reduce(
 			unit.leases,
-			(sum, lease) => sum + lease?.tenants?.length,
+			(sum, lease) => sum + lease?.leasesTenants?.length,
 			0,
 		);
 		return plainToInstance(
@@ -290,7 +290,7 @@ export class PropertiesService implements IPropertyMetrics {
 			(sum, unit) =>
 				sum +
 				(unit?.leases?.reduce(
-					(leaseSum, lease) => leaseSum + lease?.tenants?.length,
+					(leaseSum, lease) => leaseSum + lease?.leasesTenants?.length,
 					0,
 				) || 0),
 			0,
