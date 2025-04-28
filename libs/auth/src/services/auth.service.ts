@@ -813,7 +813,9 @@ export abstract class AuthService {
 					/// INVITATION DATA
 				} catch (error) {
 					console.error('Error creating lease for tenant:', error);
-					throw new Error('Failed to create lease for tenant.');
+					throw new Error(
+						`Failed to create lease for tenant. ${error.message}`,
+					);
 				}
 			}
 
