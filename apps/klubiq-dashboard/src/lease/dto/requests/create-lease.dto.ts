@@ -72,6 +72,7 @@ export class CreateLeaseDto {
 
 export class OnboardingLeaseDto extends PartialType(
 	OmitType(CreateLeaseDto, [
+		'name',
 		'tenantsIds',
 		'newTenants',
 		'status',

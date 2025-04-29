@@ -35,7 +35,7 @@ import { PropertyManagerAssignmentDto } from '../dto/requests/property-manager.d
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 import { Unit } from '@app/common/database/entities/unit.entity';
 import { plainToInstance } from 'class-transformer';
-import { filter, padEnd, reduce, transform } from 'lodash';
+import { filter, forEach, reduce, transform } from 'lodash';
 import {
 	PropertyDetailsDto,
 	UnitDto,
@@ -505,9 +505,18 @@ export class PropertiesService implements IPropertyMetrics {
 			}
 			createDto?.isMultiUnit ?? createDto.units?.length > 1;
 			createDto.orgUuid = currentUser.organizationId;
-			if (!createDto.isMultiUnit) {
-				createDto.units[0].unitNumber = padEnd(createDto.name, 4, '-1');
-			}
+			forEach(createDto.units, (unit, index) => {
+				if (!createDto.isMultiUnit) {
+					unit.unitNumber = `su-${createDto.name
+						.toLowerCase()
+						.replace(/ /g, '-')}`;
+				} else {
+					unit.unitNumber = `mu-${createDto.name
+						.slice(0, 3)
+						.toLowerCase()
+						.replace(/ /g, '-')}-${unit.unitNumber}-${index + 1}`;
+				}
+			});
 			createDto.managerUid = currentUser.kUid;
 			const createdProperty = await this.propertyRepository.createProperty(
 				createDto,
