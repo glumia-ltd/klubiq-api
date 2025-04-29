@@ -62,6 +62,7 @@ import { OnboardingLeaseDto } from 'apps/klubiq-dashboard/src/lease/dto/requests
 import { Lease } from '@app/common/database/entities/lease.entity';
 import { Unit } from '@app/common/database/entities/unit.entity';
 import { LeasesTenants } from '@app/common/database/entities/leases-tenants.entity';
+import { Generators } from '@app/common/helpers/generators';
 
 @Injectable()
 export abstract class AuthService {
@@ -90,6 +91,7 @@ export abstract class AuthService {
 		protected readonly notificationSubService: NotificationsSubscriptionService,
 		protected readonly tenantRepository: TenantRepository,
 		protected readonly emailService: MailerSendService,
+		protected readonly generators: Generators,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -696,6 +698,10 @@ export abstract class AuthService {
 			includeOffset: false,
 		});
 		const activeStatuses = [`${LeaseStatus.ACTIVE}`, `${LeaseStatus.EXPIRING}`];
+		const leaseName = this.generators.generateLeaseName(
+			leaseDto.propertyName,
+			leaseDto.unitNumber,
+		);
 		const status =
 			DateTime.fromISO(leaseDto.startDate).toJSDate().getDate() >
 			DateTime.utc().toJSDate().getDate()
@@ -735,6 +741,7 @@ export abstract class AuthService {
 				unit,
 				organizationUuid,
 				status,
+				name: leaseName,
 				...leaseData,
 			});
 			return await transactionalEntityManager.save(lease);
