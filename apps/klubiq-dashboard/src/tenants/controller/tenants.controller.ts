@@ -7,7 +7,7 @@ import { GetTenantDto } from '../dto/requests/get-tenant-dto';
 @ApiTags('tenant')
 @Controller('tenants')
 @ApiBearerAuth()
-@Auth(AuthType.None)
+@Auth(AuthType.Bearer)
 export class TenantsController {
 	constructor(private readonly tenantsService: TenantsService) {}
 
