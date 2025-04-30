@@ -655,7 +655,7 @@ export abstract class AuthService {
 	async signInAndGetAccessToken(email: string, password: string): Promise<any> {
 		try {
 			const signInData = await this.signInWithEmailPassword(email, password);
-			const refreshToken = signInData.refreshToken;
+			const { refreshToken } = signInData;
 
 			if (!refreshToken) {
 				throw new FirebaseException(

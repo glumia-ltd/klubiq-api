@@ -8,6 +8,7 @@ import {
 	Query,
 	Param,
 	ParseUUIDPipe,
+	ForbiddenException,
 } from '@nestjs/common';
 import {
 	ApiBearerAuth,
@@ -34,7 +35,9 @@ import { LandlordAuthService } from './services/landlord-auth.service';
 import { AdminAuthService } from './services/admin-auth.service';
 import { CreateSuperAdminDTO } from './dto/requests/admin-user.dto';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
-import { OrganizationSubscriptionService } from '@app/common';
+import { ErrorMessages, OrganizationSubscriptionService } from '@app/common';
+import { RolesService } from '@app/common/permissions/roles.service';
+import { UserRoles } from '@app/common/config/config.constants';
 
 @ApiTags('auth')
 @ApiBearerAuth()
@@ -47,6 +50,7 @@ export class AuthController {
 		private readonly adminAuthService: AdminAuthService,
 		private readonly organizationSettingsService: OrganizationSettingsService,
 		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
+		private readonly rolesService: RolesService,
 	) {}
 
 	@HttpCode(HttpStatus.OK)
@@ -250,6 +254,14 @@ export class AuthController {
 		description: 'Onboards a new tenant account for a lease',
 	})
 	async onboardTenantUser(@Body() createUser: TenantSignUpDto) {
+		const tenantRole = await this.rolesService.getRoleByName(UserRoles.TENANT);
+		if (!tenantRole) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		createUser.role = {
+			id: tenantRole.id,
+			name: tenantRole.name,
+		};
 		return await this.landlordAuthService.createTenant(createUser);
 	}
 }

@@ -20,6 +20,10 @@ export class OrganizationRolesRepository extends BaseRepository<OrganizationRole
 		return await this.findOne({ where: { id } });
 	}
 
+	async getRoleByName(name: string): Promise<OrganizationRole | undefined> {
+		return await this.findOne({ where: { name } });
+	}
+
 	async getAllRoles(): Promise<OrganizationRole[]> {
 		return await this.find();
 	}
