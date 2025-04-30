@@ -38,6 +38,7 @@ import { CsrfMiddleware } from './security/csrf.middleware';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { filteredRoutes } from './security/security-helpers';
+import { TenantsModule } from './tenants/tenants.module';
 
 @Module({
 	imports: [
@@ -68,6 +69,7 @@ import { filteredRoutes } from './security/security-helpers';
 		NotificationsModule,
 		EventListenerModule,
 		SchedulersModule,
+		TenantsModule,
 	],
 	providers: [
 		ApikeyGuard,

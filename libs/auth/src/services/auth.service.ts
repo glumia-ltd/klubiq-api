@@ -63,6 +63,7 @@ import { Lease } from '@app/common/database/entities/lease.entity';
 import { Unit } from '@app/common/database/entities/unit.entity';
 import { LeasesTenants } from '@app/common/database/entities/leases-tenants.entity';
 import { Generators } from '@app/common/helpers/generators';
+import { OrganizationTenants } from '@app/common';
 
 @Injectable()
 export abstract class AuthService {
@@ -608,12 +609,15 @@ export abstract class AuthService {
 			'x-firebase-gmpid': appId,
 			'x-firebase-appcheck': token,
 		};
-		return this.httpService.request<any>({
+		const data = this.httpService.request<any>({
 			url,
 			method,
 			data: body,
 			headers,
 		});
+		console.log({ data });
+
+		return data;
 	}
 
 	async signInWithEmailPassword(
@@ -809,6 +813,11 @@ export abstract class AuthService {
 						leaseTenant.isPrimaryTenant = true;
 						await transactionalEntityManager.save(leaseTenant);
 
+						const organizationTenant = new OrganizationTenants();
+						organizationTenant.tenant = tenantUser;
+						organizationTenant.organizationUuid = organizationUuid;
+						await transactionalEntityManager.save(organizationTenant);
+
 						const invitation = new TenantInvitation();
 						invitation.userId = userProfile.profileUuid;
 						invitation.firebaseUid = fireUser.uid;
@@ -817,7 +826,6 @@ export abstract class AuthService {
 						await transactionalEntityManager.save(invitation);
 						await this.sendTenantInvitationEmail(createUserDto, invitation);
 					}
-					/// INVITATION DATA
 				} catch (error) {
 					console.error('Error creating lease for tenant:', error);
 					throw new Error(
