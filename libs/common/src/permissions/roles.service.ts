@@ -60,12 +60,37 @@ export class RolesService {
 		}
 	}
 
+	async getRoleByName(name: string): Promise<OrganizationRole> {
+		try {
+			const cachedData =
+				await this.cacheService.getCacheByIdentifier<OrganizationRole>(
+					this.orgRoleCacheKey,
+					'name',
+					name,
+				);
+			if (!cachedData) {
+				const role = await this.orgRolesRepository.getRoleByName(name);
+				if (!role) {
+					throw new NotFoundException(`Role with name "${name}" not found`);
+				}
+				await this.cacheService.setCache(role, this.orgRoleCacheKey);
+				return role;
+			}
+			return cachedData;
+		} catch (error) {
+			this.logger.error('Error getting org role by name', error);
+			throw error;
+		}
+	}
+
 	async getAllRoles(): Promise<OrganizationRole[]> {
 		try {
 			const cachedData = await this.cacheService.getCache<OrganizationRole>(
 				this.orgRoleCacheKey,
 			);
-			if (cachedData) return cachedData;
+			if (cachedData) {
+				return cachedData;
+			}
 			const roles = await this.orgRolesRepository.getAllRoles();
 			await this.cacheService.setCache(roles, this.orgRoleCacheKey);
 			return roles;
