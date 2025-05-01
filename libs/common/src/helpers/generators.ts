@@ -76,6 +76,7 @@ export class Generators {
 		const timeSuffix = timestamp.toString().slice(-3);
 
 		// Combine to form 8 character name (3 + 2 + 3)
-		return `${propPrefix}${unitPrefix}${timeSuffix}`;
+		const name = `${propPrefix}${unitPrefix}${timeSuffix}`;
+		return name.replace(/ /g, '-');
 	}
 }

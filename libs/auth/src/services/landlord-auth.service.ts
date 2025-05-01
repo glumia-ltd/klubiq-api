@@ -53,6 +53,7 @@ import { UserPreferencesService } from '@app/common/services/user-preferences.se
 import { NotificationsSubscriptionService } from '@app/notifications/services/notifications-subscription.service';
 import { Generators } from '@app/common/helpers/generators';
 import { TenantRepository } from '@app/common/repositories/tenant.repository';
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 @Injectable()
 export class LandlordAuthService extends AuthService {
 	private readonly emailVerificationBaseUrl: string;
@@ -80,6 +81,7 @@ export class LandlordAuthService extends AuthService {
 		protected readonly notificationSubService: NotificationsSubscriptionService,
 		protected readonly tenantRepository: TenantRepository,
 		protected readonly generators: Generators,
+		protected readonly apiDebugger: ApiDebugger,
 	) {
 		super(
 			firebaseAdminApp,
@@ -97,6 +99,7 @@ export class LandlordAuthService extends AuthService {
 			tenantRepository,
 			emailService,
 			generators,
+			apiDebugger,
 		);
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',

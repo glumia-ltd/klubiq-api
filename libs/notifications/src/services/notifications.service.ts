@@ -218,7 +218,7 @@ export class NotificationsService {
 	}
 
 	// async publishNotification(data: SNSNotificationDto) {
-	// 	console.log('PUBLISHING NOTIFICATION: ', data);
+	// 	//console.log('PUBLISHING NOTIFICATION: ', data);
 	// 	const params = {
 	// 		TopicArn: this.notificationTopicArn,
 	// 		Message: JSON.stringify(data),
@@ -229,9 +229,9 @@ export class NotificationsService {
 	// 			},
 	// 		},
 	// 	};
-	// 	console.log('PARAMS: ', params);
+	// 	//console.log('PARAMS: ', params);
 	// 	const published = await this.snsClient.send(new PublishCommand(params));
-	// 	console.log('published output: ', published);
+	// 	//console.log('published output: ', published);
 	// }
 
 	async sendWebPushNotification(notification: SendNotificationDto) {
@@ -250,7 +250,7 @@ export class NotificationsService {
 			});
 			await Promise.all(promises);
 		} catch (error) {
-			console.log('ERROR SENDING PUSH NOTIFICATION: ', error);
+			//console.log('ERROR SENDING PUSH NOTIFICATION: ', error);
 			this.logger.error(error);
 		}
 	}

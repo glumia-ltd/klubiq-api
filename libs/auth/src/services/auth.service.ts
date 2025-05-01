@@ -63,6 +63,9 @@ import { Lease } from '@app/common/database/entities/lease.entity';
 import { Unit } from '@app/common/database/entities/unit.entity';
 import { LeasesTenants } from '@app/common/database/entities/leases-tenants.entity';
 import { Generators } from '@app/common/helpers/generators';
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EVENTS } from '@app/common/event-listeners/event-models/event-constants';
 
 @Injectable()
 export abstract class AuthService {
@@ -76,6 +79,7 @@ export abstract class AuthService {
 	private currentUser: ActiveUserData;
 	protected readonly tenantEmailVerificationBaseUrl: string;
 	protected readonly tenantEmailAuthContinueUrl: string;
+	protected readonly eventEmitter: EventEmitter2;
 	constructor(
 		@Inject('FIREBASE_ADMIN') protected firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
@@ -92,6 +96,7 @@ export abstract class AuthService {
 		protected readonly tenantRepository: TenantRepository,
 		protected readonly emailService: MailerSendService,
 		protected readonly generators: Generators,
+		protected readonly apiDebugger: ApiDebugger,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -131,6 +136,7 @@ export abstract class AuthService {
 	}
 
 	async verifyAppCheckToken(appCheckToken: string): Promise<any> {
+		this.apiDebugger.info('Verifying app check token', appCheckToken);
 		return await getAppCheck().verifyToken(appCheckToken);
 	}
 	async getAppCheckToken(): Promise<any> {
@@ -138,6 +144,7 @@ export abstract class AuthService {
 		const appCheckToken = await getAppCheck().createToken(appId, {
 			ttlMillis: 1800000,
 		});
+		this.apiDebugger.info('App check token Details', appId, appCheckToken);
 		return { token: appCheckToken.token, appId: appId };
 	}
 
@@ -544,17 +551,18 @@ export abstract class AuthService {
 	}
 
 	async createTenant(createUserDto: TenantSignUpDto): Promise<UserProfile> {
+		this.apiDebugger.info('Creating tenant', createUserDto);
 		this.currentUser = this.cls.get('currentUser');
 
 		const { email, firstName, lastName } = createUserDto;
 		const displayName = `${firstName} ${lastName}`;
 		let firebaseUserId: string | null = null;
 
-		const existingUser = await this.userProfilesRepository.findOne({
-			where: { email },
-		});
+		// check if the user has a login account and is a tenant
+		const existingUser =
+			await this.userProfilesRepository.checkTenantUserExist(email);
 		if (existingUser) {
-			throw new FirebaseException('A user with this email already exists.');
+			throw new FirebaseException('A tenant with this email already exists.');
 		}
 
 		try {
@@ -577,9 +585,14 @@ export abstract class AuthService {
 			if (!userProfile) {
 				throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
 			}
-			//await this.sendVerificationEmail(email, firstName, lastName);
+			this.emitEvent(
+				EVENTS.LEASE_CREATED,
+				this.currentUser.organizationId,
+				false,
+			);
 			return userProfile;
 		} catch (error) {
+			this.apiDebugger.error('Error creating tenant', error);
 			if (firebaseUserId) {
 				await this.deleteUser(firebaseUserId);
 			}
@@ -620,21 +633,29 @@ export abstract class AuthService {
 		email: string,
 		password: string,
 	): Promise<SignInByFireBaseResponseDto> {
+		this.apiDebugger.info('Signing in with email password', email, password);
 		try {
 			const url = `${this.configService.get<string>('GOOGLE_IDENTITY_ENDPOINT')}:signInWithPassword?key=${this.configService.get<string>('FIREBASE_API_KEY')}`;
+			this.apiDebugger.info('sign in url', url);
 			const payload = {
 				email,
 				password,
 				returnSecureToken: true,
 			};
+			this.apiDebugger.info('sign in payload', payload);
 			const response = await this.ensureAuthorizedFirebaseRequest(
 				url,
 				'POST',
 				payload,
 			);
+			this.apiDebugger.info('Is authorized response', response);
 			const { data } = await firstValueFrom(
 				response.pipe(
 					catchError((error: AxiosError | any) => {
+						this.apiDebugger.error(
+							'Error signing in with email password',
+							error,
+						);
 						const firebaseError = error.response.data;
 						this.logger.error('Firebase sign-in error:', firebaseError);
 						throw new FirebaseException(firebaseError);
@@ -643,6 +664,7 @@ export abstract class AuthService {
 			);
 			return data;
 		} catch (err) {
+			this.apiDebugger.error('Error signing in with email password', err);
 			const message =
 				err instanceof FirebaseException
 					? err.message
@@ -698,10 +720,7 @@ export abstract class AuthService {
 			includeOffset: false,
 		});
 		const activeStatuses = [`${LeaseStatus.ACTIVE}`, `${LeaseStatus.EXPIRING}`];
-		const leaseName = this.generators.generateLeaseName(
-			leaseDto.propertyName,
-			leaseDto.unitNumber,
-		);
+
 		const status =
 			DateTime.fromISO(leaseDto.startDate).toJSDate().getDate() >
 			DateTime.utc().toJSDate().getDate()
@@ -710,6 +729,11 @@ export abstract class AuthService {
 
 		return await transactionalEntityManager.transaction(async () => {
 			// Create lease within transaction
+			const name = this.generators.generateLeaseName(
+				leaseDto.propertyName,
+				leaseDto.unitNumber,
+			);
+			//console.log('leaseName', name);
 			const overlappingLease = await transactionalEntityManager
 				.createQueryBuilder(Lease, 'lease')
 				.where('lease."unitId" = :unitId', { unitId })
@@ -741,7 +765,7 @@ export abstract class AuthService {
 				unit,
 				organizationUuid,
 				status,
-				name: leaseName,
+				name,
 				...leaseData,
 			});
 			return await transactionalEntityManager.save(lease);
@@ -867,6 +891,17 @@ export abstract class AuthService {
 				this.errorMessageHelper.parseFirebaseError(err);
 			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
+	}
+
+	private emitEvent(
+		event: string,
+		organizationId: string = null,
+		sendNotification: boolean = true,
+	) {
+		this.eventEmitter.emitAsync(event, {
+			organizationId,
+			sendNotification,
+		});
 	}
 	abstract getActionCodeSettings(baseUrl: string, continueUrl: string): any;
 

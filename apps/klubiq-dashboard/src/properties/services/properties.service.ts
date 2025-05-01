@@ -243,7 +243,6 @@ export class PropertiesService implements IPropertyMetrics {
 	}
 
 	private async mapPlainUnitDetailToDto(unit: Unit): Promise<UnitDto> {
-		console.log('unit data', unit);
 		const totalRent = reduce(
 			unit.leases,
 			(sum, lease) => sum + lease.rentAmount,
@@ -272,7 +271,6 @@ export class PropertiesService implements IPropertyMetrics {
 	private async mapPlainPropertyDetailToDto(
 		property: Property,
 	): Promise<PropertyDetailsDto> {
-		console.log('MAP PROPERTY DETAIL TO DTO');
 		const units = await property.units;
 		const images = await property.images;
 		const totalRent = reduce(
@@ -346,7 +344,7 @@ export class PropertiesService implements IPropertyMetrics {
 	async getPropertyById(uuid: string): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			console.log('currentUser', currentUser);
+			//console.log('currentUser', currentUser);
 			if (!currentUser) {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			}
@@ -354,7 +352,7 @@ export class PropertiesService implements IPropertyMetrics {
 			const cachedProperty =
 				await this.cacheManager.get<PropertyDetailsDto>(cacheKey);
 			if (cachedProperty) {
-				console.log('cachedProperty', cachedProperty);
+				//console.log('cachedProperty', cachedProperty);
 				return cachedProperty;
 			}
 			const property =
@@ -363,7 +361,7 @@ export class PropertiesService implements IPropertyMetrics {
 					currentUser.kUid,
 					uuid,
 				);
-			console.log('property found: ', property);
+			//console.log('property found: ', property);
 			const propertyDetails = await this.mapPlainPropertyDetailToDto(property);
 			await this.cacheManager.set(cacheKey, propertyDetails, this.cacheTTL);
 			await this.updateOrgPropertiesCacheKeys(cacheKey);

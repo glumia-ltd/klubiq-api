@@ -68,21 +68,21 @@ export class NotificationProcessor extends WorkerHost {
 					},
 				);
 			} else if (channel === 'WEB-PUSH') {
-				console.log('PUSH to users', userIds);
+				//console.log('PUSH to users', userIds);
 				this.sendPushNotification(notificationData, userIds);
 			}
 		});
 	}
 	@OnWorkerEvent('completed')
 	async onJobCompleted(jobId: any) {
-		console.log(`Job ${jobId} completed with result`);
+		//console.log(`Job ${jobId} completed with result`);
 		return { jobId, result: true };
 	}
 
 	@OnWorkerEvent('active')
 	onJobActive(jobId: string) {
 		this.logger.log(`Job ${jobId} is active`);
-		console.log(`Job ${jobId} is active`);
+		//console.log(`Job ${jobId} is active`);
 	}
 
 	@OnWorkerEvent('failed')
@@ -141,7 +141,7 @@ export class NotificationProcessor extends WorkerHost {
 					},
 				},
 			);
-			console.log(`Notifications sent to: ${userIds}`, response.data);
+			//console.log(`Notifications sent to: ${userIds}`, response.data);
 			return response.data;
 		} catch (error) {
 			this.logger.error(`Error sending push notification: ${error}`);
