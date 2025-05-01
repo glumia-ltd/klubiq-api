@@ -40,13 +40,13 @@ export class FileUploadService {
 	}
 	// async generatePresignedUrl(fileDataDto: FileUploadDto, bucketName: string) {
 	// 	const key = `${fileDataDto.organization}/${uuidv4()}.${fileDataDto.fileType}`;
-	// 	console.log('KEY: ', key);
+	// 	//console.log('KEY: ', key);
 	// 	const command = new PutObjectCommand({
 	// 		Bucket: bucketName,
 	// 		Key: key,
 	// 	});
 
-	// 	console.log('UPLOAD PARAMS: ', command);
+	// 	//console.log('UPLOAD PARAMS: ', command);
 	// 	const presignedUrl = getSignedUrl(this.s3client, command, {
 	// 		expiresIn: 600,
 	// 	});

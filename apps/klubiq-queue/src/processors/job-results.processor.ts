@@ -61,7 +61,7 @@ export class JobResultsProcessor extends WorkerHost {
 				`http://localhost:${this.APIPort}/api/notifications/mark-as-read-or-delivered`,
 				{ notificationIds, isRead: false, isDelivered: true },
 			);
-			console.log(`Marked notifications as delivered: ${notificationIds}`);
+			//console.log(`Marked notifications as delivered: ${notificationIds}`);
 		} catch (error) {
 			this.logger.error(`Error marking notifications as delivered: ${error}`);
 			return null;

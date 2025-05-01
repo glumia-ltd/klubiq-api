@@ -1,3 +1,4 @@
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 import { NotificationsService } from '@app/notifications/services/notifications.service';
 import {
 	QueueEventsHost,
@@ -6,20 +7,22 @@ import {
 } from '@nestjs/bullmq';
 @QueueEventsListener('notification')
 export class NotificationQueueListener extends QueueEventsHost {
-	constructor(private readonly notificationsService: NotificationsService) {
+	constructor(
+		private readonly notificationsService: NotificationsService,
+		private readonly apiDebugger: ApiDebugger,
+	) {
 		super();
 	}
+
 	// @OnQueueEvent('completed')
-	// async onCompleted(jobId: string) {
-
+	// async onCompleted(job: { jobId: string; returnvalue: any }) {
 	// 	if (job.returnvalue?.notificationIds) {
-
-	// 		this.notificationsService.markAsReadOrDelivered(job.returnvalue.notificationIds, true, false);
+	// 		await this.notificationsService.markAsReadOrDelivered(job.returnvalue.notificationIds, true, false);
 	// 	}
 	// }
 
 	@OnQueueEvent('failed')
 	async onFailed(job: { jobId: string; result: any }) {
-		console.log('Job failed', job);
+		this.apiDebugger.error('Job failed', job);
 	}
 }
