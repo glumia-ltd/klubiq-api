@@ -28,7 +28,7 @@ export class Lease {
 	id?: string;
 
 	@Index()
-	@Column({ length: 255, unique: true, nullable: false })
+	@Column({ length: 255, nullable: true })
 	name?: string;
 
 	@Column({

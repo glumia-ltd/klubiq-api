@@ -38,6 +38,8 @@ import { CsrfMiddleware } from './security/csrf.middleware';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { filteredRoutes } from './security/security-helpers';
+import { CommonModule } from '@app/common/common.module';
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 
 @Module({
 	imports: [
@@ -48,7 +50,7 @@ import { filteredRoutes } from './security/security-helpers';
 		}),
 		// Common modules
 		EventEmitterModule.forRoot(),
-
+		CommonModule,
 		// CUSTOM MODULES
 		AuthModule,
 		ConfigModule,
@@ -78,6 +80,10 @@ import { filteredRoutes } from './security/security-helpers';
 		UsersService,
 		// CsrfService,
 		// Generators,
+		{
+			provide: ApiDebugger,
+			useFactory: () => new ApiDebugger(process.env.NODE_ENV),
+		},
 		{
 			provide: APP_GUARD,
 			useClass: AuthenticationGuard,

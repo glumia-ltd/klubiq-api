@@ -27,7 +27,7 @@ import { AuthMiddleware } from './auth.middleware';
 import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.service';
 import { LeaseRepository } from 'apps/klubiq-dashboard/src/lease/repositories/lease.repository';
 import { LeaseTenantRepository } from '@app/common/repositories/leases-tenant.repositiory';
-import { Generators } from '@app/common/helpers/generators';
+// import { Generators } from '@app/common/helpers/generators';
 import { RolesService } from '@app/common/permissions/roles.service';
 interface FirebaseConfig {
 	type: string;
@@ -103,7 +103,7 @@ const firebaseAdminProvider = {
 		AccessControlService,
 		LeaseService,
 		FileUploadService,
-		Generators,
+		// Generators,
 		RolesService,
 	],
 	exports: [LandlordAuthService, AccessControlService],

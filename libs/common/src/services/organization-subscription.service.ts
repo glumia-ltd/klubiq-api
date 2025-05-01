@@ -28,6 +28,7 @@ import { SharedClsStore } from '../dto/public/shared-clsstore';
 import { ActiveUserData } from '@app/auth';
 import { OrganizationCounter } from '../database/entities/organization-counter.entity';
 import { multiply } from 'lodash';
+import { ApiDebugger } from '../helpers/debug-loggers';
 
 @Injectable()
 export class OrganizationSubscriptionService {
@@ -40,6 +41,7 @@ export class OrganizationSubscriptionService {
 		private readonly subscriptionRepository: OrganizationSubscriptionRepository,
 		private readonly organizationCounterRepository: OrganizationCounterRepository,
 		private readonly subscriptionPlanService: SubscriptionPlanService,
+		private readonly apiDebugger: ApiDebugger,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 
@@ -295,8 +297,9 @@ export class OrganizationSubscriptionService {
 		// Final amount to charge (or refund)
 
 		const finalAmount = newPlanProratedAmount - remainingCredit;
+		this.apiDebugger.info('Final amount to charge: ', finalAmount);
 		// TODO: Add payment processor logic for refund and charge
-		console.log('Final amount to charge: ', finalAmount);
+		//console.log('Final amount to charge: ', finalAmount);
 		// send final amount to payment processor
 
 		// IMPLEMENT: Update subscription

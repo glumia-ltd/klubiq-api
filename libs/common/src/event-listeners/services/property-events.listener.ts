@@ -123,7 +123,7 @@ export class PropertyEventsListener {
 					propertyEvent === EVENTS.PROPERTY_DELETED ? null : payload.actionLink,
 			} as NotificationPayloadDto,
 		};
-		console.log('NOTIFICATION DATA: ', data);
+		//console.log('NOTIFICATION DATA: ', data);
 		await this.notificationQueue.add(
 			'notify',
 			data,

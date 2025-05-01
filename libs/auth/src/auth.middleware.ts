@@ -30,7 +30,7 @@ export class AuthMiddleware implements NestMiddleware {
 		// try {
 		//   const { token, appId } = await this.authService.getAppCheckToken();
 		// 	const decodedToken = await this.authService.verifyAppCheckToken(token);
-		//   console.log('decodedToken', decodedToken);
+		//   //console.log('decodedToken', decodedToken);
 		// 	if (!token && !appId) {
 		// 		throw new UnauthorizedException('No app check token found');
 		// 	}

@@ -19,7 +19,7 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 		isPrimaryTenant: boolean,
 		manager: EntityManager = this.manager,
 	) {
-		console.log('ABOUT TO MAP TENANT TO LEASE');
+		//console.log('ABOUT TO MAP TENANT TO LEASE');
 		if (!tenantId || !leaseId) {
 			throw new BadRequestException('Tenant ID and Lease ID must be provided.');
 		}
@@ -40,13 +40,13 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 			throw new BadRequestException('Lease not found.');
 		}
 
-		console.log('ABOUT TO CREATE LEASE TENANT');
+		//console.log('ABOUT TO CREATE LEASE TENANT');
 		const leasesTenants = manager.create(LeasesTenants, {
 			tenant,
 			lease,
 			isPrimaryTenant,
 		});
-		console.log('LEASE TENANT CREATED');
+		//console.log('LEASE TENANT CREATED');
 		return manager.save(LeasesTenants, leasesTenants);
 	}
 }
