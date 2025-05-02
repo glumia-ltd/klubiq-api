@@ -5,6 +5,8 @@ import {
 	UnauthorizedException,
 	Inject,
 	BadRequestException,
+	ConflictException,
+	ServiceUnavailableException,
 } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 import * as admin from 'firebase-admin';
@@ -563,7 +565,7 @@ export abstract class AuthService {
 		const existingUser =
 			await this.userProfilesRepository.checkTenantUserExist(email);
 		if (existingUser) {
-			throw new FirebaseException('A tenant with this email already exists.');
+			throw new ConflictException('A tenant with this email already exists.');
 		}
 
 		try {
@@ -584,7 +586,9 @@ export abstract class AuthService {
 				this.currentUser.organizationId,
 			);
 			if (!userProfile) {
-				throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
+				throw new ServiceUnavailableException(
+					`${ErrorMessages.USER_NOT_CREATED} due to an unknown error`,
+				);
 			}
 			this.emitEvent(
 				EVENTS.LEASE_CREATED,
@@ -597,7 +601,7 @@ export abstract class AuthService {
 			if (firebaseUserId) {
 				await this.deleteUser(firebaseUserId);
 			}
-			throw new FirebaseException(error);
+			throw error;
 		}
 	}
 
@@ -750,7 +754,7 @@ export abstract class AuthService {
 				})
 				.getOne();
 			if (overlappingLease) {
-				throw new BadRequestException(
+				throw new ConflictException(
 					'The unit already has an active lease during the specified period.',
 				);
 			}
@@ -760,6 +764,9 @@ export abstract class AuthService {
 			if (!unit) {
 				throw new BadRequestException('Invalid unit ID.');
 			}
+			leaseData.rentAmount = this.generators.parseRentAmount(
+				leaseData.rentAmount,
+			);
 
 			const lease = transactionalEntityManager.create(Lease, {
 				startDate: newLeaseStartDate,
@@ -851,10 +858,9 @@ export abstract class AuthService {
 						await this.sendTenantInvitationEmail(createUserDto, invitation);
 					}
 				} catch (error) {
-					console.error('Error creating lease for tenant:', error);
-					throw new Error(
-						`Failed to create lease for tenant. ${error.message}`,
-					);
+					this.apiDebugger.error('Error creating lease for tenant:', error);
+					this.logger.error('Error creating lease for tenant:', error);
+					throw error;
 				}
 			}
 

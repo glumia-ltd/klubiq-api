@@ -245,12 +245,12 @@ export class PropertiesService implements IPropertyMetrics {
 	private async mapPlainUnitDetailToDto(unit: Unit): Promise<UnitDto> {
 		const totalRent = reduce(
 			unit.leases,
-			(sum, lease) => sum + lease.rentAmount,
+			(sum, lease) => sum + (Number(lease.rentAmount) || 0),
 			0,
 		);
 		const totalTenants = reduce(
 			unit.leases,
-			(sum, lease) => sum + lease?.leasesTenants?.length,
+			(sum, lease) => sum + (lease?.leasesTenants?.length ?? 0),
 			0,
 		);
 		return plainToInstance(
@@ -278,7 +278,7 @@ export class PropertiesService implements IPropertyMetrics {
 			(sum, unit) =>
 				sum +
 				(unit?.leases?.reduce(
-					(leaseSum, lease) => leaseSum + lease.rentAmount,
+					(leaseSum, lease) => leaseSum + (Number(lease.rentAmount) || 0),
 					0,
 				) || 0),
 			0,
@@ -288,7 +288,7 @@ export class PropertiesService implements IPropertyMetrics {
 			(sum, unit) =>
 				sum +
 				(unit?.leases?.reduce(
-					(leaseSum, lease) => leaseSum + lease?.leasesTenants?.length,
+					(leaseSum, lease) => leaseSum + (lease?.leasesTenants?.length ?? 0),
 					0,
 				) || 0),
 			0,
@@ -387,7 +387,9 @@ export class PropertiesService implements IPropertyMetrics {
 	): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			if (!currentUser) {
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
 			const property = await this.propertyRepository.updateProperty(
 				uuid,
 				currentUser.organizationId,

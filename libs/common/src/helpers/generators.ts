@@ -79,4 +79,15 @@ export class Generators {
 		const name = `${propPrefix}${unitPrefix}${timeSuffix}`;
 		return name.replace(/ /g, '-');
 	}
+
+	parseRentAmount(rentAmount: any): number {
+		if (typeof rentAmount === 'string') {
+			const amount = rentAmount.replace(/,/g, '');
+			return Number(amount) || 0;
+		}
+		if (Number.isNaN(rentAmount)) {
+			return 0;
+		}
+		return rentAmount;
+	}
 }
