@@ -66,6 +66,7 @@ import { Generators } from '@app/common/helpers/generators';
 import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '@app/common/event-listeners/event-models/event-constants';
+import { OrganizationTenants } from '@app/common';
 
 @Injectable()
 export abstract class AuthService {
@@ -621,12 +622,15 @@ export abstract class AuthService {
 			'x-firebase-gmpid': appId,
 			'x-firebase-appcheck': token,
 		};
-		return this.httpService.request<any>({
+		const data = this.httpService.request<any>({
 			url,
 			method,
 			data: body,
 			headers,
 		});
+		console.log({ data });
+
+		return data;
 	}
 
 	async signInWithEmailPassword(
@@ -833,6 +837,11 @@ export abstract class AuthService {
 						leaseTenant.isPrimaryTenant = true;
 						await transactionalEntityManager.save(leaseTenant);
 
+						const organizationTenant = new OrganizationTenants();
+						organizationTenant.tenant = tenantUser;
+						organizationTenant.organizationUuid = organizationUuid;
+						await transactionalEntityManager.save(organizationTenant);
+
 						const invitation = new TenantInvitation();
 						invitation.userId = userProfile.profileUuid;
 						invitation.firebaseUid = fireUser.uid;
@@ -841,7 +850,6 @@ export abstract class AuthService {
 						await transactionalEntityManager.save(invitation);
 						await this.sendTenantInvitationEmail(createUserDto, invitation);
 					}
-					/// INVITATION DATA
 				} catch (error) {
 					console.error('Error creating lease for tenant:', error);
 					throw new Error(

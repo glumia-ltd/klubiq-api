@@ -40,6 +40,7 @@ import { Cache } from 'cache-manager';
 import { filteredRoutes } from './security/security-helpers';
 import { CommonModule } from '@app/common/common.module';
 import { ApiDebugger } from '@app/common/helpers/debug-loggers';
+import { TenantsModule } from './tenants/tenants.module';
 
 @Module({
 	imports: [
@@ -70,6 +71,7 @@ import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 		NotificationsModule,
 		EventListenerModule,
 		SchedulersModule,
+		TenantsModule,
 	],
 	providers: [
 		ApikeyGuard,
