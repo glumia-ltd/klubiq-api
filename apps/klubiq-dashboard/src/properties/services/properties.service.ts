@@ -46,7 +46,7 @@ import { PropertyEvent } from '../../../../../libs/common/src/event-listeners/ev
 import { CommonConfigService } from '@app/common/config/common-config';
 import { PropertyAddress } from '@app/common';
 import { DateTime } from 'luxon';
-
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
 	private readonly logger = new Logger(PropertiesService.name);
@@ -61,6 +61,7 @@ export class PropertiesService implements IPropertyMetrics {
 		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		private readonly eventEmitter: EventEmitter2,
 		private readonly commonConfigService: CommonConfigService,
+		private readonly apiDebugger: ApiDebugger,
 	) {}
 	async getTotalUnits(organizationUuid: string): Promise<number> {
 		try {
@@ -245,13 +246,30 @@ export class PropertiesService implements IPropertyMetrics {
 	private async mapPlainUnitDetailToDto(unit: Unit): Promise<UnitDto> {
 		const totalRent = reduce(
 			unit.leases,
-			(sum, lease) => sum + lease.rentAmount,
+			(sum, lease) => sum + (Number(lease.rentAmount) || 0),
 			0,
 		);
 		const totalTenants = reduce(
 			unit.leases,
-			(sum, lease) => sum + lease?.leasesTenants?.length,
+			(sum, lease) => sum + (lease?.leasesTenants?.length ?? 0),
 			0,
+		);
+		const resolvedActiveLeaseTenants = await Promise.all(
+			unit.leases[0]?.leasesTenants.map(async (leaseTenant) => {
+				const tenantProfile = await Promise.resolve(leaseTenant.tenant.profile);
+				return {
+					id: leaseTenant.tenantId,
+					profile: {
+						firstName: tenantProfile.firstName,
+						lastName: tenantProfile.lastName,
+						email: tenantProfile.email,
+						profileUuid: tenantProfile.profileUuid,
+						profilePicUrl: tenantProfile.profilePicUrl,
+						phoneNumber: tenantProfile.phoneNumber,
+					},
+					isPrimaryTenant: leaseTenant.isPrimaryTenant,
+				};
+			}),
 		);
 		return plainToInstance(
 			UnitDto,
@@ -264,6 +282,7 @@ export class PropertiesService implements IPropertyMetrics {
 				toilets: unit.toilets,
 				area: unit.area,
 				lease: unit.leases?.[0],
+				tenants: resolvedActiveLeaseTenants,
 			},
 			{ excludeExtraneousValues: true, groups: ['private'] },
 		);
@@ -278,7 +297,7 @@ export class PropertiesService implements IPropertyMetrics {
 			(sum, unit) =>
 				sum +
 				(unit?.leases?.reduce(
-					(leaseSum, lease) => leaseSum + lease.rentAmount,
+					(leaseSum, lease) => leaseSum + (Number(lease.rentAmount) || 0),
 					0,
 				) || 0),
 			0,
@@ -288,7 +307,7 @@ export class PropertiesService implements IPropertyMetrics {
 			(sum, unit) =>
 				sum +
 				(unit?.leases?.reduce(
-					(leaseSum, lease) => leaseSum + lease?.leasesTenants?.length,
+					(leaseSum, lease) => leaseSum + (lease?.leasesTenants?.length ?? 0),
 					0,
 				) || 0),
 			0,
@@ -361,8 +380,9 @@ export class PropertiesService implements IPropertyMetrics {
 					currentUser.kUid,
 					uuid,
 				);
-			//console.log('property found: ', property);
+			this.apiDebugger.info('property found: ', property);
 			const propertyDetails = await this.mapPlainPropertyDetailToDto(property);
+			this.apiDebugger.info('propertyDetails after mapping: ', propertyDetails);
 			await this.cacheManager.set(cacheKey, propertyDetails, this.cacheTTL);
 			await this.updateOrgPropertiesCacheKeys(cacheKey);
 			return propertyDetails;
@@ -387,7 +407,9 @@ export class PropertiesService implements IPropertyMetrics {
 	): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			if (!currentUser) {
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
 			const property = await this.propertyRepository.updateProperty(
 				uuid,
 				currentUser.organizationId,
@@ -565,6 +587,7 @@ export class PropertiesService implements IPropertyMetrics {
 			const cachedProperties =
 				await this.cacheManager.get<PageDto<PropertyListDto>>(cacheKey);
 			if (cachedProperties) {
+				this.apiDebugger.info('cachedProperties', cachedProperties);
 				return cachedProperties;
 			}
 			const [entities, count] =

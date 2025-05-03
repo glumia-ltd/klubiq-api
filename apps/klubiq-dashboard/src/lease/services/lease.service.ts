@@ -37,6 +37,7 @@ import { DateTime } from 'luxon';
 import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '@app/common/event-listeners/event-models/event-constants';
+import { Generators } from '@app/common/helpers/generators';
 @Injectable()
 export class LeaseService implements ILeaseService {
 	private readonly logger = new Logger(LeaseService.name);
@@ -51,6 +52,7 @@ export class LeaseService implements ILeaseService {
 		private readonly leaseRepository: LeaseRepository,
 		private readonly uploadService: FileUploadService,
 		private readonly eventEmitter: EventEmitter2,
+		private readonly generators: Generators,
 	) {}
 
 	private async updateOrgCacheKeys(cacheKey: string) {
@@ -248,7 +250,7 @@ export class LeaseService implements ILeaseService {
 			DateTime.utc().toJSDate().getDate()
 				? LeaseStatus.INACTIVE
 				: LeaseStatus.ACTIVE;
-
+		leaseDto.rentAmount = this.generators.parseRentAmount(leaseDto.rentAmount);
 		const createdLease = await this.leaseRepository.createLease(
 			leaseDto,
 			currentUser.organizationId,
@@ -357,22 +359,20 @@ export class LeaseService implements ILeaseService {
 				endDate: lease.end_date,
 				status: lease.status,
 				paymentFrequency: lease.payment_frequency,
-				tenants: lease.tenant_firstname
-					? [
-							{
-								id: lease.tenant_id,
-								profile: {
-									firstName: lease.tenant_firstname || null,
-									lastName: lease.tenant_lastname || null,
-									email: lease.tenant_email || null,
-									profileUuid: lease.tenant_profileuuid || null,
-									profilePicUrl: lease.tenant_profilepicurl || null,
-									phoneNumber: lease.tenant_phoneNumber || null,
-								},
-								isPrimaryTenant: lease.leasestenants_isprimarytenant || false,
-							},
-						]
-					: [],
+				tenants: [
+					{
+						id: lease.tenant_id,
+						profile: {
+							firstName: lease.tenant_firstname || null,
+							lastName: lease.tenant_lastname || null,
+							email: lease.tenant_email || null,
+							profileUuid: lease.tenant_profileuuid || null,
+							profilePicUrl: lease.tenant_profilepicurl || null,
+							phoneNumber: lease.tenant_phoneNumber || null,
+						},
+						isPrimaryTenant: lease.leasestenants_isprimarytenant || false,
+					},
+				],
 				unitNumber: lease.unit_number,
 				propertyName: lease.property_name,
 				propertyAddress: lease.property_address,
@@ -388,6 +388,23 @@ export class LeaseService implements ILeaseService {
 	}
 
 	private async mapLeaseDetailsToDto(lease: Lease): Promise<LeaseDetailsDto> {
+		const resolvedTenants = await Promise.all(
+			lease.leasesTenants.map(async (leaseTenant) => {
+				const tenantProfile = await Promise.resolve(leaseTenant.tenant.profile);
+				return {
+					id: leaseTenant.tenantId,
+					profile: {
+						firstName: tenantProfile.firstName,
+						lastName: tenantProfile.lastName,
+						email: tenantProfile.email,
+						profileUuid: tenantProfile.profileUuid,
+						profilePicUrl: tenantProfile.profilePicUrl,
+						phoneNumber: tenantProfile.phoneNumber,
+					},
+					isPrimaryTenant: leaseTenant.isPrimaryTenant,
+				};
+			}),
+		);
 		return plainToInstance(
 			LeaseDetailsDto,
 			{
@@ -398,6 +415,8 @@ export class LeaseService implements ILeaseService {
 				status: lease.status,
 				paymentFrequency: lease.paymentFrequency,
 				rentDueDay: lease.rentDueDay,
+				nextPaymentDate: lease.nextDueDate,
+				tenants: resolvedTenants,
 			},
 			{ excludeExtraneousValues: true },
 		);
