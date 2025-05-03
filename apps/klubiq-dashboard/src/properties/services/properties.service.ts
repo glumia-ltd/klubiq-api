@@ -46,7 +46,7 @@ import { PropertyEvent } from '../../../../../libs/common/src/event-listeners/ev
 import { CommonConfigService } from '@app/common/config/common-config';
 import { PropertyAddress } from '@app/common';
 import { DateTime } from 'luxon';
-
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
 	private readonly logger = new Logger(PropertiesService.name);
@@ -61,6 +61,7 @@ export class PropertiesService implements IPropertyMetrics {
 		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		private readonly eventEmitter: EventEmitter2,
 		private readonly commonConfigService: CommonConfigService,
+		private readonly apiDebugger: ApiDebugger,
 	) {}
 	async getTotalUnits(organizationUuid: string): Promise<number> {
 		try {
@@ -253,6 +254,23 @@ export class PropertiesService implements IPropertyMetrics {
 			(sum, lease) => sum + (lease?.leasesTenants?.length ?? 0),
 			0,
 		);
+		const resolvedActiveLeaseTenants = await Promise.all(
+			unit.leases[0]?.leasesTenants.map(async (leaseTenant) => {
+				const tenantProfile = await Promise.resolve(leaseTenant.tenant.profile);
+				return {
+					id: leaseTenant.tenantId,
+					profile: {
+						firstName: tenantProfile.firstName,
+						lastName: tenantProfile.lastName,
+						email: tenantProfile.email,
+						profileUuid: tenantProfile.profileUuid,
+						profilePicUrl: tenantProfile.profilePicUrl,
+						phoneNumber: tenantProfile.phoneNumber,
+					},
+					isPrimaryTenant: leaseTenant.isPrimaryTenant,
+				};
+			}),
+		);
 		return plainToInstance(
 			UnitDto,
 			{
@@ -264,6 +282,7 @@ export class PropertiesService implements IPropertyMetrics {
 				toilets: unit.toilets,
 				area: unit.area,
 				lease: unit.leases?.[0],
+				tenants: resolvedActiveLeaseTenants,
 			},
 			{ excludeExtraneousValues: true, groups: ['private'] },
 		);
@@ -361,8 +380,9 @@ export class PropertiesService implements IPropertyMetrics {
 					currentUser.kUid,
 					uuid,
 				);
-			//console.log('property found: ', property);
+			this.apiDebugger.info('property found: ', property);
 			const propertyDetails = await this.mapPlainPropertyDetailToDto(property);
+			this.apiDebugger.info('propertyDetails after mapping: ', propertyDetails);
 			await this.cacheManager.set(cacheKey, propertyDetails, this.cacheTTL);
 			await this.updateOrgPropertiesCacheKeys(cacheKey);
 			return propertyDetails;
@@ -567,6 +587,7 @@ export class PropertiesService implements IPropertyMetrics {
 			const cachedProperties =
 				await this.cacheManager.get<PageDto<PropertyListDto>>(cacheKey);
 			if (cachedProperties) {
+				this.apiDebugger.info('cachedProperties', cachedProperties);
 				return cachedProperties;
 			}
 			const [entities, count] =
