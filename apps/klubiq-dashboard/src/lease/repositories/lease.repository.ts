@@ -159,8 +159,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				includeArchived,
 			});
 		}
-		const result = await queryBuilder.getRawMany();
-		return result;
+		return await queryBuilder.getRawMany();
 	}
 
 	async getLeaseById(id: string) {
