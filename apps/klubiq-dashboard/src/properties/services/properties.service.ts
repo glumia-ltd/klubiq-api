@@ -35,7 +35,7 @@ import { PropertyManagerAssignmentDto } from '../dto/requests/property-manager.d
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
 import { Unit } from '@app/common/database/entities/unit.entity';
 import { plainToInstance } from 'class-transformer';
-import { filter, padEnd, reduce, transform } from 'lodash';
+import { filter, forEach, reduce, transform } from 'lodash';
 import {
 	PropertyDetailsDto,
 	UnitDto,
@@ -46,7 +46,7 @@ import { PropertyEvent } from '../../../../../libs/common/src/event-listeners/ev
 import { CommonConfigService } from '@app/common/config/common-config';
 import { PropertyAddress } from '@app/common';
 import { DateTime } from 'luxon';
-
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
 	private readonly logger = new Logger(PropertiesService.name);
@@ -61,6 +61,7 @@ export class PropertiesService implements IPropertyMetrics {
 		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		private readonly eventEmitter: EventEmitter2,
 		private readonly commonConfigService: CommonConfigService,
+		private readonly apiDebugger: ApiDebugger,
 	) {}
 	async getTotalUnits(organizationUuid: string): Promise<number> {
 		try {
@@ -243,17 +244,47 @@ export class PropertiesService implements IPropertyMetrics {
 	}
 
 	private async mapPlainUnitDetailToDto(unit: Unit): Promise<UnitDto> {
-		console.log('unit data', unit);
 		const totalRent = reduce(
 			unit.leases,
-			(sum, lease) => sum + lease.rentAmount,
+			(sum, lease) => sum + (Number(lease.rentAmount) || 0),
 			0,
 		);
 		const totalTenants = reduce(
 			unit.leases,
-			(sum, lease) => sum + lease?.leasesTenants?.length,
+			(sum, lease) => sum + (lease?.leasesTenants?.length ?? 0),
 			0,
 		);
+
+		// Safely handle lease tenants
+		let resolvedActiveLeaseTenants = [];
+		if (unit.leases?.[0]?.leasesTenants) {
+			resolvedActiveLeaseTenants = await Promise.all(
+				unit.leases[0].leasesTenants.map(async (leaseTenant) => {
+					if (!leaseTenant?.tenant?.profile) return null;
+
+					const tenantProfile = await Promise.resolve(
+						leaseTenant.tenant.profile,
+					);
+					return {
+						id: leaseTenant.tenantId,
+						profile: {
+							firstName: tenantProfile?.firstName || null,
+							lastName: tenantProfile?.lastName || null,
+							email: tenantProfile?.email || null,
+							profileUuid: tenantProfile?.profileUuid || null,
+							profilePicUrl: tenantProfile?.profilePicUrl || null,
+							phoneNumber: tenantProfile?.phoneNumber || null,
+						},
+						isPrimaryTenant: leaseTenant.isPrimaryTenant || false,
+					};
+				}),
+			);
+			// Filter out any null values
+			resolvedActiveLeaseTenants = resolvedActiveLeaseTenants.filter(
+				(tenant) => tenant !== null,
+			);
+		}
+
 		return plainToInstance(
 			UnitDto,
 			{
@@ -265,6 +296,7 @@ export class PropertiesService implements IPropertyMetrics {
 				toilets: unit.toilets,
 				area: unit.area,
 				lease: unit.leases?.[0],
+				tenants: resolvedActiveLeaseTenants,
 			},
 			{ excludeExtraneousValues: true, groups: ['private'] },
 		);
@@ -272,7 +304,6 @@ export class PropertiesService implements IPropertyMetrics {
 	private async mapPlainPropertyDetailToDto(
 		property: Property,
 	): Promise<PropertyDetailsDto> {
-		console.log('MAP PROPERTY DETAIL TO DTO');
 		const units = await property.units;
 		const images = await property.images;
 		const totalRent = reduce(
@@ -280,7 +311,7 @@ export class PropertiesService implements IPropertyMetrics {
 			(sum, unit) =>
 				sum +
 				(unit?.leases?.reduce(
-					(leaseSum, lease) => leaseSum + lease.rentAmount,
+					(leaseSum, lease) => leaseSum + (Number(lease.rentAmount) || 0),
 					0,
 				) || 0),
 			0,
@@ -290,7 +321,7 @@ export class PropertiesService implements IPropertyMetrics {
 			(sum, unit) =>
 				sum +
 				(unit?.leases?.reduce(
-					(leaseSum, lease) => leaseSum + lease?.leasesTenants?.length,
+					(leaseSum, lease) => leaseSum + (lease?.leasesTenants?.length ?? 0),
 					0,
 				) || 0),
 			0,
@@ -346,7 +377,7 @@ export class PropertiesService implements IPropertyMetrics {
 	async getPropertyById(uuid: string): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			console.log('currentUser', currentUser);
+			//console.log('currentUser', currentUser);
 			if (!currentUser) {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			}
@@ -354,7 +385,7 @@ export class PropertiesService implements IPropertyMetrics {
 			const cachedProperty =
 				await this.cacheManager.get<PropertyDetailsDto>(cacheKey);
 			if (cachedProperty) {
-				console.log('cachedProperty', cachedProperty);
+				//console.log('cachedProperty', cachedProperty);
 				return cachedProperty;
 			}
 			const property =
@@ -363,8 +394,9 @@ export class PropertiesService implements IPropertyMetrics {
 					currentUser.kUid,
 					uuid,
 				);
-			console.log('property found: ', property);
+			this.apiDebugger.info('property found: ', property);
 			const propertyDetails = await this.mapPlainPropertyDetailToDto(property);
+			this.apiDebugger.info('propertyDetails after mapping: ', propertyDetails);
 			await this.cacheManager.set(cacheKey, propertyDetails, this.cacheTTL);
 			await this.updateOrgPropertiesCacheKeys(cacheKey);
 			return propertyDetails;
@@ -389,7 +421,9 @@ export class PropertiesService implements IPropertyMetrics {
 	): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			if (!currentUser) {
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
 			const property = await this.propertyRepository.updateProperty(
 				uuid,
 				currentUser.organizationId,
@@ -505,9 +539,18 @@ export class PropertiesService implements IPropertyMetrics {
 			}
 			createDto?.isMultiUnit ?? createDto.units?.length > 1;
 			createDto.orgUuid = currentUser.organizationId;
-			if (!createDto.isMultiUnit) {
-				createDto.units[0].unitNumber = padEnd(createDto.name, 4, '-1');
-			}
+			forEach(createDto.units, (unit, index) => {
+				if (!createDto.isMultiUnit) {
+					unit.unitNumber = `su-${createDto.name
+						.toLowerCase()
+						.replace(/ /g, '-')}`;
+				} else {
+					unit.unitNumber = `mu-${createDto.name
+						.slice(0, 3)
+						.toLowerCase()
+						.replace(/ /g, '-')}-${unit.unitNumber}-${index + 1}`;
+				}
+			});
 			createDto.managerUid = currentUser.kUid;
 			const createdProperty = await this.propertyRepository.createProperty(
 				createDto,
@@ -558,6 +601,7 @@ export class PropertiesService implements IPropertyMetrics {
 			const cachedProperties =
 				await this.cacheManager.get<PageDto<PropertyListDto>>(cacheKey);
 			if (cachedProperties) {
+				this.apiDebugger.info('cachedProperties', cachedProperties);
 				return cachedProperties;
 			}
 			const [entities, count] =

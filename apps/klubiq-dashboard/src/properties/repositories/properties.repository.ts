@@ -279,7 +279,10 @@ export class PropertyRepository extends BaseRepository<Property> {
 		userId: string,
 		propertyUuid: string,
 	) {
+		const activeStatuses = [LeaseStatus.ACTIVE, LeaseStatus.EXPIRING];
+
 		const propertyData = await this.createQueryBuilder('property')
+			// Basic property relations
 			.leftJoinAndSelect('property.purpose', 'pp')
 			.leftJoinAndSelect('property.status', 'ps')
 			.leftJoinAndSelect('property.type', 'pt')
@@ -288,18 +291,24 @@ export class PropertyRepository extends BaseRepository<Property> {
 			.leftJoinAndSelect('property.address', 'pa')
 			.leftJoinAndSelect('property.manager', 'pm')
 			.leftJoinAndSelect('property.owner', 'po')
+
+			// Units and their relations
 			.leftJoinAndSelect('property.units', 'units')
 			.leftJoinAndSelect('units.images', 'unitImages')
+
+			// Active leases and their relations
 			.leftJoinAndSelect(
 				'units.leases',
 				'unitLeases',
 				'unitLeases.status IN (:...statuses)',
-				{ statuses: [LeaseStatus.ACTIVE, LeaseStatus.EXPIRING] },
+				{ statuses: activeStatuses },
 			)
 			.leftJoinAndSelect('unitLeases.leasesTenants', 'leases_tenants')
-			.where('property.uuid = :propertyUuid', {
-				propertyUuid: propertyUuid,
-			})
+			.leftJoinAndSelect('leases_tenants.tenant', 'tenant')
+			.leftJoinAndSelect('tenant.profile', 'profile')
+
+			// Where conditions
+			.where('property.uuid = :propertyUuid', { propertyUuid })
 			.andWhere('property.organizationUuid = :organizationUuid', {
 				organizationUuid: orgUuid,
 			})
@@ -312,10 +321,15 @@ export class PropertyRepository extends BaseRepository<Property> {
 					});
 				}),
 			)
+			// Add index hints if needed
+			// .useIndex('idx_property_uuid')
+			// .useIndex('idx_property_org')
 			.getOne();
+
 		if (!propertyData) {
 			throw new NotFoundException('Property not found');
 		}
+
 		return propertyData;
 	}
 	async saveDraftProperty(

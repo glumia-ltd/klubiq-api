@@ -5,6 +5,7 @@ import { UserProfile } from '../database/entities/user-profile.entity';
 import { EntityManager } from 'typeorm';
 import { DateTime } from 'luxon';
 import { OrganizationUser } from '@app/common/database/entities/organization-user.entity';
+import { TenantUser } from '../database/entities/tenant.entity';
 
 @Injectable()
 export class UserProfilesRepository extends BaseRepository<UserProfile> {
@@ -94,5 +95,19 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 			{ firebaseUid: userFirebaseId },
 			{ acceptedAt: this.timestamp },
 		);
+	}
+
+	async checkTenantUserExist(email: string): Promise<boolean> {
+		// first check if the user has a login account
+		const count = await this.manager.count(TenantUser, {
+			where: { profile: { email } },
+		});
+		return count > 0;
+	}
+	async checkOrganizationUserExist(email: string): Promise<boolean> {
+		const count = await this.manager.count(OrganizationUser, {
+			where: { profile: { email } },
+		});
+		return count > 0;
 	}
 }

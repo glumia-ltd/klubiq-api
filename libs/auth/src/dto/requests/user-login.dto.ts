@@ -1,7 +1,9 @@
 import {
+	ApiHideProperty,
 	ApiProperty,
 	ApiPropertyOptional,
 	IntersectionType,
+	OmitType,
 	PartialType,
 } from '@nestjs/swagger';
 import { OnboardingLeaseDto } from 'apps/klubiq-dashboard/src/lease/dto/requests/create-lease.dto';
@@ -324,13 +326,9 @@ export class PropertyInvitationDto {
 	name: string;
 }
 
-export class TenantSignUpDto extends PartialType(UserSignUpDto) {
-	@ApiProperty({
-		type: RoleTypeDto,
-	})
-	@IsObject()
-	role: RoleTypeDto;
-
+export class TenantSignUpDto extends PartialType(
+	OmitType(UserSignUpDto, ['password']),
+) {
 	@IsString()
 	@ApiPropertyOptional()
 	@IsOptional()
@@ -339,4 +337,10 @@ export class TenantSignUpDto extends PartialType(UserSignUpDto) {
 	@IsObject()
 	@IsOptional()
 	leaseDetails?: OnboardingLeaseDto;
+
+	@ApiPropertyOptional()
+	@ApiHideProperty()
+	@IsObject()
+	@IsOptional()
+	role?: RoleTypeDto;
 }

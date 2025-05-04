@@ -31,4 +31,5 @@ export class LeaseEvent extends PropertyEvent {
 	leaseName?: string;
 	firstPaymentDate?: string;
 	propertyName?: string;
+	sendNotification: boolean = true;
 }

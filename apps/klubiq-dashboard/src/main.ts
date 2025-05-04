@@ -21,6 +21,7 @@ declare const module: any;
 
 async function bootstrap() {
 	//await repl(KlubiqDashboardModule);
+
 	const customLogger = new CustomLogging(new ConfigService()); // Create an instance of ConfigService
 	const app = await NestFactory.create<NestExpressApplication>(
 		KlubiqDashboardModule,
@@ -102,13 +103,14 @@ async function bootstrap() {
 	// Serve filtered Swagger JSON
 	expressApp.get('/api-json', (req: Request, res: Response) => {
 		const doesQueryExist: any = req.query.role;
-		console.log({ doesQueryExist });
 
 		const excludedPaths = ['/api/auth/verify-email']; // I added this for test purposes. This will be referenced from env later on.
 		const filteredPaths: Record<string, any> = {};
 
 		Object.keys(document.paths).forEach((path) => {
-			if (shouldExcludeRoute(path, doesQueryExist, excludedPaths)) return;
+			if (shouldExcludeRoute(path, doesQueryExist, excludedPaths)) {
+				return;
+			}
 			filteredPaths[path] = document.paths[path];
 		});
 

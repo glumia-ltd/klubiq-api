@@ -13,7 +13,10 @@ import {
 	PropertyImageResponseDto,
 	PropertyListMetadataDto,
 } from './property-list-response.dto';
-import { LeaseDto } from '../../../lease/dto/responses/view-lease.dto';
+import {
+	LeaseDto,
+	LeaseListTenantDto,
+} from '../../../lease/dto/responses/view-lease.dto';
 
 //GROUPS :
 // Private - means only exposed for property details page
@@ -90,6 +93,11 @@ export class UnitDto {
 	@IsArray()
 	@IsOptional()
 	amenities?: string[];
+
+	@Expose({ groups: ['private'] })
+	@ValidateNested({ each: true })
+	@Type(() => LeaseListTenantDto)
+	tenants?: LeaseListTenantDto[];
 }
 
 export class PropertyManagerDto {
@@ -104,7 +112,15 @@ export class PropertyManagerDto {
 
 	@Expose()
 	@IsString()
-	userId: string;
+	profileUuid: string;
+
+	@Expose()
+	@IsString()
+	firstName: string;
+
+	@Expose()
+	@IsString()
+	lastName: string;
 }
 
 export class PropertyDetailsDto {

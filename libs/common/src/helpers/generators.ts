@@ -1,7 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import crypto from 'crypto';
+import { DateTime } from 'luxon';
 
-// Base32 encoding (Crockford’s Alphabet)
+// Base32 encoding (Crockford's Alphabet)
 const BASE32_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
 export class Generators {
@@ -61,5 +62,32 @@ export class Generators {
 			.createHmac('sha256', secret)
 			.update(crypto.randomBytes(32))
 			.digest('hex');
+	}
+
+	generateLeaseName(propertyName: string, unitName: string): string {
+		// Get current timestamp in milliseconds
+		const timestamp = DateTime.utc().toMillis();
+
+		// Take first 3 characters from property name and 2 from unit name
+		const propPrefix = propertyName.slice(0, 3).toUpperCase();
+		const unitPrefix = unitName.slice(0, 2).toUpperCase();
+
+		// Get last 3 digits from timestamp
+		const timeSuffix = timestamp.toString().slice(-3);
+
+		// Combine to form 8 character name (3 + 2 + 3)
+		const name = `${propPrefix}${unitPrefix}${timeSuffix}`;
+		return name.replace(/ /g, '-');
+	}
+
+	parseRentAmount(rentAmount: any): number {
+		if (typeof rentAmount === 'string') {
+			const amount = rentAmount.replace(/,/g, '');
+			return Number(amount) || 0;
+		}
+		if (Number.isNaN(rentAmount)) {
+			return 0;
+		}
+		return rentAmount;
 	}
 }

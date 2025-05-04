@@ -46,11 +46,13 @@ export class LeaseEventsListener {
 			},
 		);
 		await this.helperService.invalidateOrganizationLeaseCache(payload);
-		await this.createNotification(
-			payload,
-			EVENTS.LEASE_CREATED,
-			EmailTypes.LEASE_CREATED,
-		);
+		if (payload.sendNotification) {
+			await this.createNotification(
+				payload,
+				EVENTS.LEASE_CREATED,
+				EmailTypes.LEASE_CREATED,
+			);
+		}
 	}
 
 	private async createNotification(
