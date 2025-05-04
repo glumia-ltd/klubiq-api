@@ -105,8 +105,8 @@ export class LeaseService implements ILeaseService {
 				{
 					id: lease.id,
 					rentAmount: lease.rentamount,
-					startDate: lease.startdate,
-					endDate: lease.enddate,
+					startDate: lease.startdate as Date,
+					endDate: lease.enddate as Date,
 					status: lease.status,
 					//May throw an error. Expecting tenants to be an array of objects with id and profile
 					tenants: [

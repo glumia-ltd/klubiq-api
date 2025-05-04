@@ -281,53 +281,56 @@ export class PropertyRepository extends BaseRepository<Property> {
 	) {
 		const activeStatuses = [LeaseStatus.ACTIVE, LeaseStatus.EXPIRING];
 
-		// use findOne with OR‐conditions rather than a large query builder
-		const property = await this.manager.findOne(Property, {
-			where: [
-				{
-					uuid: propertyUuid,
-					organization: { organizationUuid: orgUuid },
-					owner: { profileUuid: userId },
-				},
-				{
-					uuid: propertyUuid,
-					organization: { organizationUuid: orgUuid },
-					manager: { profileUuid: userId },
-				},
-			],
-			relations: [
-				'purpose',
-				'status',
-				'type',
-				'category',
-				'images',
-				'address',
-				'manager',
-				'owner',
-				'units',
-				'units.images',
-				'units.leases',
-				'units.leases.leasesTenants',
-				'units.leases.leasesTenants.tenant',
-				'units.leases.leasesTenants.tenant.profile',
-			],
-		});
+		const propertyData = await this.createQueryBuilder('property')
+			// Basic property relations
+			.leftJoinAndSelect('property.purpose', 'pp')
+			.leftJoinAndSelect('property.status', 'ps')
+			.leftJoinAndSelect('property.type', 'pt')
+			.leftJoinAndSelect('property.category', 'pc')
+			.leftJoinAndSelect('property.images', 'pi')
+			.leftJoinAndSelect('property.address', 'pa')
+			.leftJoinAndSelect('property.manager', 'pm')
+			.leftJoinAndSelect('property.owner', 'po')
 
-		if (!property) {
+			// Units and their relations
+			.leftJoinAndSelect('property.units', 'units')
+			.leftJoinAndSelect('units.images', 'unitImages')
+
+			// Active leases and their relations
+			.leftJoinAndSelect(
+				'units.leases',
+				'unitLeases',
+				'unitLeases.status IN (:...statuses)',
+				{ statuses: activeStatuses },
+			)
+			.leftJoinAndSelect('unitLeases.leasesTenants', 'leases_tenants')
+			.leftJoinAndSelect('leases_tenants.tenant', 'tenant')
+			.leftJoinAndSelect('tenant.profile', 'profile')
+
+			// Where conditions
+			.where('property.uuid = :propertyUuid', { propertyUuid })
+			.andWhere('property.organizationUuid = :organizationUuid', {
+				organizationUuid: orgUuid,
+			})
+			.andWhere(
+				new Brackets((qb) => {
+					qb.where('property.ownerUid = :ownerUid', {
+						ownerUid: userId,
+					}).orWhere('property.managerUid = :managerUid', {
+						managerUid: userId,
+					});
+				}),
+			)
+			// Add index hints if needed
+			// .useIndex('idx_property_uuid')
+			// .useIndex('idx_property_org')
+			.getOne();
+
+		if (!propertyData) {
 			throw new NotFoundException('Property not found');
 		}
 
-		// post‐filter leases to only include active/expiring
-		(
-			await // post‐filter leases to only include active/expiring
-			property.units
-		)?.forEach((unit) => {
-			unit.leases = unit.leases?.filter((lease) =>
-				activeStatuses.includes(lease.status),
-			);
-		});
-
-		return property;
+		return propertyData;
 	}
 	async saveDraftProperty(
 		propertyUuid: string,

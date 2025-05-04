@@ -254,23 +254,37 @@ export class PropertiesService implements IPropertyMetrics {
 			(sum, lease) => sum + (lease?.leasesTenants?.length ?? 0),
 			0,
 		);
-		const resolvedActiveLeaseTenants = await Promise.all(
-			unit.leases[0]?.leasesTenants.map(async (leaseTenant) => {
-				const tenantProfile = await Promise.resolve(leaseTenant.tenant.profile);
-				return {
-					id: leaseTenant.tenantId,
-					profile: {
-						firstName: tenantProfile.firstName,
-						lastName: tenantProfile.lastName,
-						email: tenantProfile.email,
-						profileUuid: tenantProfile.profileUuid,
-						profilePicUrl: tenantProfile.profilePicUrl,
-						phoneNumber: tenantProfile.phoneNumber,
-					},
-					isPrimaryTenant: leaseTenant.isPrimaryTenant,
-				};
-			}),
-		);
+
+		// Safely handle lease tenants
+		let resolvedActiveLeaseTenants = [];
+		if (unit.leases?.[0]?.leasesTenants) {
+			resolvedActiveLeaseTenants = await Promise.all(
+				unit.leases[0].leasesTenants.map(async (leaseTenant) => {
+					if (!leaseTenant?.tenant?.profile) return null;
+
+					const tenantProfile = await Promise.resolve(
+						leaseTenant.tenant.profile,
+					);
+					return {
+						id: leaseTenant.tenantId,
+						profile: {
+							firstName: tenantProfile?.firstName || null,
+							lastName: tenantProfile?.lastName || null,
+							email: tenantProfile?.email || null,
+							profileUuid: tenantProfile?.profileUuid || null,
+							profilePicUrl: tenantProfile?.profilePicUrl || null,
+							phoneNumber: tenantProfile?.phoneNumber || null,
+						},
+						isPrimaryTenant: leaseTenant.isPrimaryTenant || false,
+					};
+				}),
+			);
+			// Filter out any null values
+			resolvedActiveLeaseTenants = resolvedActiveLeaseTenants.filter(
+				(tenant) => tenant !== null,
+			);
+		}
+
 		return plainToInstance(
 			UnitDto,
 			{
