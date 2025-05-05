@@ -68,8 +68,8 @@ import { Generators } from '@app/common/helpers/generators';
 import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '@app/common/event-listeners/event-models/event-constants';
-import { OrganizationTenants } from '@app/common';
-
+import { OrganizationTenants } from '@app/common/database/entities/organization-tenants.entity';
+import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
@@ -82,7 +82,7 @@ export abstract class AuthService {
 	private currentUser: ActiveUserData;
 	protected readonly tenantEmailVerificationBaseUrl: string;
 	protected readonly tenantEmailAuthContinueUrl: string;
-	protected readonly eventEmitter: EventEmitter2;
+
 	constructor(
 		@Inject('FIREBASE_ADMIN') protected firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') private readonly mapper: Mapper,
@@ -100,6 +100,7 @@ export abstract class AuthService {
 		protected readonly emailService: MailerSendService,
 		protected readonly generators: Generators,
 		protected readonly apiDebugger: ApiDebugger,
+		protected readonly eventEmitter: EventEmitter2,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -553,7 +554,9 @@ export abstract class AuthService {
 		}
 	}
 
-	async createTenant(createUserDto: TenantSignUpDto): Promise<UserProfile> {
+	// Creates a new tenant account without a lease
+	// A tenant is created and then we send an invitation email to activate their account
+	async createTenant(createUserDto: CreateTenantDto): Promise<UserProfile> {
 		this.apiDebugger.info('Creating tenant', createUserDto);
 		this.currentUser = this.cls.get('currentUser');
 
@@ -565,7 +568,59 @@ export abstract class AuthService {
 		const existingUser =
 			await this.userProfilesRepository.checkTenantUserExist(email);
 		if (existingUser) {
-			throw new ConflictException('A tenant with this email already exists.');
+			throw new ConflictException(
+				'This email is already in use by another tenant. Please use a different email.',
+			);
+		}
+
+		try {
+			const fireUser = await this.createUser({
+				email,
+				password: generateString(),
+				displayName,
+			});
+			if (!fireUser) {
+				throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
+			}
+
+			firebaseUserId = fireUser.uid;
+			const userProfile = await this.createTenantPersona(
+				fireUser,
+				createUserDto,
+				this.currentUser.organizationId,
+			);
+			if (!userProfile) {
+				throw new ServiceUnavailableException(
+					`${ErrorMessages.USER_NOT_CREATED} due to an unknown error`,
+				);
+			}
+			return userProfile;
+		} catch (error) {
+			this.apiDebugger.error('Error creating tenant', error);
+			if (firebaseUserId) {
+				await this.deleteUser(firebaseUserId);
+			}
+			throw error;
+		}
+	}
+
+	// Onboards a new tenant account for a lease
+	// A tenant is created and then a lease is created for them
+	async onboardTenant(createUserDto: TenantSignUpDto): Promise<UserProfile> {
+		this.apiDebugger.info('Onboarding tenant', createUserDto);
+		this.currentUser = this.cls.get('currentUser');
+
+		const { email, firstName, lastName } = createUserDto;
+		const displayName = `${firstName} ${lastName}`;
+		let firebaseUserId: string | null = null;
+
+		// check if the user has a login account and is a tenant
+		const existingUser =
+			await this.userProfilesRepository.checkTenantUserExist(email);
+		if (existingUser) {
+			throw new ConflictException(
+				'This email is already in use by another tenant. Please use a different email.',
+			);
 		}
 
 		try {
@@ -785,11 +840,16 @@ export abstract class AuthService {
 	private async createTenantUserWithProfile(
 		transactionalEntityManager: EntityManager,
 		fireUser: any,
-		createUserDto: TenantSignUpDto,
+		createUserDto: TenantSignUpDto | CreateTenantDto,
 	): Promise<{ tenantUser: TenantUser; userProfile: UserProfile }> {
 		const tenantUser = transactionalEntityManager.create(TenantUser, {
 			isActive: true,
 			role: createUserDto.role,
+			companyName: createUserDto.companyName,
+			...('dateOfBirth' in createUserDto
+				? { dateOfBirth: createUserDto.dateOfBirth }
+				: {}),
+			...('notes' in createUserDto ? { notes: createUserDto.notes } : {}),
 		});
 
 		await transactionalEntityManager.save(tenantUser);
@@ -802,6 +862,7 @@ export abstract class AuthService {
 			isPrivacyPolicyAgreed: true,
 			isTermsAndConditionAccepted: true,
 			tenantUser,
+			title: createUserDto.title,
 		});
 
 		const savedUserProfile = await transactionalEntityManager.save(userProfile);
@@ -816,7 +877,7 @@ export abstract class AuthService {
 
 	private async createTenantPersona(
 		fireUser: any,
-		createUserDto: TenantSignUpDto,
+		createUserDto: TenantSignUpDto | CreateTenantDto,
 		organizationUuid: string,
 	): Promise<UserProfile> {
 		const entityManager = this.tenantRepository.manager;
@@ -829,7 +890,11 @@ export abstract class AuthService {
 					createUserDto,
 				);
 
-			if (userProfile && createUserDto.leaseDetails) {
+			if (
+				userProfile &&
+				'leaseDetails' in createUserDto &&
+				createUserDto.leaseDetails
+			) {
 				try {
 					const lease = await this.createLeaseForTenantOnboarding(
 						createUserDto.leaseDetails,
@@ -843,19 +908,6 @@ export abstract class AuthService {
 						leaseTenant.lease = lease;
 						leaseTenant.isPrimaryTenant = true;
 						await transactionalEntityManager.save(leaseTenant);
-
-						const organizationTenant = new OrganizationTenants();
-						organizationTenant.tenant = tenantUser;
-						organizationTenant.organizationUuid = organizationUuid;
-						await transactionalEntityManager.save(organizationTenant);
-
-						const invitation = new TenantInvitation();
-						invitation.userId = userProfile.profileUuid;
-						invitation.firebaseUid = fireUser.uid;
-						invitation.invitedAt = this.timestamp;
-						invitation.token = await this.getInvitationToken(createUserDto);
-						await transactionalEntityManager.save(invitation);
-						await this.sendTenantInvitationEmail(createUserDto, invitation);
 					}
 				} catch (error) {
 					this.apiDebugger.error('Error creating lease for tenant:', error);
@@ -863,6 +915,18 @@ export abstract class AuthService {
 					throw error;
 				}
 			}
+			const organizationTenant = new OrganizationTenants();
+			organizationTenant.tenant = tenantUser;
+			organizationTenant.organizationUuid = organizationUuid;
+			await transactionalEntityManager.save(organizationTenant);
+
+			const invitation = new TenantInvitation();
+			invitation.userId = userProfile.profileUuid;
+			invitation.firebaseUid = fireUser.uid;
+			invitation.invitedAt = this.timestamp;
+			invitation.token = await this.getInvitationToken(createUserDto);
+			await transactionalEntityManager.save(invitation);
+			await this.sendTenantInvitationEmail(createUserDto, invitation);
 
 			return userProfile;
 		});
@@ -870,7 +934,7 @@ export abstract class AuthService {
 
 	// THIS IS TO SEND INVITATION EMAIL TO A USER ADDED TO AN ORGANIZATION
 	async sendTenantInvitationEmail(
-		invitedUserDto: TenantSignUpDto,
+		invitedUserDto: TenantSignUpDto | CreateTenantDto,
 		invitation: TenantInvitation,
 	): Promise<void> {
 		try {
@@ -884,21 +948,33 @@ export abstract class AuthService {
 			);
 			resetPasswordLink += `&email=${invitedUserDto.email}&type=tenant-invitation&token=${invitation.token}`;
 			const actionUrl = replace(resetPasswordLink, '_auth_', 'reset-password');
-			const emailTemplate = EmailTemplates['tenant-invite'];
+			const recipient = {
+				email: invitedUserDto.email,
+				firstName:
+					'firstName' in invitedUserDto
+						? invitedUserDto.firstName
+						: 'companyName' in invitedUserDto
+							? invitedUserDto.companyName
+							: '',
+				lastName: 'lastName' in invitedUserDto ? invitedUserDto.lastName : '',
+			};
+
+			const customData = {
+				username: `${'firstName' in invitedUserDto ? invitedUserDto.firstName : 'companyName' in invitedUserDto ? invitedUserDto.companyName : ''} ${'lastName' in invitedUserDto ? invitedUserDto.lastName : ''}`,
+				property_manager: currentUser.name,
+				expires_after: '72hrs',
+			};
+			let emailTemplate = EmailTemplates['tenant-invite'];
+			if ('leaseDetails' in invitedUserDto && invitedUserDto.leaseDetails) {
+				emailTemplate = EmailTemplates['tenant-onboard'];
+				customData['property_details'] =
+					`${invitedUserDto.leaseDetails.propertyName} ${invitedUserDto.leaseDetails.unitNumber ? `Unit ${invitedUserDto.leaseDetails.unitNumber}` : ''}`;
+			}
 			await this.emailService.sendTransactionalEmail(
-				{
-					email: invitedUserDto.email,
-					firstName: invitedUserDto.firstName,
-					lastName: invitedUserDto.lastName,
-				},
+				recipient,
 				actionUrl,
 				emailTemplate,
-				{
-					username: `${invitedUserDto.firstName} ${invitedUserDto.lastName}`,
-					property_details: `${invitedUserDto.leaseDetails.propertyName} ${invitedUserDto.leaseDetails.unitNumber ? `Unit ${invitedUserDto.leaseDetails.unitNumber}` : ''}`,
-					property_manager: currentUser.name,
-					expires_after: '72hrs',
-				},
+				customData,
 			);
 		} catch (err) {
 			const firebaseErrorMessage =

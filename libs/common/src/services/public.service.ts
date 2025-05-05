@@ -40,7 +40,9 @@ export class PublicService {
 	async getOrganizationTenants(orgUuid: string): Promise<TenantDto[]> {
 		try {
 			this.currentUser = this.cls.get('currentUser');
-			if (!orgUuid || orgUuid !== this.currentUser.organizationId) return [];
+			if (!orgUuid || orgUuid !== this.currentUser.organizationId) {
+				return [];
+			}
 			const cachedTenants = await this.cacheManager.get<TenantDto[]>(
 				`${this.cacheKey}/${this.currentUser.organizationId}`,
 			);

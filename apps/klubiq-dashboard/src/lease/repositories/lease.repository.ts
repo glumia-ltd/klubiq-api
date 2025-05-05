@@ -115,6 +115,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 			.select([
 				// Lease fields (poo schema)
 				'lease.id as id',
+				'lease.name AS name',
 				'lease.startDate AS startDate',
 				'lease.endDate AS endDate',
 				'lease.rentAmount AS rentAmount',
@@ -132,6 +133,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 
 				// TenantUser fields (kdo schema)
 				'tenant.id as tenant_id',
+				'tenant.companyName as tenant_companyName',
 				'tenant.isActive as tenant_isActive',
 
 				// UserProfile fields (kdo schema)
@@ -177,6 +179,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 			.innerJoin('property.address', 'address')
 			.select([
 				'lease.id AS id',
+				'lease.name AS name',
 				'lease.status AS status',
 				'TO_CHAR(lease."startDate"::DATE, \'YYYY-MM-DD\') AS start_date',
 				'TO_CHAR(lease."endDate"::DATE, \'YYYY-MM-DD\') AS end_date',
@@ -190,6 +193,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				'property.isMultiUnit AS is_multi_unit_property',
 				"TO_CHAR(poo.calculate_next_rent_due_date(lease.startDate, lease.endDate, lease.rentDueDay, lease.paymentFrequency, lease.customPaymentFrequency, lease.lastPaymentDate)::DATE, 'YYYY-MM-DD')AS next_payment_date",
 				'tenant.id AS tenant_id',
+				'tenant.companyName AS tenant_companyName',
 				'profile.firstName AS tenant_firstName',
 				'profile.lastName AS tenant_lastName',
 				'profile.email AS tenant_email',
@@ -291,6 +295,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				// TenantUser fields (kdo schema)
 				'tenant.id',
 				'tenant.isActive',
+				'tenant.companyName',
 
 				// UserProfile fields (kdo schema)
 				'profile.profileUuid',

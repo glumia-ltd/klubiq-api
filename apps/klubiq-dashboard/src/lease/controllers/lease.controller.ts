@@ -153,10 +153,10 @@ export class LeaseController {
 	})
 	async addTenants(
 		@Param('id') id: string,
-		@Body() tenantDtos: CreateTenantDto[],
+		@Body() tenantDto: CreateTenantDto,
 	) {
 		try {
-			return await this.leaseService.addTenantToLease(tenantDtos, id);
+			return await this.leaseService.addTenantToLease(tenantDto, id);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}

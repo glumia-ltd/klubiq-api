@@ -1,5 +1,6 @@
 import {
 	BadRequestException,
+	ConflictException,
 	ForbiddenException,
 	Inject,
 	Injectable,
@@ -32,12 +33,13 @@ import { GetLeaseDto } from '../dto/requests/get-lease.dto';
 import { ConfigService } from '@nestjs/config';
 import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 import { plainToInstance } from 'class-transformer';
-import { filter } from 'lodash';
+import { filter, isEmpty } from 'lodash';
 import { DateTime } from 'luxon';
 import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '@app/common/event-listeners/event-models/event-constants';
 import { Generators } from '@app/common/helpers/generators';
+import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
 @Injectable()
 export class LeaseService implements ILeaseService {
 	private readonly logger = new Logger(LeaseService.name);
@@ -53,6 +55,7 @@ export class LeaseService implements ILeaseService {
 		private readonly uploadService: FileUploadService,
 		private readonly eventEmitter: EventEmitter2,
 		private readonly generators: Generators,
+		private readonly userProfilesRepository: UserProfilesRepository,
 	) {}
 
 	private async updateOrgCacheKeys(cacheKey: string) {
@@ -108,21 +111,27 @@ export class LeaseService implements ILeaseService {
 					startDate: lease.startdate as Date,
 					endDate: lease.enddate as Date,
 					status: lease.status,
-					//May throw an error. Expecting tenants to be an array of objects with id and profile
-					tenants: [
-						{
-							id: lease.tenant_id,
-							profile: {
-								firstName: lease.profile_firstname || null,
-								lastName: lease.profile_lastname || null,
-								email: lease.profile_email || null,
-								profileUuid: lease.profile_profileuuid || null,
-								profilePicUrl: lease.profile_profilepicurl || null,
-								phoneNumber: lease.profile_phonenumber || null,
-							},
-							isPrimaryTenant: lease.leasestenants_isprimarytenant || false,
-						},
-					],
+					name: lease.name,
+					// Safely map raw tenant fields into an array of { id, profile, isPrimaryTenant } objects; use fallback values to avoid runtime errors
+					tenants:
+						lease.tenant_id != null && !isEmpty(lease.profile)
+							? [
+									{
+										id: lease.tenant_id,
+										profile: {
+											firstName: lease.profile_firstname ?? '',
+											lastName: lease.profile_lastname ?? '',
+											email: lease.profile_email ?? '',
+											profileUuid: lease.profile_profileuuid ?? '',
+											profilePicUrl: lease.profile_profilepicurl ?? '',
+											phoneNumber: lease.profile_phonenumber ?? '',
+										},
+										isPrimaryTenant: Boolean(
+											lease.leasestenants_isprimarytenant,
+										),
+									},
+								]
+							: [],
 					unitNumber: lease.unit_unitnumber,
 					property: {
 						name: lease.property_name,
@@ -147,12 +156,14 @@ export class LeaseService implements ILeaseService {
 					return {
 						id: leaseTenant.tenantId,
 						profile: {
-							firstName: tenantProfile.firstName,
-							lastName: tenantProfile.lastName,
-							email: tenantProfile.email,
-							profileUuid: tenantProfile.profileUuid,
-							profilePicUrl: tenantProfile.profilePicUrl,
-							phoneNumber: tenantProfile.phoneNumber,
+							firstName:
+								tenantProfile.firstName || leaseTenant.tenant.companyName || '',
+							lastName: tenantProfile.lastName || '',
+							email: tenantProfile.email || '',
+							profileUuid: tenantProfile.profileUuid || '',
+							profilePicUrl: tenantProfile.profilePicUrl || '',
+							phoneNumber: tenantProfile.phoneNumber || '',
+							companyName: leaseTenant.tenant.companyName || '',
 						},
 						isPrimaryTenant: leaseTenant.isPrimaryTenant,
 					};
@@ -164,6 +175,7 @@ export class LeaseService implements ILeaseService {
 				LeaseDto,
 				{
 					id: lease.id,
+					name: lease.name,
 					rentAmount: lease.rentAmount,
 					startDate: lease.startDate,
 					endDate: lease.endDate,
@@ -310,10 +322,18 @@ export class LeaseService implements ILeaseService {
 	}
 
 	async addTenantToLease(
-		tenantDtos: CreateTenantDto[],
+		tenantDto: CreateTenantDto,
 		leaseId: string,
 	): Promise<LeaseDetailsDto> {
 		try {
+			const existingTenant =
+				await this.userProfilesRepository.checkTenantUserExist(tenantDto.email);
+			if (existingTenant) {
+				throw new ConflictException(
+					'This email is already in use by another tenant. Please use a different email.',
+				);
+			}
+			const tenantDtos = [tenantDto];
 			const updatedLease = await this.leaseRepository.addTenantToLease(
 				tenantDtos,
 				leaseId,
@@ -354,6 +374,7 @@ export class LeaseService implements ILeaseService {
 			LeaseDetailsDto,
 			{
 				id: lease.id,
+				name: lease.name,
 				rentAmount: lease.rent_amount,
 				startDate: lease.start_date,
 				endDate: lease.end_date,
@@ -363,12 +384,14 @@ export class LeaseService implements ILeaseService {
 					{
 						id: lease.tenant_id,
 						profile: {
-							firstName: lease.tenant_firstname || null,
-							lastName: lease.tenant_lastname || null,
-							email: lease.tenant_email || null,
-							profileUuid: lease.tenant_profileuuid || null,
-							profilePicUrl: lease.tenant_profilepicurl || null,
-							phoneNumber: lease.tenant_phoneNumber || null,
+							firstName:
+								lease.tenant_firstname || lease.tenant_companyName || '',
+							lastName: lease.tenant_lastname || '',
+							email: lease.tenant_email || '',
+							profileUuid: lease.tenant_profileuuid || '',
+							profilePicUrl: lease.tenant_profilepicurl || '',
+							phoneNumber: lease.tenant_phoneNumber || '',
+							companyName: lease.tenant_companyName || '',
 						},
 						isPrimaryTenant: lease.leasestenants_isprimarytenant || false,
 					},
@@ -394,12 +417,14 @@ export class LeaseService implements ILeaseService {
 				return {
 					id: leaseTenant.tenantId,
 					profile: {
-						firstName: tenantProfile.firstName,
-						lastName: tenantProfile.lastName,
-						email: tenantProfile.email,
-						profileUuid: tenantProfile.profileUuid,
-						profilePicUrl: tenantProfile.profilePicUrl,
-						phoneNumber: tenantProfile.phoneNumber,
+						firstName:
+							tenantProfile.firstName || leaseTenant.tenant.companyName || '',
+						lastName: tenantProfile.lastName || '',
+						email: tenantProfile.email || '',
+						profileUuid: tenantProfile.profileUuid || '',
+						profilePicUrl: tenantProfile.profilePicUrl || '',
+						phoneNumber: tenantProfile.phoneNumber || '',
+						companyName: leaseTenant.tenant.companyName || '',
 					},
 					isPrimaryTenant: leaseTenant.isPrimaryTenant,
 				};

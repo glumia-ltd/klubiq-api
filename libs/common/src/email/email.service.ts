@@ -15,6 +15,11 @@ export class MailerSendService {
 	private readonly transactionalEmailSender: string;
 	private readonly transactionalEmailSenderName: string;
 	private readonly logger = new Logger(MailerSendService.name);
+	private readonly emailCopyrightText: string;
+	//private readonly emailLogoUrl: string;
+	//private readonly homePageUrl: string;
+
+	// TODO: Add a logo to the email and home page url
 
 	constructor(private readonly configService: ConfigService) {
 		this.apiKey = this.configService.get('EMAIL_API_KEY');
@@ -24,6 +29,9 @@ export class MailerSendService {
 		);
 		this.transactionalEmailSenderName = this.configService.get<string>(
 			'TRANSACTIONAL_EMAIL_SENDER_NAME',
+		);
+		this.emailCopyrightText = this.configService.get<string>(
+			'EMAIL_COPYRIGHT_TEXT',
 		);
 		this.mailerSend = new MailerSend({ apiKey: this.apiKey }); // Set your API key
 	}
@@ -40,8 +48,9 @@ export class MailerSendService {
 				email: emailRecipient.email,
 				data: {
 					username: emailRecipient.firstName,
-					support_email: this.configService.get('SUPPORT_EMAIL'),
 					action_link: actionLink,
+					support_email: this.supportEmail,
+					copyright: this.emailCopyrightText,
 					...customData,
 				},
 			},
@@ -68,7 +77,7 @@ export class MailerSendService {
 		const templatedEmailParams = new EmailParams()
 			.setFrom(sentFrom)
 			.setTo(myRecipients)
-			.setReplyTo(sentFrom)
+			//.setReplyTo(sentFrom)
 			.setSubject(params.subject)
 			.setHtml(params.body.html)
 			.setText(params.body.text)
