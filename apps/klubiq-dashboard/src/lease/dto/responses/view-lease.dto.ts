@@ -44,6 +44,10 @@ export class TenantProfileDto {
 	@Expose()
 	@IsString()
 	phoneNumber: string;
+
+	@Expose()
+	@IsString()
+	companyName: string;
 }
 
 export class LeaseListTenantDto {
@@ -79,8 +83,12 @@ export class LeaseListPropertyDto {
 }
 export class LeaseDto {
 	@Expose()
-	@IsNumber()
+	@IsString()
 	id: string;
+
+	@Expose()
+	@IsString()
+	name: string;
 
 	@Expose()
 	@IsString()
@@ -121,6 +129,10 @@ export class LeaseDetailsDto {
 	@Expose()
 	@IsString()
 	id: string;
+
+	@Expose()
+	@IsString()
+	name: string;
 
 	@Expose()
 	@IsString()

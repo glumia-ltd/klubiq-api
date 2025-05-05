@@ -1,11 +1,15 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+	ApiHideProperty,
+	ApiProperty,
+	ApiPropertyOptional,
+} from '@nestjs/swagger';
 import {
 	IsDateString,
 	IsEmail,
 	IsNumber,
+	IsObject,
 	IsOptional,
-	IsPhoneNumber,
 	IsString,
 } from 'class-validator';
 
@@ -30,8 +34,7 @@ export class CreateTenantDto {
 	@ApiProperty()
 	@IsEmail()
 	@IsString()
-	@IsOptional()
-	email?: string;
+	email: string;
 
 	@AutoMap()
 	@ApiProperty()
@@ -41,7 +44,7 @@ export class CreateTenantDto {
 
 	@AutoMap()
 	@ApiProperty()
-	@IsPhoneNumber()
+	@IsOptional()
 	@IsString()
 	lastName?: string;
 
@@ -62,4 +65,13 @@ export class CreateTenantDto {
 	@IsOptional()
 	@IsString()
 	title?: string;
+
+	@ApiPropertyOptional()
+	@ApiHideProperty()
+	@IsObject()
+	@IsOptional()
+	role?: {
+		name: string;
+		id: number;
+	};
 }

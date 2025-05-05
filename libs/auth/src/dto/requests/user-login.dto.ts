@@ -47,19 +47,21 @@ export class UserLoginDto {
  * Represents a user sign up data transfer object.
  */
 export class UserSignUpDto extends PartialType(UserLoginDto) {
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: "User's first name",
 		example: 'John',
 	})
+	@IsOptional()
 	@IsString()
-	firstName: string;
+	firstName?: string;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: "User's last name",
 		example: 'Doe',
 	})
+	@IsOptional()
 	@IsString()
-	lastName: string;
+	lastName?: string;
 
 	@ApiProperty({
 		description: "User's password",
@@ -333,6 +335,16 @@ export class TenantSignUpDto extends PartialType(
 	@ApiPropertyOptional()
 	@IsOptional()
 	phoneNumber?: string;
+
+	@IsString()
+	@ApiPropertyOptional()
+	@IsOptional()
+	companyName?: string;
+
+	@IsString()
+	@ApiPropertyOptional()
+	@IsOptional()
+	title?: string;
 
 	@IsObject()
 	@IsOptional()
