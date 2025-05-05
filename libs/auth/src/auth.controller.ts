@@ -38,7 +38,7 @@ import { OrganizationSettingsService } from '@app/common/services/organization-s
 import { ErrorMessages, OrganizationSubscriptionService } from '@app/common';
 import { RolesService } from '@app/common/permissions/roles.service';
 import { UserRoles } from '@app/common/config/config.constants';
-
+import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 @ApiTags('auth')
 @ApiBearerAuth()
 @ApiSecurity('ApiKey')
@@ -254,6 +254,22 @@ export class AuthController {
 		description: 'Onboards a new tenant account for a lease',
 	})
 	async onboardTenantUser(@Body() createUser: TenantSignUpDto) {
+		const tenantRole = await this.rolesService.getRoleByName(UserRoles.TENANT);
+		if (!tenantRole) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		createUser.role = {
+			id: tenantRole.id,
+			name: tenantRole.name,
+		};
+		return await this.landlordAuthService.onboardTenant(createUser);
+	}
+	@Auth(AuthType.Bearer)
+	@Post('create-tenant')
+	@ApiOkResponse({
+		description: 'Creates a new tenant account without a lease',
+	})
+	async createTenant(@Body() createUser: CreateTenantDto) {
 		const tenantRole = await this.rolesService.getRoleByName(UserRoles.TENANT);
 		if (!tenantRole) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);

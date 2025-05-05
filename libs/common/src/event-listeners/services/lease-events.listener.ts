@@ -38,15 +38,15 @@ export class LeaseEventsListener {
 	}
 	@OnEvent(EVENTS.LEASE_CREATED, { async: true })
 	async handleLeaseCreatedEvent(payload: LeaseEvent) {
-		this.currencyFormat = new Intl.NumberFormat(
-			`${payload.language}-${payload.locale}`,
-			{
-				style: 'currency',
-				currency: payload.currency,
-			},
-		);
 		await this.helperService.invalidateOrganizationLeaseCache(payload);
 		if (payload.sendNotification) {
+			this.currencyFormat = new Intl.NumberFormat(
+				`${payload.language}-${payload.locale}`,
+				{
+					style: 'currency',
+					currency: payload.currency,
+				},
+			);
 			await this.createNotification(
 				payload,
 				EVENTS.LEASE_CREATED,

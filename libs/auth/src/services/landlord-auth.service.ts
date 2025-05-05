@@ -54,6 +54,7 @@ import { NotificationsSubscriptionService } from '@app/notifications/services/no
 import { Generators } from '@app/common/helpers/generators';
 import { TenantRepository } from '@app/common/repositories/tenant.repository';
 import { ApiDebugger } from '@app/common/helpers/debug-loggers';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 @Injectable()
 export class LandlordAuthService extends AuthService {
 	private readonly emailVerificationBaseUrl: string;
@@ -82,6 +83,7 @@ export class LandlordAuthService extends AuthService {
 		protected readonly tenantRepository: TenantRepository,
 		protected readonly generators: Generators,
 		protected readonly apiDebugger: ApiDebugger,
+		protected readonly eventEmitter: EventEmitter2,
 	) {
 		super(
 			firebaseAdminApp,
@@ -100,6 +102,7 @@ export class LandlordAuthService extends AuthService {
 			emailService,
 			generators,
 			apiDebugger,
+			eventEmitter,
 		);
 		this.emailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
