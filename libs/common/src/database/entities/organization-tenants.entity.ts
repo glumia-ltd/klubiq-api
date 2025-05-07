@@ -26,7 +26,7 @@ export class OrganizationTenants {
 		() => Organization,
 		(organization) => organization.organizationTenants,
 		{
-			lazy: true,
+			lazy: false,
 			onDelete: 'CASCADE',
 		},
 	)
@@ -34,7 +34,7 @@ export class OrganizationTenants {
 	organization?: Organization;
 
 	@ManyToOne(() => TenantUser, (tenant) => tenant.organizationTenants, {
-		lazy: true,
+		lazy: false,
 		onDelete: 'CASCADE',
 	})
 	@JoinColumn({ name: 'tenantId' })

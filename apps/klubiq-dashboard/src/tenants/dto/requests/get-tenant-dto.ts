@@ -5,6 +5,9 @@ import { IntersectionType } from '@nestjs/swagger';
 export class TenantFilterDto {
 	@IsOptional()
 	search?: string;
+
+	@IsOptional()
+	tenantId?: string;
 }
 export class GetTenantDto extends IntersectionType(
 	TenantFilterDto,

@@ -36,7 +36,7 @@ export class TenantUser {
 	@OneToOne(() => UserProfile, {
 		cascade: ['remove', 'update'],
 		nullable: true,
-		lazy: true,
+		lazy: false,
 	})
 	@JoinColumn({
 		name: 'profileUuid',

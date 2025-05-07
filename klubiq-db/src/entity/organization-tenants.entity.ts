@@ -34,7 +34,7 @@ export class OrganizationTenants {
 	organization?: Organization;
 
 	@ManyToOne(() => TenantUser, (tenant) => tenant.organizationTenants, {
-		lazy: true,
+		lazy: false,
 		onDelete: 'CASCADE',
 	})
 	@JoinColumn({ name: 'tenantId' })

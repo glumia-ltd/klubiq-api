@@ -1,33 +1,134 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+	BadRequestException,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Query,
+} from '@nestjs/common';
 import { TenantsService } from '../services/tenants.service';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Auth, AuthType } from '@app/auth';
+import {
+	ApiBearerAuth,
+	ApiOkResponse,
+	ApiTags,
+	ApiBadRequestResponse,
+	ApiHeader,
+} from '@nestjs/swagger';
 import { GetTenantDto } from '../dto/requests/get-tenant-dto';
+import { Auth, Permission } from '@app/auth/decorators/auth.decorator';
+import { PageDto, Permissions } from '@app/common';
+import { AuthType } from '@app/auth/types/firebase.types';
+import { LeaseDto, TenantDto } from '../dto/responses/lease-tenant.dto';
 
 @ApiTags('tenant')
-@Controller('tenants')
 @ApiBearerAuth()
 @Auth(AuthType.Bearer)
+@Controller('tenants')
+@ApiHeader({
+	name: 'x-tenant-id',
+	description: 'The organization tenant id',
+	required: true,
+})
 export class TenantsController {
 	constructor(private readonly tenantsService: TenantsService) {}
-
-	@Get('lease')
-	getAllTenantwithLease(@Query() getTenantDto: GetTenantDto) {
-		return this.tenantsService.findAll(getTenantDto);
+	@Permission(Permissions.READ)
+	@Get()
+	@HttpCode(HttpStatus.OK)
+	@ApiOkResponse({
+		description: 'Returns details of all associated tenants',
+		type: [TenantDto],
+	})
+	@ApiBadRequestResponse({ description: 'Invalid query parameters' })
+	async getAllTenantWithLease(@Query() getTenantDto: GetTenantDto) {
+		try {
+			return await this.tenantsService.getAllTenants(getTenantDto);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
+	@Permission(Permissions.READ)
 	@Get('lease/:id')
-	getTenantPerLease(@Param('id') id: string) {
-		return this.tenantsService.findByLeaseId(id);
+	@HttpCode(HttpStatus.OK)
+	@ApiOkResponse({
+		description: 'Returns lease details by lease ID',
+		type: LeaseDto,
+	})
+	@ApiBadRequestResponse({ description: 'Invalid lease ID' })
+	async getTenantPerLease(@Param('id') id: string) {
+		try {
+			return await this.tenantsService.getLeaseById(id);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
+	@Permission(Permissions.READ)
+	@Get('organization')
+	@HttpCode(HttpStatus.OK)
+	@ApiOkResponse({
+		description:
+			'Returns paginated list of tenants in an organization based on query params',
+		type: PageDto<TenantDto>,
+	})
+	async getOrganizationTenants(@Query() getTenantDto: GetTenantDto) {
+		try {
+			return await this.tenantsService.getOrganizationTenants(getTenantDto);
+		} catch (error) {
+			console.log({ error });
+
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Permission(Permissions.READ)
 	@Get(':id')
-	getTenantDetails(@Param('id') id: string) {
-		return this.tenantsService.findOne(id);
+	@HttpCode(HttpStatus.OK)
+	@ApiOkResponse({
+		description: 'Returns tenant details by tenant ID',
+		type: TenantDto,
+	})
+	@ApiBadRequestResponse({ description: 'Invalid tenant ID' })
+	async getTenantDetails(@Param('id') id: string) {
+		try {
+			return await this.tenantsService.getSingleTenant(id);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 
-	@Get('organization/:organizationUuid')
-	getOrganizationTenants(@Param('organizationUuid') organizationUuid: string) {
-		return this.tenantsService.findByOrganizationId(organizationUuid);
+	@Permission(Permissions.DELETE)
+	@Delete(':tenantId/remove')
+	@HttpCode(HttpStatus.OK)
+	@ApiOkResponse({
+		description: 'Removes a tenant from an organization',
+	})
+	@ApiBadRequestResponse({ description: 'Invalid tenant ID' })
+	async removeTenant(@Param('tenantId') tenantId: string) {
+		try {
+			return this.tenantsService.removeTenantFromOrganization(tenantId);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	@Permission(Permissions.DELETE)
+	@Delete(':tenantId/:leaseId/remove')
+	@HttpCode(HttpStatus.OK)
+	@ApiOkResponse({
+		description: 'Removes a tenant from a lease',
+	})
+	@ApiBadRequestResponse({ description: 'Invalid tenant ID' })
+	async removeTenantFromLease(
+		@Param('tenantId') tenantId: string,
+		@Param('leaseId') leaseId: string,
+	) {
+		try {
+			return this.tenantsService.removeTenantFromLease(tenantId, leaseId);
+		} catch (error) {
+			throw new BadRequestException(error.message);
+		}
 	}
 }
