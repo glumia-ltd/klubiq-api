@@ -59,6 +59,71 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 		return userData;
 	}
 
+	async getLandLordUserInfoByEmailAndFirebaseId(
+		email: string,
+		firebaseId: string,
+	) {
+		return await this.manager
+			.createQueryBuilder(OrganizationUser, 'user')
+			.leftJoin('user.profile', 'profile')
+			.leftJoin('user.organization', 'organization')
+			.leftJoin('user.orgRole', 'orgRole')
+			.leftJoin('profile.preferences', 'preferences')
+			.select([
+				'user.organizationUserUuid AS uuid',
+				'user.isAccountVerified AS is_account_verified',
+				'profile.firstName AS profile_first_name',
+				'profile.lastName AS profile_last_name',
+				'profile.firebaseId AS firebase_id',
+				'profile.profileUuid AS profile_uuid',
+				'profile.email AS email',
+				'profile.phoneNumber AS phone',
+				'profile.profilePicUrl AS profile_pic_url',
+				'profile.isPrivacyPolicyAgreed AS is_privacy_policy_agreed',
+				'profile.isTermsAndConditionAccepted AS is_terms_and_condition_accepted',
+				'orgRole.name AS org_role',
+				'organization.organizationUuid AS org_uuid',
+				'organization.tenantId AS tenant_id',
+				'organization.name AS organization',
+				'preferences.preferences AS user_preferences',
+			])
+			.where('profile.email = :email', { email })
+			.andWhere('profile.firebaseId = :firebaseId', { firebaseId })
+			.andWhere('user.isActive = :isActive', { isActive: true })
+			.getRawOne();
+	}
+
+	async getTenantUserInfoByEmailAndFirebaseId(
+		email: string,
+		firebaseId: string,
+	) {
+		return await this.manager
+			.createQueryBuilder(TenantUser, 'user')
+			.leftJoin('user.role', 'role')
+			.leftJoin('user.profile', 'profile')
+			.leftJoin('profile.preferences', 'user_preferences')
+			.select([
+				'user.id AS uuid',
+				'user.isActive AS isActive',
+				'user.companyName AS companyName',
+				'profile.firstName AS firstName',
+				'profile.lastName AS lastName',
+				'profile.firebaseId AS firebaseId',
+				'profile.profileUuid AS profileUuid',
+				'profile.email AS email',
+				'profile.phoneNumber AS phone',
+				'profile.profilePicUrl AS profilePicUrl',
+				'profile.isPrivacyPolicyAgreed AS isPrivacyPolicyAgreed',
+				'profile.isTermsAndConditionAccepted AS isTermsAndConditionAccepted',
+				'role.name AS role',
+				'user_preferences.preferences AS userPreferences',
+			])
+			.where('profile.email = :email', { email })
+			.andWhere('profile.firebaseId = :firebaseId', { firebaseId })
+			.andWhere('user.isActive = :isActive', { isActive: true })
+			.getRawOne();
+	}
+
 	async checkUserExist(email: string): Promise<boolean> {
 		return await this.repository.exists({
 			where: { email: email },

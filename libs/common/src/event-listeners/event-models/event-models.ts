@@ -1,4 +1,5 @@
 import { TenantDto } from '@app/common/dto/responses/tenant.dto';
+import { IntersectionType } from '@nestjs/swagger';
 
 export class PropertyEvent {
 	organizationId: string;
@@ -32,4 +33,11 @@ export class LeaseEvent extends PropertyEvent {
 	firstPaymentDate?: string;
 	propertyName?: string;
 	sendNotification: boolean = true;
+}
+
+export class TenantEvent extends IntersectionType(PropertyEvent, TenantDto) {
+	tenantId?: string;
+	tenantName?: string;
+	tenantEmail?: string;
+	tenantPhone?: string;
 }

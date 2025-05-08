@@ -5,7 +5,7 @@ example
 KlA-999: Addding new Danger variation to Button Component
 -->
 
-### Ticket # (if applicable)
+### Ticket Number: `${{ github.head_ref.split('/')[1] }}`
 
 <!-- Link the ticket if applicable -->
 
