@@ -22,6 +22,7 @@ export class Util {
 			totalUnpaidCounter,
 		};
 	}
+
 	calculateNextRentDueDate(lease: Lease): Date | null {
 		const {
 			startDate,
@@ -31,53 +32,45 @@ export class Util {
 			customPaymentFrequency,
 			lastPaymentDate,
 		} = lease;
-		const currentDate = DateTime.utc().toJSDate();
-		if (currentDate > endDate) return null;
-		let nextDueDate: Date = lastPaymentDate || startDate;
-		switch (paymentFrequency) {
-			case PaymentFrequency.WEEKLY:
-				nextDueDate = DateTime.fromJSDate(nextDueDate)
-					.plus({ weeks: 1 })
-					.toJSDate();
-				break;
-			case PaymentFrequency.BI_WEEKLY:
-				nextDueDate = DateTime.fromJSDate(nextDueDate)
-					.plus({ weeks: 2 })
-					.toJSDate();
-				break;
-			case PaymentFrequency.MONTHLY:
-				nextDueDate = DateTime.fromJSDate(nextDueDate)
-					.plus({ months: 1 })
-					.toJSDate();
-				break;
-			case PaymentFrequency.BI_MONTHLY:
-				nextDueDate = DateTime.fromJSDate(nextDueDate)
-					.plus({ months: 2 })
-					.toJSDate();
-				break;
-			case PaymentFrequency.QUARTERLY:
-				nextDueDate = DateTime.fromJSDate(nextDueDate)
-					.plus({ months: 3 })
-					.toJSDate();
-				break;
-			case PaymentFrequency.ANNUALLY:
-				nextDueDate = DateTime.fromJSDate(nextDueDate)
-					.plus({ years: 1 })
-					.toJSDate();
-			case PaymentFrequency.CUSTOM:
-				nextDueDate = DateTime.fromJSDate(nextDueDate)
-					.plus({ days: customPaymentFrequency! })
-					.toJSDate();
-				break;
-			default:
-				break;
-		}
-		if (rentDueDay > 0 && paymentFrequency === PaymentFrequency.MONTHLY) {
-			nextDueDate = DateTime.fromJSDate(nextDueDate)
-				.set({ day: rentDueDay })
-				.toJSDate();
+
+		// Early return if lease has ended
+		if (DateTime.utc().toJSDate() > endDate) return null;
+
+		// Create DateTime object once for base date
+		const baseDate = DateTime.fromJSDate(lastPaymentDate ?? startDate, {
+			zone: 'utc',
+		});
+
+		// Map payment frequencies to their intervals
+		const frequencyMap = {
+			[PaymentFrequency.WEEKLY]: { weeks: 1 },
+			[PaymentFrequency.BI_WEEKLY]: { weeks: 2 },
+			[PaymentFrequency.MONTHLY]: { months: 1 },
+			[PaymentFrequency.BI_MONTHLY]: { months: 2 },
+			[PaymentFrequency.QUARTERLY]: { months: 3 },
+			[PaymentFrequency.ANNUALLY]: { years: 1 },
+			[PaymentFrequency.CUSTOM]: { days: customPaymentFrequency! },
+		};
+
+		// Calculate next due date
+		const interval = frequencyMap[paymentFrequency];
+		if (!interval) return null;
+
+		let nextDueDate = baseDate.plus(interval);
+
+		// Adjust for rent due day if applicable
+		if (
+			rentDueDay > 0 &&
+			(paymentFrequency === PaymentFrequency.MONTHLY ||
+				paymentFrequency === PaymentFrequency.BI_MONTHLY)
+		) {
+			nextDueDate = nextDueDate.set({
+				day: Math.min(rentDueDay, nextDueDate.daysInMonth),
+			});
 		}
 
-		return nextDueDate > endDate ? null : nextDueDate;
+		// Convert to JS Date and check against end date
+		const result = nextDueDate.toJSDate();
+		return result > endDate ? null : result;
 	}
 }

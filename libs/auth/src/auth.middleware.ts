@@ -4,13 +4,9 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AdminAuthService } from './services/admin-auth.service';
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
-	constructor(
-		private readonly authService: AdminAuthService,
-		private readonly configService: ConfigService,
-	) {}
+	constructor(private readonly configService: ConfigService) {}
 	async use(req: any, res: any, next: () => void) {
 		const isLocal = this.configService.get<string>('NODE_ENV') === 'local';
 		const clientId = req.headers['x-client-id'];
@@ -27,18 +23,5 @@ export class AuthMiddleware implements NestMiddleware {
 			);
 		}
 		next();
-		// try {
-		//   const { token, appId } = await this.authService.getAppCheckToken();
-		// 	const decodedToken = await this.authService.verifyAppCheckToken(token);
-		//   //console.log('decodedToken', decodedToken);
-		// 	if (!token && !appId) {
-		// 		throw new UnauthorizedException('No app check token found');
-		// 	}
-		//   req.headers['x-firebase-gmpid'] = appId;
-		//   req.headers['x-firebase-appcheck'] = token;
-		// 	next();
-		// } catch (error) {
-		// 	throw new UnauthorizedException('App check token is invalid');
-		// }
 	}
 }

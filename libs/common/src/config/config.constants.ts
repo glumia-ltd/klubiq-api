@@ -1,5 +1,4 @@
 import { startCase } from 'lodash';
-import { DateTime } from 'luxon';
 
 export enum UserRoles {
 	SUPER_ADMIN = 'Super_Admin',
@@ -250,10 +249,11 @@ export const FILTER_OPTIONS: FilterData[] = [
 
 export const RENT_DUE_ON = (
 	rentDueDay: number,
-	startDate: string,
+	startDayAndMonth: string,
+	day: string,
 ): Record<PaymentFrequency, string> => {
-	const startDayAndMonth = DateTime.fromISO(startDate).toFormat('dd LLL');
-	const day: string = DateTime.fromISO(startDate).weekdayLong;
+	//const startDayAndMonth = DateTime.fromISO(startDate).toFormat('dd LLL');
+	//day = DateTime.fromISO(startDate).weekdayLong;
 	return {
 		[PaymentFrequency.WEEKLY]: `${day} every week`,
 		[PaymentFrequency.BI_WEEKLY]: `${day} Bi-Weekly`,

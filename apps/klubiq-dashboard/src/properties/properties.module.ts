@@ -4,7 +4,7 @@ import { PropertiesController } from './controllers/properties.controller';
 import { RepositoriesModule } from '@app/common/repositories/repositories.module';
 import { PropertyRepository } from './repositories/properties.repository';
 import { PROPERTY_METRICS } from './interfaces/property-metrics.service.interface';
-import { Util } from '@app/common/helpers/util';
+// import { Util } from '@app/common/helpers/util';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
 import { CommonConfigService } from '@app/common/config/common-config';
 import { ConfigService } from '@nestjs/config';
@@ -15,7 +15,7 @@ import { UsersModule } from '../users/users.module';
 	providers: [
 		PropertiesService,
 		PropertyRepository,
-		Util,
+		// Util,
 		ConfigService,
 		CommonConfigService,
 		FileUploadService,

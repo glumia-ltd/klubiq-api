@@ -101,7 +101,7 @@ import { TenantsModule } from './tenants/tenants.module';
 		{
 			provide: CsrfService,
 			useFactory: (repo: OrganizationRepository, cacheManager: Cache) =>
-				new CsrfService(new Generators(null), repo, cacheManager),
+				new CsrfService(new Generators(), repo, cacheManager),
 			inject: [OrganizationRepository, CACHE_MANAGER],
 		},
 	],

@@ -1,4 +1,3 @@
-import { ConfigService } from '@nestjs/config';
 import crypto from 'crypto';
 import { DateTime } from 'luxon';
 
@@ -6,12 +5,6 @@ import { DateTime } from 'luxon';
 const BASE32_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
 export class Generators {
-	private readonly configService: ConfigService;
-
-	constructor(configService: ConfigService) {
-		this.configService = configService;
-	}
-
 	// Convert a number to a Base32 string
 	encodeBase32(number: number, length: number): string {
 		let encoded = '';
@@ -39,7 +32,7 @@ export class Generators {
 	};
 
 	generateSecureULID(): string {
-		const secret = this.configService.get('APP_SECRET');
+		const secret = process.env.APP_SECRET;
 		const ulid = this.generateShortULID();
 		const hmac = crypto
 			.createHmac('sha256', secret)
@@ -50,7 +43,7 @@ export class Generators {
 	}
 
 	generateCsrfSecret(): string {
-		const secret = this.configService.get('APP_SECRET');
+		const secret = process.env.APP_SECRET;
 		return crypto
 			.createHmac('sha256', secret)
 			.update(crypto.randomBytes(32))
