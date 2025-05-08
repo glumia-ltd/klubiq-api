@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, IntersectionType } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import {
 	IsBoolean,
@@ -133,25 +133,33 @@ export class AuthUserResponseDto {
 }
 
 export class TokenResponseDto {
-	access_token: string;
-	expires_in: string;
-	token_type: string;
-	refresh_token: string;
-	id_token: string;
-	user_id: string;
-	project_id: string;
+	access_token?: string;
+	expires_in?: string;
+	token_type?: string;
+	refresh_token?: string;
+	id_token?: string;
+	user_id?: string;
+	project_id?: string;
 }
 
 export class SignInByFireBaseResponseDto {
-	idToken: string;
-	expiresIn: string;
-	tokenType: string; // inferred – not in the object but commonly "Bearer"
-	refreshToken: string;
-	localId: string;
-	email: string;
-	displayName: string;
+	idToken?: string;
+	expiresIn?: string;
+	tokenType?: string; // inferred – not in the object but commonly "Bearer"
+	refreshToken?: string;
+	localId?: string;
+	email?: string;
+	displayName?: string;
 	kind: string;
 	registered: boolean;
+	mfaPendingCredential?: string;
+	mfaInfo?: [
+		{
+			mfaEnrollmentId: string;
+			displayName: string;
+			enrolledAt: string;
+		},
+	];
 }
 
 export class LandlordUserDetailsResponseDto {
@@ -243,3 +251,74 @@ export class LandlordUserDetailsResponseDto {
 	@IsOptional()
 	notificationSubscription?: Record<string, any>;
 }
+
+export class TenantUserDetailsResponseDto {
+	@Expose()
+	@IsString()
+	uuid: string;
+
+	@Expose()
+	@IsString()
+	profileUuid: string;
+
+	@Expose()
+	@IsString()
+	firebaseId: string;
+
+	@Expose()
+	@IsString()
+	email: string;
+
+	@Expose()
+	@IsString()
+	firstName: string;
+
+	@Expose()
+	@IsString()
+	lastName: string;
+
+	@Expose()
+	@IsBoolean()
+	isActive: boolean;
+
+	@Expose()
+	@IsString()
+	companyName: string;
+
+	@Expose()
+	@IsBoolean()
+	isPrivacyPolicyAgreed: boolean;
+
+	@Expose()
+	@IsBoolean()
+	isTermsAndConditionAccepted: boolean;
+
+	@Expose()
+	@IsString()
+	@IsOptional()
+	phone?: string;
+
+	@Expose()
+	@IsString()
+	@IsOptional()
+	profilePicUrl?: string;
+
+	@Expose()
+	@IsString()
+	role: string;
+
+	@Expose()
+	@IsJSON()
+	@IsOptional()
+	preferences?: Record<string, any>;
+
+	@Expose()
+	@IsJSON()
+	@IsOptional()
+	notificationSubscription?: Record<string, any>;
+}
+
+export class LoginResponseDto extends IntersectionType(
+	LandlordUserDetailsResponseDto,
+	TenantUserDetailsResponseDto,
+) {}

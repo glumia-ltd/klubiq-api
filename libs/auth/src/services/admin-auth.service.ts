@@ -35,8 +35,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AdminAuthService extends AuthService {
-	private readonly emailVerificationBaseUrl: string;
-	private readonly emailAuthContinueUrl: string;
+	private readonly adminEmailVerificationBaseUrl: string;
+	private readonly adminEmailAuthContinueUrl: string;
 	protected readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	protected readonly logger = new Logger(AdminAuthService.name);
 	constructor(
@@ -78,10 +78,10 @@ export class AdminAuthService extends AuthService {
 			apiDebugger,
 			eventEmitter,
 		);
-		this.emailVerificationBaseUrl = this.configService.get<string>(
+		this.adminEmailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
 		);
-		this.emailAuthContinueUrl =
+		this.adminEmailAuthContinueUrl =
 			this.configService.get<string>('CONTINUE_URL_PATH');
 	}
 
@@ -141,8 +141,8 @@ export class AdminAuthService extends AuthService {
 			let resetPasswordLink = await this.auth.generatePasswordResetLink(
 				email,
 				this.getActionCodeSettings(
-					this.emailVerificationBaseUrl,
-					this.emailAuthContinueUrl,
+					this.adminEmailVerificationBaseUrl,
+					this.adminEmailAuthContinueUrl,
 				),
 			);
 			resetPasswordLink += `&email=${email}`;
@@ -181,8 +181,8 @@ export class AdminAuthService extends AuthService {
 				.generateEmailVerificationLink(
 					email,
 					this.getActionCodeSettings(
-						this.emailVerificationBaseUrl,
-						this.emailAuthContinueUrl,
+						this.adminEmailVerificationBaseUrl,
+						this.adminEmailAuthContinueUrl,
 					),
 				);
 			const actionUrl = replace(verificationLink, '_auth_', 'verify-email');
@@ -209,8 +209,8 @@ export class AdminAuthService extends AuthService {
 			let resetPasswordLink = await this.auth.generatePasswordResetLink(
 				invitedUserDto.email,
 				this.getActionCodeSettings(
-					this.emailVerificationBaseUrl,
-					this.emailAuthContinueUrl,
+					this.adminEmailVerificationBaseUrl,
+					this.adminEmailAuthContinueUrl,
 				),
 			);
 			resetPasswordLink += `&email=${invitedUserDto.email}&type=user-invitation&invited_as=${invitation.orgRole.name}`;

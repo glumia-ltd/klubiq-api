@@ -13,6 +13,13 @@ export enum ErrorMessages {
 	UNIT_LIMIT_REACHED = 'Unit limit reached for your current subscription. Upgrade your subscription to add more units.',
 	USER_LIMIT_REACHED = 'User limit reached for your current subscription. Upgrade your subscription to add more users.',
 	STORAGE_LIMIT_REACHED = 'Storage limit reached for your current subscription. Upgrade your subscription to add more storage.',
+	TOKEN_NOT_RETURNED = 'No token returned from Firebase sign-in',
+	EMAIL_NOT_VERIFIED = 'Your email is not verified. Please verify your email to continue.',
+	UNEXPECTED_ERROR = 'Unexpected error during token exchange',
+	SIGN_IN_ERROR = 'Error during Firebase sign-in and access token retrieval',
+	USER_NOT_FOUND = 'User not found',
+	INVALID_CREDENTIALS = 'Invalid credentials',
+	MFA_REQUIRED = 'auth/multi-factor-auth-required',
 }
 
 export const StatusCodeToKlubiqErrorCode: Record<number, string> = {

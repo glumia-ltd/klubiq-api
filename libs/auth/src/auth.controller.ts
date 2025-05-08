@@ -9,6 +9,9 @@ import {
 	Param,
 	ParseUUIDPipe,
 	ForbiddenException,
+	Req,
+	Res,
+	UnauthorizedException,
 } from '@nestjs/common';
 import {
 	ApiBearerAuth,
@@ -39,11 +42,20 @@ import { ErrorMessages, OrganizationSubscriptionService } from '@app/common';
 import { RolesService } from '@app/common/permissions/roles.service';
 import { UserRoles } from '@app/common/config/config.constants';
 import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
+import { TokenResponseDto } from './dto/responses/auth-response.dto';
+import { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { cookieConfig, extractRefreshToken } from './helpers/cookie-helper';
 @ApiTags('auth')
 @ApiBearerAuth()
 @ApiSecurity('ApiKey')
 @Auth(AuthType.None)
 @Controller('auth')
+@ApiHeader({
+	name: 'X-client-id',
+	description: 'The client id',
+	required: false,
+})
 export class AuthController {
 	constructor(
 		private readonly landlordAuthService: LandlordAuthService,
@@ -51,6 +63,7 @@ export class AuthController {
 		private readonly organizationSettingsService: OrganizationSettingsService,
 		private readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		private readonly rolesService: RolesService,
+		private readonly configService: ConfigService,
 	) {}
 
 	@HttpCode(HttpStatus.OK)
@@ -67,13 +80,39 @@ export class AuthController {
 	}
 
 	@Auth(AuthType.Bearer)
-	@Get('user')
+	@Get('landlord/user')
 	@ApiOkResponse({
 		description: 'Gets user data',
 	})
 	async user(): Promise<any> {
 		try {
-			return this.landlordAuthService.getOrgUserInfo();
+			const userData = await this.landlordAuthService.getOrgUserInfo();
+			if (userData && userData.organizationUuid) {
+				const orgSettings =
+					(await this.organizationSettingsService.getOrganizationSettings(
+						userData.organizationUuid,
+					)) || null;
+				const orgSubscription =
+					(await this.organizationSubscriptionService.getSubscription(
+						userData.organizationUuid,
+					)) || null;
+				userData['orgSettings'] = orgSettings;
+				userData['orgSubscription'] = orgSubscription;
+			}
+			return userData;
+		} catch (err) {
+			throw err;
+		}
+	}
+
+	@Auth(AuthType.Bearer)
+	@Get('tenant/user')
+	@ApiOkResponse({
+		description: 'Gets tenant user data',
+	})
+	async tenantUser(): Promise<any> {
+		try {
+			return this.landlordAuthService.getTenantUserInfo();
 		} catch (err) {
 			throw err;
 		}
@@ -82,19 +121,55 @@ export class AuthController {
 	@Post('signin')
 	@HttpCode(HttpStatus.OK)
 	@ApiOkResponse({
-		description:
-			'Signs in user with email and password, and returns access token',
-		type: String,
+		description: 'Signs in user with email and password, and returns user data',
 	})
-	@ApiHeader({
-		name: 'X-client-id',
-		description: 'The client id',
-		required: false,
-	})
-	async signIn(@Body() credentials: UserLoginDto): Promise<string> {
-		return this.landlordAuthService.signInAndGetAccessToken(
+	async signIn(
+		@Req() req: Request,
+		@Res({ passthrough: true }) res: Response,
+		@Body() credentials: UserLoginDto,
+	): Promise<TokenResponseDto> {
+		const tokenData = await this.landlordAuthService.signInAndGetAccessToken(
 			credentials.email,
 			credentials.password,
+		);
+		if (this.isNotApiCall(req)) {
+			this.setLoginCookie(res, tokenData);
+			return { expires_in: tokenData.expires_in };
+		} else {
+			return tokenData;
+		}
+	}
+
+	private isNotApiCall(req: Request): boolean {
+		const clientId = req.header('x-client-id');
+		const nonApiClientIds = [
+			this.configService.get<string>('LANDLORP_PORTAL_CLIENT_ID'),
+			this.configService.get<string>('TENANT_PORTAL_CLIENT_ID'),
+			this.configService.get<string>('ADMIN_PORTAL_CLIENT_ID'),
+		];
+		return nonApiClientIds.includes(clientId);
+	}
+	private setLoginCookie(res: Response, tokenData: TokenResponseDto): void {
+		const { refresh_token, access_token } = tokenData;
+		res.cookie(
+			cookieConfig.refreshToken.name,
+			refresh_token,
+			cookieConfig.refreshToken.options,
+		);
+		res.cookie(
+			cookieConfig.accessToken.name,
+			access_token,
+			cookieConfig.accessToken.options,
+		);
+	}
+	private clearLoginCookie(res: Response): void {
+		res.clearCookie(
+			cookieConfig.refreshToken.name,
+			cookieConfig.refreshToken.options,
+		);
+		res.clearCookie(
+			cookieConfig.accessToken.name,
+			cookieConfig.accessToken.options,
 		);
 	}
 
@@ -104,8 +179,14 @@ export class AuthController {
 	@ApiOkResponse({
 		description: 'Signs out user',
 	})
-	async signOut(): Promise<void> {
+	async signOut(
+		@Req() req: Request,
+		@Res({ passthrough: true }) res: Response,
+	): Promise<void> {
 		await this.landlordAuthService.signOut();
+		if (this.isNotApiCall(req)) {
+			this.clearLoginCookie(res);
+		}
 	}
 
 	@Auth(AuthType.Bearer)
@@ -140,9 +221,12 @@ export class AuthController {
 
 	@Auth(AuthType.Bearer)
 	@Get('verify-token')
-	async verifyToken(): Promise<any> {
+	@ApiOkResponse({
+		description: 'Verifies user token',
+	})
+	async verifyToken(@Req() req: Request): Promise<any> {
 		try {
-			return this.landlordAuthService.verifyToken();
+			return this.landlordAuthService.verifyToken(req);
 		} catch (err) {
 			throw err;
 		}
@@ -213,10 +297,27 @@ export class AuthController {
 	@HttpCode(HttpStatus.OK)
 	@Post('exchange-refresh-token')
 	@ApiOkResponse()
-	async exchangeRefreshToken(@Body() request: RefreshTokenExchangeDto) {
-		return await this.landlordAuthService.exchangeRefreshToken(
+	async exchangeRefreshToken(
+		@Req() req: Request,
+		@Res({ passthrough: true }) res: Response,
+		@Body() request?: RefreshTokenExchangeDto,
+	): Promise<TokenResponseDto> {
+		if (!request.refreshToken) {
+			const refreshToken = extractRefreshToken(req);
+			if (!refreshToken) {
+				throw new UnauthorizedException('Refresh token not found');
+			}
+			request.refreshToken = refreshToken;
+		}
+		const tokenData = await this.landlordAuthService.exchangeRefreshToken(
 			request.refreshToken,
 		);
+		if (this.isNotApiCall(req)) {
+			this.setLoginCookie(res, tokenData);
+			return;
+		} else {
+			return tokenData;
+		}
 	}
 
 	@HttpCode(HttpStatus.OK)

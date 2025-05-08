@@ -90,6 +90,9 @@ env:
   FIREBASE_APP_NAME: ${{ secrets.FIREBASE_APP_NAME }}
   TENANT_EMAIL_VERIFICATION_BASE_URL: ${{ vars.TENANT_EMAIL_VERIFICATION_BASE_URL }}
   TENANT_CONTINUE_URL_PATH: ${{ vars.TENANT_CONTINUE_URL_PATH }}
+  LANDLORP_PORTAL_CLIENT_ID: ${{ secrets.LANDLORP_PORTAL_CLIENT_ID }}
+  TENANT_PORTAL_CLIENT_ID: ${{ secrets.TENANT_PORTAL_CLIENT_ID }}
+  ADMIN_PORTAL_CLIENT_ID: ${{ secrets.ADMIN_PORTAL_CLIENT_ID }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -195,6 +198,9 @@ jobs:
             export FIREBASE_APP_NAME=${{ secrets.FIREBASE_APP_NAME }}
             export TENANT_EMAIL_VERIFICATION_BASE_URL=${{ vars.TENANT_EMAIL_VERIFICATION_BASE_URL }}
             export TENANT_CONTINUE_URL_PATH=${{ vars.TENANT_CONTINUE_URL_PATH }}
+            export LANDLORP_PORTAL_CLIENT_ID=${{ secrets.LANDLORP_PORTAL_CLIENT_ID }}
+            export TENANT_PORTAL_CLIENT_ID=${{ secrets.TENANT_PORTAL_CLIENT_ID }}
+            export ADMIN_PORTAL_CLIENT_ID=${{ secrets.ADMIN_PORTAL_CLIENT_ID }}
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
 
             # Check if the process is running

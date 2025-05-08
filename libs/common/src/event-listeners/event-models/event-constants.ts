@@ -7,6 +7,8 @@ export enum EVENTS {
 	PROPERTY_ARCHIVED = 'property.archived',
 	PROPERTY_ASSIGNED = 'property.assigned',
 	LEASE_CREATED = 'lease.created',
+	TENANT_CREATED = 'tenant.created',
+	TENANT_ONBOARDED = 'tenant.onboarded',
 }
 export type EventTemplate = {
 	subject: string;
@@ -46,6 +48,16 @@ export const EVENT_TEMPLATE = (
 			subject: 'New Lease Created',
 			message: `A new lease has been created by ${payload.propertyManagerName} in your organization.`,
 			type: 'lease-created',
+		},
+		[EVENTS.TENANT_CREATED]: {
+			subject: 'New Tenant Created',
+			message: `A new tenant has been created by ${payload.propertyManagerName} in your organization.`,
+			type: 'tenant-created',
+		},
+		[EVENTS.TENANT_ONBOARDED]: {
+			subject: 'Tenant Onboarded',
+			message: `A new tenant has been onboarded by ${payload.propertyManagerName} in your organization.`,
+			type: 'tenant-onboarded',
 		},
 	};
 };
