@@ -26,7 +26,7 @@ export class OrganizationTenants {
 		() => Organization,
 		(organization) => organization.organizationTenants,
 		{
-			lazy: true,
+			lazy: false,
 			onDelete: 'CASCADE',
 		},
 	)
