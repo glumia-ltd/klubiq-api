@@ -1,7 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { ConfigService } from '@nestjs/config';
-// import { AuthService } from '../services/auth.service';
+
 import {
 	FirebaseAdminErrors,
 	FirebaseAdminErrorMessages,
@@ -10,12 +9,15 @@ import { ErrorMessages } from '@app/common/config/error.constant';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
 import { ClsService } from 'nestjs-cls';
 import { LandlordAuthService } from '../services/landlord-auth.service';
-
+import { Request } from 'express';
+import {
+	extractAccessToken,
+	extractRefreshToken,
+} from '../helpers/cookie-helper';
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
 	constructor(
 		private authService: LandlordAuthService,
-		private configService: ConfigService,
 		private readonly cls: ClsService<SharedClsStore>,
 	) {}
 
@@ -23,10 +25,25 @@ export class FirebaseAuthGuard implements CanActivate {
 		context: ExecutionContext,
 	): Promise<boolean | Promise<boolean> | Observable<boolean> | any> {
 		const request: any = context.switchToHttp().getRequest<Request>();
-		if (!request.headers.authorization) {
+		const authHeader = request.headers.authorization;
+		const cookieToken: string | undefined = extractAccessToken(request);
+		const refreshToken: string | undefined = extractRefreshToken(request);
+		let rawToken: string | undefined;
+		if (authHeader && authHeader.startsWith('Bearer ')) {
+			rawToken = authHeader.split(' ')[1];
+		} else if (cookieToken) {
+			rawToken = cookieToken;
+		}
+
+		if (!rawToken && refreshToken) {
+			throw new Error(
+				FirebaseAdminErrorMessages[FirebaseAdminErrors.AUTH_EXPIRED_TOKEN],
+			);
+		}
+		if (!rawToken) {
 			throw new Error(ErrorMessages.UNAUTHORIZED);
 		}
-		const fireUser = await this.validate(request.headers.authorization);
+		const fireUser = await this.validate(rawToken);
 		if (!fireUser) {
 			throw new Error(ErrorMessages.UNAUTHORIZED);
 		}
@@ -37,23 +54,19 @@ export class FirebaseAuthGuard implements CanActivate {
 
 	public async validate(token: string) {
 		let firebaseUser: any;
-		const jwtToken = token.split('Bearer ')[1];
-		if (!jwtToken) {
-			throw new Error(ErrorMessages.UNAUTHORIZED);
-		}
 		try {
-			firebaseUser = await this.authService.auth.verifyIdToken(jwtToken, true);
+			firebaseUser = await this.authService.auth.verifyIdToken(token, true);
 			return firebaseUser;
 		} catch (err) {
-			if (err.code == FirebaseAdminErrors.AUTH_REVOKED_TOKEN)
+			if (err.code == FirebaseAdminErrors.AUTH_REVOKED_TOKEN) {
 				throw new Error(
 					FirebaseAdminErrorMessages[FirebaseAdminErrors.AUTH_REVOKED_TOKEN],
 				);
-			else if (err.code == FirebaseAdminErrors.AUTH_EXPIRED_TOKEN)
+			} else if (err.code == FirebaseAdminErrors.AUTH_EXPIRED_TOKEN) {
 				throw new Error(
 					FirebaseAdminErrorMessages[FirebaseAdminErrors.AUTH_EXPIRED_TOKEN],
 				);
-			else {
+			} else {
 				const message = FirebaseAdminErrorMessages[err.code];
 				throw new Error(message ?? err.message);
 			}

@@ -227,7 +227,8 @@ export class RefreshTokenExchangeDto {
 		description: 'refresh token',
 	})
 	@IsString()
-	refreshToken: string;
+	@IsOptional()
+	refreshToken?: string;
 }
 
 /**

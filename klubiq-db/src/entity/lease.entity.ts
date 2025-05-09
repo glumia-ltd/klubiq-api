@@ -112,4 +112,6 @@ export class Lease {
 	@Index('IDX_LEASE_ORGANIZATION_UUID')
 	@Column({ type: 'uuid', nullable: true })
 	organizationUuid?: string;
+
+
 }

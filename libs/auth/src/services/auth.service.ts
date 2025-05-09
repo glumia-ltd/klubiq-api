@@ -7,6 +7,8 @@ import {
 	BadRequestException,
 	ConflictException,
 	ServiceUnavailableException,
+	ForbiddenException,
+	PreconditionFailedException,
 } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 import * as admin from 'firebase-admin';
@@ -22,6 +24,7 @@ import {
 	LandlordUserDetailsResponseDto,
 	TokenResponseDto,
 	SignInByFireBaseResponseDto,
+	TenantUserDetailsResponseDto,
 } from '../dto/responses/auth-response.dto';
 import {
 	LeaseStatus,
@@ -57,7 +60,7 @@ import { TenantUser } from '@app/common/database/entities/tenant.entity';
 import { EntityManager } from 'typeorm';
 import { generateString } from '@nestjs/typeorm';
 import { TenantInvitation } from '@app/common/database/entities/tenant-invitation.entity';
-import { replace } from 'lodash';
+import { replace, split } from 'lodash';
 import { EmailTemplates } from '@app/common/email/types/email.types';
 import { MailerSendService } from '@app/common/email/email.service';
 import { OnboardingLeaseDto } from 'apps/klubiq-dashboard/src/lease/dto/requests/create-lease.dto';
@@ -70,6 +73,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '@app/common/event-listeners/event-models/event-constants';
 import { OrganizationTenants } from '@app/common/database/entities/organization-tenants.entity';
 import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
+import { extractAccessToken } from '../helpers/cookie-helper';
+import { Request } from 'express';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
@@ -82,6 +87,11 @@ export abstract class AuthService {
 	private currentUser: ActiveUserData;
 	protected readonly tenantEmailVerificationBaseUrl: string;
 	protected readonly tenantEmailAuthContinueUrl: string;
+	private readonly landlordPortalClientId: string;
+	private readonly tenantPortalClientId: string;
+	private readonly adminPortalClientId: string;
+	private readonly emailVerificationBaseUrl: string;
+	private readonly emailAuthContinueUrl: string;
 
 	constructor(
 		@Inject('FIREBASE_ADMIN') protected firebaseAdminApp: admin.app.App,
@@ -111,6 +121,20 @@ export abstract class AuthService {
 		this.tenantEmailAuthContinueUrl = this.configService.get<string>(
 			'TENANT_CONTINUE_URL_PATH',
 		);
+		this.landlordPortalClientId = this.configService.get<string>(
+			'LANDLORP_PORTAL_CLIENT_ID',
+		);
+		this.tenantPortalClientId = this.configService.get<string>(
+			'TENANT_PORTAL_CLIENT_ID',
+		);
+		this.adminPortalClientId = this.configService.get<string>(
+			'ADMIN_PORTAL_CLIENT_ID',
+		);
+		this.emailVerificationBaseUrl = this.configService.get<string>(
+			'EMAIL_VERIFICATION_BASE_URL',
+		);
+		this.emailAuthContinueUrl =
+			this.configService.get<string>('CONTINUE_URL_PATH');
 	}
 
 	get auth(): auth.Auth {
@@ -169,8 +193,9 @@ export abstract class AuthService {
 		}
 		return updatedUserPreferences;
 	}
-	async verifyToken(): Promise<any> {
-		const token = this.cls.get('jwtToken');
+	async verifyToken(request: Request): Promise<any> {
+		const token =
+			extractAccessToken(request) ?? this.cls.get('jwtToken') ?? null;
 		return this.auth.verifyIdToken(token);
 	}
 	async enableTOTPMFA() {
@@ -481,7 +506,35 @@ export abstract class AuthService {
 			if (cachedUser) {
 				return cachedUser;
 			} else {
-				return await this.getUserDetails(this.currentUser, cacheKey);
+				return await this.getLoginUserDetails(
+					this.currentUser.email,
+					this.currentUser.uid,
+					'landlord',
+				);
+			}
+		} catch (err) {
+			throw err;
+		}
+	}
+
+	async getTenantUserInfo(): Promise<any> {
+		try {
+			this.currentUser = this.cls.get('currentUser');
+			if (!this.currentUser.uid && !this.currentUser.kUid) {
+				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
+			}
+			const cacheKey = `${this.cacheKeyPrefix}:user:${this.currentUser.kUid}`;
+
+			const cachedUser =
+				await this.cacheManager.get<TenantUserDetailsResponseDto>(cacheKey);
+			if (cachedUser) {
+				return cachedUser;
+			} else {
+				return await this.getLoginUserDetails(
+					this.currentUser.email,
+					this.currentUser.uid,
+					'tenant',
+				);
 			}
 		} catch (err) {
 			throw err;
@@ -509,10 +562,61 @@ export abstract class AuthService {
 		return userData;
 	}
 
+	private async getLoginUserDetails(
+		email: string,
+		firebaseId: string,
+		type: 'landlord' | 'tenant' | 'staff',
+	): Promise<LandlordUserDetailsResponseDto> {
+		let userDetails: any;
+		let notificationsSubscription: any;
+		let cacheKey = `${this.cacheKeyPrefix}:user:`;
+		switch (type) {
+			case 'landlord':
+				userDetails =
+					await this.userProfilesRepository.getLandLordUserInfoByEmailAndFirebaseId(
+						email,
+						firebaseId,
+					);
+				notificationsSubscription = userDetails?.profile_uuid
+					? await this.notificationSubService.getAUserSubscriptionDetails(
+							userDetails.profile_uuid,
+						)
+					: null;
+				userDetails = (await this.mapLandlordUserToDto(userDetails)) || {};
+				cacheKey = `${cacheKey}${userDetails.uuid}`;
+				break;
+			case 'tenant':
+				userDetails =
+					await this.userProfilesRepository.getTenantUserInfoByEmailAndFirebaseId(
+						email,
+						firebaseId,
+					);
+				notificationsSubscription = userDetails?.profileUuid
+					? await this.notificationSubService.getAUserSubscriptionDetails(
+							userDetails.profileUuid,
+						)
+					: null;
+				userDetails = (await this.mapTenantUserToDto(userDetails)) || {};
+				cacheKey = `${cacheKey}${userDetails.uuid}`;
+				break;
+			default:
+				userDetails = {};
+		}
+		if (!userDetails) {
+			throw new NotFoundException('User not found');
+		}
+		userDetails.notificationSubscription = notificationsSubscription;
+		await this.cacheManager.set(cacheKey, userDetails, 3600);
+		return userDetails;
+	}
+
 	private async mapLandlordUserToDto(
 		user: any,
-		currentUser: ActiveUserData,
+		currentUser: ActiveUserData = null,
 	): Promise<LandlordUserDetailsResponseDto> {
+		if (!user) {
+			return null;
+		}
 		return plainToInstance(LandlordUserDetailsResponseDto, {
 			email: user.email,
 			firstName: user.profile_first_name,
@@ -530,11 +634,24 @@ export abstract class AuthService {
 			preferences: user.user_preferences,
 			profilePicUrl: user.profile_pic_url,
 			roleName:
-				ROLE_ALIAS()[currentUser.organizationRole] ||
-				currentUser.organizationRole,
+				ROLE_ALIAS()[currentUser?.organizationRole || user.org_role] ||
+				currentUser?.organizationRole ||
+				user.org_role,
 			uuid: user.uuid,
 			// orgSettings,
 			// orgSubscription,
+		});
+	}
+
+	private async mapTenantUserToDto(
+		user: any,
+	): Promise<TenantUserDetailsResponseDto> {
+		if (!user) {
+			return null;
+		}
+		return plainToInstance(TenantUserDetailsResponseDto, {
+			...user,
+			preferences: user?.userPreferences || {},
 		});
 	}
 
@@ -692,26 +809,49 @@ export abstract class AuthService {
 		return data;
 	}
 
+	async firebaseLookupUser(token: string): Promise<any> {
+		const url = `${this.configService.get<string>('GOOGLE_IDENTITY_ENDPOINT')}:lookup?key=${this.configService.get<string>('FIREBASE_API_KEY')}`;
+		const payload = {
+			idToken: token,
+		};
+		const response = await this.ensureAuthorizedFirebaseRequest(
+			url,
+			'POST',
+			payload,
+		);
+		return await firstValueFrom(
+			response.pipe(
+				catchError((error: AxiosError | any) => {
+					this.apiDebugger.error('User lookup error', error);
+					throw new FirebaseException(error);
+				}),
+			),
+		);
+	}
+
+	/**
+	 * Calls the google identity endpoint to sign in with email and password
+	 * @param email
+	 * @param password
+	 * @param asLandlord
+	 * @returns
+	 */
 	async signInWithEmailPassword(
 		email: string,
 		password: string,
 	): Promise<SignInByFireBaseResponseDto> {
-		this.apiDebugger.info('Signing in with email password', email, password);
 		try {
 			const url = `${this.configService.get<string>('GOOGLE_IDENTITY_ENDPOINT')}:signInWithPassword?key=${this.configService.get<string>('FIREBASE_API_KEY')}`;
-			this.apiDebugger.info('sign in url', url);
 			const payload = {
 				email,
 				password,
 				returnSecureToken: true,
 			};
-			this.apiDebugger.info('sign in payload', payload);
 			const response = await this.ensureAuthorizedFirebaseRequest(
 				url,
 				'POST',
 				payload,
 			);
-			this.apiDebugger.info('Is authorized response', response);
 			const { data } = await firstValueFrom(
 				response.pipe(
 					catchError((error: AxiosError | any) => {
@@ -725,6 +865,7 @@ export abstract class AuthService {
 					}),
 				),
 			);
+			this.apiDebugger.info('Sign in response', data);
 			return data;
 		} catch (err) {
 			this.apiDebugger.error('Error signing in with email password', err);
@@ -737,40 +878,124 @@ export abstract class AuthService {
 		}
 	}
 
-	async signInAndGetAccessToken(email: string, password: string): Promise<any> {
+	/**
+	 * Signs in with email and password and returns the access token
+	 * @param email
+	 * @param password
+	 * @param asLandlord
+	 * @returns
+	 */
+	async signInAndGetAccessToken(
+		emailAddress: string,
+		password: string,
+	): Promise<any> {
 		try {
-			const signInData = await this.signInWithEmailPassword(email, password);
-			const { refreshToken } = signInData;
-
+			const clientId = this.cls.get('clientName');
+			if (!clientId) {
+				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
+			}
+			const authorizedClients = this.configService
+				.get<string>('KLUBIQ_API_APPCHECK_CLIENTS')
+				.split('|');
+			if (!authorizedClients.includes(clientId)) {
+				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
+			}
+			const signInData = await this.signInWithEmailPassword(
+				emailAddress,
+				password,
+			);
+			const { refreshToken, idToken, displayName, registered, expiresIn } =
+				signInData;
 			if (!refreshToken) {
-				throw new FirebaseException(
-					'No refresh token returned from Firebase sign-in',
+				const requiresMfa = signInData.mfaInfo?.length > 0;
+				const factors = signInData.mfaInfo?.map((factor) => {
+					return factor.displayName;
+				});
+				if (requiresMfa) {
+					throw new PreconditionFailedException(ErrorMessages.MFA_REQUIRED, {
+						cause: {
+							factors,
+						},
+					});
+				}
+				throw new FirebaseException(ErrorMessages.TOKEN_NOT_RETURNED);
+			}
+			const names = split(displayName, ' ');
+			if (!registered && clientId === this.landlordPortalClientId) {
+				await this.sendVerificationEmail(
+					emailAddress,
+					names[0] || '',
+					names[1] || '',
 				);
+				throw new ForbiddenException(ErrorMessages.EMAIL_NOT_VERIFIED);
+			} else if (!registered && clientId === this.tenantPortalClientId) {
+				await this.sendVerificationEmail(
+					emailAddress,
+					names[0] || '',
+					names[1] || '',
+					this.tenantEmailVerificationBaseUrl,
+					this.tenantEmailAuthContinueUrl,
+				);
+				throw new ForbiddenException(ErrorMessages.EMAIL_NOT_VERIFIED);
 			}
 
-			const tokenData = await this.exchangeRefreshToken(refreshToken);
-
-			if (!tokenData.access_token) {
-				throw new FirebaseException(
-					'No access token returned from refresh token exchange',
-				);
-			}
-
-			return {
-				...signInData,
-				access_token: tokenData.access_token,
+			const tokenData: TokenResponseDto = {
+				access_token: idToken,
+				expires_in: expiresIn,
+				refresh_token: refreshToken,
 			};
+			return tokenData;
 		} catch (error) {
 			this.logger.error(
 				'Error during Firebase sign-in and access token retrieval',
 				error,
 			);
-			const message =
-				error instanceof FirebaseException
-					? error.message
-					: 'Unexpected error during token exchange';
-			throw new FirebaseException(message);
+			throw error;
 		}
+	}
+
+	/**
+	 * Checks a Firebase user's MFA status and lists enrolled factors.
+	 * @param {string} uid - The Firebase user's UID.
+	 * @returns {Promise<string[]>}
+	 */
+	async getUserMfaFactors(uid: string): Promise<string[]> {
+		let enrolledFactors: string[] = [];
+		try {
+			const userRecord = await this.auth.getUser(uid);
+
+			if (
+				userRecord.multiFactor &&
+				Array.isArray(userRecord.multiFactor.enrolledFactors) &&
+				userRecord.multiFactor.enrolledFactors.length > 0
+			) {
+				this.apiDebugger.info(
+					`User ${uid} has the following MFA factors enrolled:`,
+				);
+				this.apiDebugger.info(
+					`User ${uid} has the following MFA factors enrolled:`,
+				);
+				enrolledFactors = userRecord.multiFactor.enrolledFactors.map(
+					(factor) => {
+						return factor.factorId;
+					},
+				);
+				// userRecord.multiFactor.enrolledFactors.forEach((factor, idx) => {
+				//   this.apiDebugger.info(`  Factor #${idx + 1}:`);
+				//   this.apiDebugger.info(`    Factor ID: ${factor.factorId}`); // 'phone' or 'totp'
+				//   this.apiDebugger.info(`    UID: ${factor.uid}`);
+				//   this.apiDebugger.info(`    Display Name: ${factor.displayName || 'N/A'}`);
+				//   this.apiDebugger.info(`    Enrollment Time: ${factor.enrollmentTime}`);
+				// });
+
+				// Check specifically for TOTP
+			} else {
+				this.apiDebugger.info(`User ${uid} has NO MFA factors enrolled.`);
+			}
+		} catch (error) {
+			this.apiDebugger.error('Error fetching user:', error);
+		}
+		return enrolledFactors;
 	}
 
 	private async createLeaseForTenantOnboarding(
@@ -993,20 +1218,129 @@ export abstract class AuthService {
 			sendNotification,
 		});
 	}
-	abstract getActionCodeSettings(baseUrl: string, continueUrl: string): any;
+	// abstract getActionCodeSettings(baseUrl: string, continueUrl: string): any;
 
-	abstract generatePasswordResetEmail(email: string): void;
+	// abstract generatePasswordResetEmail(email: string): void;
 
-	abstract sendVerificationEmail(
-		email: string,
-		firstName: string,
-		lastName: string,
-	): void;
+	// abstract sendVerificationEmail(
+	// 	email: string,
+	// 	firstName: string,
+	// 	lastName: string,
+	// ): void;
 
 	abstract inviteUser(invitedUserDto: InviteUserDto): any;
 
-	abstract sendInvitationEmail(
+	// abstract sendInvitationEmail(
+	// 	invitedUserDto: InviteUserDto,
+	// 	invitation: UserInvitation,
+	// ): any;
+
+	getActionCodeSettings(baseUrl: string, continueUrl: string) {
+		return {
+			url: `${baseUrl}${continueUrl}`,
+		};
+	}
+
+	async generatePasswordResetEmail(email: string): Promise<void> {
+		try {
+			const user = await this.auth.getUserByEmail(email);
+			const name = split(user.displayName, ' ');
+			if (!user) {
+				throw new NotFoundException('User not found');
+			}
+			let resetPasswordLink = await this.auth.generatePasswordResetLink(
+				email,
+				this.getActionCodeSettings(
+					this.emailVerificationBaseUrl,
+					this.emailAuthContinueUrl,
+				),
+			);
+			resetPasswordLink += `&email=${email}`;
+			const actionUrl = replace(resetPasswordLink, '_auth_', 'reset-password');
+			const emailTemplate = EmailTemplates['password-reset'];
+			await this.emailService.sendTransactionalEmail(
+				{
+					email,
+					firstName: name.length > 0 ? name[0] : '',
+					lastName: name.length > 1 ? name[1] : '',
+				},
+				actionUrl,
+				emailTemplate,
+			);
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			const errorMessage = firebaseErrorMessage || err.message;
+
+			this.logger.error('Error generating password reset email:', err);
+
+			throw new FirebaseException(errorMessage);
+		}
+	}
+
+	async sendVerificationEmail(
+		email: string,
+		firstName: string,
+		lastName: string,
+		verificationBaseUrl: string = this.emailVerificationBaseUrl,
+		verificationContinueUrl: string = this.emailAuthContinueUrl,
+	): Promise<void> {
+		try {
+			const verificationLink = await admin
+				.auth()
+				.generateEmailVerificationLink(
+					email,
+					this.getActionCodeSettings(
+						verificationBaseUrl,
+						verificationContinueUrl,
+					),
+				);
+			const actionUrl = replace(verificationLink, '_auth_', 'verify-email');
+			const emailTemplate = EmailTemplates['email-verification'];
+			await this.emailService.sendTransactionalEmail(
+				{ email, firstName, lastName },
+				actionUrl,
+				emailTemplate,
+			);
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
+		}
+	}
+
+	async sendInvitationEmail(
 		invitedUserDto: InviteUserDto,
 		invitation: UserInvitation,
-	): any;
+	): Promise<void> {
+		try {
+			let resetPasswordLink = await this.auth.generatePasswordResetLink(
+				invitedUserDto.email,
+				this.getActionCodeSettings(
+					this.emailVerificationBaseUrl,
+					this.emailAuthContinueUrl,
+				),
+			);
+			resetPasswordLink += `&email=${invitedUserDto.email}&type=user-invitation&invited_as=${invitation.orgRole.name}&token=${invitation.token}`;
+			const actionUrl = replace(resetPasswordLink, '_auth_', 'reset-password');
+			const emailTemplate = EmailTemplates['org-user-invite'];
+			await this.emailService.sendTransactionalEmail(
+				{
+					email: invitedUserDto.email,
+					firstName: invitedUserDto.firstName,
+					lastName: invitedUserDto.lastName,
+				},
+				actionUrl,
+				emailTemplate,
+				{
+					organization_name: invitation.organization.name,
+					expires_after: '72hrs',
+				},
+			);
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
+		}
+	}
 }

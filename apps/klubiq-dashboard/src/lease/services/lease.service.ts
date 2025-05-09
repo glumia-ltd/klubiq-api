@@ -33,13 +33,16 @@ import { GetLeaseDto } from '../dto/requests/get-lease.dto';
 import { ConfigService } from '@nestjs/config';
 import { FileUploadDto } from '@app/common/dto/requests/file-upload.dto';
 import { plainToInstance } from 'class-transformer';
-import { filter, isEmpty } from 'lodash';
+import { filter, isEmpty, isEqual } from 'lodash';
 import { DateTime } from 'luxon';
 import { RentOverdueLeaseDto } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '@app/common/event-listeners/event-models/event-constants';
 import { Generators } from '@app/common/helpers/generators';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
+import { Util } from '@app/common/helpers/util';
+import { PropertyAddress } from '@app/common/database/entities/property-address.entity';
 @Injectable()
 export class LeaseService implements ILeaseService {
 	private readonly logger = new Logger(LeaseService.name);
@@ -56,6 +59,8 @@ export class LeaseService implements ILeaseService {
 		private readonly eventEmitter: EventEmitter2,
 		private readonly generators: Generators,
 		private readonly userProfilesRepository: UserProfilesRepository,
+		private readonly apiDebugger: ApiDebugger,
+		private readonly util: Util,
 	) {}
 
 	private async updateOrgCacheKeys(cacheKey: string) {
@@ -102,6 +107,8 @@ export class LeaseService implements ILeaseService {
 	}
 
 	private async mapLeaseRawToDto(leases: any[]): Promise<LeaseDto[]> {
+		this.apiDebugger.log('leases: ', leases);
+		this.apiDebugger.log('Tenants: ', leases[0].leasesTenants);
 		return leases.map((lease) =>
 			plainToInstance(
 				LeaseDto,
@@ -114,7 +121,7 @@ export class LeaseService implements ILeaseService {
 					name: lease.name,
 					// Safely map raw tenant fields into an array of { id, profile, isPrimaryTenant } objects; use fallback values to avoid runtime errors
 					tenants:
-						lease.tenant_id != null && !isEmpty(lease.profile)
+						lease.leasesTenants_tenantId != null && !isEmpty(lease.profile)
 							? [
 									{
 										id: lease.tenant_id,
@@ -211,7 +218,9 @@ export class LeaseService implements ILeaseService {
 			return cachedLeases;
 		}
 		const leases = await this.leaseRepository.getUnitLeases(unitId);
-		const mappedLeases = await this.mapLeaseRawToDto(leases);
+		this.apiDebugger.log('Leases Raw: ', leases);
+		//const mappedLeases = await this.mapLeaseRawToDto(leases);
+		const mappedLeases = await this.mapLeaseListToDto(leases);
 		await this.cacheManager.set(cacheKey, mappedLeases, this.cacheTTL);
 		this.updateOrgCacheKeys(cacheKey);
 		if (currentUser.organizationRole !== UserRoles.ORG_OWNER) {
@@ -232,7 +241,8 @@ export class LeaseService implements ILeaseService {
 			return cachedLease;
 		}
 		const lease = await this.leaseRepository.getLeaseById(id);
-		const mappedLease = await this.mapLeaseDetailRawToDto(lease);
+		this.apiDebugger.log('Lease Single Raw: ', lease);
+		const mappedLease = await this.mapLeaseDetailsToDto(lease);
 		await this.cacheManager.set(cacheKey, mappedLease, this.cacheTTL);
 		this.updateOrgCacheKeys(cacheKey);
 		return mappedLease;
@@ -338,7 +348,7 @@ export class LeaseService implements ILeaseService {
 				tenantDtos,
 				leaseId,
 			);
-			return await this.mapLeaseDetailRawToDto(updatedLease);
+			return await this.mapLeaseDetailsToDto(updatedLease);
 		} catch (error) {
 			throw new Error(error.message);
 		}
@@ -366,51 +376,53 @@ export class LeaseService implements ILeaseService {
 		//TODO: Implement Logic to send invitation emails to Tenants
 	}
 
-	private async mapLeaseDetailRawToDto(lease: any): Promise<LeaseDetailsDto> {
-		const rentDueRecord = RENT_DUE_ON(lease.rent_due_day, lease.start_date);
-		const start = DateTime.fromISO(lease.start_date);
-		const end = DateTime.fromISO(lease.end_date);
-		return plainToInstance(
-			LeaseDetailsDto,
-			{
-				id: lease.id,
-				name: lease.name,
-				rentAmount: lease.rent_amount,
-				startDate: lease.start_date,
-				endDate: lease.end_date,
-				status: lease.status,
-				paymentFrequency: lease.payment_frequency,
-				tenants: [
-					{
-						id: lease.tenant_id,
-						profile: {
-							firstName:
-								lease.tenant_firstname || lease.tenant_companyName || '',
-							lastName: lease.tenant_lastname || '',
-							email: lease.tenant_email || '',
-							profileUuid: lease.tenant_profileuuid || '',
-							profilePicUrl: lease.tenant_profilepicurl || '',
-							phoneNumber: lease.tenant_phoneNumber || '',
-							companyName: lease.tenant_companyName || '',
-						},
-						isPrimaryTenant: lease.leasestenants_isprimarytenant || false,
-					},
-				],
-				unitNumber: lease.unit_number,
-				propertyName: lease.property_name,
-				propertyAddress: lease.property_address,
-				propertyType: lease.property_type,
-				isMultiUnitProperty: lease.is_multi_unit_property,
-				daysToLeaseExpires: end.diff(start, 'days').days,
-				nextPaymentDate: lease.next_payment_date,
-				rentDueDay: lease.rent_due_day,
-				rentDueOn: rentDueRecord[lease.payment_frequency],
-			},
-			{ excludeExtraneousValues: true },
-		);
-	}
+	// private async mapLeaseDetailRawToDto(lease: any): Promise<LeaseDetailsDto> {
+	// 	const rentDueRecord = RENT_DUE_ON(lease.rent_due_day, lease.start_date);
+	// 	const start = DateTime.fromISO(lease.start_date);
+	// 	const end = DateTime.fromISO(lease.end_date);
+	// 	return plainToInstance(
+	// 		LeaseDetailsDto,
+	// 		{
+	// 			id: lease.id,
+	// 			name: lease.name,
+	// 			rentAmount: lease.rent_amount,
+	// 			startDate: lease.start_date,
+	// 			endDate: lease.end_date,
+	// 			status: lease.status,
+	// 			paymentFrequency: lease.payment_frequency,
+	// 			tenants: [
+	// 				{
+	// 					id: lease.tenant_id,
+	// 					profile: {
+	// 						firstName:
+	// 							lease.tenant_firstname || lease.tenant_companyName || '',
+	// 						lastName: lease.tenant_lastname || '',
+	// 						email: lease.tenant_email || '',
+	// 						profileUuid: lease.tenant_profileuuid || '',
+	// 						profilePicUrl: lease.tenant_profilepicurl || '',
+	// 						phoneNumber: lease.tenant_phoneNumber || '',
+	// 						companyName: lease.tenant_companyName || '',
+	// 					},
+	// 					isPrimaryTenant: lease.leasestenants_isprimarytenant || false,
+	// 				},
+	// 			],
+	// 			unitNumber: lease.unit_number,
+	// 			propertyName: lease.property_name,
+	// 			propertyAddress: lease.property_address,
+	// 			propertyType: lease.property_type,
+	// 			isMultiUnitProperty: lease.is_multi_unit_property,
+	// 			daysToLeaseExpires: end.diff(start, 'days').days,
+	// 			nextPaymentDate: lease.next_payment_date,
+	// 			rentDueDay: lease.rent_due_day,
+	// 			rentDueOn: rentDueRecord[lease.payment_frequency],
+	// 		},
+	// 		{ excludeExtraneousValues: true },
+	// 	);
+	// }
 
 	private async mapLeaseDetailsToDto(lease: Lease): Promise<LeaseDetailsDto> {
+		lease.startDate = new Date(lease.startDate);
+		lease.endDate = new Date(lease.endDate);
 		const resolvedTenants = await Promise.all(
 			lease.leasesTenants.map(async (leaseTenant) => {
 				const tenantProfile = await Promise.resolve(leaseTenant.tenant.profile);
@@ -430,21 +442,74 @@ export class LeaseService implements ILeaseService {
 				};
 			}),
 		);
+		const property = await Promise.resolve(lease.unit.property);
+		const startDayAndMonth = DateTime.fromJSDate(lease.startDate, {
+			zone: 'utc',
+		}).toFormat('LLL d');
+		const startDateDay = DateTime.fromJSDate(lease.startDate, {
+			zone: 'utc',
+		}).weekdayLong;
+		const rentDueRecord = RENT_DUE_ON(
+			lease.rentDueDay,
+			startDayAndMonth,
+			startDateDay,
+		);
+		const nextRentDueDate = this.util.calculateNextRentDueDate(lease);
+		this.apiDebugger.log('Next Rent Due Date: ', nextRentDueDate);
 		return plainToInstance(
 			LeaseDetailsDto,
 			{
 				id: lease.id,
-				rentAmount: lease.rentAmount,
-				startDate: lease.startDate,
-				endDate: lease.endDate,
-				status: lease.status,
-				paymentFrequency: lease.paymentFrequency,
-				rentDueDay: lease.rentDueDay,
-				nextPaymentDate: lease.nextDueDate,
-				tenants: resolvedTenants,
+				name: lease.name || null,
+				rentAmount: lease.rentAmount || 0,
+				startDate: lease.startDate || null,
+				endDate: lease.endDate || null,
+				status: lease.status || LeaseStatus.ACTIVE,
+				paymentFrequency: lease.paymentFrequency || PaymentFrequency.MONTHLY,
+				rentDueDay: lease.rentDueDay || null,
+				nextPaymentDate: nextRentDueDate || null,
+				tenants: resolvedTenants || [],
+				unitNumber: lease.unit.unitNumber || null,
+				propertyName: property.name || null,
+				isMultiUnitProperty: property.isMultiUnit || false,
+				rentDueOn: rentDueRecord[lease.paymentFrequency] || null,
+				daysToLeaseExpires:
+					DateTime.fromJSDate(lease.endDate, { zone: 'utc' }).diff(
+						DateTime.fromJSDate(lease.startDate, { zone: 'utc' }),
+						'days',
+					).days || 0,
+				propertyAddress: this.buildPropertyAddress(property.address) || null,
+				propertyType: property.type.name || null,
 			},
 			{ excludeExtraneousValues: true },
 		);
+	}
+
+	private buildPropertyAddress(address: PropertyAddress): string {
+		let fullAddress = '';
+		if (address.addressLine1) {
+			fullAddress += `${address.addressLine1}, `;
+		}
+		if (address.addressLine2) {
+			fullAddress += `${address.addressLine2}, `;
+		}
+		if (address.city && address.state && isEqual(address.city, address.state)) {
+			fullAddress += `${address.city}, `;
+		} else {
+			if (address.city) {
+				fullAddress += `${address.city}, `;
+			}
+			if (address.state) {
+				fullAddress += `${address.state}, `;
+			}
+		}
+		if (address.postalCode) {
+			fullAddress += `${address.postalCode}, `;
+		}
+		if (address.country) {
+			fullAddress += `${address.country}, `;
+		}
+		return fullAddress;
 	}
 
 	private emitEvent(

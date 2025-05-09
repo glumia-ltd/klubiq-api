@@ -4,7 +4,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from 'apps/klubiq-dashboard/src/users/services/users.service';
 import { each, transform } from 'lodash';
-import { LeaseEvent, PropertyEvent } from '../event-models/event-models';
+import {
+	LeaseEvent,
+	PropertyEvent,
+	TenantEvent,
+} from '../event-models/event-models';
 import { Cache } from 'cache-manager';
 import { EVENTS, EventTemplate } from '../event-models/event-constants';
 import { UserDetailsDto } from 'apps/klubiq-dashboard/src/users/dto/org-user.dto';
@@ -70,6 +74,24 @@ export class HelperService {
 	}
 
 	/**
+	 * Invalidates an organization's tenant cache
+	 * @param payload
+	 */
+	async invalidateOrganizationTenantCache(payload: TenantEvent) {
+		const tenantCacheKeys = this.getTenantRelatedCacheKeys(
+			payload.organizationId,
+		);
+		each(tenantCacheKeys, async (key) => {
+			const cacheData = await this.cacheManager.get(key);
+			if (cacheData && key.includes('getTenantListKeys')) {
+				this.deleteFilteredCacheKeys(cacheData as string[]);
+			} else {
+				await this.cacheManager.del(key);
+			}
+		});
+	}
+
+	/**
 	 * Delete filtered cache by keys
 	 * @param keys
 	 */
@@ -102,6 +124,21 @@ export class HelperService {
 			`${organizationId}:getLeaseListKeys`,
 			`dashboard:${CacheKeys.LEASE_METRICS}:${organizationId}`,
 			`dashboard:${CacheKeys.PROPERTY_METRICS}:${organizationId}`,
+		];
+	}
+
+	/**
+	 * Get lease related cache keys for an organization
+	 * @param organizationId
+	 * @returns
+	 */
+	private getTenantRelatedCacheKeys(organizationId: string) {
+		return [
+			`${organizationId}:getTenantListKeys`,
+			`dashboard:${CacheKeys.LEASE_METRICS}:${organizationId}`,
+			`dashboard:${CacheKeys.PROPERTY_METRICS}:${organizationId}`,
+			`${organizationId}:getLeaseListKeys`,
+			`${organizationId}:getPropertyListKeys`,
 		];
 	}
 

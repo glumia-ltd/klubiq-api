@@ -57,8 +57,8 @@ import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 @Injectable()
 export class LandlordAuthService extends AuthService {
-	private readonly emailVerificationBaseUrl: string;
-	private readonly emailAuthContinueUrl: string;
+	private readonly landlordEmailVerificationBaseUrl: string;
+	private readonly landlordEmailAuthContinueUrl: string;
 	protected readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
 	protected readonly logger = new Logger(LandlordAuthService.name);
 	protected readonly suid = new ShortUniqueId();
@@ -104,10 +104,10 @@ export class LandlordAuthService extends AuthService {
 			apiDebugger,
 			eventEmitter,
 		);
-		this.emailVerificationBaseUrl = this.configService.get<string>(
+		this.landlordEmailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
 		);
-		this.emailAuthContinueUrl =
+		this.landlordEmailAuthContinueUrl =
 			this.configService.get<string>('CONTINUE_URL_PATH');
 		this.landlordRoleId = this.configService.get<number>('LANDLORD_ROLE_ID');
 		this.orgOwnerRoleId = this.configService.get<number>('ORG_OWNER_ROLE_ID');
@@ -125,7 +125,6 @@ export class LandlordAuthService extends AuthService {
 				password: createUserDto.password,
 				displayName: displayName,
 			});
-
 			if (fireUser) {
 				fbid = fireUser.uid;
 				const userProfile = (await this.createUserWithOrganization(
@@ -189,12 +188,15 @@ export class LandlordAuthService extends AuthService {
 		orgCountryDto?: OrganizationCountryDto,
 	): Promise<Organization> {
 		try {
-			const organizationId = this.cls.get('currentUser.organizationId');
 			if (createEventType === CreateUserEventTypes.CREATE_ORG_USER) {
 				const newOrganization = new Organization();
 				newOrganization.name = name;
-				newOrganization.tenantId = this.generators.generateSecureULID();
-				newOrganization.csrfSecret = this.generators.generateCsrfSecret();
+				try {
+					newOrganization.tenantId = this.generators.generateSecureULID();
+					newOrganization.csrfSecret = this.generators.generateCsrfSecret();
+				} catch (err) {
+					throw new Error('Tenant ID or CSRF Secret not generated');
+				}
 				if (orgCountryDto) {
 					newOrganization.country = orgCountryDto.name;
 					newOrganization.countryPhoneCode = orgCountryDto.dialCode;
@@ -213,6 +215,8 @@ export class LandlordAuthService extends AuthService {
 				}
 				return entityManager.save(newOrganization);
 			} else if (createEventType === CreateUserEventTypes.INVITE_ORG_USER) {
+				const organizationId =
+					this.cls.get('currentUser.organizationId') || null;
 				const existingOrganization = await entityManager.findOne(Organization, {
 					where: { name: name, organizationUuid: organizationId },
 				});
@@ -351,6 +355,7 @@ export class LandlordAuthService extends AuthService {
 		createUserDto: OrgUserSignUpDto,
 		createEventType: CreateUserEventTypes,
 	): Promise<UserProfile> {
+		this.apiDebugger.info(`Creating org owner profile for: ${fireUser}`);
 		const entityManager = this.organizationRepository.manager;
 		return entityManager.transaction(async (transactionalEntityManager) => {
 			const organization = await this.findOrCreateOrganization(
@@ -406,8 +411,8 @@ export class LandlordAuthService extends AuthService {
 			let resetPasswordLink = await this.auth.generatePasswordResetLink(
 				email,
 				this.getActionCodeSettings(
-					this.emailVerificationBaseUrl,
-					this.emailAuthContinueUrl,
+					this.landlordEmailVerificationBaseUrl,
+					this.landlordEmailAuthContinueUrl,
 				),
 			);
 			resetPasswordLink += `&email=${email}`;
@@ -444,8 +449,8 @@ export class LandlordAuthService extends AuthService {
 				.generateEmailVerificationLink(
 					email,
 					this.getActionCodeSettings(
-						this.emailVerificationBaseUrl,
-						this.emailAuthContinueUrl,
+						this.landlordEmailVerificationBaseUrl,
+						this.landlordEmailAuthContinueUrl,
 					),
 				);
 			const actionUrl = replace(verificationLink, '_auth_', 'verify-email');
@@ -471,8 +476,8 @@ export class LandlordAuthService extends AuthService {
 			let resetPasswordLink = await this.auth.generatePasswordResetLink(
 				invitedUserDto.email,
 				this.getActionCodeSettings(
-					this.emailVerificationBaseUrl,
-					this.emailAuthContinueUrl,
+					this.landlordEmailVerificationBaseUrl,
+					this.landlordEmailAuthContinueUrl,
 				),
 			);
 			resetPasswordLink += `&email=${invitedUserDto.email}&type=user-invitation&invited_as=${invitation.orgRole.name}&token=${invitation.token}`;

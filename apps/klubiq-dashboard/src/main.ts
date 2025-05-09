@@ -66,12 +66,13 @@ async function bootstrap() {
 	);
 	app.use(
 		session({
-			secret: configService.get('APP_SECRET'),
+			secret: process.env.APP_SECRET,
 			resave: false,
 			saveUninitialized: false,
 			cookie: {
+				sameSite: 'strict',
 				httpOnly: true,
-				secure: configService.get('NODE_ENV') !== 'local',
+				secure: process.env.NODE_ENV === 'production',
 				maxAge: 1000 * 60 * 60 * 24 * 30,
 			},
 		}),
@@ -162,10 +163,33 @@ async function bootstrap() {
 	});
 
 	/// APP SETTINGS
+	const allowedOrigins =
+		process.env.NODE_ENV === 'production'
+			? [
+					'https://app.klubiq.com',
+					'https://dashboard.klubiq.com',
+					'https://admin.klubiq.com',
+				]
+			: [
+					'http://localhost:3000',
+					'http://localhost:5173',
+					'http://localhost:5174',
+					'https://dev.klubiq.com',
+					'https://dev-tenant.klubiq.com',
+				];
 	app.enableCors({
-		//origin: ['http://localhost', 'https://*.klubiq.com'],
-		origin: true,
+		// Allow CORS from any origin by echoing back the request's Origin header
+		origin: (origin, callback) => {
+			if (!origin || allowedOrigins.includes(origin)) {
+				callback(null, true);
+			} else {
+				callback(new Error('Not allowed by CORS'));
+			}
+		},
+		// Use HTTP 204 (No Content) for successful preflight (OPTIONS) requests
 		optionsSuccessStatus: 204,
+		// Allow cookies and authentication info to be sent in cross-origin requests
+		credentials: true,
 	});
 	app.enableVersioning({
 		type: VersioningType.URI,

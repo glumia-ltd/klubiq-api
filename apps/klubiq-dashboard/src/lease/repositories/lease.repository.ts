@@ -114,46 +114,46 @@ export class LeaseRepository extends BaseRepository<Lease> {
 			.innerJoin('unit.property', 'property')
 			.select([
 				// Lease fields (poo schema)
-				'lease.id as id',
-				'lease.name AS name',
-				'lease.startDate AS startDate',
-				'lease.endDate AS endDate',
-				'lease.rentAmount AS rentAmount',
-				'lease.status AS status',
-				'lease.createdDate AS createdDate',
-				'lease.updatedDate AS updatedDate',
-				'lease.paymentFrequency AS paymentFrequency',
-				'lease.nextDueDate AS nextDueDate',
-				'lease.rentDueDay AS rentDueDay',
+				'lease.id',
+				'lease.name',
+				'lease.startDate',
+				'lease.endDate',
+				'lease.rentAmount',
+				'lease.status',
+				'lease.createdDate',
+				'lease.updatedDate',
+				'lease.paymentFrequency',
+				'lease.nextDueDate',
+				'lease.rentDueDay',
 
 				// LeasesTenants fields (poo schema)
-				'leasesTenants.id as leasesTenants_id',
-				'leasesTenants.tenantId as leasesTenants_tenantId',
-				'leasesTenants.isPrimaryTenant as leasesTenants_isPrimaryTenant',
+				'leasesTenants.id',
+				'leasesTenants.tenantId',
+				'leasesTenants.isPrimaryTenant',
 
 				// TenantUser fields (kdo schema)
-				'tenant.id as tenant_id',
-				'tenant.companyName as tenant_companyName',
-				'tenant.isActive as tenant_isActive',
+				'tenant.id',
+				'tenant.companyName',
+				'tenant.isActive',
 
 				// UserProfile fields (kdo schema)
-				'profile.profileUuid as profile_profileUuid',
-				'profile.firstName as profile_firstName',
-				'profile.lastName as profile_lastName',
-				'profile.email as profile_email',
-				'profile.profilePicUrl as profile_profilePicUrl',
-				'profile.phoneNumber as profile_phoneNumber',
+				'profile.profileUuid',
+				'profile.firstName',
+				'profile.lastName',
+				'profile.email',
+				'profile.profilePicUrl',
+				'profile.phoneNumber',
 
 				// Property fields (poo schema)
-				'property.uuid as property_uuid',
-				'property.name as property_name',
-				'property.organizationUuid as property_organizationUuid',
-				'property.managerUid as property_managerUid',
-				'property.ownerUid as property_ownerUid',
+				'property.uuid',
+				'property.name',
+				'property.organizationUuid',
+				'property.managerUid',
+				'property.ownerUid',
 
 				// Unit fields (poo schema)
-				'unit.id as unit_id',
-				'unit.unitNumber as unit_unitNumber',
+				'unit.id',
+				'unit.unitNumber',
 			])
 			.where('lease.unitId = :unitId', { unitId });
 		if (!includeArchived) {
@@ -161,7 +161,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 				includeArchived,
 			});
 		}
-		return await queryBuilder.getRawMany();
+		return await queryBuilder.getMany();
 	}
 
 	async getLeaseById(id: string) {
@@ -178,34 +178,145 @@ export class LeaseRepository extends BaseRepository<Lease> {
 			.innerJoin('property.type', 'type')
 			.innerJoin('property.address', 'address')
 			.select([
-				'lease.id AS id',
-				'lease.name AS name',
-				'lease.status AS status',
-				'TO_CHAR(lease."startDate"::DATE, \'YYYY-MM-DD\') AS start_date',
-				'TO_CHAR(lease."endDate"::DATE, \'YYYY-MM-DD\') AS end_date',
-				'lease.rentAmount AS rent_amount',
-				'lease.paymentFrequency AS payment_frequency',
-				'lease.rentDueDay AS rent_due_day',
-				'property.name AS property_name',
-				`CONCAT(address."addressLine1", ' ', address."addressLine2", ', ', address.city, ', ', address.state, ', ', address."postalCode", ', ', address.country) AS property_address`,
-				'type.name AS property_type',
-				'unit.unitNumber AS unit_number',
-				'property.isMultiUnit AS is_multi_unit_property',
-				"TO_CHAR(poo.calculate_next_rent_due_date(lease.startDate, lease.endDate, lease.rentDueDay, lease.paymentFrequency, lease.customPaymentFrequency, lease.lastPaymentDate)::DATE, 'YYYY-MM-DD')AS next_payment_date",
-				'tenant.id AS tenant_id',
-				'tenant.companyName AS tenant_companyName',
-				'profile.firstName AS tenant_firstName',
-				'profile.lastName AS tenant_lastName',
-				'profile.email AS tenant_email',
-				'profile.profileUuid AS tenant_profileUuid',
-				'profile.profilePicUrl AS tenant_profilePicUrl',
-				'profile.phoneNumber AS tenant_phoneNumber',
-				'leasesTenants.isPrimaryTenant AS leasesTenants_isPrimaryTenant',
+				'lease.id',
+				'lease.name',
+				'lease.status',
+				'lease.startDate',
+				'lease.endDate',
+				'lease.rentAmount',
+				'lease.paymentFrequency',
+				'lease.rentDueDay',
+				'property.name',
+				'address.addressLine1',
+				'address.addressLine2',
+				'address.city',
+				'address.state',
+				'address.postalCode',
+				'address.country',
+				'type.name',
+				'unit.unitNumber',
+				'property.isMultiUnit',
+				//"TO_CHAR(poo.calculate_next_rent_due_date(lease.startDate, lease.endDate, lease.rentDueDay, lease.paymentFrequency, lease.customPaymentFrequency, lease.lastPaymentDate)::DATE, 'YYYY-MM-DD') as \"nextDueDate\"",
+				'tenant.id',
+				'tenant.companyName',
+				'profile.firstName',
+				'profile.lastName',
+				'profile.email',
+				'profile.profileUuid',
+				'profile.profilePicUrl',
+				'profile.phoneNumber',
+				'leasesTenants.isPrimaryTenant',
 			])
 			.where('lease.id = :id', { id })
-			.getRawOne();
+			.getOne();
 		return lease;
 	}
+
+	// async getUnitLeases(unitId: string, includeArchived: boolean = false) {
+	// 	const queryBuilder = this.createQueryBuilder('lease')
+	// 		// Join with LeasesTenants (junction table)
+	// 		.leftJoin('lease.leasesTenants', 'leasesTenants')
+	// 		// Join with TenantUser (in kdo schema)
+	// 		.leftJoin('leasesTenants.tenant', 'tenant')
+	// 		// Join with UserProfile (in kdo schema)
+	// 		.leftJoin('tenant.profile', 'profile')
+	// 		// Join with Unit and Property (in poo schema)
+	// 		.innerJoin('lease.unit', 'unit')
+	// 		.innerJoin('unit.property', 'property')
+	// 		.select([
+	// 			// Lease fields (poo schema)
+	// 			'lease.id as id',
+	// 			'lease.name AS name',
+	// 			'lease.startDate AS startDate',
+	// 			'lease.endDate AS endDate',
+	// 			'lease.rentAmount AS rentAmount',
+	// 			'lease.status AS status',
+	// 			'lease.createdDate AS createdDate',
+	// 			'lease.updatedDate AS updatedDate',
+	// 			'lease.paymentFrequency AS paymentFrequency',
+	// 			'lease.nextDueDate AS nextDueDate',
+	// 			'lease.rentDueDay AS rentDueDay',
+
+	// 			// LeasesTenants fields (poo schema)
+	// 			'leasesTenants.id as leasesTenants_id',
+	// 			'leasesTenants.tenantId as leasesTenants_tenantId',
+	// 			'leasesTenants.isPrimaryTenant as leasesTenants_isPrimaryTenant',
+
+	// 			// TenantUser fields (kdo schema)
+	// 			'tenant.id as tenant_id',
+	// 			'tenant.companyName as tenant_companyName',
+	// 			'tenant.isActive as tenant_isActive',
+
+	// 			// UserProfile fields (kdo schema)
+	// 			'profile.profileUuid as profile_profileUuid',
+	// 			'profile.firstName as profile_firstName',
+	// 			'profile.lastName as profile_lastName',
+	// 			'profile.email as profile_email',
+	// 			'profile.profilePicUrl as profile_profilePicUrl',
+	// 			'profile.phoneNumber as profile_phoneNumber',
+
+	// 			// Property fields (poo schema)
+	// 			'property.uuid as property_uuid',
+	// 			'property.name as property_name',
+	// 			'property.organizationUuid as property_organizationUuid',
+	// 			'property.managerUid as property_managerUid',
+	// 			'property.ownerUid as property_ownerUid',
+
+	// 			// Unit fields (poo schema)
+	// 			'unit.id as unit_id',
+	// 			'unit.unitNumber as unit_unitNumber',
+	// 		])
+	// 		.where('lease.unitId = :unitId', { unitId });
+	// 	if (!includeArchived) {
+	// 		queryBuilder.andWhere('lease.isArchived = :includeArchived', {
+	// 			includeArchived,
+	// 		});
+	// 	}
+	// 	return await queryBuilder.getMany();
+	// }
+
+	// async getLeaseById(id: string) {
+	// 	const lease = await this.createQueryBuilder('lease')
+	// 		// Join with LeasesTenants (junction table)
+	// 		.leftJoin('lease.leasesTenants', 'leasesTenants')
+	// 		// Join with TenantUser (in kdo schema)
+	// 		.leftJoin('leasesTenants.tenant', 'tenant')
+	// 		// Join with UserProfile (in kdo schema)
+	// 		.leftJoin('tenant.profile', 'profile')
+	// 		// Join with Unit and Property (in poo schema)
+	// 		.innerJoin('lease.unit', 'unit')
+	// 		.innerJoin('unit.property', 'property')
+	// 		.innerJoin('property.type', 'type')
+	// 		.innerJoin('property.address', 'address')
+	// 		.select([
+	// 			'lease.id AS id',
+	// 			'lease.name AS name',
+	// 			'lease.status AS status',
+	// 			'TO_CHAR(lease."startDate"::DATE, \'YYYY-MM-DD\') AS start_date',
+	// 			'TO_CHAR(lease."endDate"::DATE, \'YYYY-MM-DD\') AS end_date',
+	// 			'lease.rentAmount AS rent_amount',
+	// 			'lease.paymentFrequency AS payment_frequency',
+	// 			'lease.rentDueDay AS rent_due_day',
+	// 			'property.name AS property_name',
+	// 			`CONCAT(address."addressLine1", ' ', address."addressLine2", ', ', address.city, ', ', address.state, ', ', address."postalCode", ', ', address.country) AS property_address`,
+	// 			'type.name AS property_type',
+	// 			'unit.unitNumber AS unit_number',
+	// 			'property.isMultiUnit AS is_multi_unit_property',
+	// 			"TO_CHAR(poo.calculate_next_rent_due_date(lease.startDate, lease.endDate, lease.rentDueDay, lease.paymentFrequency, lease.customPaymentFrequency, lease.lastPaymentDate)::DATE, 'YYYY-MM-DD')AS next_payment_date",
+	// 			'tenant.id AS tenant_id',
+	// 			'tenant.companyName AS tenant_companyName',
+	// 			'profile.firstName AS tenant_firstName',
+	// 			'profile.lastName AS tenant_lastName',
+	// 			'profile.email AS tenant_email',
+	// 			'profile.profileUuid AS tenant_profileUuid',
+	// 			'profile.profilePicUrl AS tenant_profilePicUrl',
+	// 			'profile.phoneNumber AS tenant_phoneNumber',
+	// 			'leasesTenants.isPrimaryTenant AS leasesTenants_isPrimaryTenant',
+	// 		])
+	// 		.where('lease.id = :id', { id })
+	// 		.getRawOne();
+	// 	return lease;
+	// }
 
 	async updateLease(id: string, leaseDto: UpdateLeaseDto): Promise<Lease> {
 		if (leaseDto.startDate)
