@@ -17,15 +17,17 @@ import {
 	ApiHeader,
 } from '@nestjs/swagger';
 import { GetTenantDto } from '../dto/requests/get-tenant-dto';
-import { Auth, Permission } from '@app/auth/decorators/auth.decorator';
-import { PageDto, Permissions } from '@app/common';
+import { Auth, Permission, Feature } from '@app/auth/decorators/auth.decorator';
+import { PageDto } from '@app/common';
 import { AuthType } from '@app/auth/types/firebase.types';
 import { LeaseDto, TenantDto } from '../dto/responses/lease-tenant.dto';
+import { Permissions, AppFeature } from '@app/common/config/config.constants';
 
 @ApiTags('tenant')
 @ApiBearerAuth()
 @Auth(AuthType.Bearer)
 @Controller('tenants')
+@Feature(AppFeature.TENANT)
 @ApiHeader({
 	name: 'x-tenant-id',
 	description: 'The organization tenant id',
