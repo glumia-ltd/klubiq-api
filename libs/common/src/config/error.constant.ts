@@ -19,7 +19,7 @@ export enum ErrorMessages {
 	SIGN_IN_ERROR = 'Error during Firebase sign-in and access token retrieval',
 	USER_NOT_FOUND = 'User not found',
 	INVALID_CREDENTIALS = 'Invalid credentials',
-	MFA_REQUIRED = 'auth/multi-factor-auth-required',
+	MFA_REQUIRED = 'MFA-required',
 }
 
 export const StatusCodeToKlubiqErrorCode: Record<number, string> = {
