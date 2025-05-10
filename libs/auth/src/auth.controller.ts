@@ -42,7 +42,10 @@ import { ErrorMessages, OrganizationSubscriptionService } from '@app/common';
 import { RolesService } from '@app/common/permissions/roles.service';
 import { UserRoles } from '@app/common/config/config.constants';
 import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
-import { TokenResponseDto } from './dto/responses/auth-response.dto';
+import {
+	MFAResponseDto,
+	TokenResponseDto,
+} from './dto/responses/auth-response.dto';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { cookieConfig, extractRefreshToken } from './helpers/cookie-helper';
@@ -132,12 +135,31 @@ export class AuthController {
 			credentials.email,
 			credentials.password,
 		);
+		if (tokenData.message && tokenData.message === ErrorMessages.MFA_REQUIRED) {
+			this.setMFARequiredCookie(res, tokenData);
+			delete tokenData.mfaPendingCredential;
+			return tokenData;
+		}
 		if (this.isNotApiCall(req)) {
 			this.setLoginCookie(res, tokenData);
 			return { expires_in: tokenData.expires_in };
 		} else {
 			return tokenData;
 		}
+	}
+
+	private setMFARequiredCookie(res: Response, tokenData: MFAResponseDto): void {
+		const { mfaPendingCredential, mfaEnrollmentId } = tokenData;
+		res.cookie(
+			cookieConfig.mfaPendingCredential.name,
+			mfaPendingCredential,
+			cookieConfig.mfaPendingCredential.options,
+		);
+		res.cookie(
+			cookieConfig.mfaEnrollmentId.name,
+			mfaEnrollmentId,
+			cookieConfig.mfaEnrollmentId.options,
+		);
 	}
 
 	private isNotApiCall(req: Request): boolean {

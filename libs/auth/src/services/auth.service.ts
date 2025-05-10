@@ -8,7 +8,6 @@ import {
 	ConflictException,
 	ServiceUnavailableException,
 	ForbiddenException,
-	PreconditionFailedException,
 } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 import * as admin from 'firebase-admin';
@@ -25,6 +24,7 @@ import {
 	TokenResponseDto,
 	SignInByFireBaseResponseDto,
 	TenantUserDetailsResponseDto,
+	MFAResponseDto,
 } from '../dto/responses/auth-response.dto';
 import {
 	LeaseStatus,
@@ -945,15 +945,14 @@ export abstract class AuthService {
 				signInData;
 			if (!refreshToken) {
 				const requiresMfa = signInData.mfaInfo?.length > 0;
-				const factors = signInData.mfaInfo?.map((factor) => {
-					return factor.displayName;
-				});
+				//const factors = signInData.mfaInfo?.map((factor) => {return factor.displayName;});
 				if (requiresMfa) {
-					throw new PreconditionFailedException(ErrorMessages.MFA_REQUIRED, {
-						cause: {
-							factors,
-						},
-					});
+					const response: MFAResponseDto = {
+						message: ErrorMessages.MFA_REQUIRED,
+						mfaPendingCredential: signInData.mfaPendingCredential,
+						mfaEnrollmentId: signInData.mfaInfo[0].mfaEnrollmentId,
+					};
+					return response;
 				}
 				throw new FirebaseException(ErrorMessages.TOKEN_NOT_RETURNED);
 			}

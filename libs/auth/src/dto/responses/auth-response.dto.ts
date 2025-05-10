@@ -140,6 +140,14 @@ export class TokenResponseDto {
 	id_token?: string;
 	user_id?: string;
 	project_id?: string;
+	message?: string;
+	factors?: string[];
+}
+
+export class MFAResponseDto {
+	message: string;
+	mfaPendingCredential: string;
+	mfaEnrollmentId: string;
 }
 
 export class SignInByFireBaseResponseDto {
