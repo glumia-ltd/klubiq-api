@@ -1,68 +1,77 @@
 import { Request } from 'express';
 
+// Common cookie options
+const commonCookieOptions = {
+	httpOnly: true,
+	secure: process.env.NODE_ENV === 'production',
+	sameSite: 'strict' as const,
+};
+
 export const cookieConfig = {
 	refreshToken: {
 		name: 'refresh_token',
 		options: {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
-			sameSite: 'strict' as const,
+			...commonCookieOptions,
 			maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 		},
 	},
 	accessToken: {
 		name: 'access_token',
 		options: {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
-			sameSite: 'strict' as const,
+			...commonCookieOptions,
 			maxAge: 60 * 60 * 1000, // 1 hour
+		},
+	},
+	mfaPendingCredential: {
+		name: 'mfa_pending_credential',
+		options: {
+			...commonCookieOptions,
+			maxAge: 15 * 60 * 1000, // 15 minutes
+		},
+	},
+	mfaEnrollmentId: {
+		name: 'mfa_enrollment_id',
+		options: {
+			...commonCookieOptions,
+			maxAge: 15 * 60 * 1000, // 15 minutes
 		},
 	},
 };
 
-export const extractRefreshToken = (req: Request): string | null => {
-	const { name } = cookieConfig.refreshToken;
+// Generic token extractor to reduce code duplication
+const extractToken = (req: Request, tokenName: string): string | null => {
 	// Try cookie-parser first
-	const cookieToken = req.cookies?.[name];
+	const cookieToken = req.cookies?.[tokenName];
 	if (cookieToken) {
 		return cookieToken;
 	}
-	// Fallback: parse raw Cookie header if cookie-parser isn't used
+
+	// Fallback: parse raw Cookie header
 	const rawCookie = req.headers.cookie;
 	if (!rawCookie) {
 		return null;
 	}
+
 	const matched = rawCookie
 		.split(';')
 		.map((c) => c.trim())
-		.find((c) => c.startsWith(`${name}=`));
+		.find((c) => c.startsWith(`${tokenName}=`));
+
 	if (!matched) {
 		return null;
 	}
-	// decode in case the value was URL-encoded
+
 	return decodeURIComponent(matched.split('=')[1]);
 };
 
-export const extractAccessToken = (req: Request): string | null => {
-	const { name } = cookieConfig.accessToken;
-	// Try cookie-parser first
-	const cookieToken = req.cookies?.[name];
-	if (cookieToken) {
-		return cookieToken;
-	}
-	// Fallback: parse raw Cookie header if cookie-parser isn't used
-	const rawCookie = req.headers.cookie;
-	if (!rawCookie) {
-		return null;
-	}
-	const matched = rawCookie
-		.split(';')
-		.map((c) => c.trim())
-		.find((c) => c.startsWith(`${name}=`));
-	if (!matched) {
-		return null;
-	}
-	// decode in case the value was URL-encoded
-	return decodeURIComponent(matched.split('=')[1]);
-};
+export const extractRefreshToken = (req: Request): string | null =>
+	extractToken(req, cookieConfig.refreshToken.name);
+
+export const extractAccessToken = (req: Request): string | null =>
+	extractToken(req, cookieConfig.accessToken.name);
+
+export const extractMfaPendingCredential = (req: Request): string | null =>
+	extractToken(req, cookieConfig.mfaPendingCredential.name);
+
+export const extractMfaEnrollmentId = (req: Request): string | null =>
+	extractToken(req, cookieConfig.mfaEnrollmentId.name);
