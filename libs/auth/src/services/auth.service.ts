@@ -30,6 +30,7 @@ import {
 	LeaseStatus,
 	ROLE_ALIAS,
 	UserRoles,
+	UserType,
 } from '@app/common/config/config.constants';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
 import { ErrorMessages } from '@app/common/config/error.constant';
@@ -348,7 +349,8 @@ export abstract class AuthService {
 		);
 	}
 	// ACCEPTS INVITATION
-	async acceptInvitation(
+
+	async acceptLandlordInvitation(
 		resetPassword: ResetPasswordDto,
 		invitationToken: string,
 	) {
@@ -356,6 +358,42 @@ export abstract class AuthService {
 			if (!(await this.validateInvitation(invitationToken))) {
 				throw new BadRequestException('Invitation link has expired');
 			}
+			const userData = await this.acceptInvitation(resetPassword);
+			this.userProfilesRepository.acceptInvitation(
+				userData.localId,
+				UserType.LANDLORD,
+			);
+			return userData;
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
+		}
+	}
+
+	async acceptTenantInvitation(
+		resetPassword: ResetPasswordDto,
+		invitationToken: string,
+	) {
+		try {
+			if (!(await this.validateInvitation(invitationToken))) {
+				throw new BadRequestException('Invitation link has expired');
+			}
+			const userData = await this.acceptInvitation(resetPassword);
+			this.userProfilesRepository.acceptInvitation(
+				userData.localId,
+				UserType.TENANT,
+			);
+			return userData;
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
+		}
+	}
+
+	async acceptInvitation(resetPassword: ResetPasswordDto) {
+		try {
 			const body = {
 				oobCode: resetPassword.oobCode,
 				password: resetPassword.password,
@@ -381,7 +419,6 @@ export abstract class AuthService {
 			if (!data.localId || data['localId'] === undefined) {
 				throw new FirebaseException('User not found');
 			}
-			this.userProfilesRepository.acceptInvitation(data.localId);
 			return data;
 		} catch (err) {
 			const firebaseErrorMessage =

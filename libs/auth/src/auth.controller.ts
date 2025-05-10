@@ -327,7 +327,20 @@ export class AuthController {
 		@Query('token') token: string,
 		@Body() resetPasswordDto: ResetPasswordDto,
 	) {
-		return await this.landlordAuthService.acceptInvitation(
+		return await this.landlordAuthService.acceptLandlordInvitation(
+			resetPasswordDto,
+			token,
+		);
+	}
+
+	@HttpCode(HttpStatus.OK)
+	@Post('accept-tenant-invitation')
+	@ApiOkResponse()
+	async acceptTenantInvitation(
+		@Query('token') token: string,
+		@Body() resetPasswordDto: ResetPasswordDto,
+	) {
+		return await this.landlordAuthService.acceptTenantInvitation(
 			resetPasswordDto,
 			token,
 		);
