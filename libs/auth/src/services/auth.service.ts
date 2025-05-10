@@ -25,6 +25,7 @@ import {
 	SignInByFireBaseResponseDto,
 	TenantUserDetailsResponseDto,
 	MFAResponseDto,
+	VerifyMfaOtpResponseDto,
 } from '../dto/responses/auth-response.dto';
 import {
 	LeaseStatus,
@@ -866,6 +867,10 @@ export abstract class AuthService {
 		);
 	}
 
+	private getV2GoogleEndpoint(url: string): string {
+		return replace(url, 'v1', 'v2');
+	}
+
 	/**
 	 * Calls the google identity endpoint to sign in with email and password
 	 * @param email
@@ -911,6 +916,58 @@ export abstract class AuthService {
 					? err.message
 					: this.errorMessageHelper.parseFirebaseError(err) ||
 						'Unknown error during sign-in';
+			throw new FirebaseException(message);
+		}
+	}
+
+	/**
+	 * Calls the google identity endpoint to sign in with email and password
+	 * @param email
+	 * @param password
+	 * @param asLandlord
+	 * @returns
+	 */
+	async verifyMfaOtp(
+		mfaPendingCredential: string,
+		mfaOtp: string,
+		mfaEnrollmentId: string,
+	): Promise<VerifyMfaOtpResponseDto> {
+		try {
+			const baseUrl = this.getV2GoogleEndpoint(
+				this.configService.get<string>('GOOGLE_IDENTITY_ENDPOINT'),
+			);
+			const url = `${baseUrl}/mfaSignIn:finalize?key=${this.configService.get<string>('FIREBASE_API_KEY')}`;
+			const payload = {
+				mfaPendingCredential,
+				mfaEnrollmentId,
+				totpVerificationInfo: {
+					verificationCode: mfaOtp,
+				},
+			};
+			const response = await this.ensureAuthorizedFirebaseRequest(
+				url,
+				'POST',
+				payload,
+			);
+			const { data } = await firstValueFrom(
+				response.pipe(
+					catchError((error: AxiosError | any) => {
+						this.apiDebugger.error('Error verifying MFA OTP', error);
+						const firebaseError = error.response.data;
+						this.logger.error('Firebase sign-in error:', firebaseError);
+						throw new FirebaseException(firebaseError);
+					}),
+				),
+			);
+			this.apiDebugger.info('MFA Sign in response', data);
+			return data;
+		} catch (err) {
+			this.apiDebugger.error('Error verifying MFA OTP', err);
+			const message =
+				err instanceof FirebaseException
+					? err.message
+					: this.errorMessageHelper.parseFirebaseError(err) ||
+						'Unknown error during MFA OTP verification';
 			throw new FirebaseException(message);
 		}
 	}

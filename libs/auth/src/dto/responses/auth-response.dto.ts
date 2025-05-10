@@ -5,6 +5,7 @@ import {
 	IsBoolean,
 	IsJSON,
 	IsJWT,
+	IsNotEmpty,
 	IsOptional,
 	IsString,
 } from 'class-validator';
@@ -148,6 +149,36 @@ export class MFAResponseDto {
 	message: string;
 	mfaPendingCredential: string;
 	mfaEnrollmentId: string;
+}
+
+export class VerifyMfaOtpDto {
+	@ApiProperty({
+		description: 'MFA OTP',
+		example: '123456',
+	})
+	@IsString()
+	@IsNotEmpty()
+	otp: string;
+
+	@ApiProperty({
+		description: 'MFA Enrollment ID',
+		required: false,
+	})
+	@IsString()
+	@IsOptional()
+	mfaEnrollmentId?: string;
+
+	@ApiProperty({
+		description: 'MFA Pending Credential',
+		required: false,
+	})
+	@IsString()
+	@IsOptional()
+	mfaPendingCredential?: string;
+}
+export class VerifyMfaOtpResponseDto {
+	idToken?: string;
+	refreshToken?: string;
 }
 
 export class SignInByFireBaseResponseDto {
