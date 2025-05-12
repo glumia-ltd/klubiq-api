@@ -59,4 +59,10 @@ export class RoleFeaturePermissions {
 		default: () => 'NOW()',
 	})
 	updatedDate?: Date;
+
+	@Column({
+		nullable: true,
+		length: 255,
+	})
+	description?: string;
 }
