@@ -1,5 +1,5 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
 
 export class CreatePermissionDto {
@@ -41,6 +41,13 @@ export class CreateFeaturePermissionDto {
 	@IsInt()
 	@IsNotEmpty()
 	featureId: number;
+
+	@ApiProperty({
+		description: 'description',
+	})
+	@IsString()
+	@IsOptional()
+	description?: string;
 }
 
 export class UpdatePermissionDto extends PartialType(CreatePermissionDto) {}
@@ -64,4 +71,11 @@ export class CreateRoleFeaturePermissionDto {
 	@IsInt()
 	@IsNotEmpty()
 	permissionId: number;
+
+	@ApiProperty({
+		description: 'description',
+	})
+	@IsString()
+	@IsOptional()
+	description?: string;
 }

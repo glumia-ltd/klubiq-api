@@ -56,4 +56,10 @@ export class FeaturePermission {
 		default: () => 'NOW()',
 	})
 	updatedDate?: Date;
+
+	@Column({
+		nullable: true,
+		length: 255,
+	})
+	description?: string;
 }
