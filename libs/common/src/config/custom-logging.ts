@@ -3,8 +3,6 @@ import DailyRotateFile = require('winston-daily-rotate-file');
 import * as winston from 'winston';
 import WinstonCloudWatch from 'winston-cloudwatch';
 import { includes } from 'lodash';
-import { Request } from 'express';
-import { TransformableInfo } from 'logform'; // Add at the top
 
 const devEnvironments = ['local', 'dev', 'development'];
 export class CustomLogging {
@@ -17,6 +15,7 @@ export class CustomLogging {
 		this.env = this.configService.get<string>('NODE_ENV');
 		const isNotDevEnvironment =
 			!!this.env && !includes(devEnvironments, this.env);
+		/** A transport for winston which logs to a rotating file based on date**/
 		this.dailyRotateFileTransport = new DailyRotateFile({
 			filename: 'logs/app_log-%DATE%.log',
 			datePattern: 'YYYY-MM-DD-HH',
@@ -53,40 +52,27 @@ export class CustomLogging {
 		/**
 		 * Custom log format tailored to our application's requirements
 		 */
-
-		this.myFormat = winston.format.printf((info: TransformableInfo) => {
-			const {
-				level = 'info',
-				message,
-				timestamp,
-				err,
-				req,
-				...metadata
-			} = info;
-
-			const request = req as Request | undefined;
-			const ip =
-				request?.headers?.['x-forwarded-for'] || request?.ip || 'unknown';
-
-			const logData: any = {
-				timestamp: timestamp || new Date().toISOString(),
-				level,
-				...metadata,
-				message,
-				error: {},
-				ip,
-			};
-
-			if (err) {
-				if (err instanceof Error) {
-					logData.error = err.stack;
-				} else {
-					logData.error = err;
+		this.myFormat = winston.format.printf(
+			({ level = 'info', message, timestamp, req, err, ...metadata }) => {
+				if (!req) {
+					req = { headers: {} };
 				}
-			}
-
-			return JSON.stringify(logData);
-		});
+				let msg = `${timestamp} [${level}]: ${message}`;
+				const logData: any = {
+					timestamp,
+					level,
+					...metadata,
+					message,
+					error: {},
+					ip: req.headers['x-forwarded-for'] || req.ip,
+				};
+				if (err) {
+					logData.error = err.stack || err;
+				}
+				msg = JSON.stringify(logData);
+				return msg;
+			},
+		);
 
 		this.createLoggerConfig = {
 			level: 'warn',
