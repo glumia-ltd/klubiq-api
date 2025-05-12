@@ -42,10 +42,19 @@ import { ErrorMessages, OrganizationSubscriptionService } from '@app/common';
 import { RolesService } from '@app/common/permissions/roles.service';
 import { UserRoles } from '@app/common/config/config.constants';
 import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
-import { TokenResponseDto } from './dto/responses/auth-response.dto';
+import {
+	MFAResponseDto,
+	TokenResponseDto,
+	VerifyMfaOtpDto,
+} from './dto/responses/auth-response.dto';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { cookieConfig, extractRefreshToken } from './helpers/cookie-helper';
+import {
+	cookieConfig,
+	extractMfaEnrollmentId,
+	extractMfaPendingCredential,
+	extractRefreshToken,
+} from './helpers/cookie-helper';
 @ApiTags('auth')
 @ApiBearerAuth()
 @ApiSecurity('ApiKey')
@@ -77,6 +86,42 @@ export class AuthController {
 		} catch (err) {
 			throw err;
 		}
+	}
+
+	@Post('mfa/verify-otp')
+	@ApiOkResponse({
+		description: 'Verifies MFA OTP',
+	})
+	async verifyMfaOtp(
+		@Body() data: VerifyMfaOtpDto,
+		@Req() req: Request,
+		@Res({ passthrough: true }) res: Response,
+	): Promise<any> {
+		const mfaPendingCredential = extractMfaPendingCredential(req);
+		const mfaEnrollmentId = extractMfaEnrollmentId(req);
+		if (!mfaPendingCredential || !mfaEnrollmentId) {
+			throw new UnauthorizedException(
+				'MFA pending credential or enrollment id not found. Please sign in again.',
+			);
+		}
+		const response = await this.landlordAuthService.verifyMfaOtp(
+			mfaPendingCredential,
+			data.otp,
+			mfaEnrollmentId,
+		);
+		if (response.idToken && response.refreshToken) {
+			const tokenData: TokenResponseDto = {
+				access_token: response.idToken,
+				refresh_token: response.refreshToken,
+			};
+			this.setLoginCookie(res, tokenData);
+			return this.isNotApiCall(req)
+				? { message: 'MFA OTP verified successfully' }
+				: tokenData;
+		}
+		throw new UnauthorizedException(
+			'MFA OTP verification failed. Please try again.',
+		);
 	}
 
 	@Auth(AuthType.Bearer)
@@ -132,12 +177,34 @@ export class AuthController {
 			credentials.email,
 			credentials.password,
 		);
+		if (tokenData.message && tokenData.message === ErrorMessages.MFA_REQUIRED) {
+			this.setMFARequiredCookie(res, tokenData);
+			if (this.isNotApiCall(req)) {
+				delete tokenData.mfaPendingCredential;
+				delete tokenData.mfaEnrollmentId;
+			}
+			return tokenData;
+		}
 		if (this.isNotApiCall(req)) {
 			this.setLoginCookie(res, tokenData);
 			return { expires_in: tokenData.expires_in };
 		} else {
 			return tokenData;
 		}
+	}
+
+	private setMFARequiredCookie(res: Response, tokenData: MFAResponseDto): void {
+		const { mfaPendingCredential, mfaEnrollmentId } = tokenData;
+		res.cookie(
+			cookieConfig.mfaPendingCredential.name,
+			mfaPendingCredential,
+			cookieConfig.mfaPendingCredential.options,
+		);
+		res.cookie(
+			cookieConfig.mfaEnrollmentId.name,
+			mfaEnrollmentId,
+			cookieConfig.mfaEnrollmentId.options,
+		);
 	}
 
 	private isNotApiCall(req: Request): boolean {
@@ -327,7 +394,20 @@ export class AuthController {
 		@Query('token') token: string,
 		@Body() resetPasswordDto: ResetPasswordDto,
 	) {
-		return await this.landlordAuthService.acceptInvitation(
+		return await this.landlordAuthService.acceptLandlordInvitation(
+			resetPasswordDto,
+			token,
+		);
+	}
+
+	@HttpCode(HttpStatus.OK)
+	@Post('accept-tenant-invitation')
+	@ApiOkResponse()
+	async acceptTenantInvitation(
+		@Query('token') token: string,
+		@Body() resetPasswordDto: ResetPasswordDto,
+	) {
+		return await this.landlordAuthService.acceptTenantInvitation(
 			resetPasswordDto,
 			token,
 		);

@@ -8,7 +8,6 @@ import {
 	ConflictException,
 	ServiceUnavailableException,
 	ForbiddenException,
-	PreconditionFailedException,
 } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 import * as admin from 'firebase-admin';
@@ -25,11 +24,14 @@ import {
 	TokenResponseDto,
 	SignInByFireBaseResponseDto,
 	TenantUserDetailsResponseDto,
+	MFAResponseDto,
+	VerifyMfaOtpResponseDto,
 } from '../dto/responses/auth-response.dto';
 import {
 	LeaseStatus,
 	ROLE_ALIAS,
 	UserRoles,
+	UserType,
 } from '@app/common/config/config.constants';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
 import { ErrorMessages } from '@app/common/config/error.constant';
@@ -348,7 +350,8 @@ export abstract class AuthService {
 		);
 	}
 	// ACCEPTS INVITATION
-	async acceptInvitation(
+
+	async acceptLandlordInvitation(
 		resetPassword: ResetPasswordDto,
 		invitationToken: string,
 	) {
@@ -356,6 +359,42 @@ export abstract class AuthService {
 			if (!(await this.validateInvitation(invitationToken))) {
 				throw new BadRequestException('Invitation link has expired');
 			}
+			const userData = await this.acceptInvitation(resetPassword);
+			this.userProfilesRepository.acceptInvitation(
+				userData.localId,
+				UserType.LANDLORD,
+			);
+			return userData;
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
+		}
+	}
+
+	async acceptTenantInvitation(
+		resetPassword: ResetPasswordDto,
+		invitationToken: string,
+	) {
+		try {
+			if (!(await this.validateInvitation(invitationToken))) {
+				throw new BadRequestException('Invitation link has expired');
+			}
+			const userData = await this.acceptInvitation(resetPassword);
+			this.userProfilesRepository.acceptInvitation(
+				userData.localId,
+				UserType.TENANT,
+			);
+			return userData;
+		} catch (err) {
+			const firebaseErrorMessage =
+				this.errorMessageHelper.parseFirebaseError(err);
+			throw new FirebaseException(firebaseErrorMessage || err.message);
+		}
+	}
+
+	async acceptInvitation(resetPassword: ResetPasswordDto) {
+		try {
 			const body = {
 				oobCode: resetPassword.oobCode,
 				password: resetPassword.password,
@@ -381,7 +420,6 @@ export abstract class AuthService {
 			if (!data.localId || data['localId'] === undefined) {
 				throw new FirebaseException('User not found');
 			}
-			this.userProfilesRepository.acceptInvitation(data.localId);
 			return data;
 		} catch (err) {
 			const firebaseErrorMessage =
@@ -829,6 +867,10 @@ export abstract class AuthService {
 		);
 	}
 
+	private getV2GoogleEndpoint(url: string): string {
+		return replace(url, 'v1', 'v2');
+	}
+
 	/**
 	 * Calls the google identity endpoint to sign in with email and password
 	 * @param email
@@ -879,6 +921,58 @@ export abstract class AuthService {
 	}
 
 	/**
+	 * Calls the google identity endpoint to sign in with email and password
+	 * @param email
+	 * @param password
+	 * @param asLandlord
+	 * @returns
+	 */
+	async verifyMfaOtp(
+		mfaPendingCredential: string,
+		mfaOtp: string,
+		mfaEnrollmentId: string,
+	): Promise<VerifyMfaOtpResponseDto> {
+		try {
+			const baseUrl = this.getV2GoogleEndpoint(
+				this.configService.get<string>('GOOGLE_IDENTITY_ENDPOINT'),
+			);
+			const url = `${baseUrl}/mfaSignIn:finalize?key=${this.configService.get<string>('FIREBASE_API_KEY')}`;
+			const payload = {
+				mfaPendingCredential,
+				mfaEnrollmentId,
+				totpVerificationInfo: {
+					verificationCode: mfaOtp,
+				},
+			};
+			const response = await this.ensureAuthorizedFirebaseRequest(
+				url,
+				'POST',
+				payload,
+			);
+			const { data } = await firstValueFrom(
+				response.pipe(
+					catchError((error: AxiosError | any) => {
+						this.apiDebugger.error('Error verifying MFA OTP', error);
+						const firebaseError = error.response.data;
+						this.logger.error('Firebase sign-in error:', firebaseError);
+						throw new FirebaseException(firebaseError);
+					}),
+				),
+			);
+			this.apiDebugger.info('MFA Sign in response', data);
+			return data;
+		} catch (err) {
+			this.apiDebugger.error('Error verifying MFA OTP', err);
+			const message =
+				err instanceof FirebaseException
+					? err.message
+					: this.errorMessageHelper.parseFirebaseError(err) ||
+						'Unknown error during MFA OTP verification';
+			throw new FirebaseException(message);
+		}
+	}
+
+	/**
 	 * Signs in with email and password and returns the access token
 	 * @param email
 	 * @param password
@@ -908,15 +1002,14 @@ export abstract class AuthService {
 				signInData;
 			if (!refreshToken) {
 				const requiresMfa = signInData.mfaInfo?.length > 0;
-				const factors = signInData.mfaInfo?.map((factor) => {
-					return factor.displayName;
-				});
+				//const factors = signInData.mfaInfo?.map((factor) => {return factor.displayName;});
 				if (requiresMfa) {
-					throw new PreconditionFailedException(ErrorMessages.MFA_REQUIRED, {
-						cause: {
-							factors,
-						},
-					});
+					const response: MFAResponseDto = {
+						message: ErrorMessages.MFA_REQUIRED,
+						mfaPendingCredential: signInData.mfaPendingCredential,
+						mfaEnrollmentId: signInData.mfaInfo[0].mfaEnrollmentId,
+					};
+					return response;
 				}
 				throw new FirebaseException(ErrorMessages.TOKEN_NOT_RETURNED);
 			}

@@ -53,7 +53,7 @@ export class MainSeeder {
 				{
 					name: UserRoles.LANDLORD,
 					alias: 'Landlord',
-					description: 'Manages properties and tenants.',
+					description: 'Not Used',
 					isKlubiqInternal: false,
 				},
 				{

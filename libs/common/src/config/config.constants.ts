@@ -13,6 +13,12 @@ export enum UserRoles {
 	CUSTOM = 'Custom',
 }
 
+export enum UserType {
+	LANDLORD = 'Landlord',
+	TENANT = 'Tenant',
+	KLUBIQ_STAFF = 'Klubiq_Staff',
+}
+
 export const SYSTEM_ROLES: UserRoles[] = [
 	UserRoles.SUPER_ADMIN,
 	UserRoles.ADMIN,
