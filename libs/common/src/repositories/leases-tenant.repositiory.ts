@@ -229,12 +229,30 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 			email: string;
 			phone: string;
 		};
-		leases: {
+		activeLeases: {
 			id: string;
 			leaseStart: Date;
 			leaseEnd: Date;
 			rentAmount: number;
-			unitId: object;
+			unitId: string;
+			unitNumber: string;
+			propertyName: string;
+			propertyAddress: string;
+			securityDeposit: number;
+			paymentFrequency: string;
+			nextDueDate: Date;
+			lastPaymentDate: Date;
+			lateFeeAmount: number;
+		}[];
+		inactiveLeases: {
+			id: string;
+			leaseStart: Date;
+			leaseEnd: Date;
+			rentAmount: number;
+			unitId: string;
+			unitNumber: string;
+			propertyName: string;
+			propertyAddress: string;
 			securityDeposit: number;
 			paymentFrequency: string;
 			nextDueDate: Date;
@@ -242,49 +260,80 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 			lateFeeAmount: number;
 		}[];
 	}> {
-		try {
-			if (!tenantId) {
-				throw new BadRequestException('Tenant ID is required');
-			}
+		if (!tenantId) {
+			throw new BadRequestException('Tenant ID is required');
+		}
 
-			const records = await this.manager
-				.getRepository(LeasesTenants)
-				.createQueryBuilder('lt')
-				.leftJoinAndSelect('lt.tenant', 'tenant')
-				.leftJoinAndSelect('tenant.profile', 'profile')
-				.leftJoinAndSelect('lt.lease', 'lease')
-				.where('tenant.id = :tenantId', { tenantId: tenantId })
-				.getMany();
+		const records = await this.manager
+			.getRepository(LeasesTenants)
+			.createQueryBuilder('lt')
+			.leftJoinAndSelect('lt.tenant', 'tenant')
+			.leftJoinAndSelect('tenant.profile', 'profile')
+			.leftJoinAndSelect('lt.lease', 'lease')
+			.leftJoinAndSelect('lease.unit', 'unit')
+			.leftJoinAndSelect('unit.property', 'property')
+			.leftJoinAndSelect('property.address', 'address')
+			.where('tenant.id = :tenantId', { tenantId })
+			.getMany();
 
-			if (records.length === 0) {
-				throw new NotFoundException('Tenant or leases not found.');
-			}
+		if (records.length === 0) {
+			throw new NotFoundException('Tenant or leases not found.');
+		}
 
-			const profile = await records[0].tenant.profile;
+		const tenantProfile = records[0].tenant.profile;
 
-			return {
-				tenant: {
-					id: records[0].tenant.id,
-					fullName: `${profile.firstName} ${profile.lastName}`,
-					email: profile.email,
-					phone: profile.phoneNumber,
-				},
-				leases: records.map((record) => ({
+		return {
+			tenant: {
+				id: records[0].tenant.id,
+				fullName: `${(await tenantProfile).firstName} ${(await tenantProfile).lastName}`,
+				email: (await tenantProfile).email,
+				phone: (await tenantProfile).phoneNumber,
+			},
+			activeLeases: records
+				.filter(
+					(record: any) =>
+						record.lease.status.toUpperCase() === 'ACTIVE' &&
+						!record.lease.isArchived,
+				)
+				.map((record) => ({
 					id: record.lease.id,
 					leaseStart: record.lease.startDate,
 					leaseEnd: record.lease.endDate,
 					rentAmount: record.lease.rentAmount,
-					unitId: record.lease.unit,
+					unitId: record.lease.unit.id,
+					unitNumber: record.lease.unit.unitNumber,
+					propertyName: record.lease.unit.property.name,
+					propertyAddress: `${record.lease.unit.property.address.addressLine1} ${record.lease.unit.property.address.city} ${record.lease.unit.property.address.state}`,
 					paymentFrequency: record.lease.paymentFrequency,
 					lastPaymentDate: record.lease.lastPaymentDate,
 					nextDueDate: record.lease.nextDueDate,
 					lateFeeAmount: record.lease.lateFeeAmount,
 					securityDeposit: record.lease.securityDeposit,
+					status: record.lease.status,
 				})),
-			};
-		} catch (error) {
-			throw error;
-		}
+			inactiveLeases: records
+				.filter(
+					(record: any) =>
+						record.lease.status.toUpperCase() === 'INACTIVE' ||
+						record.lease.isArchived,
+				)
+				.map((record) => ({
+					id: record.lease.id,
+					leaseStart: record.lease.startDate,
+					leaseEnd: record.lease.endDate,
+					rentAmount: record.lease.rentAmount,
+					unitId: record.lease.unit.id,
+					unitNumber: record.lease.unit.unitNumber,
+					propertyName: record.lease.unit.property.name,
+					propertyAddress: `${record.lease.unit.property.address.addressLine1} ${record.lease.unit.property.address.city} ${record.lease.unit.property.address.state}`,
+					paymentFrequency: record.lease.paymentFrequency,
+					lastPaymentDate: record.lease.lastPaymentDate,
+					nextDueDate: record.lease.nextDueDate,
+					lateFeeAmount: record.lease.lateFeeAmount,
+					securityDeposit: record.lease.securityDeposit,
+					status: record.lease.status,
+				})),
+		};
 	}
 
 	async removeTenantFromOrganization(

@@ -17,17 +17,17 @@ import {
 	ApiHeader,
 } from '@nestjs/swagger';
 import { GetTenantDto } from '../dto/requests/get-tenant-dto';
-import { Auth, Permission, Feature } from '@app/auth/decorators/auth.decorator';
+import { Auth, Permission } from '@app/auth/decorators/auth.decorator';
 import { PageDto } from '@app/common';
 import { AuthType } from '@app/auth/types/firebase.types';
 import { LeaseDto, TenantDto } from '../dto/responses/lease-tenant.dto';
-import { Permissions, AppFeature } from '@app/common/config/config.constants';
+import { Permissions } from '@app/common/config/config.constants';
 
 @ApiTags('tenant')
 @ApiBearerAuth()
 @Auth(AuthType.Bearer)
 @Controller('tenants')
-@Feature(AppFeature.TENANT)
+//@Feature(AppFeature.TENANT)
 @ApiHeader({
 	name: 'x-tenant-id',
 	description: 'The organization tenant id',
@@ -51,7 +51,7 @@ export class TenantsController {
 		}
 	}
 
-	@Permission(Permissions.READ)
+	//@Permission(Permissions.READ)
 	@Get('lease/:id')
 	@HttpCode(HttpStatus.OK)
 	@ApiOkResponse({
@@ -67,7 +67,7 @@ export class TenantsController {
 		}
 	}
 
-	@Permission(Permissions.READ)
+	//@Permission(Permissions.READ)
 	@Get('organization')
 	@HttpCode(HttpStatus.OK)
 	@ApiOkResponse({
@@ -85,7 +85,7 @@ export class TenantsController {
 		}
 	}
 
-	@Permission(Permissions.READ)
+	//@Permission(Permissions.READ)
 	@Get(':id')
 	@HttpCode(HttpStatus.OK)
 	@ApiOkResponse({
@@ -101,7 +101,7 @@ export class TenantsController {
 		}
 	}
 
-	@Permission(Permissions.DELETE)
+	//@Permission(Permissions.DELETE)
 	@Delete(':tenantId/remove')
 	@HttpCode(HttpStatus.OK)
 	@ApiOkResponse({
@@ -116,7 +116,7 @@ export class TenantsController {
 		}
 	}
 
-	@Permission(Permissions.DELETE)
+	//@Permission(Permissions.DELETE)
 	@Delete(':tenantId/:leaseId/remove')
 	@HttpCode(HttpStatus.OK)
 	@ApiOkResponse({
