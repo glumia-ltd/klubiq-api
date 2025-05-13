@@ -9,6 +9,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import DataLoader from 'dataloader';
 import { RoleFeaturePermissions } from '@app/common/database/entities/role-feature-permission.entity';
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 @Injectable()
 export class AccessControlService {
 	private readonly logger = new Logger(AccessControlService.name);
@@ -26,6 +27,7 @@ export class AccessControlService {
 		private readonly roleFeaturePermissionsRepository: Repository<RoleFeaturePermissions>,
 		@InjectRepository(OrganizationUser)
 		private readonly organizationUserRepository: Repository<OrganizationUser>,
+		private readonly apiDebugger: ApiDebugger,
 	) {
 		this.roleFeaturePermissionLoader = new DataLoader<
 			string,
@@ -157,6 +159,25 @@ export class AccessControlService {
 				await this.cacheManager.del(key);
 				this.logger.log(`Invalidated cache for key: ${key}`);
 			}
+		}
+	}
+
+	async invalidateAllCache(
+		userId: string,
+		organizationId: string,
+	): Promise<void> {
+		this.apiDebugger.log(
+			`Invalidating all cache for user: ${userId} and organization: ${organizationId}`,
+		);
+		const keys = await this.cacheManager.store.keys();
+		this.apiDebugger.log(`Found ${keys.length} keys in cache`);
+		const userKeys = keys.filter((key) => key.includes(userId));
+		const organizationKeys = keys.filter((key) => key.includes(organizationId));
+		const allKeys = [...userKeys, ...organizationKeys];
+		this.apiDebugger.log(`Invalidating ${allKeys.length} keys`);
+		for (const key of allKeys) {
+			await this.cacheManager.del(key);
+			this.apiDebugger.log(`Invalidated cache for key: ${key}`);
 		}
 	}
 }

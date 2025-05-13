@@ -545,10 +545,12 @@ export class PropertiesService implements IPropertyMetrics {
 						.toLowerCase()
 						.replace(/ /g, '-')}`;
 				} else {
-					unit.unitNumber = `mu-${createDto.name
-						.slice(0, 3)
-						.toLowerCase()
-						.replace(/ /g, '-')}-${unit.unitNumber}-${index + 1}`;
+					unit.unitNumber =
+						unit.unitNumber ??
+						`mu-${createDto.name
+							.slice(0, 2)
+							.toLowerCase()
+							.replace(/ /g, '-')}-uniit-${index + 1}`;
 				}
 			});
 			createDto.managerUid = currentUser.kUid;
