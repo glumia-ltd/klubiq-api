@@ -13,7 +13,7 @@ import { Expose, Type } from 'class-transformer';
 import { UnitStatus } from '@app/common/config/config.constants';
 
 export class UpdateUnitDto {
-	@IsNumber()
+	@IsString()
 	@IsOptional()
 	id?: string;
 
