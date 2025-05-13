@@ -446,6 +446,7 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.name,
 				currentUser.kUid,
 				updateData,
+				false,
 			);
 			const propertyDetails = await this.mapPlainPropertyDetailToDto(property);
 			const cacheKey = `${this.cacheKeyPrefix}:${uuid}`;
@@ -784,6 +785,7 @@ export class PropertiesService implements IPropertyMetrics {
 		currentUserName: string,
 		currentUserId: string,
 		propertyData?: CreatePropertyDto | UpdatePropertyDto,
+		invalidateCache: boolean = true,
 	) {
 		this.eventEmitter.emitAsync(event, {
 			totalUnits: propertyData.units?.length,
@@ -796,6 +798,7 @@ export class PropertiesService implements IPropertyMetrics {
 			currency: this.cls.get('clientCurrency'),
 			locale: this.cls.get('clientLocale'),
 			language: this.cls.get('clientLanguage'),
+			invalidateCache,
 		});
 	}
 }

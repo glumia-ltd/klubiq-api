@@ -52,7 +52,9 @@ export class PropertyEventsListener {
 	@OnEvent(EVENTS.PROPERTY_UPDATED, { async: true })
 	@OnEvent(EVENTS.PROPERTY_ARCHIVED, { async: true })
 	async handlePropertyUpdatedOrArchivedEvent(payload: PropertyEvent) {
-		await this.helperService.invalidateOrganizationPropertyCache(payload);
+		if (payload.invalidateCache) {
+			await this.helperService.invalidateOrganizationPropertyCache(payload);
+		}
 	}
 
 	@OnEvent(EVENTS.PROPERTY_ASSIGNED, { async: true })
