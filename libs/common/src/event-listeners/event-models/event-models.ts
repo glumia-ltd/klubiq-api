@@ -19,6 +19,7 @@ export class PropertyEvent {
 	currency?: string;
 	locale?: string;
 	language?: string;
+	invalidateCache?: boolean = true;
 }
 
 export class LeaseEvent extends PropertyEvent {

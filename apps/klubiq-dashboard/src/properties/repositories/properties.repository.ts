@@ -36,6 +36,7 @@ import { PropertyAddress } from '@app/common/database/entities/property-address.
 import { Unit } from '@app/common/database/entities/unit.entity';
 import { PropertyImage } from '@app/common/database/entities/property-image.entity';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 
 @Injectable()
 export class PropertyRepository extends BaseRepository<Property> {
@@ -52,7 +53,10 @@ export class PropertyRepository extends BaseRepository<Property> {
 		'display',
 		'unitType',
 	];
-	constructor(manager: EntityManager) {
+	constructor(
+		manager: EntityManager,
+		private readonly apiDebugger: ApiDebugger,
+	) {
 		super(Property, manager);
 	}
 
@@ -399,7 +403,12 @@ export class PropertyRepository extends BaseRepository<Property> {
 
 	//UPDATE UNIT AND IT'S IMAGES
 	async updateUnit(id: string, data: UpdateUnitDto) {
-		await this.manager.update(Unit, id, data);
+		this.apiDebugger.info('In property repository, about to update unit', data);
+		const result = await this.manager.update(Unit, id, data);
+		this.apiDebugger.info(
+			'In property repository, result of updating unit',
+			result.affected,
+		);
 		const updatedUnit = await this.manager.findOne(Unit, {
 			where: { id },
 		});
@@ -463,51 +472,74 @@ export class PropertyRepository extends BaseRepository<Property> {
 			statusId,
 			address,
 			customAmenities,
-			...propertyData
+			name,
+			description,
+			note,
+			tags,
 		} = data;
+
 		return await this.manager.transaction(
 			async (transactionalEntityManager) => {
+				// Find and validate property
 				const property = await transactionalEntityManager.findOne(Property, {
 					where: { uuid: propertyUuid },
 					relations: ['organization'],
 				});
+
 				if (!property) {
 					throw new Error('Property not found');
 				}
+
+				// Validate authorization
 				if (property.organization.organizationUuid !== orgUuid) {
 					throw new Error('You are not authorized to update this property');
 				}
+
 				if (
 					!isOrgOwner &&
-					(property.owner?.profileUuid !== userId ||
-						property.manager?.profileUuid !== userId)
+					property.owner?.profileUuid !== userId &&
+					property.manager?.profileUuid !== userId
 				) {
 					throw new Error('You are not authorized to update this property');
 				}
-				if (typeId) {
-					property.type = await transactionalEntityManager.findOneBy(
-						PropertyType,
-						{ id: typeId },
-					);
-				}
-				if (categoryId) {
-					property.category = await transactionalEntityManager.findOneBy(
-						PropertyCategory,
-						{ id: categoryId },
-					);
-				}
-				if (purposeId) {
-					property.purpose = await transactionalEntityManager.findOneBy(
-						PropertyPurpose,
-						{ id: purposeId },
-					);
-				}
-				if (statusId) {
-					property.status = await transactionalEntityManager.findOneBy(
-						PropertyStatus,
-						{ id: statusId },
-					);
-				}
+
+				// Update property relations in parallel
+				const [type, category, purpose, status] = await Promise.all([
+					typeId
+						? transactionalEntityManager.findOneBy(PropertyType, { id: typeId })
+						: null,
+					categoryId
+						? transactionalEntityManager.findOneBy(PropertyCategory, {
+								id: categoryId,
+							})
+						: null,
+					purposeId
+						? transactionalEntityManager.findOneBy(PropertyPurpose, {
+								id: purposeId,
+							})
+						: null,
+					statusId
+						? transactionalEntityManager.findOneBy(PropertyStatus, {
+								id: statusId,
+							})
+						: null,
+				]);
+
+				// Update property fields
+				Object.assign(property, {
+					type: type || property.type,
+					category: category || property.category,
+					purpose: purpose || property.purpose,
+					status: status || property.status,
+					name: name || property.name,
+					description: description || property.description,
+					note: note || property.note,
+					tags: tags?.length
+						? [...(property.tags || []), ...tags.map((tag) => tag.trim())]
+						: property.tags,
+				});
+
+				// Update address if provided
 				if (address) {
 					await transactionalEntityManager.update(
 						PropertyAddress,
@@ -516,41 +548,29 @@ export class PropertyRepository extends BaseRepository<Property> {
 					);
 				}
 
-				await transactionalEntityManager.update(
-					Property,
-					propertyUuid,
-					propertyData,
+				// Save property changes
+				await transactionalEntityManager.save(Property, property);
+
+				// Handle units, images and amenities in parallel
+				await Promise.all(
+					[
+						units?.length &&
+							Promise.all(units.map((unit) => this.updateUnit(unit.id, unit))),
+						images?.length && this.updatePropertyImages(property, images),
+						customAmenities?.length &&
+							transactionalEntityManager.save(
+								Amenity,
+								customAmenities.map((amenity) =>
+									transactionalEntityManager.create(Amenity, {
+										name: amenity,
+										isPrivate: true,
+									}),
+								),
+							),
+					].filter(Boolean),
 				);
-				if (units && units.length > 0) {
-					await Promise.all(
-						units.map((unit) => this.updateUnit(unit.id, unit)),
-					);
-				}
-				if (images && images.length > 0) {
-					await this.updatePropertyImages(property, images);
-				}
-				// create new amenities
-				if (customAmenities && customAmenities.length > 0) {
-					const newAmenities = map(customAmenities, (amenity) => {
-						return transactionalEntityManager.create(Amenity, {
-							name: amenity,
-							isPrivate: true,
-						});
-					});
-					await transactionalEntityManager.save(Amenity, newAmenities);
-				}
-				return transactionalEntityManager.findOne(Property, {
-					where: { uuid: propertyUuid },
-					relations: [
-						'type',
-						'category',
-						'purpose',
-						'status',
-						'address',
-						'units',
-						'images',
-					],
-				});
+
+				return this.getAPropertyInAnOrganization(orgUuid, userId, propertyUuid);
 			},
 		);
 	}

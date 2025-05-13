@@ -77,6 +77,7 @@ import { OrganizationTenants } from '@app/common/database/entities/organization-
 import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 import { extractAccessToken } from '../helpers/cookie-helper';
 import { Request } from 'express';
+import { AccessControlService } from './access-control.service';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
@@ -113,6 +114,7 @@ export abstract class AuthService {
 		protected readonly generators: Generators,
 		protected readonly apiDebugger: ApiDebugger,
 		protected readonly eventEmitter: EventEmitter2,
+		protected readonly accessControlService: AccessControlService,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -159,6 +161,10 @@ export abstract class AuthService {
 		if (this.currentUser) {
 			this.cacheManager.del(
 				`${this.cacheKeyPrefix}:user:${this.currentUser.kUid}`,
+			);
+			await this.accessControlService.invalidateAllCache(
+				this.currentUser.kUid,
+				this.currentUser.organizationId,
 			);
 			await this.auth.revokeRefreshTokens(this.currentUser.uid);
 			this.cls.set('currentUser', null);
