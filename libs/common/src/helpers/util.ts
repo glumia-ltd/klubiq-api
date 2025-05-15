@@ -2,7 +2,9 @@ import { Lease } from '../database/entities/lease.entity';
 import { DateTime } from 'luxon';
 import { CacheTTl, PaymentFrequency } from '../config/config.constants';
 import { CacheService } from '../services/cache.service';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class Util {
 	constructor(private cacheService: CacheService) {}
 

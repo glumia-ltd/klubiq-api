@@ -166,12 +166,20 @@ export abstract class AuthService {
 	async signOut(): Promise<void> {
 		this.currentUser = this.cls.get('currentUser');
 		if (this.currentUser) {
-			const cacheKey = this.getcacheKey(`user:${this.currentUser.kUid}`);
+			const landlordCacheKey = this.getcacheKey(
+				`user:landlord:${this.currentUser.kUid}`,
+			);
+			const tenantCacheKey = this.getcacheKey(
+				`user:tenant:${this.currentUser.kUid}`,
+			);
 			await this.accessControlService.invalidateCache(
 				this.currentUser.kUid,
 				this.currentUser.organizationId,
 			);
-			await this.accessControlService.invalidateAllCache([cacheKey]);
+			await this.accessControlService.invalidateAllCache([
+				landlordCacheKey,
+				tenantCacheKey,
+			]);
 			await this.auth.revokeRefreshTokens(this.currentUser.uid);
 			this.cls.set('currentUser', null);
 		}
@@ -619,7 +627,7 @@ export abstract class AuthService {
 	): Promise<LandlordUserDetailsResponseDto> {
 		let userDetails: any;
 		let notificationsSubscription: any;
-		let cacheKey = `${this.cacheKeyPrefix}:user:`;
+		let cacheKey: string;
 		switch (type) {
 			case 'landlord':
 				userDetails =
@@ -629,11 +637,11 @@ export abstract class AuthService {
 					);
 				notificationsSubscription = userDetails?.profile_uuid
 					? await this.notificationSubService.getAUserSubscriptionDetails(
-							userDetails.profile_uuid,
+							userDetails.profileUuid,
 						)
 					: null;
 				userDetails = (await this.mapLandlordUserToDto(userDetails)) || {};
-				cacheKey = `${cacheKey}${userDetails.uuid}`;
+				cacheKey = this.getcacheKey(`landlord:${userDetails.profileUuid}`);
 				break;
 			case 'tenant':
 				userDetails =
@@ -647,7 +655,7 @@ export abstract class AuthService {
 						)
 					: null;
 				userDetails = (await this.mapTenantUserToDto(userDetails)) || {};
-				cacheKey = `${cacheKey}${userDetails.uuid}`;
+				cacheKey = this.getcacheKey(`tenant:${userDetails.profileUuid}`);
 				break;
 			default:
 				userDetails = {};
