@@ -9,7 +9,6 @@ import {
 import { LeaseTenantResponseDto } from '../dto/responses/lease-tenant.dto';
 import { GetTenantDto, TenantListDto } from '../dto/requests/get-tenant-dto';
 import { ClsService } from 'nestjs-cls';
-import { InjectRepository } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CacheKeys, CacheTTl } from '@app/common/config/config.constants';
@@ -21,9 +20,7 @@ export class TenantsService {
 	private readonly cacheTTL = CacheTTl.FIFTEEN_MINUTES;
 
 	constructor(
-		@InjectRepository(LeaseTenantRepository)
-		@Inject(CACHE_MANAGER)
-		private cacheManager: Cache,
+		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly leaseTenantRepository: LeaseTenantRepository,
 		private readonly cls: ClsService<SharedClsStore>,
 		private readonly util: Util,

@@ -18,6 +18,7 @@ import { UsersService } from './users/services/users.service';
 import { UsersRepository } from './users/repositories/users.repository';
 import { APP_GUARD } from '@nestjs/core';
 import { PropertiesModule } from './properties/properties.module';
+import { TenantsModule } from './tenants/tenants.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { LeaseModule } from './lease/lease.module';
 import { LeaseRepository } from './lease/repositories/lease.repository';
@@ -40,7 +41,6 @@ import { Cache } from 'cache-manager';
 import { filteredRoutes } from './security/security-helpers';
 import { CommonModule } from '@app/common/common.module';
 import { ApiDebugger } from '@app/common/helpers/debug-loggers';
-import { TenantsModule } from './tenants/tenants.module';
 import { Util } from '@app/common/helpers/util';
 
 @Module({
