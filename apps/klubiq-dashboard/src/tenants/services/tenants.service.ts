@@ -7,17 +7,18 @@ import {
 	SharedClsStore,
 } from '@app/common';
 import { LeaseTenantResponseDto } from '../dto/responses/lease-tenant.dto';
-import { GetTenantDto } from '../dto/requests/get-tenant-dto';
+import { GetTenantDto, TenantListDto } from '../dto/requests/get-tenant-dto';
 import { ClsService } from 'nestjs-cls';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { CacheKeys, CacheTTl } from '@app/common/config/config.constants';
+import { Util } from '@app/common/helpers/util';
 
 @Injectable()
 export class TenantsService {
 	private readonly logger = new Logger(TenantsService.name);
-	private readonly cacheKeyPrefix = 'tenants';
-	private readonly cacheTTL = 900000;
+	private readonly cacheTTL = CacheTTl.FIFTEEN_MINUTES;
 
 	constructor(
 		@InjectRepository(LeaseTenantRepository)
@@ -25,21 +26,12 @@ export class TenantsService {
 		private cacheManager: Cache,
 		private readonly leaseTenantRepository: LeaseTenantRepository,
 		private readonly cls: ClsService<SharedClsStore>,
+		private readonly util: Util,
 	) {}
 
-	private async updateOrgTenantsCacheKeys(cacheKey: string) {
-		const currentUser = this.cls.get('currentUser');
-		const tenantListKeys =
-			(await this.cacheManager.get<string[]>(
-				`${currentUser.organizationId}:getTenantListKeys`,
-			)) || [];
-		await this.cacheManager.set(
-			`${currentUser.organizationId}:getTenantListKeys`,
-			[...tenantListKeys, cacheKey],
-			this.cacheTTL,
-		);
+	private getcacheKey(organizationUuid: string, cacheKeyExtension?: string) {
+		return `${organizationUuid}:${CacheKeys.TENANT}${cacheKeyExtension ? `:${cacheKeyExtension}` : ''}`;
 	}
-
 	async getAllTenants(
 		getTenantDto?: GetTenantDto,
 	): Promise<PageDto<LeaseTenantResponseDto>> {
@@ -67,7 +59,18 @@ export class TenantsService {
 
 	async getLeaseById(leaseId: string): Promise<LeaseTenantResponseDto[]> {
 		try {
-			return this.leaseTenantRepository.findByLeaseId(leaseId);
+			const cacheKey = this.getcacheKey(
+				this.cls.get('currentUser').organizationId,
+				`${CacheKeys.LEASE}:${leaseId}`,
+			);
+			const cachedTenants =
+				await this.cacheManager.get<LeaseTenantResponseDto[]>(cacheKey);
+			if (cachedTenants) {
+				return cachedTenants;
+			}
+			const tenants = await this.leaseTenantRepository.findByLeaseId(leaseId);
+			await this.cacheManager.set(cacheKey, tenants, this.cacheTTL);
+			return tenants;
 		} catch (error) {
 			throw error;
 		}
@@ -78,6 +81,16 @@ export class TenantsService {
 			const currentUser = this.cls.get('currentUser');
 			if (!currentUser) {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
+
+			const cacheKey = this.getcacheKey(
+				currentUser.organizationId,
+				this.cls.get('requestUrl'),
+			);
+			const cachedTenants =
+				await this.cacheManager.get<PageDto<TenantListDto>>(cacheKey);
+			if (cachedTenants) {
+				return cachedTenants;
 			}
 
 			const [entities, count] =
@@ -91,6 +104,12 @@ export class TenantsService {
 				pageOptionsDto: getTenantDto,
 			});
 			const tenantsPageData = new PageDto(entities, pageMetaDto);
+			await this.cacheManager.set(cacheKey, tenantsPageData, this.cacheTTL);
+			await this.util.updateOrganizationResourceCacheKeys(
+				currentUser.organizationId,
+				CacheKeys.TENANT,
+				cacheKey,
+			);
 			return tenantsPageData;
 		} catch (error) {
 			throw error;
