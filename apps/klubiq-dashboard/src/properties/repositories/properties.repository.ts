@@ -725,7 +725,7 @@ export class PropertyRepository extends BaseRepository<Property> {
 					].filter(Boolean),
 				);
 
-				return this.getAPropertyInAnOrganization(orgUuid, userId, propertyUuid);
+				//return this.getAPropertyInAnOrganization(orgUuid, userId, propertyUuid);
 			},
 		);
 	}

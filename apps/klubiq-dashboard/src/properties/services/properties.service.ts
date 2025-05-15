@@ -423,7 +423,7 @@ export class PropertiesService implements IPropertyMetrics {
 			if (!currentUser) {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			}
-			const property = await this.propertyRepository.updateProperty(
+			await this.propertyRepository.updateProperty(
 				uuid,
 				currentUser.organizationId,
 				currentUser.kUid,
@@ -439,10 +439,10 @@ export class PropertiesService implements IPropertyMetrics {
 				updateData,
 				false,
 			);
-			const propertyDetails = await this.mapPlainPropertyDetailToDto(property);
+
 			const cacheKey = this.getcacheKey(currentUser.organizationId, uuid);
-			await this.cacheManager.set(cacheKey, propertyDetails, this.cacheTTL);
-			return propertyDetails;
+			await this.cacheManager.del(cacheKey);
+			return await this.getPropertyById(uuid);
 		} catch (error) {
 			this.logger.error('Error updating Property Data', error);
 			throw new Error(`Error updating Property Data. Error: ${error}`);
