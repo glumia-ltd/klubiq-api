@@ -78,6 +78,7 @@ env:
   TENANT_ROLE_ID: ${{ secrets.TENANT_ROLE_ID }}
   LEASE_MANAGER_ROLE_ID: ${{ secrets.LEASE_MANAGER_ROLE_ID }}
   PROPERTY_OWNER_ROLE_ID: ${{ secrets.PROPERTY_OWNER_ROLE_ID }}
+  REDIS_HOST: ${{ secrets.REDIS_HOST }}
   REDIS_PORT: ${{ secrets.REDIS_PORT }}
   WORKER_PORT: ${{ secrets.WORKER_PORT }}
   APP_PORT: ${{ secrets.APP_PORT }}
@@ -93,6 +94,7 @@ env:
   LANDLORP_PORTAL_CLIENT_ID: ${{ secrets.LANDLORP_PORTAL_CLIENT_ID }}
   TENANT_PORTAL_CLIENT_ID: ${{ secrets.TENANT_PORTAL_CLIENT_ID }}
   ADMIN_PORTAL_CLIENT_ID: ${{ secrets.ADMIN_PORTAL_CLIENT_ID }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -186,6 +188,7 @@ jobs:
             export TENANT_ROLE_ID=${{ secrets.TENANT_ROLE_ID }}
             export LEASE_MANAGER_ROLE_ID=${{ secrets.LEASE_MANAGER_ROLE_ID }}
             export PROPERTY_OWNER_ROLE_ID=${{ secrets.PROPERTY_OWNER_ROLE_ID }}
+            export REDIS_HOST=${{ secrets.REDIS_HOST }}
             export REDIS_PORT=${{ secrets.REDIS_PORT }}
             export WORKER_PORT=${{ secrets.WORKER_PORT }}
             export APP_PORT=${{ secrets.APP_PORT }}
