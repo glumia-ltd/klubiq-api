@@ -1,8 +1,21 @@
 import { PageOptionsDto } from '@app/common/dto/pagination/page-options.dto';
-import { IsOptional } from 'class-validator';
-import { IntersectionType } from '@nestjs/swagger';
+import { IsEnum, IsOptional } from 'class-validator';
+import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
+
+export enum SortTenants {
+	CREATED_DATE = 'createdDate',
+	UPDATED_DATE = 'updatedDate',
+}
 export class TenantFilterDto {
+	@IsOptional()
+	@ApiPropertyOptional({
+		enum: SortTenants,
+		default: SortTenants.CREATED_DATE,
+	})
+	@IsEnum(SortTenants)
+	sortBy?: SortTenants;
+
 	@IsOptional()
 	search?: string;
 
@@ -20,57 +33,44 @@ export class GetTenantDto extends IntersectionType(
 
 export class TenantListDto {
 	@Expose()
-	uuid: string;
+	id: string;
 
 	@Expose()
-	tenantId: string;
-
-	@Expose()
-	organizationUuid: string;
+	profileUuid: string;
 
 	@Expose()
 	companyName: string;
 
 	@Expose()
-	isActive: boolean;
+	fullName: string;
 
 	@Expose()
-	firstName: string;
+	activeLeaseCount: number;
 
 	@Expose()
-	lastName: string;
+	mostRecentLeaseStartDate: Date;
 
 	@Expose()
-	email: string;
+	mostRecentLeaseId: string;
 
 	@Expose()
-	phoneNumber: string;
+	mostRecentUnitId: string;
 
 	@Expose()
-	isKYCVerified: boolean;
-
-	// Other fields that might be null but should still appear
-	@Expose()
-	profilePicUrl: string | null;
+	mostRecentUnitName: string;
 
 	@Expose()
-	gender: string | null;
+	mostRecentPropertyId: string;
 
 	@Expose()
-	dateOfBirth: string | null;
+	mostRecentPropertyName: string;
 
 	@Expose()
-	street: string | null;
+	mostRecentPaymentStatus: string | null;
 
 	@Expose()
-	city: string | null;
+	createdDate: Date | null;
 
 	@Expose()
-	state: string | null;
-
-	@Expose()
-	country: string | null;
-
-	@Expose()
-	postalCode: string | null;
+	updatedDate: Date | null;
 }

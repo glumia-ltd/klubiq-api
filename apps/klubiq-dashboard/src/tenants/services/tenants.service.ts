@@ -7,12 +7,11 @@ import {
 	SharedClsStore,
 } from '@app/common';
 import { LeaseTenantResponseDto } from '../dto/responses/lease-tenant.dto';
-import { GetTenantDto, TenantListDto } from '../dto/requests/get-tenant-dto';
+import { GetTenantDto } from '../dto/requests/get-tenant-dto';
 import { ClsService } from 'nestjs-cls';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class TenantsService {
@@ -39,41 +38,6 @@ export class TenantsService {
 			[...tenantListKeys, cacheKey],
 			this.cacheTTL,
 		);
-	}
-
-	private async mapTenantEntityToTenantListDto(
-		tenantEntities: any[],
-	): Promise<TenantListDto[]> {
-		const tenantListDto = plainToInstance(
-			TenantListDto,
-			tenantEntities.map((tenantEntity) => {
-				const tenant = tenantEntity.__tenant__;
-				const profile = tenant?.__profile__;
-				return {
-					uuid: tenantEntity.uuid,
-					tenantId: tenantEntity.tenantId,
-					organizationUuid: tenantEntity.organizationUuid,
-					companyName: tenant?.companyName ?? null,
-					isActive: tenant?.isActive ?? null,
-					firstName: profile?.firstName ?? null,
-					lastName: profile?.lastName ?? null,
-					email: profile?.email ?? null,
-					phoneNumber: profile?.phoneNumber ?? null,
-					isKYCVerified: profile?.isKYCVerified ?? null,
-					profilePicUrl: profile?.profilePicUrl ?? null,
-					gender: profile?.gender ?? null,
-					dateOfBirth: profile?.dateOfBirth ?? null,
-					street: profile?.street ?? null,
-					city: profile?.city ?? null,
-					state: profile?.state ?? null,
-					country: profile?.country ?? null,
-					postalCode: profile?.postalCode ?? null,
-				};
-			}),
-			{ excludeExtraneousValues: true },
-		);
-
-		return tenantListDto;
 	}
 
 	async getAllTenants(
@@ -126,11 +90,7 @@ export class TenantsService {
 				itemCount: count,
 				pageOptionsDto: getTenantDto,
 			});
-			const mappedEntities =
-				await this.mapTenantEntityToTenantListDto(entities);
-			console.log({ mappedEntities });
-
-			const tenantsPageData = new PageDto(mappedEntities, pageMetaDto);
+			const tenantsPageData = new PageDto(entities, pageMetaDto);
 			return tenantsPageData;
 		} catch (error) {
 			throw error;
