@@ -1,8 +1,13 @@
 import { Lease } from '../database/entities/lease.entity';
 import { DateTime } from 'luxon';
-import { PaymentFrequency } from '../config/config.constants';
+import { CacheTTl, PaymentFrequency } from '../config/config.constants';
+import { CacheService } from '../services/cache.service';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class Util {
+	constructor(private cacheService: CacheService) {}
+
 	getPercentageIncreaseOrDecrease(oldVal: number, newVal: number): number {
 		return (newVal - oldVal) / oldVal;
 	}
@@ -72,5 +77,31 @@ export class Util {
 		// Convert to JS Date and check against end date
 		const result = nextDueDate.toJSDate();
 		return result > endDate ? null : result;
+	}
+
+	public getcacheKey(
+		organizationUuid: string,
+		resource: string,
+		cacheKeyExtension?: string,
+	) {
+		return `${organizationUuid}:${resource}${cacheKeyExtension ? `:${cacheKeyExtension}` : ''}`;
+	}
+
+	public async updateOrganizationResourceCacheKeys(
+		organizationUuid: string,
+		resource: string,
+		listKey?: string,
+	) {
+		const cacheKey = this.getcacheKey(organizationUuid, resource);
+		const cachedEntry =
+			(await this.cacheService.getCache<string[]>(cacheKey)) || [];
+		const newCacheEntry = listKey
+			? Array.from(new Set([...cachedEntry, listKey]))
+			: Array.from(new Set(cachedEntry));
+		await this.cacheService.setCache(
+			newCacheEntry,
+			`${cacheKey}:listKeys`,
+			CacheTTl.ONE_DAY,
+		);
 	}
 }

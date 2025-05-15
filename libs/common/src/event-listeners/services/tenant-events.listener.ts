@@ -36,6 +36,7 @@ export class TenantEventsListener {
 	@OnEvent(EVENTS.TENANT_CREATED, { async: true })
 	async handleTenantCreatedEvent(payload: TenantEvent) {
 		await this.helperService.invalidateOrganizationTenantCache(payload);
+		await this.helperService.invalidateOrganizationPropertyCache(payload);
 		// this.currencyFormat = new Intl.NumberFormat(
 		//     `${payload.language}-${payload.locale}`,
 		//     {
@@ -48,6 +49,13 @@ export class TenantEventsListener {
 		// 	EVENTS.TENANT_CREATED,
 		// 	EmailTypes.TENANT_CREATED,
 		// );
+	}
+
+	@OnEvent(EVENTS.TENANT_ONBOARDED, { async: true })
+	async handleTenantOnboardedEvent(payload: TenantEvent) {
+		await this.helperService.invalidateOrganizationTenantCache(payload);
+		await this.helperService.invalidateOrganizationPropertyCache(payload);
+		await this.helperService.invalidateOrganizationLeaseCache(payload);
 	}
 
 	// private async createNotification(

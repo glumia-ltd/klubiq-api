@@ -230,14 +230,8 @@ export class AuthController {
 		);
 	}
 	private clearLoginCookie(res: Response): void {
-		res.clearCookie(
-			cookieConfig.refreshToken.name,
-			cookieConfig.refreshToken.options,
-		);
-		res.clearCookie(
-			cookieConfig.accessToken.name,
-			cookieConfig.accessToken.options,
-		);
+		res.clearCookie(cookieConfig.refreshToken.name);
+		res.clearCookie(cookieConfig.accessToken.name);
 	}
 
 	@Auth(AuthType.Bearer)

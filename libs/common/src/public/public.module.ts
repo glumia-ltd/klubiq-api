@@ -15,7 +15,6 @@ import { PropertiesAmenityService } from '../services/properties-amenity.service
 import { PublicService } from '../services/public.service';
 import { PropertiesService } from 'apps/klubiq-dashboard/src/properties/services/properties.service';
 import { PropertyRepository } from 'apps/klubiq-dashboard/src/properties/repositories/properties.repository';
-import { Util } from '../helpers/util';
 import { OrganizationSubscriptionService } from '../services/organization-subscription.service';
 import { CommonConfigService } from '../config/common-config';
 import { SubscriptionPlanService } from '../services/subscription-plan.service';
@@ -33,7 +32,6 @@ import { ConfigService } from '@nestjs/config';
 		PublicService,
 		PropertiesService,
 		PropertyRepository,
-		Util,
 		OrganizationSubscriptionService,
 		CommonConfigService,
 		SubscriptionPlanService,

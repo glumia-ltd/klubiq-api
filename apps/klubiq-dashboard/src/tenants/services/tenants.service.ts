@@ -12,13 +12,13 @@ import { ClsService } from 'nestjs-cls';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { plainToInstance } from 'class-transformer';
+import { CacheKeys, CacheTTl } from '@app/common/config/config.constants';
+import { Util } from '@app/common/helpers/util';
 
 @Injectable()
 export class TenantsService {
 	private readonly logger = new Logger(TenantsService.name);
-	private readonly cacheKeyPrefix = 'tenants';
-	private readonly cacheTTL = 90;
+	private readonly cacheTTL = CacheTTl.FIFTEEN_MINUTES;
 
 	constructor(
 		@InjectRepository(LeaseTenantRepository)
@@ -26,56 +26,12 @@ export class TenantsService {
 		private cacheManager: Cache,
 		private readonly leaseTenantRepository: LeaseTenantRepository,
 		private readonly cls: ClsService<SharedClsStore>,
+		private readonly util: Util,
 	) {}
 
-	private async updateOrgTenantsCacheKeys(cacheKey: string) {
-		const currentUser = this.cls.get('currentUser');
-		const tenantListKeys =
-			(await this.cacheManager.get<string[]>(
-				`${currentUser.organizationId}:getTenantListKeys`,
-			)) || [];
-		await this.cacheManager.set(
-			`${currentUser.organizationId}:getTenantListKeys`,
-			[...tenantListKeys, cacheKey],
-			this.cacheTTL,
-		);
+	private getcacheKey(organizationUuid: string, cacheKeyExtension?: string) {
+		return `${organizationUuid}:${CacheKeys.TENANT}${cacheKeyExtension ? `:${cacheKeyExtension}` : ''}`;
 	}
-
-	private async mapTenantEntityToTenantListDto(
-		tenantEntities: any[],
-	): Promise<TenantListDto[]> {
-		const tenantListDto = plainToInstance(
-			TenantListDto,
-			tenantEntities.map((tenantEntity) => {
-				const tenant = tenantEntity.__tenant__;
-				const profile = tenant?.__profile__;
-				return {
-					uuid: tenantEntity.uuid,
-					tenantId: tenantEntity.tenantId,
-					organizationUuid: tenantEntity.organizationUuid,
-					companyName: tenant?.companyName ?? null,
-					isActive: tenant?.isActive ?? null,
-					firstName: profile?.firstName ?? null,
-					lastName: profile?.lastName ?? null,
-					email: profile?.email ?? null,
-					phoneNumber: profile?.phoneNumber ?? null,
-					isKYCVerified: profile?.isKYCVerified ?? null,
-					profilePicUrl: profile?.profilePicUrl ?? null,
-					gender: profile?.gender ?? null,
-					dateOfBirth: profile?.dateOfBirth ?? null,
-					street: profile?.street ?? null,
-					city: profile?.city ?? null,
-					state: profile?.state ?? null,
-					country: profile?.country ?? null,
-					postalCode: profile?.postalCode ?? null,
-				};
-			}),
-			{ excludeExtraneousValues: true },
-		);
-
-		return tenantListDto;
-	}
-
 	async getAllTenants(
 		getTenantDto?: GetTenantDto,
 	): Promise<PageDto<LeaseTenantResponseDto>> {
@@ -103,7 +59,18 @@ export class TenantsService {
 
 	async getLeaseById(leaseId: string): Promise<LeaseTenantResponseDto[]> {
 		try {
-			return this.leaseTenantRepository.findByLeaseId(leaseId);
+			const cacheKey = this.getcacheKey(
+				this.cls.get('currentUser').organizationId,
+				`${CacheKeys.LEASE}:${leaseId}`,
+			);
+			const cachedTenants =
+				await this.cacheManager.get<LeaseTenantResponseDto[]>(cacheKey);
+			if (cachedTenants) {
+				return cachedTenants;
+			}
+			const tenants = await this.leaseTenantRepository.findByLeaseId(leaseId);
+			await this.cacheManager.set(cacheKey, tenants, this.cacheTTL);
+			return tenants;
 		} catch (error) {
 			throw error;
 		}
@@ -116,6 +83,16 @@ export class TenantsService {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			}
 
+			const cacheKey = this.getcacheKey(
+				currentUser.organizationId,
+				this.cls.get('requestUrl'),
+			);
+			const cachedTenants =
+				await this.cacheManager.get<PageDto<TenantListDto>>(cacheKey);
+			if (cachedTenants) {
+				return cachedTenants;
+			}
+
 			const [entities, count] =
 				await this.leaseTenantRepository.organizationTenants(
 					currentUser.organizationId,
@@ -126,11 +103,13 @@ export class TenantsService {
 				itemCount: count,
 				pageOptionsDto: getTenantDto,
 			});
-			const mappedEntities =
-				await this.mapTenantEntityToTenantListDto(entities);
-			console.log({ mappedEntities });
-
-			const tenantsPageData = new PageDto(mappedEntities, pageMetaDto);
+			const tenantsPageData = new PageDto(entities, pageMetaDto);
+			await this.cacheManager.set(cacheKey, tenantsPageData, this.cacheTTL);
+			await this.util.updateOrganizationResourceCacheKeys(
+				currentUser.organizationId,
+				CacheKeys.TENANT,
+				cacheKey,
+			);
 			return tenantsPageData;
 		} catch (error) {
 			throw error;

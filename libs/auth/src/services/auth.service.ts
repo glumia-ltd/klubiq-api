@@ -28,6 +28,7 @@ import {
 	VerifyMfaOtpResponseDto,
 } from '../dto/responses/auth-response.dto';
 import {
+	CacheKeys,
 	LeaseStatus,
 	ROLE_ALIAS,
 	UserRoles,
@@ -78,12 +79,13 @@ import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 import { extractAccessToken } from '../helpers/cookie-helper';
 import { Request } from 'express';
 import { AccessControlService } from './access-control.service';
+import { Util } from '@app/common/helpers/util';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
 	private readonly adminIdentityTenantId: string;
 	private readonly cacheKeyPrefix = 'auth';
-	private readonly cacheTTL = 90;
+	private readonly cacheTTL = 900000;
 	protected readonly cacheService = new CacheService(this.cacheManager);
 	protected readonly suid = new ShortUniqueId();
 	protected readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
@@ -115,6 +117,7 @@ export abstract class AuthService {
 		protected readonly apiDebugger: ApiDebugger,
 		protected readonly eventEmitter: EventEmitter2,
 		protected readonly accessControlService: AccessControlService,
+		protected readonly util: Util,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -141,6 +144,10 @@ export abstract class AuthService {
 			this.configService.get<string>('CONTINUE_URL_PATH');
 	}
 
+	private getcacheKey(cacheKeyExtension?: string) {
+		return `${CacheKeys.AUTH}${cacheKeyExtension ? `:${cacheKeyExtension}` : ''}`;
+	}
+
 	get auth(): auth.Auth {
 		return this.firebaseAdminApp.auth();
 	}
@@ -159,13 +166,20 @@ export abstract class AuthService {
 	async signOut(): Promise<void> {
 		this.currentUser = this.cls.get('currentUser');
 		if (this.currentUser) {
-			this.cacheManager.del(
-				`${this.cacheKeyPrefix}:user:${this.currentUser.kUid}`,
+			const landlordCacheKey = this.getcacheKey(
+				`user:landlord:${this.currentUser.kUid}`,
 			);
-			await this.accessControlService.invalidateAllCache(
+			const tenantCacheKey = this.getcacheKey(
+				`user:tenant:${this.currentUser.kUid}`,
+			);
+			await this.accessControlService.invalidateCache(
 				this.currentUser.kUid,
 				this.currentUser.organizationId,
 			);
+			await this.accessControlService.invalidateAllCache([
+				landlordCacheKey,
+				tenantCacheKey,
+			]);
 			await this.auth.revokeRefreshTokens(this.currentUser.uid);
 			this.cls.set('currentUser', null);
 		}
@@ -196,7 +210,7 @@ export abstract class AuthService {
 				preferences,
 			);
 		if (updatedUserPreferences) {
-			const cacheKey = `${this.cacheKeyPrefix}:user:${currentUser.kUid}`;
+			const cacheKey = this.getcacheKey(`user:${currentUser.kUid}`);
 			await this.cacheManager.del(cacheKey);
 		}
 		return updatedUserPreferences;
@@ -543,7 +557,7 @@ export abstract class AuthService {
 			if (!this.currentUser.uid && !this.currentUser.kUid) {
 				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
 			}
-			const cacheKey = `${this.cacheKeyPrefix}:user:${this.currentUser.kUid}`;
+			const cacheKey = this.getcacheKey(`user:${this.currentUser.kUid}`);
 
 			const cachedUser =
 				await this.cacheManager.get<LandlordUserDetailsResponseDto>(cacheKey);
@@ -567,7 +581,7 @@ export abstract class AuthService {
 			if (!this.currentUser.uid && !this.currentUser.kUid) {
 				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
 			}
-			const cacheKey = `${this.cacheKeyPrefix}:user:${this.currentUser.kUid}`;
+			const cacheKey = this.getcacheKey(`user:${this.currentUser.kUid}`);
 
 			const cachedUser =
 				await this.cacheManager.get<TenantUserDetailsResponseDto>(cacheKey);
@@ -602,7 +616,7 @@ export abstract class AuthService {
 			);
 		const userData = await this.mapLandlordUserToDto(userDetails, currentUser);
 		userData.notificationSubscription = notificationsSubscription;
-		await this.cacheManager.set(cacheKey, userData, 3600);
+		await this.cacheManager.set(cacheKey, userData, this.cacheTTL);
 		return userData;
 	}
 
@@ -613,7 +627,7 @@ export abstract class AuthService {
 	): Promise<LandlordUserDetailsResponseDto> {
 		let userDetails: any;
 		let notificationsSubscription: any;
-		let cacheKey = `${this.cacheKeyPrefix}:user:`;
+		let cacheKey: string;
 		switch (type) {
 			case 'landlord':
 				userDetails =
@@ -623,11 +637,11 @@ export abstract class AuthService {
 					);
 				notificationsSubscription = userDetails?.profile_uuid
 					? await this.notificationSubService.getAUserSubscriptionDetails(
-							userDetails.profile_uuid,
+							userDetails.profileUuid,
 						)
 					: null;
 				userDetails = (await this.mapLandlordUserToDto(userDetails)) || {};
-				cacheKey = `${cacheKey}${userDetails.uuid}`;
+				cacheKey = this.getcacheKey(`landlord:${userDetails.profileUuid}`);
 				break;
 			case 'tenant':
 				userDetails =
@@ -641,7 +655,7 @@ export abstract class AuthService {
 						)
 					: null;
 				userDetails = (await this.mapTenantUserToDto(userDetails)) || {};
-				cacheKey = `${cacheKey}${userDetails.uuid}`;
+				cacheKey = this.getcacheKey(`tenant:${userDetails.profileUuid}`);
 				break;
 			default:
 				userDetails = {};
@@ -650,7 +664,7 @@ export abstract class AuthService {
 			throw new NotFoundException('User not found');
 		}
 		userDetails.notificationSubscription = notificationsSubscription;
-		await this.cacheManager.set(cacheKey, userDetails, 3600);
+		await this.cacheManager.set(cacheKey, userDetails, this.cacheTTL);
 		return userDetails;
 	}
 
@@ -755,6 +769,11 @@ export abstract class AuthService {
 					`${ErrorMessages.USER_NOT_CREATED} due to an unknown error`,
 				);
 			}
+			this.emitEvent(
+				EVENTS.TENANT_CREATED,
+				this.currentUser.organizationId,
+				false,
+			);
 			return userProfile;
 		} catch (error) {
 			this.apiDebugger.error('Error creating tenant', error);
@@ -807,7 +826,7 @@ export abstract class AuthService {
 				);
 			}
 			this.emitEvent(
-				EVENTS.LEASE_CREATED,
+				EVENTS.TENANT_ONBOARDED,
 				this.currentUser.organizationId,
 				false,
 			);
@@ -913,7 +932,6 @@ export abstract class AuthService {
 					}),
 				),
 			);
-			this.apiDebugger.info('Sign in response', data);
 			return data;
 		} catch (err) {
 			this.apiDebugger.error('Error signing in with email password', err);
@@ -965,7 +983,6 @@ export abstract class AuthService {
 					}),
 				),
 			);
-			this.apiDebugger.info('MFA Sign in response', data);
 			return data;
 		} catch (err) {
 			this.apiDebugger.error('Error verifying MFA OTP', err);
@@ -1137,8 +1154,11 @@ export abstract class AuthService {
 					'The unit already has an active lease during the specified period.',
 				);
 			}
-			const unit = await transactionalEntityManager.findOneBy(Unit, {
-				id: unitId,
+			const unit = await transactionalEntityManager.findOne(Unit, {
+				where: { id: unitId },
+				relations: {
+					property: true,
+				},
 			});
 			if (!unit) {
 				throw new BadRequestException('Invalid unit ID.');
@@ -1158,6 +1178,12 @@ export abstract class AuthService {
 				name,
 				...leaseData,
 			});
+			const propertyCacheKey = this.util.getcacheKey(
+				organizationUuid,
+				CacheKeys.PROPERTY,
+				unit.property.uuid,
+			);
+			await this.cacheManager.del(propertyCacheKey);
 			return await transactionalEntityManager.save(lease);
 		});
 	}

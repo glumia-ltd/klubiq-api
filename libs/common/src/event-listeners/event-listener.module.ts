@@ -6,7 +6,7 @@ import { UsersModule } from 'apps/klubiq-dashboard/src/users/users.module';
 import { NotificationsModule } from '@app/notifications';
 import { HelperService } from './services/listeners-helper';
 import { LeaseEventsListener } from './services/lease-events.listener';
-
+import { TenantEventsListener } from './services/tenant-events.listener';
 @Module({
 	imports: [QueueModule, UsersModule, NotificationsModule],
 	providers: [
@@ -14,6 +14,7 @@ import { LeaseEventsListener } from './services/lease-events.listener';
 		NotificationQueueListener,
 		HelperService,
 		LeaseEventsListener,
+		TenantEventsListener,
 	],
 })
 export class EventListenerModule {}
