@@ -10,6 +10,8 @@ import { Cache } from 'cache-manager';
 import DataLoader from 'dataloader';
 import { RoleFeaturePermissions } from '@app/common/database/entities/role-feature-permission.entity';
 import { ApiDebugger } from '@app/common/helpers/debug-loggers';
+import { CacheKeys, CacheTTl } from '@app/common/config/config.constants';
+import KeyvRedis from '@keyv/redis';
 @Injectable()
 export class AccessControlService {
 	private readonly logger = new Logger(AccessControlService.name);
@@ -55,6 +57,9 @@ export class AccessControlService {
 		});
 	}
 
+	private getcacheKey(cacheKeyExtension?: string, prefix?: string) {
+		return `${prefix ? `${prefix}:` : ''}${CacheKeys.PERMISSION}${cacheKeyExtension ? `:${cacheKeyExtension}` : ''}`;
+	}
 	async hasPermission(
 		userUuid: string,
 		organizationUuid: string,
@@ -63,7 +68,9 @@ export class AccessControlService {
 	): Promise<boolean> {
 		try {
 			// 1. Construct the cache key.
-			const cacheKey = `permission:${userUuid}:${organizationUuid}:${featureName}:${permissionName}`;
+			const cacheKey = this.getcacheKey(
+				`${userUuid}:${organizationUuid}:${featureName}:${permissionName}`,
+			);
 
 			// 2. Check the cache.
 			const cachedResult = await this.cacheManager.get<boolean>(cacheKey);
@@ -81,7 +88,7 @@ export class AccessControlService {
 			);
 
 			// 4. Store the result in the cache.
-			await this.cacheManager.set(cacheKey, hasPermission, 3600); // Cache for 1 hour (adjust as needed)
+			await this.cacheManager.set(cacheKey, hasPermission, CacheTTl.ONE_HOUR); // Cache for 1 hour (adjust as needed)
 			this.logger.debug(
 				`Cache set for key: ${cacheKey} with value: ${hasPermission}`,
 			);
@@ -145,39 +152,30 @@ export class AccessControlService {
 	): Promise<void> {
 		// Invalidate specific cache entries or all entries for a user/organization
 		if (featureName && permissionName) {
-			const cacheKey = `permission:${userUuid}:${organizationUuid}:${featureName}:${permissionName}`;
+			const cacheKey = this.getcacheKey(
+				`${userUuid}:${organizationUuid}:${featureName}:${permissionName}`,
+			);
 			await this.cacheManager.del(cacheKey);
 			this.logger.log(`Invalidated cache for key: ${cacheKey}`);
 		} else {
 			// Invalidate all permissions for a user/organization (more aggressive, use sparingly)
 			// This is a simplified example and might need refinement based on your cache strategy.
-			const keys = await this.cacheManager.store.keys();
-			const keysToDelete = keys.filter((key) =>
-				key.startsWith(`permission:${userUuid}:${organizationUuid}`),
-			);
-			for (const key of keysToDelete) {
-				await this.cacheManager.del(key);
-				this.logger.log(`Invalidated cache for key: ${key}`);
+			const store = this.cacheManager.stores[0].store as KeyvRedis<any>;
+			for await (const [key, value] of store.iterator()) {
+				if (
+					key.startsWith(
+						`${CacheKeys.PERMISSION}:${userUuid}:${organizationUuid}`,
+					) &&
+					value
+				) {
+					await this.cacheManager.del(key);
+				}
 			}
 		}
 	}
 
-	async invalidateAllCache(
-		userId: string,
-		organizationId: string,
-	): Promise<void> {
-		this.apiDebugger.log(
-			`Invalidating all cache for user: ${userId} and organization: ${organizationId}`,
-		);
-		const keys = await this.cacheManager.store.keys();
-		this.apiDebugger.log(`Found ${keys.length} keys in cache`);
-		const userKeys = keys.filter((key) => key.includes(userId));
-		const organizationKeys = keys.filter((key) => key.includes(organizationId));
-		const allKeys = [...userKeys, ...organizationKeys];
-		this.apiDebugger.log(`Invalidating ${allKeys.length} keys`);
-		for (const key of allKeys) {
-			await this.cacheManager.del(key);
-			this.apiDebugger.log(`Invalidated cache for key: ${key}`);
-		}
+	async invalidateAllCache(keys: string[]): Promise<void> {
+		this.apiDebugger.log(`Invalidating all cache for keyPrefixs: ${keys}`);
+		await this.cacheManager.mdel(keys);
 	}
 }

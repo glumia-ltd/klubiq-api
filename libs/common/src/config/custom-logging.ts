@@ -64,10 +64,10 @@ export class CustomLogging {
 					...metadata,
 					message,
 					error: {},
-					ip: req.headers['x-forwarded-for'] || req.ip,
+					ip: (req as any).headers?.['x-forwarded-for'] || (req as any).ip,
 				};
 				if (err) {
-					logData.error = err.stack || err;
+					logData.error = (err as Error).stack || err;
 				}
 				msg = JSON.stringify(logData);
 				return msg;

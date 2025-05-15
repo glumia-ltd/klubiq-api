@@ -1,5 +1,5 @@
 import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
-import { CacheKeys } from '../config/config.constants';
+import { CacheKeys, CacheTTl } from '../config/config.constants';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectMapper } from '@automapper/nestjs';
@@ -37,6 +37,7 @@ export class UserPreferencesService {
 			await this.cacheManager.set(
 				`${this.cacheKey}:${userId}`,
 				userPreferences,
+				CacheTTl.ONE_HOUR,
 			);
 		}
 		return userPreferences;
@@ -62,7 +63,11 @@ export class UserPreferencesService {
 		}
 		const updatedResult =
 			await this.userPreferencesRepository.save(userPreferences);
-		await this.cacheManager.set(`${this.cacheKey}:${userId}`, updatedResult);
+		await this.cacheManager.set(
+			`${this.cacheKey}:${userId}`,
+			updatedResult,
+			CacheTTl.ONE_HOUR,
+		);
 		return updatedResult;
 	}
 }

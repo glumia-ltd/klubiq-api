@@ -15,6 +15,7 @@ import { ErrorMessages } from '@app/common/config/error.constant';
 import { FileUploadService } from '@app/common/services/file-upload.service';
 import { Lease } from '@app/common/database/entities/lease.entity';
 import {
+	CacheKeys,
 	CacheTTl,
 	LeaseStatus,
 	PaymentFrequency,
@@ -46,8 +47,7 @@ import { PropertyAddress } from '@app/common/database/entities/property-address.
 @Injectable()
 export class LeaseService implements ILeaseService {
 	private readonly logger = new Logger(LeaseService.name);
-	private readonly cacheKeyPrefix = 'leases';
-	private readonly cacheTTL = 180;
+	private readonly cacheTTL = CacheTTl.FIFTEEN_MINUTES;
 
 	constructor(
 		private readonly configService: ConfigService,
@@ -63,17 +63,8 @@ export class LeaseService implements ILeaseService {
 		private readonly util: Util,
 	) {}
 
-	private async updateOrgCacheKeys(cacheKey: string) {
-		const currentUser = this.cls.get('currentUser');
-		const leaseListKeys =
-			(await this.cacheManager.get<string[]>(
-				`${currentUser.organizationId}:getLeaseListKeys`,
-			)) || [];
-		await this.cacheManager.set(
-			`${currentUser.organizationId}:getLeaseListKeys`,
-			[...leaseListKeys, cacheKey],
-			this.cacheTTL,
-		);
+	private getcacheKey(organizationUuid: string, cacheKeyExtension?: string) {
+		return `${organizationUuid}:${CacheKeys.LEASE}${cacheKeyExtension ? `:${cacheKeyExtension}` : ''}`;
 	}
 
 	async getOrganizationLeases(
@@ -83,7 +74,10 @@ export class LeaseService implements ILeaseService {
 		if (!currentUser) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
-		const cacheKey = `${this.cacheKeyPrefix}:${currentUser.organizationId}:${this.cls.get('requestUrl')}`;
+		const cacheKey = this.getcacheKey(
+			currentUser.organizationId,
+			`${this.cls.get('requestUrl')}`,
+		);
 		const cachedLeases =
 			await this.cacheManager.get<PageDto<LeaseDto>>(cacheKey);
 		if (cachedLeases) {
@@ -102,7 +96,11 @@ export class LeaseService implements ILeaseService {
 		const mappedEntities = await this.mapLeaseListToDto(entities);
 		const leaseData = new PageDto(mappedEntities, pageMetaDto);
 		await this.cacheManager.set(cacheKey, leaseData, this.cacheTTL);
-		this.updateOrgCacheKeys(cacheKey);
+		await this.util.updateOrganizationResourceCacheKeys(
+			currentUser.organizationId,
+			CacheKeys.LEASE,
+			cacheKey,
+		);
 		return leaseData;
 	}
 
@@ -204,7 +202,10 @@ export class LeaseService implements ILeaseService {
 		if (!currentUser) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
-		const cacheKey = `${this.cacheKeyPrefix}:property:${unitId}`;
+		const cacheKey = this.getcacheKey(
+			currentUser.organizationId,
+			`property:${unitId}`,
+		);
 		const cachedLeases = await this.cacheManager.get<LeaseDto[]>(cacheKey);
 		if (cachedLeases) {
 			if (currentUser.organizationRole !== UserRoles.ORG_OWNER) {
@@ -222,7 +223,6 @@ export class LeaseService implements ILeaseService {
 		//const mappedLeases = await this.mapLeaseRawToDto(leases);
 		const mappedLeases = await this.mapLeaseListToDto(leases);
 		await this.cacheManager.set(cacheKey, mappedLeases, this.cacheTTL);
-		this.updateOrgCacheKeys(cacheKey);
 		if (currentUser.organizationRole !== UserRoles.ORG_OWNER) {
 			return filter(
 				mappedLeases,
@@ -235,7 +235,11 @@ export class LeaseService implements ILeaseService {
 	}
 
 	async getLeaseById(id: string): Promise<LeaseDetailsDto> {
-		const cacheKey = `${this.cacheKeyPrefix}:${id}`;
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		const cacheKey = this.getcacheKey(currentUser.organizationId, id);
 		const cachedLease = await this.cacheManager.get<LeaseDetailsDto>(cacheKey);
 		if (cachedLease) {
 			return cachedLease;
@@ -244,7 +248,6 @@ export class LeaseService implements ILeaseService {
 		this.apiDebugger.log('Lease Single Raw: ', lease);
 		const mappedLease = await this.mapLeaseDetailsToDto(lease);
 		await this.cacheManager.set(cacheKey, mappedLease, this.cacheTTL);
-		this.updateOrgCacheKeys(cacheKey);
 		return mappedLease;
 	}
 
@@ -252,8 +255,15 @@ export class LeaseService implements ILeaseService {
 		id: string,
 		leaseDto: UpdateLeaseDto,
 	): Promise<LeaseDetailsDto> {
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		const cacheKey = this.getcacheKey(currentUser.organizationId, id);
 		const updatedLease = await this.leaseRepository.updateLease(id, leaseDto);
-		return await this.mapLeaseDetailsToDto(updatedLease);
+		const mappedLease = await this.mapLeaseDetailsToDto(updatedLease);
+		await this.cacheManager.set(cacheKey, mappedLease, this.cacheTTL);
+		return mappedLease;
 	}
 
 	async createLease(leaseDto: CreateLeaseDto): Promise<void> {
@@ -293,21 +303,34 @@ export class LeaseService implements ILeaseService {
 	}
 
 	async deleteLease(leaseId: string): Promise<void> {
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
 		await this.leaseRepository.delete(leaseId);
+		await this.cacheManager.del(
+			this.getcacheKey(currentUser.organizationId, leaseId),
+		);
 	}
 
 	async renewLease(leaseId: string): Promise<void> {
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		const cacheKey = this.getcacheKey(currentUser.organizationId, leaseId);
 		const leaseDto: UpdateLeaseDto = {
 			status: LeaseStatus.ACTIVE,
 			endDate: DateTime.utc().toISO(),
 		};
 		await this.leaseRepository.updateLease(leaseId, leaseDto);
+		await this.cacheManager.del(cacheKey);
 	}
 	async getTotalOverdueRents(
 		organizationUuid: string,
 	): Promise<RentOverdueLeaseDto> {
 		try {
-			const cacheKey = `${this.cacheKeyPrefix}:overdue-metrics:${organizationUuid}`;
+			const cacheKey = this.getcacheKey(organizationUuid, 'overdue-metrics');
 			const cachedOverdueRentData =
 				await this.cacheManager.get<RentOverdueLeaseDto>(cacheKey);
 			if (cachedOverdueRentData) {
@@ -315,12 +338,12 @@ export class LeaseService implements ILeaseService {
 			}
 			const totalOverdueRents =
 				await this.leaseRepository.getOverdueRentData(organizationUuid);
-			await this.cacheManager.set(
+			await this.cacheManager.set(cacheKey, totalOverdueRents, this.cacheTTL);
+			await this.util.updateOrganizationResourceCacheKeys(
+				organizationUuid,
+				CacheKeys.LEASE,
 				cacheKey,
-				totalOverdueRents,
-				CacheTTl.ONE_DAY,
 			);
-			this.updateOrgCacheKeys(cacheKey);
 			return totalOverdueRents;
 		} catch (error) {
 			this.logger.error(
@@ -336,6 +359,11 @@ export class LeaseService implements ILeaseService {
 		leaseId: string,
 	): Promise<LeaseDetailsDto> {
 		try {
+			const currentUser = this.cls.get('currentUser');
+			if (!currentUser) {
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
+			const cacheKey = this.getcacheKey(currentUser.organizationId, leaseId);
 			const existingTenant =
 				await this.userProfilesRepository.checkTenantUserExist(tenantDto.email);
 			if (existingTenant) {
@@ -344,11 +372,9 @@ export class LeaseService implements ILeaseService {
 				);
 			}
 			const tenantDtos = [tenantDto];
-			const updatedLease = await this.leaseRepository.addTenantToLease(
-				tenantDtos,
-				leaseId,
-			);
-			return await this.mapLeaseDetailsToDto(updatedLease);
+			await this.leaseRepository.addTenantToLease(tenantDtos, leaseId);
+			await this.cacheManager.del(cacheKey);
+			return await this.getLeaseById(leaseId);
 		} catch (error) {
 			throw new Error(error.message);
 		}
@@ -365,11 +391,17 @@ export class LeaseService implements ILeaseService {
 	}
 
 	async terminateLease(leaseId: string): Promise<void> {
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		const cacheKey = this.getcacheKey(currentUser.organizationId, leaseId);
 		const leaseDto: UpdateLeaseDto = {
 			status: LeaseStatus.TERMINATED,
 			endDate: DateTime.utc().toISO(),
 		};
 		await this.leaseRepository.updateLease(leaseId, leaseDto);
+		await this.cacheManager.del(cacheKey);
 	}
 
 	async sendTenantsInvitation() {
