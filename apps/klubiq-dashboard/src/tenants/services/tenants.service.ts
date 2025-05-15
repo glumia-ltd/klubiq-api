@@ -17,7 +17,7 @@ import { Cache } from 'cache-manager';
 export class TenantsService {
 	private readonly logger = new Logger(TenantsService.name);
 	private readonly cacheKeyPrefix = 'tenants';
-	private readonly cacheTTL = 90;
+	private readonly cacheTTL = 900000;
 
 	constructor(
 		@InjectRepository(LeaseTenantRepository)

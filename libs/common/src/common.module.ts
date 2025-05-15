@@ -5,10 +5,11 @@ import { Global, Module } from '@nestjs/common';
 import { ApiDebugger } from './helpers/debug-loggers';
 import { Generators } from './helpers/generators';
 import { Util } from './helpers/util';
+import { CacheService } from './services/cache.service';
 
 @Global()
 @Module({
-	providers: [ApiDebugger, Generators, Util],
+	providers: [ApiDebugger, Generators, Util, CacheService],
 	exports: [ApiDebugger, Generators, Util],
 })
 export class CommonModule {}

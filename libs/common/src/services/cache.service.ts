@@ -1,8 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { CacheTTl } from '../config/config.constants';
-
+import { Cache } from 'cache-manager';
 @Injectable()
 export class CacheService {
 	private readonly cacheTTL: number = CacheTTl.ONE_DAY;
@@ -122,10 +121,6 @@ export class CacheService {
 	}
 
 	async invalidateCache(cacheKey: string): Promise<void> {
-		const keys = await this.cacheManager.store.keys();
-		const keysToDelete = keys.filter((k) => k.startsWith(cacheKey));
-		keysToDelete.forEach(async (key) => {
-			await this.cacheManager.del(key);
-		});
+		await this.cacheManager.del(cacheKey);
 	}
 }

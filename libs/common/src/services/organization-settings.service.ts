@@ -1,5 +1,5 @@
 import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
-import { CacheKeys } from '../config/config.constants';
+import { CacheKeys, CacheTTl } from '../config/config.constants';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ClsService } from 'nestjs-cls';
@@ -40,6 +40,7 @@ export class OrganizationSettingsService {
 			await this.cacheManager.set(
 				`${this.cacheKey}:${orgId}`,
 				organizationSettings?.settings,
+				CacheTTl.ONE_HOUR,
 			);
 		}
 		return organizationSettings?.settings;
@@ -70,7 +71,11 @@ export class OrganizationSettingsService {
 		}
 		const result =
 			await this.organizationSettingsRepository.save(organizationSettings);
-		await this.cacheManager.set(`${this.cacheKey}:${orgId}`, result);
+		await this.cacheManager.set(
+			`${this.cacheKey}:${orgId}`,
+			result,
+			CacheTTl.ONE_HOUR,
+		);
 		return result;
 	}
 }

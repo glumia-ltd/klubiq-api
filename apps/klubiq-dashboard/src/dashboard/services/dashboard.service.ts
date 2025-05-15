@@ -15,7 +15,7 @@ import {
 } from '@app/common/dto/responses/dashboard-metrics.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { CacheKeys } from '@app/common/config/config.constants';
+import { CacheKeys, CacheTTl } from '@app/common/config/config.constants';
 import { DashboardRepository } from '../repositories/dashboard.repository';
 import { DateTime } from 'luxon';
 import { FileDownloadService } from '@app/common/services/file-download.service';
@@ -28,8 +28,7 @@ import {
 @Injectable()
 export class DashboardService {
 	private readonly logger = new Logger(DashboardService.name);
-	private readonly cacheTTL = 3600;
-	private readonly cacheKeyPrefix = 'dashboard';
+	private readonly cacheTTL = CacheTTl.FIFTEEN_MINUTES;
 	constructor(
 		private readonly cls: ClsService<SharedClsStore>,
 		@Inject(PROPERTY_METRICS)
@@ -42,14 +41,10 @@ export class DashboardService {
 		private readonly leaseService: ILeaseService,
 	) {}
 
-	private async updateOrgCacheKeys(cacheKey: string, listKeyName: string) {
-		const listKeys = (await this.cacheManager.get<string[]>(listKeyName)) || [];
-		await this.cacheManager.set(
-			listKeyName,
-			[...listKeys, cacheKey],
-			this.cacheTTL,
-		);
+	private getcacheKey(organizationUuid: string, cacheKeyExtension?: string) {
+		return `${organizationUuid}:${CacheKeys.DASHBOARD}${cacheKeyExtension ? `:${cacheKeyExtension}` : ''}`;
 	}
+
 	async getPropertyMetrics(
 		invalidateCache: boolean = false,
 	): Promise<PropertyMetrics> {
@@ -57,8 +52,10 @@ export class DashboardService {
 		if (!currentUser) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
-
-		const cacheKey = `${this.cacheKeyPrefix}:${CacheKeys.PROPERTY_METRICS}:${currentUser.organizationId}`;
+		const cacheKey = this.getcacheKey(
+			currentUser.organizationId,
+			CacheKeys.PROPERTY_METRICS,
+		);
 		if (invalidateCache) {
 			await this.cacheManager.del(cacheKey);
 		}
@@ -73,9 +70,10 @@ export class DashboardService {
 				30,
 			);
 		await this.cacheManager.set(cacheKey, propertyMetrics, this.cacheTTL);
-		this.updateOrgCacheKeys(
+		await this.util.updateOrganizationResourceCacheKeys(
+			currentUser.organizationId,
+			CacheKeys.DASHBOARD,
 			cacheKey,
-			`${currentUser.organizationId}:getPropertyListKeys`,
 		);
 		return propertyMetrics;
 	}
@@ -85,8 +83,13 @@ export class DashboardService {
 		endDateStr?: string,
 	): Promise<RevenueResponseDto> {
 		const currentUser = this.cls.get('currentUser');
-		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const cacheKey = `${this.cacheKeyPrefix}:${CacheKeys.REVENUE_METRICS}:${startDateStr}to${endDateStr}:${currentUser.organizationId}`;
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		const cacheKey = this.getcacheKey(
+			currentUser.organizationId,
+			`${CacheKeys.REVENUE_METRICS}:${startDateStr}to${endDateStr}`,
+		);
 		const cachedRevenueMetrics =
 			await this.cacheManager.get<RevenueResponseDto>(cacheKey);
 		if (cachedRevenueMetrics) {
@@ -105,17 +108,23 @@ export class DashboardService {
 			endDate,
 		);
 		await this.cacheManager.set(cacheKey, result, this.cacheTTL);
-		this.updateOrgCacheKeys(
+		await this.util.updateOrganizationResourceCacheKeys(
+			currentUser.organizationId,
+			CacheKeys.DASHBOARD,
 			cacheKey,
-			`${currentUser.organizationId}:transactionListKeys`,
 		);
 		return result;
 	}
 
 	async getTransactionMetricsData(): Promise<TransactionMetricsDto> {
 		const currentUser = this.cls.get('currentUser');
-		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const cacheKey = `${this.cacheKeyPrefix}:${CacheKeys.TRANSACTION_METRICS}:${currentUser.organizationId}`;
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		const cacheKey = this.getcacheKey(
+			currentUser.organizationId,
+			CacheKeys.TRANSACTION_METRICS,
+		);
 		const cachedTransactionMetrics =
 			await this.cacheManager.get<TransactionMetricsDto>(cacheKey);
 		if (cachedTransactionMetrics) {
@@ -126,9 +135,10 @@ export class DashboardService {
 			currentUser.organizationId,
 		);
 		await this.cacheManager.set(cacheKey, result, this.cacheTTL);
-		this.updateOrgCacheKeys(
+		await this.util.updateOrganizationResourceCacheKeys(
+			currentUser.organizationId,
+			CacheKeys.DASHBOARD,
 			cacheKey,
-			`${currentUser.organizationId}:transactionListKeys`,
 		);
 		return result;
 	}
@@ -139,7 +149,9 @@ export class DashboardService {
 	): Promise<Buffer> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			if (!currentUser) {
+				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+			}
 
 			const startDate = DateTime.fromISO(startDateStr).toSQL({
 				includeOffset: false,
@@ -168,8 +180,13 @@ export class DashboardService {
 
 	async getLeaseMetricsData(): Promise<LeaseMetricsDto> {
 		const currentUser = this.cls.get('currentUser');
-		if (!currentUser) throw new ForbiddenException(ErrorMessages.FORBIDDEN);
-		const cacheKey = `${this.cacheKeyPrefix}:${CacheKeys.LEASE_METRICS}:${currentUser.organizationId}`;
+		if (!currentUser) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		const cacheKey = this.getcacheKey(
+			currentUser.organizationId,
+			CacheKeys.LEASE_METRICS,
+		);
 		const cachedLeaseMetrics =
 			await this.cacheManager.get<LeaseMetricsDto>(cacheKey);
 		if (cachedLeaseMetrics) {
@@ -219,9 +236,10 @@ export class DashboardService {
 			activeLeaseForPeriodChangeIndicator,
 		};
 		await this.cacheManager.set(cacheKey, leaseMetrics, this.cacheTTL);
-		this.updateOrgCacheKeys(
+		await this.util.updateOrganizationResourceCacheKeys(
+			currentUser.organizationId,
+			CacheKeys.DASHBOARD,
 			cacheKey,
-			`${currentUser.organizationId}:getLeaseListKeys`,
 		);
 		return leaseMetrics;
 	}

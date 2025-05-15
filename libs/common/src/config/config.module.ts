@@ -10,9 +10,10 @@ import { classes } from '@automapper/classes';
 import { ClsModule } from 'nestjs-cls';
 import { v4 as uuidv4 } from 'uuid';
 import { CacheModule } from '@nestjs/cache-manager';
-import * as redis from 'cache-manager-redis-store';
+// import * as redis from 'cache-manager-redis-store';
 import { createMapper } from '@automapper/core';
 import { CommonConfigService } from './common-config';
+import keyvRedis from '@keyv/redis';
 
 @Module({
 	imports: [
@@ -73,6 +74,7 @@ import { CommonConfigService } from './common-config';
 				LANDLORP_PORTAL_CLIENT_ID: Joi.string().optional(),
 				TENANT_PORTAL_CLIENT_ID: Joi.string().required(),
 				ADMIN_PORTAL_CLIENT_ID: Joi.string().required(),
+				REDIS_HOST: Joi.string().required(),
 			}),
 		}),
 		AutomapperModule.forRoot([
@@ -104,10 +106,14 @@ import { CommonConfigService } from './common-config';
 			isGlobal: true,
 			inject: [ConfigService],
 			useFactory: async (configService: ConfigService) => ({
-				store: redis,
-				host: 'localhost',
-				port: configService.get('REDIS_PORT'),
-				// ttl: 300,
+				stores: [
+					new keyvRedis(
+						`redis://${configService.get('REDIS_HOST')}:${configService.get(
+							'REDIS_PORT',
+						)}`,
+					),
+				],
+				ttl: 600000,
 			}),
 		}),
 	],

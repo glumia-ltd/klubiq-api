@@ -18,7 +18,7 @@ import { Transaction } from '@app/common/database/entities/transaction.entity';
 export class TransactionsService {
 	private readonly logger = new Logger(TransactionsService.name);
 	private readonly cacheKeyPrefix = 'transactions';
-	private readonly cacheTTL = 180;
+	private readonly cacheTTL = 900000;
 	private readonly suid = new ShortUniqueId({ length: 10 });
 	constructor(
 		private readonly cls: ClsService<SharedClsStore>,

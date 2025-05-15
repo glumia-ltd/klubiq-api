@@ -41,6 +41,7 @@ import { filteredRoutes } from './security/security-helpers';
 import { CommonModule } from '@app/common/common.module';
 import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 import { TenantsModule } from './tenants/tenants.module';
+import { Util } from '@app/common/helpers/util';
 
 @Module({
 	imports: [
@@ -86,6 +87,7 @@ import { TenantsModule } from './tenants/tenants.module';
 			provide: ApiDebugger,
 			useFactory: () => new ApiDebugger(process.env.NODE_ENV),
 		},
+
 		{
 			provide: APP_GUARD,
 			useClass: AuthenticationGuard,
@@ -103,6 +105,11 @@ import { TenantsModule } from './tenants/tenants.module';
 			useFactory: (repo: OrganizationRepository, cacheManager: Cache) =>
 				new CsrfService(new Generators(), repo, cacheManager),
 			inject: [OrganizationRepository, CACHE_MANAGER],
+		},
+		{
+			provide: Util,
+			useFactory: (cacheService: CacheService) => new Util(cacheService),
+			inject: [CacheService],
 		},
 	],
 	//exports: [UsersModule],

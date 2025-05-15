@@ -9,7 +9,7 @@ import { TenantRepository } from '../repositories/tenant.repository';
 import { ClsService } from 'nestjs-cls';
 import { SharedClsStore } from '../dto/public/shared-clsstore';
 import { ActiveUserData } from '@app/auth/types/firebase.types';
-import { CacheKeys } from '../config/config.constants';
+import { CacheKeys, CacheTTl } from '../config/config.constants';
 import { OrganizationTenants } from '../database/entities/organization-tenants.entity';
 import { TenantDto } from '../dto/responses/tenant.dto';
 import { map } from 'lodash';
@@ -53,7 +53,7 @@ export class PublicService {
 				await this.cacheManager.set(
 					`${this.cacheKey}/${this.currentUser.organizationId}`,
 					tenants,
-					86400,
+					CacheTTl.ONE_HOUR,
 				);
 				return tenants;
 			}
@@ -65,7 +65,10 @@ export class PublicService {
 	}
 
 	async resetCache() {
-		await this.cacheManager.reset();
+		const { stores } = this.cacheManager;
+		for (const store of stores) {
+			await store.store.clear();
+		}
 	}
 
 	private async getMappedTenants(

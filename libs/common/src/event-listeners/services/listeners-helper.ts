@@ -3,7 +3,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from 'apps/klubiq-dashboard/src/users/services/users.service';
-import { each, transform } from 'lodash';
+import { transform } from 'lodash';
 import {
 	LeaseEvent,
 	PropertyEvent,
@@ -12,7 +12,8 @@ import {
 import { Cache } from 'cache-manager';
 import { EVENTS, EventTemplate } from '../event-models/event-constants';
 import { UserDetailsDto } from 'apps/klubiq-dashboard/src/users/dto/org-user.dto';
-
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
+import { Util } from '@app/common/helpers/util';
 @Injectable()
 export class HelperService {
 	private readonly orgAdminRoleId: number;
@@ -25,6 +26,8 @@ export class HelperService {
 		private readonly userService: UsersService,
 		private readonly configService: ConfigService,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
+		private readonly apiDebugger: ApiDebugger,
+		private readonly util: Util,
 	) {
 		this.orgAdminRoleId = this.configService.get<number>('ORG_OWNER_ROLE_ID');
 	}
@@ -42,17 +45,13 @@ export class HelperService {
 	 * @param payload
 	 */
 	async invalidateOrganizationPropertyCache(payload: PropertyEvent) {
-		const propertyCacheKeys = this.getPropertyRelatedCacheKeys(
+		const propertyCacheKeys = await this.getPropertyRelatedCacheKeys(
 			payload.organizationId,
 		);
-		each(propertyCacheKeys, async (key) => {
-			const cacheData = await this.cacheManager.get(key);
-			if (cacheData && key.includes('getPropertyListKeys')) {
-				this.deleteFilteredCacheKeys(cacheData as string[]);
-			} else {
-				await this.cacheManager.del(key);
-			}
-		});
+		const dashboardCacheKeys = await this.getDashboardRelatedCacheKeys(
+			payload.organizationId,
+		);
+		await this.cacheManager.mdel([...propertyCacheKeys, ...dashboardCacheKeys]);
 	}
 
 	/**
@@ -60,17 +59,13 @@ export class HelperService {
 	 * @param payload
 	 */
 	async invalidateOrganizationLeaseCache(payload: LeaseEvent) {
-		const leaseCacheKeys = this.getLeaseRelatedCacheKeys(
+		const leaseCacheKeys = await this.getLeaseRelatedCacheKeys(
 			payload.organizationId,
 		);
-		each(leaseCacheKeys, async (key) => {
-			const cacheData = await this.cacheManager.get(key);
-			if (cacheData && key.includes('getLeaseListKeys')) {
-				this.deleteFilteredCacheKeys(cacheData as string[]);
-			} else {
-				await this.cacheManager.del(key);
-			}
-		});
+		const dashboardCacheKeys = await this.getDashboardRelatedCacheKeys(
+			payload.organizationId,
+		);
+		await this.cacheManager.mdel([...leaseCacheKeys, ...dashboardCacheKeys]);
 	}
 
 	/**
@@ -78,27 +73,29 @@ export class HelperService {
 	 * @param payload
 	 */
 	async invalidateOrganizationTenantCache(payload: TenantEvent) {
-		const tenantCacheKeys = this.getTenantRelatedCacheKeys(
+		const dashboardCacheKeys = await this.getDashboardRelatedCacheKeys(
 			payload.organizationId,
 		);
-		each(tenantCacheKeys, async (key) => {
-			const cacheData = await this.cacheManager.get(key);
-			if (cacheData && key.includes('getTenantListKeys')) {
-				this.deleteFilteredCacheKeys(cacheData as string[]);
-			} else {
-				await this.cacheManager.del(key);
-			}
-		});
+		const leaseCacheKeys = await this.getLeaseRelatedCacheKeys(
+			payload.organizationId,
+		);
+		const tenantCacheKeys = await this.getTenantRelatedCacheKeys(
+			payload.organizationId,
+		);
+		await this.cacheManager.mdel([
+			...dashboardCacheKeys,
+			...leaseCacheKeys,
+			...tenantCacheKeys,
+		]);
 	}
 
 	/**
 	 * Delete filtered cache by keys
 	 * @param keys
 	 */
-	private deleteFilteredCacheKeys(keys: string[]) {
-		each(keys, async (key) => {
-			await this.cacheManager.del(key);
-		});
+	private async deleteFilteredCacheKeys(keys: string[]) {
+		this.apiDebugger.log(keys, 'keys');
+		await this.cacheManager.stores[0].deleteMany(keys);
 	}
 
 	/**
@@ -106,12 +103,31 @@ export class HelperService {
 	 * @param organizationId
 	 * @returns
 	 */
-	private getPropertyRelatedCacheKeys(organizationId: string) {
-		return [
-			`${organizationId}:getPropertyListKeys`,
-			`dashboard:${CacheKeys.PROPERTY_METRICS}:${organizationId}`,
-			`properties:grouped-units:${organizationId}`,
-		];
+	private async getPropertyRelatedCacheKeys(
+		organizationId: string,
+	): Promise<string[]> {
+		const key = this.util.getcacheKey(
+			organizationId,
+			CacheKeys.PROPERTY,
+			'listKeys',
+		);
+		return await this.cacheManager.get(key);
+	}
+
+	/**
+	 * Get property related cache keys for an organization
+	 * @param organizationId
+	 * @returns
+	 */
+	private async getDashboardRelatedCacheKeys(
+		organizationId: string,
+	): Promise<string[]> {
+		const key = this.util.getcacheKey(
+			organizationId,
+			CacheKeys.DASHBOARD,
+			'listKeys',
+		);
+		return await this.cacheManager.get(key);
 	}
 
 	/**
@@ -119,12 +135,15 @@ export class HelperService {
 	 * @param organizationId
 	 * @returns
 	 */
-	private getLeaseRelatedCacheKeys(organizationId: string) {
-		return [
-			`${organizationId}:getLeaseListKeys`,
-			`dashboard:${CacheKeys.LEASE_METRICS}:${organizationId}`,
-			`dashboard:${CacheKeys.PROPERTY_METRICS}:${organizationId}`,
-		];
+	private async getLeaseRelatedCacheKeys(
+		organizationId: string,
+	): Promise<string[]> {
+		const key = this.util.getcacheKey(
+			organizationId,
+			CacheKeys.LEASE,
+			'listKeys',
+		);
+		return await this.cacheManager.get(key);
 	}
 
 	/**
@@ -132,14 +151,15 @@ export class HelperService {
 	 * @param organizationId
 	 * @returns
 	 */
-	private getTenantRelatedCacheKeys(organizationId: string) {
-		return [
-			`${organizationId}:getTenantListKeys`,
-			`dashboard:${CacheKeys.LEASE_METRICS}:${organizationId}`,
-			`dashboard:${CacheKeys.PROPERTY_METRICS}:${organizationId}`,
-			`${organizationId}:getLeaseListKeys`,
-			`${organizationId}:getPropertyListKeys`,
-		];
+	private async getTenantRelatedCacheKeys(
+		organizationId: string,
+	): Promise<string[]> {
+		const key = this.util.getcacheKey(
+			organizationId,
+			CacheKeys.TENANT,
+			'listKeys',
+		);
+		return await this.cacheManager.get(key);
 	}
 
 	/**
