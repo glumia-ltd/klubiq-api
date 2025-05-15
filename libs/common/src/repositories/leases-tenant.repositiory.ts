@@ -13,8 +13,13 @@ import {
 	LeaseTenantResponseDto,
 	TenantDto,
 } from 'apps/klubiq-dashboard/src/tenants/dto/responses/lease-tenant.dto';
-import { GetTenantDto } from 'apps/klubiq-dashboard/src/tenants/dto/requests/get-tenant-dto';
+import {
+	GetTenantDto,
+	TenantListDto,
+} from 'apps/klubiq-dashboard/src/tenants/dto/requests/get-tenant-dto';
 import { OrganizationTenants } from '../database/entities/organization-tenants.entity';
+import { PaymentStatus } from '../config/config.constants';
+import { Transaction } from '../database/entities/transaction.entity';
 
 @Injectable()
 export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
@@ -201,64 +206,105 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 	async organizationTenants(
 		organizationUuid: string,
 		getTenantDto?: GetTenantDto,
-	): Promise<[OrganizationTenants[], number]> {
-		console.log({ getTenantDto });
-
-		try {
-			if (!organizationUuid) {
-				throw new BadRequestException('Organization ID is required.');
-			}
-			const tenants = await this.manager
-				.createQueryBuilder(OrganizationTenants, 'orgTenant')
-				.leftJoinAndSelect('orgTenant.tenant', 'tenant')
-				.leftJoinAndSelect('tenant.profile', 'profile')
-				.where('orgTenant.organizationUuid = :organizationUuid', {
-					organizationUuid,
-				});
-
-			return await tenants.getManyAndCount();
-		} catch (error) {
-			throw error;
+	): Promise<[TenantListDto[], number]> {
+		if (!organizationUuid) {
+			throw new BadRequestException('Organization ID is required.');
 		}
+
+		const query = this.manager
+			.createQueryBuilder()
+			.select('tenant.id', 'id')
+			.addSelect('profile.profileUuid', 'profileUuid')
+			.addSelect("CONCAT(profile.firstName, ' ', profile.lastName)", 'fullName')
+			.addSelect('tenant.companyName', 'companyName')
+			.addSelect('COUNT(DISTINCT lease.id)', 'activeLeaseCount')
+			.addSelect('MAX(lease.startDate)', 'mostRecentLeaseStartDate')
+			.from(OrganizationTenants, 'orgTenant')
+			.innerJoin('orgTenant.tenant', 'tenant')
+			.leftJoin('tenant.profile', 'profile')
+			.leftJoin('tenant.leasesTenants', 'leasesTenants')
+			.leftJoin('leasesTenants.lease', 'lease', "lease.status = 'Active'")
+			.leftJoin('lease.unit', 'unit')
+			.leftJoin('unit.property', 'property')
+			.where('orgTenant.organizationUuid = :organizationUuid', {
+				organizationUuid,
+			})
+			.groupBy(
+				'tenant.id, profile.profileUuid, profile.firstName, profile.lastName, tenant.companyName',
+			);
+
+		if (getTenantDto?.sortBy && getTenantDto?.order) {
+			query.orderBy(
+				`tenant.${getTenantDto.sortBy}`,
+				getTenantDto.order.toUpperCase() as 'ASC' | 'DESC',
+			);
+		}
+
+		if (getTenantDto?.skip !== undefined) query.skip(getTenantDto.skip);
+		if (getTenantDto?.take !== undefined) query.take(getTenantDto.take);
+
+		const [rawTenants, total] = await Promise.all([
+			query.getRawMany(),
+			query.getCount(),
+		]);
+
+		const formattedTenantsList = await Promise.all(
+			rawTenants.map(async (tenant) => {
+				const lease = await this.manager
+					.createQueryBuilder(Lease, 'lease')
+					.innerJoinAndSelect('lease.unit', 'unit')
+					.innerJoinAndSelect('unit.property', 'property')
+					.innerJoin('lease.leasesTenants', 'lt')
+					.where('lt.tenantId = :tenantId', { tenantId: tenant.id })
+					.andWhere('lease.status = :status', { status: 'Active' })
+					.andWhere('lease.startDate = :startDate', {
+						startDate: tenant.mostRecentLeaseStartDate,
+					})
+					.orderBy('lease.startDate', 'DESC')
+					.getOne();
+
+				let mostRecentPaymentStatus: PaymentStatus | null = null;
+
+				if (lease?.id) {
+					const transaction = await this.manager
+						.createQueryBuilder(Transaction, 'transaction')
+						.where('transaction.leaseId = :leaseId', { leaseId: lease.id })
+						.orderBy('transaction.transactionDate', 'DESC')
+						.getOne();
+
+					mostRecentPaymentStatus = transaction?.status ?? null;
+				}
+
+				return {
+					...tenant,
+					mostRecentLeaseId: lease?.id || null,
+					mostRecentUnitId: lease?.unit?.id || null,
+					mostRecentUnitName: lease?.unit?.unitNumber || null,
+					mostRecentPropertyId: lease?.unit?.property?.id || null,
+					mostRecentPropertyName: lease?.unit?.property?.name || null,
+					mostRecentPaymentStatus,
+				};
+			}),
+		);
+
+		return [formattedTenantsList, total];
 	}
 
 	async getTenantById(tenantId: string): Promise<{
-		tenant: {
+		profile: {
 			id: string;
 			fullName: string;
 			email: string;
 			phone: string;
 		};
-		activeLeases: {
-			id: string;
-			leaseStart: Date;
-			leaseEnd: Date;
-			rentAmount: number;
-			unitId: string;
-			unitNumber: string;
-			propertyName: string;
-			propertyAddress: string;
-			securityDeposit: number;
-			paymentFrequency: string;
-			nextDueDate: Date;
-			lastPaymentDate: Date;
-			lateFeeAmount: number;
-		}[];
-		inactiveLeases: {
-			id: string;
-			leaseStart: Date;
-			leaseEnd: Date;
-			rentAmount: number;
-			unitId: string;
-			unitNumber: string;
-			propertyName: string;
-			propertyAddress: string;
-			securityDeposit: number;
-			paymentFrequency: string;
-			nextDueDate: Date;
-			lastPaymentDate: Date;
-			lateFeeAmount: number;
-		}[];
+		summary: {
+			totalLeases: number;
+			activeLeases: number;
+			inactiveLeases: number;
+			totalRent: number;
+		};
+		activeLeases: any[];
+		inactiveLeases: any[];
 	}> {
 		if (!tenantId) {
 			throw new BadRequestException('Tenant ID is required');
@@ -280,59 +326,61 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 			throw new NotFoundException('Tenant or leases not found.');
 		}
 
-		const tenantProfile = records[0].tenant.profile;
+		const profile = await records[0].tenant.profile;
+
+		const leaseMapper = (record: LeasesTenants) => {
+			const lease = record.lease;
+			const unit = lease.unit;
+			const property = unit.property;
+			const address = property.address;
+
+			return {
+				id: lease.id,
+				leaseStart: lease.startDate,
+				leaseEnd: lease.endDate,
+				rentAmount: lease.rentAmount,
+				unit: unit,
+				propertyName: property.name,
+				propertyAddress: `${address.addressLine1}, ${address.city}, ${address.state}`,
+				paymentFrequency: lease.paymentFrequency,
+				lastPaymentDate: lease.lastPaymentDate,
+				nextDueDate: lease.nextDueDate,
+				lateFeeAmount: lease.lateFeeAmount,
+				securityDeposit: lease.securityDeposit,
+			};
+		};
+
+		const activeLeases = records
+			.filter(
+				(r) =>
+					r.lease.status?.toUpperCase() === 'ACTIVE' && !r.lease.isArchived,
+			)
+			.map(leaseMapper);
+
+		const inactiveLeases = records
+			.filter(
+				(r) => r.lease.status?.toUpperCase() !== 'ACTIVE' || r.lease.isArchived,
+			)
+			.map(leaseMapper);
 
 		return {
-			tenant: {
+			profile: {
 				id: records[0].tenant.id,
-				fullName: `${(await tenantProfile).firstName} ${(await tenantProfile).lastName}`,
-				email: (await tenantProfile).email,
-				phone: (await tenantProfile).phoneNumber,
+				fullName: `${profile.firstName} ${profile.lastName}`,
+				email: profile.email,
+				phone: profile.phoneNumber,
 			},
-			activeLeases: records
-				.filter(
-					(record: any) =>
-						record.lease.status.toUpperCase() === 'ACTIVE' &&
-						!record.lease.isArchived,
-				)
-				.map((record) => ({
-					id: record.lease.id,
-					leaseStart: record.lease.startDate,
-					leaseEnd: record.lease.endDate,
-					rentAmount: record.lease.rentAmount,
-					unitId: record.lease.unit.id,
-					unitNumber: record.lease.unit.unitNumber,
-					propertyName: record.lease.unit.property.name,
-					propertyAddress: `${record.lease.unit.property.address.addressLine1} ${record.lease.unit.property.address.city} ${record.lease.unit.property.address.state}`,
-					paymentFrequency: record.lease.paymentFrequency,
-					lastPaymentDate: record.lease.lastPaymentDate,
-					nextDueDate: record.lease.nextDueDate,
-					lateFeeAmount: record.lease.lateFeeAmount,
-					securityDeposit: record.lease.securityDeposit,
-					status: record.lease.status,
-				})),
-			inactiveLeases: records
-				.filter(
-					(record: any) =>
-						record.lease.status.toUpperCase() === 'INACTIVE' ||
-						record.lease.isArchived,
-				)
-				.map((record) => ({
-					id: record.lease.id,
-					leaseStart: record.lease.startDate,
-					leaseEnd: record.lease.endDate,
-					rentAmount: record.lease.rentAmount,
-					unitId: record.lease.unit.id,
-					unitNumber: record.lease.unit.unitNumber,
-					propertyName: record.lease.unit.property.name,
-					propertyAddress: `${record.lease.unit.property.address.addressLine1} ${record.lease.unit.property.address.city} ${record.lease.unit.property.address.state}`,
-					paymentFrequency: record.lease.paymentFrequency,
-					lastPaymentDate: record.lease.lastPaymentDate,
-					nextDueDate: record.lease.nextDueDate,
-					lateFeeAmount: record.lease.lateFeeAmount,
-					securityDeposit: record.lease.securityDeposit,
-					status: record.lease.status,
-				})),
+			summary: {
+				totalLeases: records.length,
+				activeLeases: activeLeases.length,
+				inactiveLeases: inactiveLeases.length,
+				totalRent: records.reduce(
+					(sum, r) => sum + Number(r.lease.rentAmount ?? 0),
+					0,
+				),
+			},
+			activeLeases,
+			inactiveLeases,
 		};
 	}
 
