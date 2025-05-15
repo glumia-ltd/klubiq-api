@@ -318,7 +318,7 @@ export class LeaseRepository extends BaseRepository<Lease> {
 	// 	return lease;
 	// }
 
-	async updateLease(id: string, leaseDto: UpdateLeaseDto): Promise<Lease> {
+	async updateLease(id: string, leaseDto: UpdateLeaseDto): Promise<void> {
 		if (leaseDto.startDate) {
 			leaseDto.startDate = DateTime.fromISO(leaseDto.startDate).toSQL({
 				includeOffset: false,
@@ -331,7 +331,6 @@ export class LeaseRepository extends BaseRepository<Lease> {
 		}
 		const lease = await this.preload({ id, ...leaseDto });
 		await this.update(id, lease);
-		return await this.getLeaseById(id);
 	}
 
 	private async getLeaseFilterQueryString(

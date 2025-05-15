@@ -260,10 +260,9 @@ export class LeaseService implements ILeaseService {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
 		const cacheKey = this.getcacheKey(currentUser.organizationId, id);
-		const updatedLease = await this.leaseRepository.updateLease(id, leaseDto);
-		const mappedLease = await this.mapLeaseDetailsToDto(updatedLease);
-		await this.cacheManager.set(cacheKey, mappedLease, this.cacheTTL);
-		return mappedLease;
+		await this.leaseRepository.updateLease(id, leaseDto);
+		await this.cacheManager.del(cacheKey);
+		return await this.getLeaseById(id);
 	}
 
 	async createLease(leaseDto: CreateLeaseDto): Promise<void> {
