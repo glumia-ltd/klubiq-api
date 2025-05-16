@@ -71,7 +71,7 @@ import keyvRedis from '@keyv/redis';
 				KLUBIQ_API_APPCHECK_CLIENTS: Joi.string().optional(),
 				TENANT_EMAIL_VERIFICATION_BASE_URL: Joi.string().required(),
 				TENANT_CONTINUE_URL_PATH: Joi.string().required(),
-				LANDLORP_PORTAL_CLIENT_ID: Joi.string().optional(),
+				LANDLORD_PORTAL_CLIENT_ID: Joi.string().optional(),
 				TENANT_PORTAL_CLIENT_ID: Joi.string().required(),
 				ADMIN_PORTAL_CLIENT_ID: Joi.string().required(),
 				REDIS_HOST: Joi.string().required(),

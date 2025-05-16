@@ -44,7 +44,6 @@ import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
-import { createHmac } from 'crypto';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
 import { ActiveUserData, RolesAndEntitlements } from '../types/firebase.types';
 import { plainToInstance } from 'class-transformer';
@@ -129,7 +128,7 @@ export abstract class AuthService {
 			'TENANT_CONTINUE_URL_PATH',
 		);
 		this.landlordPortalClientId = this.configService.get<string>(
-			'LANDLORP_PORTAL_CLIENT_ID',
+			'LANDLORD_PORTAL_CLIENT_ID',
 		);
 		this.tenantPortalClientId = this.configService.get<string>(
 			'TENANT_PORTAL_CLIENT_ID',
@@ -364,7 +363,9 @@ export abstract class AuthService {
 		const invitationTimeStamp = DateTime.fromJSDate(
 			this.suid.parseStamp(invitationToken),
 		);
+		this.apiDebugger.info('Invitation time stamp', invitationTimeStamp);
 		const end = DateTime.utc();
+		this.apiDebugger.info('End time', end);
 		return (
 			invitationTimeStamp && end.diff(invitationTimeStamp, 'hours').hours < 72
 		);
@@ -840,13 +841,8 @@ export abstract class AuthService {
 		}
 	}
 
-	async getInvitationToken(invitedUserDto: InviteUserDto): Promise<string> {
-		const secret = this.configService.get<string>('KLUBIQ_ADMIN_API_KEY');
-		return createHmac('sha256', secret)
-			.update(
-				`${invitedUserDto.email}|${invitedUserDto.firstName}||${invitedUserDto.lastName}`,
-			)
-			.digest('hex');
+	getInvitationToken(): string {
+		return this.suid.stamp(36, DateTime.utc().toJSDate());
 	}
 	async ensureAuthorizedFirebaseRequest(
 		url: string,
@@ -1274,7 +1270,7 @@ export abstract class AuthService {
 			invitation.userId = userProfile.profileUuid;
 			invitation.firebaseUid = fireUser.uid;
 			invitation.invitedAt = this.timestamp;
-			invitation.token = await this.getInvitationToken(createUserDto);
+			invitation.token = this.getInvitationToken();
 			await transactionalEntityManager.save(invitation);
 			await this.sendTenantInvitationEmail(createUserDto, invitation);
 

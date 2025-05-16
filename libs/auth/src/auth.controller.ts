@@ -210,7 +210,7 @@ export class AuthController {
 	private isNotApiCall(req: Request): boolean {
 		const clientId = req.header('x-client-id');
 		const nonApiClientIds = [
-			this.configService.get<string>('LANDLORP_PORTAL_CLIENT_ID'),
+			this.configService.get<string>('LANDLORD_PORTAL_CLIENT_ID'),
 			this.configService.get<string>('TENANT_PORTAL_CLIENT_ID'),
 			this.configService.get<string>('ADMIN_PORTAL_CLIENT_ID'),
 		];
