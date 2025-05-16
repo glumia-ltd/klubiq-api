@@ -13,7 +13,6 @@ import { LandlordAuthService } from './services/landlord-auth.service';
 import _firebaseConfig from '../../../config.json';
 import { AdminAuthService } from './services/admin-auth.service';
 import { SubscriptionModule } from '@app/common/public/subscription/subscription.module';
-import { MailerSendService } from '@app/common/email/email.service';
 import { OrganizationSettingsService } from '@app/common/services/organization-settings.service';
 import { RepositoriesModule } from '@app/common/repositories/repositories.module';
 import { UserPreferencesService } from '@app/common/services/user-preferences.service';
@@ -27,6 +26,7 @@ import { AuthMiddleware } from './auth.middleware';
 import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.service';
 import { LeaseRepository } from 'apps/klubiq-dashboard/src/lease/repositories/lease.repository';
 import { LeaseTenantRepository } from '@app/common/repositories/leases-tenant.repositiory';
+import { ZohoEmailService } from '@app/common/email/zoho-email.service';
 // import { Generators } from '@app/common/helpers/generators';
 import { RolesService } from '@app/common/permissions/roles.service';
 interface FirebaseConfig {
@@ -92,7 +92,7 @@ const firebaseAdminProvider = {
 		FirebaseErrorMessageHelper,
 		JwtService,
 		LandlordAuthService,
-		MailerSendService,
+		ZohoEmailService,
 		OrgUserProfile,
 		OrganizationRepository,
 		UserProfilesRepository,

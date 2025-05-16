@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MailerSendService } from '@app/common/email/email.service';
+import { ZohoEmailService } from '@app/common/email/zoho-email.service';
 import { NotificationProcessor } from './processors/notification.processor';
 import { JobResultsProcessor } from './processors/job-results.processor';
 // import { DevtoolsModule } from '@nestjs/devtools-integration';
@@ -34,7 +34,7 @@ import { JobResultsProcessor } from './processors/job-results.processor';
 		// }),
 	],
 	providers: [
-		MailerSendService,
+		ZohoEmailService,
 		ConfigService,
 		NotificationProcessor,
 		JobResultsProcessor,

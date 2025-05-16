@@ -51,6 +51,12 @@ export class MailerSendService {
 			.setPersonalization(personalization);
 
 		try {
+			this.logger.debug('Attempting to send email:', {
+				from: params.from,
+				to: params.to.map((r) => r.email),
+				subject: params.subject,
+				personalization: personalization,
+			});
 			const response = await this.mailerSend.email.send(templatedEmailParams);
 
 			// Check for trial account restrictions

@@ -1,4 +1,4 @@
-import { MailerSendService } from '@app/common/email/email.service';
+import { ZohoEmailService } from '@app/common/email/zoho-email.service';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { replace, split } from 'lodash';
 import { ClsService } from 'nestjs-cls';
@@ -45,7 +45,7 @@ export class AdminAuthService extends AuthService {
 		@Inject('FIREBASE_ADMIN') firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') mapper: Mapper,
 		@Inject(CACHE_MANAGER) protected cacheManager: Cache,
-		protected readonly emailService: MailerSendService,
+		protected readonly emailService: ZohoEmailService,
 		private readonly organizationRepository: OrganizationRepository,
 		userProfilesRepository: UserProfilesRepository,
 		protected readonly errorMessageHelper: FirebaseErrorMessageHelper,

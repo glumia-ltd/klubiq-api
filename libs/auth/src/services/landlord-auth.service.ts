@@ -1,4 +1,4 @@
-import { MailerSendService } from '@app/common/email/email.service';
+import { ZohoEmailService } from '@app/common/email/zoho-email.service';
 import {
 	BadRequestException,
 	Injectable,
@@ -71,7 +71,7 @@ export class LandlordAuthService extends AuthService {
 		@Inject(CACHE_MANAGER) protected cacheManager: Cache,
 		@Inject('FIREBASE_ADMIN') firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') mapper: Mapper,
-		protected readonly emailService: MailerSendService,
+		protected readonly emailService: ZohoEmailService,
 		private readonly organizationRepository: OrganizationRepository,
 		userProfilesRepository: UserProfilesRepository,
 		protected readonly errorMessageHelper: FirebaseErrorMessageHelper,
@@ -152,8 +152,53 @@ export class LandlordAuthService extends AuthService {
 			}
 			throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
 		} catch (error) {
+			await this.deleteFailedUser(fbid);
 			await this.deleteUser(fbid);
 			throw new FirebaseException(error);
+		}
+	}
+
+	async deleteFailedUser(fbid: string) {
+		try {
+			const entityManager = this.organizationRepository.manager;
+			return entityManager.transaction(async (transactionalEntityManager) => {
+				const userProfile = await transactionalEntityManager.findOne(
+					UserProfile,
+					{
+						where: { firebaseId: fbid },
+					},
+				);
+				if (userProfile) {
+					const orgUser = await transactionalEntityManager.findOne(
+						OrganizationUser,
+						{
+							where: { profile: { profileUuid: userProfile.profileUuid } },
+							relations: ['organization'],
+						},
+					);
+					await transactionalEntityManager.update(
+						Organization,
+						{
+							organizationUuid: orgUser.organization.organizationUuid,
+						},
+						{
+							tenantId: null,
+							csrfSecret: null,
+							isActive: false,
+							isDeleted: true,
+							deletedDate: this.timestamp,
+						},
+					);
+					await transactionalEntityManager.delete(OrganizationUser, {
+						organizationUserUuid: orgUser.organizationUserUuid,
+					});
+					await transactionalEntityManager.delete(UserProfile, {
+						firebaseId: fbid,
+					});
+				}
+			});
+		} catch (error) {
+			this.logger.error('Error deleting user:', error);
 		}
 	}
 
