@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	Logger,
+	NotFoundException,
+} from '@nestjs/common';
 import { BaseRepository } from '@app/common/repositories/base.repository';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
 import { UserProfile } from '../database/entities/user-profile.entity';
@@ -9,6 +14,7 @@ import { TenantUser } from '../database/entities/tenant.entity';
 import { UserType } from '../config/config.constants';
 import { TenantInvitation } from '../database/entities/tenant-invitation.entity';
 import { Property } from '../database/entities/property.entity';
+import { UpdateTenantProfileDto } from 'apps/klubiq-dashboard/src/tenants/dto/responses/update-tenant-profile';
 
 @Injectable()
 export class UserProfilesRepository extends BaseRepository<UserProfile> {
@@ -220,5 +226,32 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 			where: { profile: { email } },
 		});
 		return count > 0;
+	}
+
+	async updateTenantProfile(
+		profileId: string,
+		updateDto: UpdateTenantProfileDto,
+	): Promise<any> {
+		if (!profileId) {
+			throw new BadRequestException('Profile ID is required');
+		}
+
+		const profileRepo = this.manager.getRepository(UserProfile);
+
+		const profile = await profileRepo.findOne({
+			where: { profileUuid: profileId },
+		});
+
+		if (!profile) {
+			throw new NotFoundException('Profile not found');
+		}
+
+		const updated = profileRepo.merge(profile, updateDto);
+		await profileRepo.save(updated);
+
+		return {
+			message: 'Tenant profile updated successfully',
+			data: updated,
+		};
 	}
 }

@@ -5,6 +5,8 @@ import {
 	PageDto,
 	PageMetaDto,
 	SharedClsStore,
+	UserProfile,
+	UserProfilesRepository,
 } from '@app/common';
 import { LeaseTenantResponseDto } from '../dto/responses/lease-tenant.dto';
 import { GetTenantDto, TenantListDto } from '../dto/requests/get-tenant-dto';
@@ -13,6 +15,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CacheKeys, CacheTTl } from '@app/common/config/config.constants';
 import { Util } from '@app/common/helpers/util';
+import { UpdateTenantProfileDto } from '../dto/responses/update-tenant-profile';
 
 @Injectable()
 export class TenantsService {
@@ -22,6 +25,7 @@ export class TenantsService {
 	constructor(
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly leaseTenantRepository: LeaseTenantRepository,
+		private readonly userProfileRepository: UserProfilesRepository,
 		private readonly cls: ClsService<SharedClsStore>,
 		private readonly util: Util,
 	) {}
@@ -147,6 +151,34 @@ export class TenantsService {
 			await this.leaseTenantRepository.removeTenantFromLease(tenantId, leaseId);
 		} catch (error) {
 			this.logger.error(`Error removing tenant ${tenantId}: ${error.message}`);
+			throw error;
+		}
+	}
+
+	async getTenantInfo(): Promise<any> {
+		try {
+			const currentUser = this.cls.get('currentUser');
+			if (currentUser.organizationRole != 'Tenant') {
+				throw new ForbiddenException('Unauthorized');
+			}
+			return await this.leaseTenantRepository.getTenantByProfileUuid(
+				currentUser.kUid,
+			);
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async updateTenantProfile(
+		profileId: string,
+		updateDto: UpdateTenantProfileDto,
+	): Promise<UserProfile> {
+		try {
+			return await this.userProfileRepository.updateTenantProfile(
+				profileId,
+				updateDto,
+			);
+		} catch (error) {
 			throw error;
 		}
 	}
