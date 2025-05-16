@@ -94,6 +94,8 @@ env:
   LANDLORD_PORTAL_CLIENT_ID: ${{ secrets.LANDLORD_PORTAL_CLIENT_ID }}
   TENANT_PORTAL_CLIENT_ID: ${{ secrets.TENANT_PORTAL_CLIENT_ID }}
   ADMIN_PORTAL_CLIENT_ID: ${{ secrets.ADMIN_PORTAL_CLIENT_ID }}
+  ZOHO_EMAIL_USER: ${{ secrets.ZOHO_EMAIL_USER }}
+  ZOHO_EMAIL_PASSWORD: ${{ secrets.ZOHO_EMAIL_PASSWORD }}
 
 jobs:
   build:
@@ -204,6 +206,8 @@ jobs:
             export LANDLORD_PORTAL_CLIENT_ID=${{ secrets.LANDLORD_PORTAL_CLIENT_ID }}
             export TENANT_PORTAL_CLIENT_ID=${{ secrets.TENANT_PORTAL_CLIENT_ID }}
             export ADMIN_PORTAL_CLIENT_ID=${{ secrets.ADMIN_PORTAL_CLIENT_ID }}
+            export ZOHO_EMAIL_USER=${{ secrets.ZOHO_EMAIL_USER }}
+            export ZOHO_EMAIL_PASSWORD=${{ secrets.ZOHO_EMAIL_PASSWORD }}
             npm pkg delete scripts.prepare && npm ci --omit=dev && npm cache clean --force
 
             # Check if the process is running

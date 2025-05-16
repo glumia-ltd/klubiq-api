@@ -1,4 +1,4 @@
-import { MailerSendService } from '@app/common/email/email.service';
+import { ZohoEmailService } from '@app/common/email/zoho-email.service';
 import {
 	EmailInterfaceParams,
 	EmailRecipient,
@@ -27,7 +27,7 @@ export class NotificationProcessor extends WorkerHost {
 	private readonly supportEmail: string;
 	private readonly APIPort: number;
 	constructor(
-		private readonly mailerSendService: MailerSendService,
+		private readonly zohoEmailService: ZohoEmailService,
 		private readonly configService: ConfigService,
 		@InjectQueue('notification-results')
 		private notificationResultsQueue: Queue,
@@ -116,7 +116,7 @@ export class NotificationProcessor extends WorkerHost {
 					data: personalizationData || {},
 				};
 			});
-			return await this.mailerSendService.sendEmail(
+			return await this.zohoEmailService.sendEmail(
 				emailParams,
 				personalization,
 			);

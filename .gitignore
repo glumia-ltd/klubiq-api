@@ -66,3 +66,4 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 Data
 Data/**
+test-email.ts
