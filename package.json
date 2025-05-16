@@ -24,7 +24,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/klubiq-dashboard/test/jest-e2e.json",
     "typeorm": "typeorm-ts-node-esm",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:email": "ts-node test-email.ts"
   },
   "dependencies": {
     "@automapper/classes": "^8.8.1",
@@ -63,6 +64,7 @@
     "mailersend": "^2.2.0",
     "nest-winston": "^1.9.4",
     "nestjs-cls": "^4.3.0",
+    "nodemailer": "^7.0.3",
     "pg": "^8.11.3",
     "reflect-metadata": "^0.1.12",
     "rxjs": "^7.8.1",

@@ -14,6 +14,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { createMapper } from '@automapper/core';
 import { CommonConfigService } from './common-config';
 import keyvRedis from '@keyv/redis';
+import { ZohoEmailService } from '../email/zoho-email.service';
 
 @Module({
 	imports: [
@@ -75,6 +76,8 @@ import keyvRedis from '@keyv/redis';
 				TENANT_PORTAL_CLIENT_ID: Joi.string().required(),
 				ADMIN_PORTAL_CLIENT_ID: Joi.string().required(),
 				REDIS_HOST: Joi.string().required(),
+				ZOHO_EMAIL_USER: Joi.string().required(),
+				ZOHO_EMAIL_PASSWORD: Joi.string().required(),
 			}),
 		}),
 		AutomapperModule.forRoot([
@@ -127,7 +130,13 @@ import keyvRedis from '@keyv/redis';
 				return createMapper({ strategyInitializer: classes() });
 			},
 		},
+		ZohoEmailService,
 	],
-	exports: [ConfigService, MailerSendService, CommonConfigService],
+	exports: [
+		ConfigService,
+		MailerSendService,
+		CommonConfigService,
+		ZohoEmailService,
+	],
 })
 export class ConfigModule {}

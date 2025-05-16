@@ -12,6 +12,10 @@ export class CacheService {
 		return await this.cacheManager.get<T[]>(cacheKey);
 	}
 
+	async getItem<T>(cacheKey: string): Promise<T> {
+		return await this.cacheManager.get<T>(cacheKey);
+	}
+
 	async removeCacheData(cacheKey: string): Promise<void> {
 		await this.cacheManager.del(cacheKey);
 	}

@@ -64,7 +64,7 @@ import { generateString } from '@nestjs/typeorm';
 import { TenantInvitation } from '@app/common/database/entities/tenant-invitation.entity';
 import { replace, split } from 'lodash';
 import { EmailTemplates } from '@app/common/email/types/email.types';
-import { MailerSendService } from '@app/common/email/email.service';
+import { ZohoEmailService } from '@app/common/email/zoho-email.service';
 import { OnboardingLeaseDto } from 'apps/klubiq-dashboard/src/lease/dto/requests/create-lease.dto';
 import { Lease } from '@app/common/database/entities/lease.entity';
 import { Unit } from '@app/common/database/entities/unit.entity';
@@ -111,7 +111,7 @@ export abstract class AuthService {
 		protected readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		protected readonly notificationSubService: NotificationsSubscriptionService,
 		protected readonly tenantRepository: TenantRepository,
-		protected readonly emailService: MailerSendService,
+		protected readonly emailService: ZohoEmailService,
 		protected readonly generators: Generators,
 		protected readonly apiDebugger: ApiDebugger,
 		protected readonly eventEmitter: EventEmitter2,
