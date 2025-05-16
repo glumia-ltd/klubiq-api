@@ -77,7 +77,7 @@ export enum CreateUserEventTypes {
 }
 
 export enum CacheKeys {
-	ORG_ROLES = 'org-roles',
+	ORG_ROLES = 'klubiq-roles',
 	SYSTEM_ROLES = 'system-roles',
 	ROLES_PERMISSIONS = 'roles-permission',
 	PERMISSIONS = 'permissions',
