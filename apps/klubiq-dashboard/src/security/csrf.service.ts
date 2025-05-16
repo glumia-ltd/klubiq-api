@@ -13,12 +13,16 @@ export class CsrfService {
 	constructor(
 		private readonly generators: Generators,
 		@InjectRepository(Organization)
-		private readonly tenantRepository: Repository<Organization>,
+		private readonly tenantRepository: Repository<Organization>, // Tenant here refers to an Organization which happens to be a tenant of Klubiq
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 
 	async generateToken(tenantId: string): Promise<string> {
 		const secret = await this.getTenantSecret(tenantId);
+		return this.generators.generateToken(secret);
+	}
+
+	async generateTokenWithAppSecret(secret: string): Promise<string> {
 		return this.generators.generateToken(secret);
 	}
 
