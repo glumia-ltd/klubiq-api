@@ -575,6 +575,8 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.name,
 				currentUser.kUid,
 				createDto,
+				true,
+				createdProperty.uuid,
 			);
 			return await this.mapPlainPropertyDetailToDto(createdProperty);
 		} catch (error) {
@@ -806,6 +808,7 @@ export class PropertiesService implements IPropertyMetrics {
 		currentUserId: string,
 		propertyData?: CreatePropertyDto | UpdatePropertyDto,
 		invalidateCache: boolean = true,
+		propertyId?: string,
 	) {
 		this.eventEmitter.emitAsync(event, {
 			totalUnits: propertyData.units?.length,
@@ -819,6 +822,7 @@ export class PropertiesService implements IPropertyMetrics {
 			locale: this.cls.get('clientLocale'),
 			language: this.cls.get('clientLanguage'),
 			invalidateCache,
+			propertyId,
 		});
 	}
 }

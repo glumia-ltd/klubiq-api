@@ -27,7 +27,6 @@ import { LeaseService } from 'apps/klubiq-dashboard/src/lease/services/lease.ser
 import { LeaseRepository } from 'apps/klubiq-dashboard/src/lease/repositories/lease.repository';
 import { LeaseTenantRepository } from '@app/common/repositories/leases-tenant.repositiory';
 import { ZohoEmailService } from '@app/common/email/zoho-email.service';
-// import { Generators } from '@app/common/helpers/generators';
 import { RolesService } from '@app/common/permissions/roles.service';
 interface FirebaseConfig {
 	type: string;
