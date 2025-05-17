@@ -185,7 +185,6 @@ export abstract class AuthService {
 	}
 
 	async verifyAppCheckToken(appCheckToken: string): Promise<any> {
-		this.apiDebugger.info('Verifying app check token', appCheckToken);
 		return await getAppCheck().verifyToken(appCheckToken);
 	}
 	async getAppCheckToken(): Promise<any> {
@@ -193,7 +192,6 @@ export abstract class AuthService {
 		const appCheckToken = await getAppCheck().createToken(appId, {
 			ttlMillis: 1800000,
 		});
-		this.apiDebugger.info('App check token Details', appId, appCheckToken);
 		return { token: appCheckToken.token, appId: appId };
 	}
 
@@ -733,7 +731,6 @@ export abstract class AuthService {
 	// Creates a new tenant account without a lease
 	// A tenant is created and then we send an invitation email to activate their account
 	async createTenant(createUserDto: CreateTenantDto): Promise<UserProfile> {
-		this.apiDebugger.info('Creating tenant', createUserDto);
 		this.currentUser = this.cls.get('currentUser');
 
 		const { email, firstName, lastName } = createUserDto;
@@ -788,7 +785,6 @@ export abstract class AuthService {
 	// Onboards a new tenant account for a lease
 	// A tenant is created and then a lease is created for them
 	async onboardTenant(createUserDto: TenantSignUpDto): Promise<UserProfile> {
-		this.apiDebugger.info('Onboarding tenant', createUserDto);
 		this.currentUser = this.cls.get('currentUser');
 
 		const { email, firstName, lastName } = createUserDto;
@@ -863,8 +859,6 @@ export abstract class AuthService {
 			data: body,
 			headers,
 		});
-		console.log({ data });
-
 		return data;
 	}
 
@@ -918,25 +912,22 @@ export abstract class AuthService {
 			const { data } = await firstValueFrom(
 				response.pipe(
 					catchError((error: AxiosError | any) => {
-						this.apiDebugger.error(
-							'Error signing in with email password',
-							error,
+						this.apiDebugger.error('Sign in error: ', error.status);
+						this.logger.error('Sign In Error Code:', error.status);
+						throw new Error(
+							'Invalid email or password. Please check your credentials and try again.',
 						);
-						const firebaseError = error.response.data;
-						this.logger.error('Firebase sign-in error:', firebaseError);
-						throw new FirebaseException(firebaseError);
 					}),
 				),
 			);
 			return data;
 		} catch (err) {
-			this.apiDebugger.error('Error signing in with email password', err);
-			const message =
-				err instanceof FirebaseException
-					? err.message
-					: this.errorMessageHelper.parseFirebaseError(err) ||
-						'Unknown error during sign-in';
-			throw new FirebaseException(message);
+			if (err.message) {
+				throw new FirebaseException(err.message);
+			}
+			throw new FirebaseException(
+				'Invalid email or password. Please check your credentials and try again.',
+			);
 		}
 	}
 
@@ -1019,6 +1010,8 @@ export abstract class AuthService {
 			);
 			const { refreshToken, idToken, displayName, registered, expiresIn } =
 				signInData;
+
+			this.apiDebugger.info('Sign in data from firebase', signInData);
 			if (!refreshToken) {
 				const requiresMfa = signInData.mfaInfo?.length > 0;
 				//const factors = signInData.mfaInfo?.map((factor) => {return factor.displayName;});
@@ -1081,12 +1074,6 @@ export abstract class AuthService {
 				Array.isArray(userRecord.multiFactor.enrolledFactors) &&
 				userRecord.multiFactor.enrolledFactors.length > 0
 			) {
-				this.apiDebugger.info(
-					`User ${uid} has the following MFA factors enrolled:`,
-				);
-				this.apiDebugger.info(
-					`User ${uid} has the following MFA factors enrolled:`,
-				);
 				enrolledFactors = userRecord.multiFactor.enrolledFactors.map(
 					(factor) => {
 						return factor.factorId;
@@ -1102,7 +1089,6 @@ export abstract class AuthService {
 
 				// Check specifically for TOTP
 			} else {
-				this.apiDebugger.info(`User ${uid} has NO MFA factors enrolled.`);
 			}
 		} catch (error) {
 			this.apiDebugger.error('Error fetching user:', error);
@@ -1133,7 +1119,6 @@ export abstract class AuthService {
 				leaseDto.propertyName,
 				leaseDto.unitNumber,
 			);
-			//console.log('leaseName', name);
 			const overlappingLease = await transactionalEntityManager
 				.createQueryBuilder(Lease, 'lease')
 				.where('lease."unitId" = :unitId', { unitId })
