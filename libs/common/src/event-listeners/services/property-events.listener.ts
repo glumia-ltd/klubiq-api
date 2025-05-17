@@ -77,6 +77,7 @@ export class PropertyEventsListener {
 		payload.actionLink = `${this.clientBaseUrl}properties/${payload.propertyId}`;
 		payload.actionText = 'View Property';
 		const template = EVENT_TEMPLATE(payload)[propertyEvent];
+
 		const notificationRecipients =
 			await this.helperService.getNotificationRecipients(
 				payload,
