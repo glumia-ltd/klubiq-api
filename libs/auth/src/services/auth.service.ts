@@ -1011,7 +1011,6 @@ export abstract class AuthService {
 			const { refreshToken, idToken, displayName, registered, expiresIn } =
 				signInData;
 
-			this.apiDebugger.info('Sign in data from firebase', signInData);
 			if (!refreshToken) {
 				const requiresMfa = signInData.mfaInfo?.length > 0;
 				//const factors = signInData.mfaInfo?.map((factor) => {return factor.displayName;});
