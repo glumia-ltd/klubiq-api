@@ -1008,10 +1008,7 @@ export abstract class AuthService {
 				emailAddress,
 				password,
 			);
-			const { refreshToken, idToken, displayName, registered, expiresIn } =
-				signInData;
-
-			this.apiDebugger.info('Sign in data from firebase', signInData);
+			const { refreshToken, idToken, displayName, expiresIn } = signInData;
 			if (!refreshToken) {
 				const requiresMfa = signInData.mfaInfo?.length > 0;
 				//const factors = signInData.mfaInfo?.map((factor) => {return factor.displayName;});
@@ -1025,15 +1022,22 @@ export abstract class AuthService {
 				}
 				throw new FirebaseException(ErrorMessages.TOKEN_NOT_RETURNED);
 			}
+			const decodedToken = await this.auth.verifyIdToken(idToken);
 			const names = split(displayName, ' ');
-			if (!registered && clientId === this.landlordPortalClientId) {
+			if (
+				!decodedToken.email_verified &&
+				clientId === this.landlordPortalClientId
+			) {
 				await this.sendVerificationEmail(
 					emailAddress,
 					names[0] || '',
 					names[1] || '',
 				);
 				throw new ForbiddenException(ErrorMessages.EMAIL_NOT_VERIFIED);
-			} else if (!registered && clientId === this.tenantPortalClientId) {
+			} else if (
+				!decodedToken.email_verified &&
+				clientId === this.tenantPortalClientId
+			) {
 				await this.sendVerificationEmail(
 					emailAddress,
 					names[0] || '',
