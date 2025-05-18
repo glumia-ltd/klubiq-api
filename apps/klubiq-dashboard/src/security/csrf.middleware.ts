@@ -57,10 +57,11 @@ export class CsrfMiddleware implements NestMiddleware {
 		secret: string,
 	) {
 		if (req.method === 'GET') {
-			const csrfToken = await this.csrfService.generateToken(secret);
+			const sessionId = req.sessionID;
+			const csrfToken = await this.csrfService.generateToken(secret, sessionId);
 			this.setCsrfToken(req, res, cookieKey, csrfToken);
 		} else {
-			await this.validateCsrfToken(req, cookieKey, secret);
+			await this.validateCsrfToken(req, secret);
 		}
 	}
 
@@ -77,21 +78,15 @@ export class CsrfMiddleware implements NestMiddleware {
 		}
 	}
 
-	private async validateCsrfToken(
-		req: Request,
-		cookieKey: string,
-		secret: string,
-	) {
-		const csrfToken = req.headers['x-xsrf-token'] as string;
-		const storedToken = req.session[cookieKey];
+	private async validateCsrfToken(req: Request, secret: string) {
+		const csrfToken = req.headers['x-csrf-token'] as string;
+		const sessionId = req.sessionID;
 
-		if (!csrfToken || !storedToken) {
+		if (!csrfToken || !sessionId) {
 			throw new UnauthorizedException('CSRF token missing');
 		}
 
-		if (
-			!(await this.csrfService.validateToken(csrfToken, storedToken, secret))
-		) {
+		if (!(await this.csrfService.validateToken(secret, csrfToken, sessionId))) {
 			throw new UnauthorizedException('Invalid CSRF token');
 		}
 	}

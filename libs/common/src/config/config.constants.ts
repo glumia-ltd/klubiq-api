@@ -75,6 +75,14 @@ export enum CreateUserEventTypes {
 	CREATE_ORG_USER,
 	INVITE_ORG_USER,
 }
+export enum OrganizationType {
+	INDIVIDUAL = 'individual',
+	COMPANY = 'company',
+	NG_ORGANIZATION = 'ngo',
+	GOVERNMENT = 'government',
+	OTHER = 'other',
+	SELF = 'self',
+}
 
 export enum CacheKeys {
 	ORG_ROLES = 'klubiq-roles',
