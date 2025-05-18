@@ -294,8 +294,28 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 		profile: {
 			id: string;
 			fullName: string;
+			firstName: string;
+			lastName: string;
 			email: string;
-			phone: string;
+			phoneNumber: string;
+			title: string | null;
+			profilePicUrl: string | null;
+			countryPhoneCode: string | null;
+			street: string | null;
+			addressLine2: string | null;
+			state: string | null;
+			city: string | null;
+			country: string | null;
+			postalCode: string | null;
+			formOfIdentity: string | null;
+			dateOfBirth: Date | null;
+			gender: string | null;
+			bio: string | null;
+			isTermsAndConditionAccepted: boolean;
+			isPrivacyPolicyAgreed: boolean;
+			createdDate: Date;
+			updatedDate: Date;
+			isKYCVerified: boolean;
 		};
 		summary: {
 			totalLeases: number;
@@ -310,26 +330,31 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 			throw new BadRequestException('Tenant ID is required');
 		}
 
-		const records = await this.manager
-			.getRepository(LeasesTenants)
+		const records: any[] = await this.manager
+			.getRepository(TenantUser)
 			.createQueryBuilder('lt')
-			.leftJoinAndSelect('lt.tenant', 'tenant')
-			.leftJoinAndSelect('tenant.profile', 'profile')
-			.leftJoinAndSelect('lt.lease', 'lease')
+			.leftJoinAndSelect('lt.profile', 'profile')
+			.leftJoinAndSelect('lt.leasesTenants', 'leasesTenants')
+			.leftJoinAndSelect('leasesTenants.lease', 'lease')
 			.leftJoinAndSelect('lease.unit', 'unit')
 			.leftJoinAndSelect('unit.property', 'property')
 			.leftJoinAndSelect('property.address', 'address')
-			.where('tenant.id = :tenantId', { tenantId })
+			.where('lt.ID = :tenantId', { tenantId })
 			.getMany();
 
 		if (records.length === 0) {
-			throw new NotFoundException('Tenant or leases not found.');
+			throw new NotFoundException('Tenant not found.');
 		}
 
-		const profile = await records[0].tenant.profile;
+		const tenant = records[0];
+		const profile = await tenant.profile;
 
-		const leaseMapper = (record: LeasesTenants) => {
-			const lease = record.lease;
+		const validLeases = records
+			.flatMap((r) => r.leasesTenants || [])
+			.filter((lt: any) => lt.lease);
+
+		const mapLease = (lt: any) => {
+			const lease = lt.lease;
 			const unit = lease.unit;
 			const property = unit.property;
 			const address = property.address;
@@ -339,7 +364,7 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 				leaseStart: lease.startDate,
 				leaseEnd: lease.endDate,
 				rentAmount: lease.rentAmount,
-				unit: unit,
+				unit,
 				propertyName: property.name,
 				propertyAddress: `${address.addressLine1}, ${address.city}, ${address.state}`,
 				paymentFrequency: lease.paymentFrequency,
@@ -350,32 +375,53 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 			};
 		};
 
-		const activeLeases = records
+		const activeLeases = validLeases
 			.filter(
-				(r) =>
-					r.lease.status?.toUpperCase() === 'ACTIVE' && !r.lease.isArchived,
+				(lt) =>
+					lt.lease.status?.toUpperCase() === 'ACTIVE' && !lt.lease.isArchived,
 			)
-			.map(leaseMapper);
+			.map(mapLease);
 
-		const inactiveLeases = records
+		const inactiveLeases = validLeases
 			.filter(
-				(r) => r.lease.status?.toUpperCase() !== 'ACTIVE' || r.lease.isArchived,
+				(lt) =>
+					lt.lease.status?.toUpperCase() !== 'ACTIVE' || lt.lease.isArchived,
 			)
-			.map(leaseMapper);
+			.map(mapLease);
 
 		return {
 			profile: {
-				id: records[0].tenant.id,
+				id: tenant.id,
 				fullName: `${profile.firstName} ${profile.lastName}`,
+				firstName: profile.firstName,
+				lastName: profile.lastName,
 				email: profile.email,
-				phone: profile.phoneNumber,
+				phoneNumber: profile.phoneNumber,
+				title: profile.title ?? null,
+				profilePicUrl: profile.profilePicUrl ?? null,
+				countryPhoneCode: profile.countryPhoneCode ?? null,
+				street: profile.street ?? null,
+				addressLine2: profile.addressLine2 ?? null,
+				state: profile.state ?? null,
+				city: profile.city ?? null,
+				country: profile.country ?? null,
+				postalCode: profile.postalCode ?? null,
+				formOfIdentity: profile.formOfIdentity ?? null,
+				dateOfBirth: profile.dateOfBirth ?? null,
+				gender: profile.gender ?? null,
+				bio: profile.bio ?? null,
+				isTermsAndConditionAccepted: profile.isTermsAndConditionAccepted,
+				isPrivacyPolicyAgreed: profile.isPrivacyPolicyAgreed,
+				createdDate: profile.createdDate,
+				updatedDate: profile.updatedDate,
+				isKYCVerified: profile.isKYCVerified,
 			},
 			summary: {
-				totalLeases: records.length,
+				totalLeases: validLeases.length,
 				activeLeases: activeLeases.length,
 				inactiveLeases: inactiveLeases.length,
-				totalRent: records.reduce(
-					(sum, r) => sum + Number(r.lease.rentAmount ?? 0),
+				totalRent: validLeases.reduce(
+					(sum, lt) => sum + Number(lt.lease?.rentAmount ?? 0),
 					0,
 				),
 			},
@@ -434,5 +480,145 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 		} catch (error) {
 			throw error;
 		}
+	}
+
+	async getTenantByProfileUuid(tenantId: string): Promise<{
+		profile: {
+			id: string;
+			fullName: string;
+			firstName: string;
+			lastName: string;
+			email: string;
+			phoneNumber: string;
+			title: string | null;
+			profilePicUrl: string | null;
+			countryPhoneCode: string | null;
+			street: string | null;
+			addressLine2: string | null;
+			state: string | null;
+			city: string | null;
+			country: string | null;
+			postalCode: string | null;
+			formOfIdentity: string | null;
+			dateOfBirth: Date | null;
+			gender: string | null;
+			bio: string | null;
+			isTermsAndConditionAccepted: boolean;
+			isPrivacyPolicyAgreed: boolean;
+			createdDate: Date;
+			updatedDate: Date;
+			isKYCVerified: boolean;
+		};
+		summary: {
+			totalLeases: number;
+			activeLeases: number;
+			inactiveLeases: number;
+			totalRent: number;
+		};
+		activeLeases: any[];
+		inactiveLeases: any[];
+	}> {
+		if (!tenantId) {
+			throw new BadRequestException('Tenant ID is required');
+		}
+
+		const records: any[] = await this.manager
+			.getRepository(TenantUser)
+			.createQueryBuilder('lt')
+			.leftJoinAndSelect('lt.profile', 'profile')
+			.leftJoinAndSelect('lt.leasesTenants', 'leasesTenants')
+			.leftJoinAndSelect('leasesTenants.lease', 'lease')
+			.leftJoinAndSelect('lease.unit', 'unit')
+			.leftJoinAndSelect('unit.property', 'property')
+			.leftJoinAndSelect('property.address', 'address')
+			.where('lt.profile = :tenantId', { tenantId })
+			.getMany();
+
+		if (records.length === 0) {
+			throw new NotFoundException('Tenant not found.');
+		}
+
+		const tenant = records[0];
+		const profile = await tenant.profile;
+
+		const validLeases = records
+			.flatMap((r) => r.leasesTenants || [])
+			.filter((lt: any) => lt.lease);
+
+		const mapLease = (lt: any) => {
+			const lease = lt.lease;
+			const unit = lease.unit;
+			const property = unit.property;
+			const address = property.address;
+
+			return {
+				id: lease.id,
+				leaseStart: lease.startDate,
+				leaseEnd: lease.endDate,
+				rentAmount: lease.rentAmount,
+				unit,
+				propertyName: property.name,
+				propertyAddress: `${address.addressLine1}, ${address.city}, ${address.state}`,
+				paymentFrequency: lease.paymentFrequency,
+				lastPaymentDate: lease.lastPaymentDate,
+				nextDueDate: lease.nextDueDate,
+				lateFeeAmount: lease.lateFeeAmount,
+				securityDeposit: lease.securityDeposit,
+			};
+		};
+
+		const activeLeases = validLeases
+			.filter(
+				(lt) =>
+					lt.lease.status?.toUpperCase() === 'ACTIVE' && !lt.lease.isArchived,
+			)
+			.map(mapLease);
+
+		const inactiveLeases = validLeases
+			.filter(
+				(lt) =>
+					lt.lease.status?.toUpperCase() !== 'ACTIVE' || lt.lease.isArchived,
+			)
+			.map(mapLease);
+
+		return {
+			profile: {
+				id: tenant.id,
+				fullName: `${profile.firstName} ${profile.lastName}`,
+				firstName: profile.firstName,
+				lastName: profile.lastName,
+				email: profile.email,
+				phoneNumber: profile.phoneNumber,
+				title: profile.title ?? null,
+				profilePicUrl: profile.profilePicUrl ?? null,
+				countryPhoneCode: profile.countryPhoneCode ?? null,
+				street: profile.street ?? null,
+				addressLine2: profile.addressLine2 ?? null,
+				state: profile.state ?? null,
+				city: profile.city ?? null,
+				country: profile.country ?? null,
+				postalCode: profile.postalCode ?? null,
+				formOfIdentity: profile.formOfIdentity ?? null,
+				dateOfBirth: profile.dateOfBirth ?? null,
+				gender: profile.gender ?? null,
+				bio: profile.bio ?? null,
+				isTermsAndConditionAccepted: profile.isTermsAndConditionAccepted,
+				isPrivacyPolicyAgreed: profile.isPrivacyPolicyAgreed,
+				createdDate: profile.createdDate,
+				updatedDate: profile.updatedDate,
+				isKYCVerified: profile.isKYCVerified,
+			},
+			summary: {
+				totalLeases: validLeases.length,
+				activeLeases: activeLeases.length,
+				inactiveLeases: inactiveLeases.length,
+				totalRent: validLeases.reduce(
+					(sum, lt) => sum + Number(lt.lease?.rentAmount ?? 0),
+					0,
+				),
+			},
+			activeLeases,
+			inactiveLeases,
+		};
 	}
 }
