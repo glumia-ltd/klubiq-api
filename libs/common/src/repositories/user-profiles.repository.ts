@@ -7,7 +7,7 @@ import {
 import { BaseRepository } from '@app/common/repositories/base.repository';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
 import { UserProfile } from '../database/entities/user-profile.entity';
-import { EntityManager, In, IsNull } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { DateTime } from 'luxon';
 import { OrganizationUser } from '@app/common/database/entities/organization-user.entity';
 import { TenantUser } from '../database/entities/tenant.entity';
@@ -163,51 +163,61 @@ export class UserProfilesRepository extends BaseRepository<UserProfile> {
 		return data;
 	}
 
-	async acceptInvitation(userFirebaseId: string, userType: UserType) {
+	async acceptInvitation(
+		invitation: UserInvitation | TenantInvitation,
+		userType: UserType,
+	) {
 		if (userType === UserType.LANDLORD) {
+			const landlordInvitation = invitation as UserInvitation;
 			return this.manager.transaction(async (transactionalEntityManager) => {
-				const invitation = await transactionalEntityManager.findOne(
-					UserInvitation,
-					{ where: { firebaseUid: userFirebaseId, acceptedAt: IsNull() } },
-				);
-				if (!invitation) {
-					throw new NotFoundException('Invitation not found');
-				}
 				await transactionalEntityManager.update(
 					UserInvitation,
-					{ firebaseUid: userFirebaseId, id: invitation.id },
+					{
+						firebaseUid: landlordInvitation.firebaseUid,
+						id: landlordInvitation.id,
+					},
 					{ acceptedAt: this.timestamp },
 				);
 				await transactionalEntityManager.update(
 					OrganizationUser,
-					{ profile: { firebaseId: userFirebaseId } },
+					{ organizationUserUuid: landlordInvitation.userId },
 					{ isAccountVerified: true, isActive: true },
 				);
-				if (invitation.propertyToOwnIds.length > 0) {
+				if (
+					landlordInvitation.propertyToOwnIds &&
+					landlordInvitation.propertyToOwnIds.length > 0
+				) {
 					await transactionalEntityManager.update(
 						Property,
-						{ id: In(invitation.propertyToOwnIds) },
-						{ owner: { profileUuid: userFirebaseId } },
+						{ id: In(landlordInvitation.propertyToOwnIds) },
+						{ owner: { profileUuid: landlordInvitation.userId } },
 					);
 				}
-				if (invitation.propertyToManageIds.length > 0) {
+				if (
+					landlordInvitation.propertyToManageIds &&
+					landlordInvitation.propertyToManageIds.length > 0
+				) {
 					await transactionalEntityManager.update(
 						Property,
-						{ id: In(invitation.propertyToManageIds) },
-						{ manager: { profileUuid: userFirebaseId } },
+						{ id: In(landlordInvitation.propertyToManageIds) },
+						{ manager: { profileUuid: landlordInvitation.userId } },
 					);
 				}
 			});
 		} else if (userType === UserType.TENANT) {
+			const tenantInvitation = invitation as TenantInvitation;
 			return this.manager.transaction(async (transactionalEntityManager) => {
 				await transactionalEntityManager.update(
 					TenantInvitation,
-					{ firebaseUid: userFirebaseId },
+					{
+						firebaseUid: tenantInvitation.firebaseUid,
+						id: tenantInvitation.id,
+					},
 					{ acceptedAt: this.timestamp },
 				);
 				await transactionalEntityManager.update(
 					TenantUser,
-					{ profile: { firebaseId: userFirebaseId } },
+					{ id: tenantInvitation.userId },
 					{ isActive: true },
 				);
 			});
