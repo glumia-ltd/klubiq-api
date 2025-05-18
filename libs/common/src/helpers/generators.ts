@@ -50,11 +50,13 @@ export class Generators {
 			.digest('hex');
 	}
 
-	generateToken(secret: string): string {
-		return crypto
-			.createHmac('sha256', secret)
-			.update(crypto.randomBytes(32))
-			.digest('hex');
+	generateToken(secret: string, sessionId?: string): string {
+		return sessionId
+			? crypto.createHmac('sha256', secret).update(sessionId).digest('hex')
+			: crypto
+					.createHmac('sha256', secret)
+					.update(crypto.randomBytes(32))
+					.digest('hex');
 	}
 
 	generateLeaseName(propertyName: string, unitName: string): string {

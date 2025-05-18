@@ -32,7 +32,7 @@ export class Organization {
 	@AutoMap()
 	@Index()
 	@Column({ length: 100, nullable: true })
-	name: string;
+	name?: string;
 
 	@AutoMap()
 	@Column({ default: false })
