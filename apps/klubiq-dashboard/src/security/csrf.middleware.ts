@@ -70,7 +70,12 @@ export class CsrfMiddleware implements NestMiddleware {
 		cookieKey: string,
 		token: string,
 	) {
-		res.cookie(cookieKey, token);
+		res.cookie(cookieKey, token, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			maxAge: 86400000, // 1 day
+			sameSite: 'strict',
+		});
 		// Store in session if available
 		if (req.session) {
 			req.session[cookieKey] = token;
@@ -82,15 +87,19 @@ export class CsrfMiddleware implements NestMiddleware {
 		cookieKey: string,
 		secret: string,
 	) {
-		const csrfToken = req.headers['x-xsrf-token'] as string;
+		const csrfToken = req.headers['x-csrf-token'] as string;
 		const storedToken = req.session[cookieKey];
+
+		console.log('req.session', req.session);
+		console.log('storedToken', storedToken);
+		console.log('csrfToken', csrfToken);
 
 		if (!csrfToken || !storedToken) {
 			throw new UnauthorizedException('CSRF token missing');
 		}
 
 		if (
-			!(await this.csrfService.validateToken(csrfToken, storedToken, secret))
+			!(await this.csrfService.validateToken(secret, csrfToken, storedToken))
 		) {
 			throw new UnauthorizedException('Invalid CSRF token');
 		}

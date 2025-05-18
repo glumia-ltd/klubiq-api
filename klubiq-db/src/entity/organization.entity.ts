@@ -31,7 +31,7 @@ export class Organization {
 
 	
 	@Index()
-	@Column({ length: 100, unique: true, nullable: true })
+	@Column({ length: 100, nullable: true })
 	name: string;
 
 	
