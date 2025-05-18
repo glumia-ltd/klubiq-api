@@ -17,9 +17,9 @@ export class CsrfService {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 	) {}
 
-	async generateToken(tenantId: string): Promise<string> {
+	async generateToken(tenantId: string, sessionId: string): Promise<string> {
 		const secret = await this.getTenantSecret(tenantId);
-		return this.generators.generateToken(secret);
+		return this.generators.generateToken(secret, sessionId);
 	}
 
 	async generateTokenWithAppSecret(secret: string): Promise<string> {
@@ -29,12 +29,12 @@ export class CsrfService {
 	async validateToken(
 		tenantId: string,
 		token: string,
-		storedToken: string,
+		sessionId: string,
 	): Promise<boolean> {
 		const secret = await this.getTenantSecret(tenantId);
 		const expectedToken = crypto
 			.createHmac('sha256', secret)
-			.update(storedToken)
+			.update(sessionId)
 			.digest('hex');
 		return token === expectedToken;
 	}
