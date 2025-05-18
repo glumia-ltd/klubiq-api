@@ -378,9 +378,24 @@ export abstract class AuthService {
 			if (!(await this.validateInvitation(invitationToken))) {
 				throw new BadRequestException('Invitation link has expired');
 			}
-			const userData = await this.acceptInvitation(resetPassword);
+			const entityManager = this.userProfilesRepository.manager;
+			const userInvitation = await entityManager.findOne(UserInvitation, {
+				where: {
+					token: invitationToken,
+					acceptedAt: null,
+				},
+			});
+			if (!userInvitation) {
+				throw new BadRequestException(
+					'Invitation link has expired or already accepted',
+				);
+			}
+			const userData = await this.acceptInvitation(
+				resetPassword,
+				userInvitation.firebaseUid,
+			);
 			this.userProfilesRepository.acceptInvitation(
-				userData.localId,
+				userInvitation,
 				UserType.LANDLORD,
 			);
 			return userData;
@@ -399,9 +414,24 @@ export abstract class AuthService {
 			if (!(await this.validateInvitation(invitationToken))) {
 				throw new BadRequestException('Invitation link has expired');
 			}
-			const userData = await this.acceptInvitation(resetPassword);
+			const entityManager = this.tenantRepository.manager;
+			const tenantInvitation = await entityManager.findOne(TenantInvitation, {
+				where: {
+					token: invitationToken,
+					acceptedAt: null,
+				},
+			});
+			if (!tenantInvitation) {
+				throw new BadRequestException(
+					'Invitation link has expired or already accepted',
+				);
+			}
+			const userData = await this.acceptInvitation(
+				resetPassword,
+				tenantInvitation.firebaseUid,
+			);
 			this.userProfilesRepository.acceptInvitation(
-				userData.localId,
+				tenantInvitation,
 				UserType.TENANT,
 			);
 			return userData;
@@ -412,14 +442,22 @@ export abstract class AuthService {
 		}
 	}
 
-	async acceptInvitation(resetPassword: ResetPasswordDto) {
+	async acceptInvitation(resetPassword: ResetPasswordDto, firebaseUid: string) {
 		try {
+			this.apiDebugger.info('Accepting invitation', firebaseUid);
+			const customToken = await this.auth.createCustomToken(firebaseUid);
+			this.apiDebugger.info('Custom token', customToken);
+			const signInResponse = await this.signInWithCustomToken(customToken);
+			this.apiDebugger.info('Sign in response', signInResponse);
 			const body = {
 				oobCode: resetPassword.oobCode,
 				password: resetPassword.password,
 				email: resetPassword.email,
 				emailVerified: true,
+				idToken: signInResponse.idToken,
+				//localId: firebaseUid,
 			};
+
 			const { data } = await firstValueFrom(
 				this.httpService
 					.post(
@@ -932,6 +970,47 @@ export abstract class AuthService {
 	}
 
 	/**
+	 * Calls the google identity endpoint to sign in with TOKEN
+	 * @param customToken
+	 * @returns
+	 */
+	async signInWithCustomToken(
+		customToken: string,
+	): Promise<SignInByFireBaseResponseDto> {
+		try {
+			const url = `${this.configService.get<string>('GOOGLE_IDENTITY_ENDPOINT')}:signInWithCustomToken?key=${this.configService.get<string>('FIREBASE_API_KEY')}`;
+			const payload = {
+				token: customToken,
+				returnSecureToken: true,
+			};
+			const response = await this.ensureAuthorizedFirebaseRequest(
+				url,
+				'POST',
+				payload,
+			);
+			const { data } = await firstValueFrom(
+				response.pipe(
+					catchError((error: AxiosError | any) => {
+						this.apiDebugger.error('Sign in error: ', error.status);
+						this.logger.error('Sign In Error Code:', error.status);
+						throw new Error(
+							'Invalid email or password. Please check your credentials and try again.',
+						);
+					}),
+				),
+			);
+			return data;
+		} catch (err) {
+			if (err.message) {
+				throw new FirebaseException(err.message);
+			}
+			throw new FirebaseException(
+				'Invalid email or password. Please check your credentials and try again.',
+			);
+		}
+	}
+
+	/**
 	 * Calls the google identity endpoint to sign in with email and password
 	 * @param email
 	 * @param password
@@ -1256,7 +1335,7 @@ export abstract class AuthService {
 			await transactionalEntityManager.save(organizationTenant);
 
 			const invitation = new TenantInvitation();
-			invitation.userId = userProfile.profileUuid;
+			invitation.userId = tenantUser.id;
 			invitation.firebaseUid = fireUser.uid;
 			invitation.invitedAt = this.timestamp;
 			invitation.token = this.getInvitationToken();

@@ -33,6 +33,10 @@ export class UserInvitation {
 	@Column({ unique: true })
 	firebaseUid: string;
 
+	@Index()
+	@Column({ type: 'uuid', unique: true })
+	userId: string;
+
 	@Column({ type: 'timestamptz' })
 	invitedAt: string;
 
