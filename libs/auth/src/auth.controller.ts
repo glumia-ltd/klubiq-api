@@ -455,4 +455,21 @@ export class AuthController {
 		};
 		return await this.landlordAuthService.createTenant(createUser);
 	}
+
+	@Auth(AuthType.Bearer)
+	@Get('test-invitation-token')
+	@ApiOkResponse()
+	async testGetInvitationToken() {
+		return await this.landlordAuthService.getInvitationToken({
+			email: 'test@test.com',
+			userId: '123',
+			fid: '456',
+		});
+	}
+	@Auth(AuthType.Bearer)
+	@Get('test-decode-token')
+	@ApiOkResponse()
+	async testDecodeInvitationToken(@Query('token') token: string) {
+		return await this.landlordAuthService.decodeInvitationToken(token);
+	}
 }

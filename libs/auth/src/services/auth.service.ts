@@ -356,16 +356,25 @@ export abstract class AuthService {
 			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
+	async decodeInvitationToken(invitationToken: string) {
+		const tokenParts = invitationToken.split(':');
+		if (tokenParts.length !== 3) {
+			throw new BadRequestException('Invalid invitation token');
+		}
+		return this.generators.decodeShortJwt(tokenParts[0]);
+	}
 
 	private async validateInvitation(invitationToken: string) {
+		const tokenParts = invitationToken.split(':');
+		if (tokenParts.length !== 3) {
+			throw new BadRequestException('Invalid invitation token');
+		}
 		const invitationTimeStamp = DateTime.fromJSDate(
-			this.suid.parseStamp(invitationToken),
+			this.suid.parseStamp(tokenParts[1]),
 		);
-		this.apiDebugger.info('Invitation time stamp', invitationTimeStamp);
-		const end = DateTime.utc();
-		this.apiDebugger.info('End time', end);
+		const end = DateTime.fromJSDate(this.suid.parseStamp(tokenParts[2]));
 		return (
-			invitationTimeStamp && end.diff(invitationTimeStamp, 'hours').hours < 72
+			invitationTimeStamp && end.diff(invitationTimeStamp, 'hours').hours <= 72
 		);
 	}
 	// ACCEPTS INVITATION
@@ -377,6 +386,10 @@ export abstract class AuthService {
 		try {
 			if (!(await this.validateInvitation(invitationToken))) {
 				throw new BadRequestException('Invitation link has expired');
+			}
+			const decodedToken = await this.decodeInvitationToken(invitationToken);
+			if (decodedToken.email !== resetPassword.email) {
+				throw new BadRequestException('Invalid invitation token');
 			}
 			const entityManager = this.userProfilesRepository.manager;
 			const userInvitation = await entityManager.findOne(UserInvitation, {
@@ -414,6 +427,10 @@ export abstract class AuthService {
 			if (!(await this.validateInvitation(invitationToken))) {
 				throw new BadRequestException('Invitation link has expired');
 			}
+			const decodedToken = await this.decodeInvitationToken(invitationToken);
+			if (decodedToken.email !== resetPassword.email) {
+				throw new BadRequestException('Invalid invitation token');
+			}
 			const entityManager = this.tenantRepository.manager;
 			const tenantInvitation = await entityManager.findOne(TenantInvitation, {
 				where: {
@@ -426,14 +443,23 @@ export abstract class AuthService {
 					'Invitation link has expired or already accepted',
 				);
 			}
-			const userData = await this.acceptInvitation(
-				resetPassword,
-				tenantInvitation.firebaseUid,
-			);
+			// const userData = await this.acceptInvitation(
+			// 	resetPassword,
+			// 	tenantInvitation.firebaseUid,
+			// );
 			this.userProfilesRepository.acceptInvitation(
 				tenantInvitation,
 				UserType.TENANT,
 			);
+			const userData = await this.auth.updateUser(
+				tenantInvitation.firebaseUid,
+				{
+					email: resetPassword.email,
+					emailVerified: true,
+					password: resetPassword.password,
+				},
+			);
+			this.apiDebugger.info('Updated User', userData);
 			return userData;
 		} catch (err) {
 			const firebaseErrorMessage =
@@ -875,8 +901,12 @@ export abstract class AuthService {
 		}
 	}
 
-	getInvitationToken(): string {
-		return this.suid.stamp(36, DateTime.utc().toJSDate());
+	async getInvitationToken(data: Record<string, any>): Promise<string> {
+		const jwt = this.generators.generateShortJwt(data, '72h');
+		const expiration = DateTime.now().plus({ days: 3 }).toJSDate();
+		const expirationTimeStamp = this.suid.stamp(48, expiration);
+		const startTimeStamp = this.suid.stamp(48, DateTime.utc().toJSDate());
+		return Promise.resolve(`${jwt}:${startTimeStamp}:${expirationTimeStamp}`);
 	}
 	async ensureAuthorizedFirebaseRequest(
 		url: string,
@@ -1338,7 +1368,11 @@ export abstract class AuthService {
 			invitation.userId = tenantUser.id;
 			invitation.firebaseUid = fireUser.uid;
 			invitation.invitedAt = this.timestamp;
-			invitation.token = this.getInvitationToken();
+			invitation.token = await this.getInvitationToken({
+				email: createUserDto.email,
+				userId: tenantUser.id,
+				fid: fireUser.uid,
+			});
 			await transactionalEntityManager.save(invitation);
 			await this.sendTenantInvitationEmail(createUserDto, invitation);
 
@@ -1353,15 +1387,8 @@ export abstract class AuthService {
 	): Promise<void> {
 		try {
 			const currentUser = this.cls.get<ActiveUserData>('currentUser');
-			let resetPasswordLink = await this.auth.generatePasswordResetLink(
-				invitedUserDto.email,
-				this.getActionCodeSettings(
-					this.tenantEmailVerificationBaseUrl,
-					this.tenantEmailAuthContinueUrl,
-				),
-			);
-			resetPasswordLink += `&email=${invitedUserDto.email}&type=tenant-invitation&token=${invitation.token}`;
-			const actionUrl = replace(resetPasswordLink, '_auth_', 'reset-password');
+			const actionUrl = `${this.tenantEmailVerificationBaseUrl}/reset-password?continueUrl=${this.tenantEmailAuthContinueUrl}&email=${invitedUserDto.email}&type=tenant-invitation&token=${invitation.token}`;
+
 			const recipient = {
 				email: invitedUserDto.email,
 				firstName:
