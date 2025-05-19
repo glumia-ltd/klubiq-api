@@ -169,6 +169,7 @@ async function bootstrap() {
 					'https://app.klubiq.com',
 					'https://dashboard.klubiq.com',
 					'https://admin.klubiq.com',
+					'https://api.klubiq.com',
 				]
 			: [
 					'http://localhost:3000',
