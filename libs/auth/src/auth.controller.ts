@@ -177,20 +177,24 @@ export class AuthController {
 			credentials.email,
 			credentials.password,
 		);
+
 		if (tokenData.message && tokenData.message === ErrorMessages.MFA_REQUIRED) {
 			this.setMFARequiredCookie(res, tokenData);
 			if (this.isNotApiCall(req)) {
-				delete tokenData.mfaPendingCredential;
-				delete tokenData.mfaEnrollmentId;
+				const response = { ...tokenData };
+				delete response.mfaPendingCredential;
+				delete response.mfaEnrollmentId;
+				return response;
 			}
 			return tokenData;
 		}
+
 		if (this.isNotApiCall(req)) {
 			this.setLoginCookie(res, tokenData);
 			return { expires_in: tokenData.expires_in };
-		} else {
-			return tokenData;
 		}
+
+		return tokenData;
 	}
 
 	private setMFARequiredCookie(res: Response, tokenData: MFAResponseDto): void {
