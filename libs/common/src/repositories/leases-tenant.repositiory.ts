@@ -296,7 +296,8 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 			fullName: string;
 			firstName: string;
 			lastName: string;
-			email: string;
+			companyName: string;
+			email: string | null;
 			phoneNumber: string;
 			title: string | null;
 			profilePicUrl: string | null;
@@ -395,6 +396,7 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 				fullName: `${profile.firstName} ${profile.lastName}`,
 				firstName: profile.firstName,
 				lastName: profile.lastName,
+				companyName: tenant.companyName,
 				email: profile.email,
 				phoneNumber: profile.phoneNumber,
 				title: profile.title ?? null,
