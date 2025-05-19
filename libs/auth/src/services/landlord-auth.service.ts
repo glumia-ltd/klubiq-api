@@ -391,7 +391,11 @@ export class LandlordAuthService extends AuthService {
 			invitation.propertyToOwnIds = invitedUserDto.propertiesToOwn
 				? map(invitedUserDto.propertiesToOwn, 'uuid')
 				: null;
-			invitation.token = this.getInvitationToken();
+			invitation.token = await this.getInvitationToken({
+				email: invitedUserDto.email,
+				userId: user.organizationUserUuid,
+				fid: fireUser.uid,
+			});
 			invitation.userId = user.organizationUserUuid;
 			/// TRANSACTION SAVES DATA
 			await transactionalEntityManager.save(user);
