@@ -104,4 +104,7 @@ export class Util {
 			CacheTTl.ONE_DAY,
 		);
 	}
+	public async invalidateCacheByKeys(cacheKeys: string[]) {
+		await this.cacheService.invalidateCacheByKeys(cacheKeys);
+	}
 }

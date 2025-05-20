@@ -45,13 +45,10 @@ export class HelperService {
 	 * @param payload
 	 */
 	async invalidateOrganizationPropertyCache(payload: PropertyEvent) {
-		const propertyCacheKeys = await this.getPropertyRelatedCacheKeys(
-			payload.organizationId,
-		);
 		const dashboardCacheKeys = await this.getDashboardRelatedCacheKeys(
 			payload.organizationId,
 		);
-		await this.cacheManager.mdel([...propertyCacheKeys, ...dashboardCacheKeys]);
+		await this.cacheManager.mdel([...dashboardCacheKeys]);
 	}
 
 	/**
