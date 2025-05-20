@@ -36,8 +36,9 @@ export class CacheService {
 		identifier: any,
 	): Promise<T> {
 		const cachedList = await this.cacheManager.get<T[]>(cacheKey);
-		if (cachedList && cachedList.length > 0)
+		if (cachedList && cachedList.length > 0) {
 			return cachedList.find((f) => f[key] == identifier);
+		}
 	}
 
 	async getCacheByIdentifiers<T>(
@@ -46,10 +47,11 @@ export class CacheService {
 		identifiers: any[],
 	): Promise<T> {
 		const cachedList = await this.cacheManager.get<T[]>(cacheKey);
-		if (cachedList && cachedList.length > 0)
+		if (cachedList && cachedList.length > 0) {
 			return cachedList.find((f) => {
 				return keys.every((key, index) => f[key] == identifiers[index]);
 			});
+		}
 	}
 
 	// gets a cached data by Id or identifier
@@ -126,5 +128,9 @@ export class CacheService {
 
 	async invalidateCache(cacheKey: string): Promise<void> {
 		await this.cacheManager.del(cacheKey);
+	}
+
+	async invalidateCacheByKeys(cacheKeys: string[]): Promise<void> {
+		await this.cacheManager.mdel(cacheKeys);
 	}
 }

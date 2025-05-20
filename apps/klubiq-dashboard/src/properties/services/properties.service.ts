@@ -439,9 +439,7 @@ export class PropertiesService implements IPropertyMetrics {
 				updateData,
 				false,
 			);
-
-			const cacheKey = this.getcacheKey(currentUser.organizationId, uuid);
-			await this.cacheManager.del(cacheKey);
+			await this.invalidatePropertyCache(uuid, true);
 			return await this.getPropertyById(uuid);
 		} catch (error) {
 			this.logger.error('Error updating Property Data', error);
@@ -468,6 +466,7 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.organizationId,
 				currentUser.kUid,
 			);
+			await this.invalidatePropertyCache(deleteData.uuid, true);
 			const deletedTime = DateTime.utc()
 				.setZone(this.cls.get('clientTimeZoneName'))
 				.toLocaleString(DateTime.DATETIME_FULL);
@@ -504,9 +503,7 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.organizationId,
 				currentUser.kUid,
 			);
-			await this.cacheManager.del(
-				this.getcacheKey(currentUser.organizationId, propertyUuid),
-			);
+			await this.invalidatePropertyCache(propertyUuid, true);
 			this.eventEmitter.emit('property.archived', {
 				organizationId: currentUser.organizationId,
 				propertyId: propertyUuid,
@@ -568,6 +565,7 @@ export class PropertiesService implements IPropertyMetrics {
 				createDto,
 				isDraft,
 			);
+			await this.invalidatePropertyCache(undefined, true);
 			this.emitPropertyEvent(
 				'property.created',
 				currentUser.organizationId,
@@ -672,12 +670,11 @@ export class PropertiesService implements IPropertyMetrics {
 				throw new PreconditionFailedException(ErrorMessages.UNIT_LIMIT_REACHED);
 			}
 
-			const cacheKey = this.getcacheKey(orgId, propertyUuid);
 			const addedUnits = await this.propertyRepository.addUnitsToAProperty(
 				propertyUuid,
 				unitsDto,
 			);
-			await this.cacheManager.del(cacheKey);
+			await this.invalidatePropertyCache(propertyUuid, true);
 			return addedUnits;
 		} catch (error) {
 			this.logger.error('Error adding Unit to Property', error);
@@ -704,9 +701,7 @@ export class PropertiesService implements IPropertyMetrics {
 					managerDto,
 				);
 			if (assigned) {
-				await this.cacheManager.del(
-					this.getcacheKey(currentUser.organizationId, propertyUuid),
-				);
+				await this.invalidatePropertyCache(propertyUuid);
 				const eventTimestamp = DateTime.utc()
 					.setZone(this.cls.get('clientTimeZoneName'))
 					.toLocaleString(DateTime.DATETIME_FULL);
@@ -759,9 +754,7 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.kUid,
 				currentUser.organizationRole === UserRoles.ORG_OWNER,
 			);
-			await this.cacheManager.del(
-				this.getcacheKey(currentUser.organizationId, propertyUuid),
-			);
+			await this.invalidatePropertyCache(propertyUuid, true);
 		} catch (error) {
 			this.logger.error('Error deleting Units from Property', error);
 			throw new BadRequestException(`Error deleting Units from Property.`, {
@@ -824,5 +817,27 @@ export class PropertiesService implements IPropertyMetrics {
 			invalidateCache,
 			propertyId,
 		});
+	}
+
+	private async invalidatePropertyCache(
+		propertyUuid?: string,
+		clearListKeys: boolean = false,
+	) {
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser.organizationId) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		const cacheKeys = propertyUuid
+			? [this.getcacheKey(currentUser.organizationId, propertyUuid)]
+			: [];
+		if (clearListKeys) {
+			const listKeys = await this.cacheManager.get<string[]>(
+				`${this.getcacheKey(currentUser.organizationId, 'listKeys')}`,
+			);
+			if (listKeys) {
+				cacheKeys.push(...listKeys);
+			}
+		}
+		await this.cacheManager.mdel(cacheKeys);
 	}
 }
