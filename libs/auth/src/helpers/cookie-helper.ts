@@ -1,12 +1,19 @@
 import { Request } from 'express';
 
-// Common cookie options
-const commonCookieOptions = {
-	httpOnly: true,
-	secure: process.env.NODE_ENV !== 'local',
-	sameSite: 'none' as const,
-	domain: '.klubiq.com', // <-- include this
-};
+const commonCookieOptions =
+	process.env.NODE_ENV === 'local'
+		? {
+				httpOnly: true,
+				secure: false, // fine for local http
+				sameSite: 'lax' as const, // allow cookies on cross-site navigations in dev
+				// omit domain so it stays host-only (localhost)
+			}
+		: {
+				httpOnly: true,
+				secure: true, // required when SameSite=None
+				sameSite: 'none' as const,
+				domain: '.klubiq.com', // your real apex domain
+			};
 
 export const cookieConfig = {
 	refreshToken: {
