@@ -3,8 +3,9 @@ import { Request } from 'express';
 // Common cookie options
 const commonCookieOptions = {
 	httpOnly: true,
-	secure: process.env.NODE_ENV === 'production',
-	sameSite: 'strict' as const,
+	secure: process.env.NODE_ENV !== 'local',
+	sameSite: 'none' as const,
+	domain: '.klubiq.com', // <-- include this
 };
 
 export const cookieConfig = {

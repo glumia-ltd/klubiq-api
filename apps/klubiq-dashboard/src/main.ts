@@ -70,9 +70,10 @@ async function bootstrap() {
 			resave: false,
 			saveUninitialized: false,
 			cookie: {
-				sameSite: 'strict',
+				sameSite: 'none' as const,
 				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production',
+				secure: process.env.NODE_ENV !== 'local',
+				domain: '.klubiq.com',
 				maxAge: 1000 * 60 * 60 * 24, // 1 day
 			},
 		}),
@@ -96,6 +97,16 @@ async function bootstrap() {
 			in: 'header',
 			name: 'Authorization',
 			scheme: 'ApiKeyAuth',
+		})
+		.addCookieAuth('refresh_token', {
+			type: 'apiKey',
+			in: 'cookie',
+			name: 'refresh_token',
+		})
+		.addCookieAuth('access_token', {
+			type: 'apiKey',
+			in: 'cookie',
+			name: 'access_token',
 		})
 		.build();
 
