@@ -374,6 +374,7 @@ export class AuthController {
 			}
 			request.refreshToken = refreshToken;
 		}
+		this.clearLoginCookie(res);
 		const tokenData = await this.landlordAuthService.exchangeRefreshToken(
 			request.refreshToken,
 		);
