@@ -2,6 +2,7 @@ import { AutoMap } from '@automapper/classes';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import {
+	IsArray,
 	IsBoolean,
 	IsJSON,
 	IsJWT,
@@ -284,6 +285,14 @@ export class LandlordUserDetailsResponseDto {
 	// 	isFreeTrial: boolean;
 	// 	planId: number;
 	// };
+
+	@Expose()
+	@IsString()
+	role: string;
+
+	@Expose()
+	@IsArray()
+	mfaFactors?: string[];
 
 	@Expose()
 	@IsJSON()
