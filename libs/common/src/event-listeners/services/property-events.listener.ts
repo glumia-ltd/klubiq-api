@@ -49,13 +49,15 @@ export class PropertyEventsListener {
 		);
 	}
 
-	@OnEvent(EVENTS.PROPERTY_UPDATED)
-	@OnEvent(EVENTS.PROPERTY_ARCHIVED)
-	async handlePropertyUpdatedOrDeletedEvent(payload: PropertyEvent) {
-		await this.helperService.invalidateOrganizationPropertyCache(payload);
+	@OnEvent(EVENTS.PROPERTY_UPDATED, { async: true })
+	@OnEvent(EVENTS.PROPERTY_ARCHIVED, { async: true })
+	async handlePropertyUpdatedOrArchivedEvent(payload: PropertyEvent) {
+		if (payload.invalidateCache) {
+			await this.helperService.invalidateOrganizationPropertyCache(payload);
+		}
 	}
 
-	@OnEvent(EVENTS.PROPERTY_ASSIGNED)
+	@OnEvent(EVENTS.PROPERTY_ASSIGNED, { async: true })
 	async handlePropertyAssignedEvent(payload: PropertyEvent) {
 		await this.helperService.deleteItemFromCache(
 			`properties:${payload.propertyId}`,
@@ -75,6 +77,7 @@ export class PropertyEventsListener {
 		payload.actionLink = `${this.clientBaseUrl}properties/${payload.propertyId}`;
 		payload.actionText = 'View Property';
 		const template = EVENT_TEMPLATE(payload)[propertyEvent];
+
 		const notificationRecipients =
 			await this.helperService.getNotificationRecipients(
 				payload,

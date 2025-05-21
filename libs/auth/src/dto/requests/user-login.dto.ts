@@ -268,7 +268,8 @@ export class ResetPasswordDto extends IntersectionType(
 
 	@ApiProperty()
 	@IsString()
-	oobCode: string;
+	@IsOptional()
+	oobCode?: string;
 }
 
 /**

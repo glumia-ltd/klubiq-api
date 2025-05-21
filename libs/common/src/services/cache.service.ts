@@ -1,8 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { CacheTTl } from '../config/config.constants';
-
+import { Cache } from 'cache-manager';
 @Injectable()
 export class CacheService {
 	private readonly cacheTTL: number = CacheTTl.ONE_DAY;
@@ -11,6 +10,10 @@ export class CacheService {
 	// gets all data by cache key
 	async getCache<T>(cacheKey: string): Promise<T[]> {
 		return await this.cacheManager.get<T[]>(cacheKey);
+	}
+
+	async getItem<T>(cacheKey: string): Promise<T> {
+		return await this.cacheManager.get<T>(cacheKey);
 	}
 
 	async removeCacheData(cacheKey: string): Promise<void> {
@@ -33,8 +36,9 @@ export class CacheService {
 		identifier: any,
 	): Promise<T> {
 		const cachedList = await this.cacheManager.get<T[]>(cacheKey);
-		if (cachedList && cachedList.length > 0)
+		if (cachedList && cachedList.length > 0) {
 			return cachedList.find((f) => f[key] == identifier);
+		}
 	}
 
 	async getCacheByIdentifiers<T>(
@@ -43,10 +47,11 @@ export class CacheService {
 		identifiers: any[],
 	): Promise<T> {
 		const cachedList = await this.cacheManager.get<T[]>(cacheKey);
-		if (cachedList && cachedList.length > 0)
+		if (cachedList && cachedList.length > 0) {
 			return cachedList.find((f) => {
 				return keys.every((key, index) => f[key] == identifiers[index]);
 			});
+		}
 	}
 
 	// gets a cached data by Id or identifier
@@ -122,10 +127,10 @@ export class CacheService {
 	}
 
 	async invalidateCache(cacheKey: string): Promise<void> {
-		const keys = await this.cacheManager.store.keys();
-		const keysToDelete = keys.filter((k) => k.startsWith(cacheKey));
-		keysToDelete.forEach(async (key) => {
-			await this.cacheManager.del(key);
-		});
+		await this.cacheManager.del(cacheKey);
+	}
+
+	async invalidateCacheByKeys(cacheKeys: string[]): Promise<void> {
+		await this.cacheManager.mdel(cacheKeys);
 	}
 }

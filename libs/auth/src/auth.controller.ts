@@ -177,20 +177,24 @@ export class AuthController {
 			credentials.email,
 			credentials.password,
 		);
+
 		if (tokenData.message && tokenData.message === ErrorMessages.MFA_REQUIRED) {
 			this.setMFARequiredCookie(res, tokenData);
 			if (this.isNotApiCall(req)) {
-				delete tokenData.mfaPendingCredential;
-				delete tokenData.mfaEnrollmentId;
+				const response = { ...tokenData };
+				delete response.mfaPendingCredential;
+				delete response.mfaEnrollmentId;
+				return response;
 			}
 			return tokenData;
 		}
+
 		if (this.isNotApiCall(req)) {
 			this.setLoginCookie(res, tokenData);
 			return { expires_in: tokenData.expires_in };
-		} else {
-			return tokenData;
 		}
+
+		return tokenData;
 	}
 
 	private setMFARequiredCookie(res: Response, tokenData: MFAResponseDto): void {
@@ -210,7 +214,7 @@ export class AuthController {
 	private isNotApiCall(req: Request): boolean {
 		const clientId = req.header('x-client-id');
 		const nonApiClientIds = [
-			this.configService.get<string>('LANDLORP_PORTAL_CLIENT_ID'),
+			this.configService.get<string>('LANDLORD_PORTAL_CLIENT_ID'),
 			this.configService.get<string>('TENANT_PORTAL_CLIENT_ID'),
 			this.configService.get<string>('ADMIN_PORTAL_CLIENT_ID'),
 		];
@@ -230,14 +234,8 @@ export class AuthController {
 		);
 	}
 	private clearLoginCookie(res: Response): void {
-		res.clearCookie(
-			cookieConfig.refreshToken.name,
-			cookieConfig.refreshToken.options,
-		);
-		res.clearCookie(
-			cookieConfig.accessToken.name,
-			cookieConfig.accessToken.options,
-		);
+		res.clearCookie(cookieConfig.refreshToken.name);
+		res.clearCookie(cookieConfig.accessToken.name);
 	}
 
 	@Auth(AuthType.Bearer)
@@ -376,6 +374,7 @@ export class AuthController {
 			}
 			request.refreshToken = refreshToken;
 		}
+		this.clearLoginCookie(res);
 		const tokenData = await this.landlordAuthService.exchangeRefreshToken(
 			request.refreshToken,
 		);
@@ -460,5 +459,22 @@ export class AuthController {
 			name: tenantRole.name,
 		};
 		return await this.landlordAuthService.createTenant(createUser);
+	}
+
+	@Auth(AuthType.Bearer)
+	@Get('test-invitation-token')
+	@ApiOkResponse()
+	async testGetInvitationToken() {
+		return await this.landlordAuthService.getInvitationToken({
+			email: 'test@test.com',
+			userId: '123',
+			fid: '456',
+		});
+	}
+	@Auth(AuthType.Bearer)
+	@Get('test-decode-token')
+	@ApiOkResponse()
+	async testDecodeInvitationToken(@Query('token') token: string) {
+		return await this.landlordAuthService.decodeInvitationToken(token);
 	}
 }

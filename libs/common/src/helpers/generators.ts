@@ -50,11 +50,13 @@ export class Generators {
 			.digest('hex');
 	}
 
-	generateToken(secret: string): string {
-		return crypto
-			.createHmac('sha256', secret)
-			.update(crypto.randomBytes(32))
-			.digest('hex');
+	generateToken(secret: string, sessionId?: string): string {
+		return sessionId
+			? crypto.createHmac('sha256', secret).update(sessionId).digest('hex')
+			: crypto
+					.createHmac('sha256', secret)
+					.update(crypto.randomBytes(32))
+					.digest('hex');
 	}
 
 	generateLeaseName(propertyName: string, unitName: string): string {
@@ -82,5 +84,77 @@ export class Generators {
 			return 0;
 		}
 		return rentAmount;
+	}
+
+	generateShortJwt(
+		payload: Record<string, any>,
+		expiresIn: string = '1h',
+	): string {
+		const secret = process.env.APP_SECRET;
+		if (!secret) {
+			throw new Error('APP_SECRET is not defined');
+		}
+
+		// Create a minimal payload with standard JWT claims
+		const minimalPayload = {
+			...payload,
+			iat: Math.floor(Date.now() / 1000),
+			exp: Math.floor(Date.now() / 1000) + this.parseExpiresIn(expiresIn),
+		};
+
+		// Encode header
+		const header = Buffer.from(
+			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
+		).toString('base64url');
+
+		// Encode payload
+		const encodedPayload = Buffer.from(JSON.stringify(minimalPayload)).toString(
+			'base64url',
+		);
+
+		// Create signature
+		const signature = crypto
+			.createHmac('sha256', secret)
+			.update(`${header}.${encodedPayload}`)
+			.digest('base64url');
+
+		return `${header}.${encodedPayload}.${signature}`;
+	}
+
+	decodeShortJwt(jwt: string): Record<string, any> {
+		const [header, payload, signature] = jwt.split('.');
+		const secret = process.env.APP_SECRET;
+		if (!secret) {
+			throw new Error('APP_SECRET is not defined');
+		}
+		const decodedPayload = JSON.parse(
+			Buffer.from(payload, 'base64url').toString('utf-8'),
+		);
+		const decodedSignature = crypto
+			.createHmac('sha256', secret)
+			.update(`${header}.${payload}`)
+			.digest('base64url');
+		if (decodedSignature !== signature) {
+			throw new Error('Invalid signature');
+		}
+		return decodedPayload;
+	}
+
+	private parseExpiresIn(expiresIn: string): number {
+		const unit = expiresIn.slice(-1);
+		const value = parseInt(expiresIn.slice(0, -1));
+
+		switch (unit) {
+			case 's':
+				return value;
+			case 'm':
+				return value * 60;
+			case 'h':
+				return value * 3600;
+			case 'd':
+				return value * 86400;
+			default:
+				return 3600; // Default to 1 hour
+		}
 	}
 }

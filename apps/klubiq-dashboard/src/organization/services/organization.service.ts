@@ -24,12 +24,12 @@ import { plainToInstance } from 'class-transformer';
 import { PageOptionsDto } from '@app/common/dto/pagination/page-options.dto';
 import { PageMetaDto } from '@app/common/dto/pagination/page-meta.dto';
 import { PageDto } from '@app/common/dto/pagination/page.dto';
+import { CacheKeys, CacheTTl } from '@app/common/config/config.constants';
 
 @Injectable()
 export class OrganizationService {
 	private readonly logger = new Logger(OrganizationService.name);
-	private readonly cacheTTL = 600;
-	private readonly cacheKeyPrefix = 'organizations';
+	private readonly cacheTTL = CacheTTl.FIFTEEN_MINUTES;
 	constructor(
 		private readonly cls: ClsService<SharedClsStore>,
 		@InjectEntityManager() private entityManager: EntityManager,
@@ -67,6 +67,14 @@ export class OrganizationService {
 			{ excludeExtraneousValues: true },
 		);
 	}
+
+	private getcacheKey(
+		organizationUuid: string,
+		cacheKeyExtension?: string,
+		prefix?: string,
+	) {
+		return `${prefix ? `${prefix}:` : ''}${organizationUuid}:${CacheKeys.ORGANIZATION}${cacheKeyExtension ? `:${cacheKeyExtension}` : ''}`;
+	}
 	// This gets the organization by uuid
 	async getOrganizationByUuId(uuid: string) {
 		try {
@@ -75,7 +83,7 @@ export class OrganizationService {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			}
 			uuid = currentUser.organizationId;
-			const cacheKey = `${this.cacheKeyPrefix}:${uuid}`;
+			const cacheKey = this.getcacheKey(uuid);
 			const cachedProperty =
 				await this.cacheManager.get<OrganizationResponseDto>(cacheKey);
 			if (cachedProperty) {
@@ -85,7 +93,6 @@ export class OrganizationService {
 			const org = await this.organizationRepository.getOrganizationByUUID(uuid);
 			const orgResponse = await this.mapPlainToClass(org);
 			await this.cacheManager.set(cacheKey, orgResponse, this.cacheTTL);
-			await this.updateOrgCacheKeys(cacheKey);
 			return orgResponse;
 		} catch (err) {
 			this.logger.error('Error getting organization', err);
@@ -98,7 +105,7 @@ export class OrganizationService {
 			if (!id) {
 				throw new BadRequestException(ErrorMessages.BAD_REQUEST);
 			}
-			const cacheKey = `tokens:${this.cacheKeyPrefix}:${id}`;
+			const cacheKey = this.getcacheKey(id, null, 'tokens');
 			const cachedProperty = await this.cacheManager.get<string>(cacheKey);
 			if (cachedProperty) {
 				return cachedProperty;
@@ -224,17 +231,5 @@ export class OrganizationService {
 			this.logger.error(`Error updating new organization - ${orgUuid}`, err);
 			throw new Error(`Error updating new organization. Error: ${err}`);
 		}
-	}
-	private async updateOrgCacheKeys(cacheKey: string) {
-		const currentUser = this.cls.get('currentUser');
-		const orgListKeys =
-			(await this.cacheManager.get<string[]>(
-				`${currentUser.organizationId}:orgListKeys`,
-			)) || [];
-		await this.cacheManager.set(
-			`${currentUser.organizationId}:orgListKeys`,
-			[...orgListKeys, cacheKey],
-			this.cacheTTL,
-		);
 	}
 }

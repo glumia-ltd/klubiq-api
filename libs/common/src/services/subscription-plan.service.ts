@@ -11,7 +11,7 @@ import { SubscriptionPlanRepository } from '../repositories/subscription.reposit
 
 @Injectable()
 export class SubscriptionPlanService {
-	private readonly cacheTTL = 60000;
+	private readonly cacheTTL = 900000;
 	private readonly logger = new Logger(SubscriptionPlanService.name);
 	private readonly cacheKey = CacheKeys.SUBSCRIPTION_PLANS;
 	private readonly cacheService = new CacheService(this.cacheManager);

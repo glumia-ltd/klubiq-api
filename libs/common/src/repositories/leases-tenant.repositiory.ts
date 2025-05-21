@@ -13,8 +13,13 @@ import {
 	LeaseTenantResponseDto,
 	TenantDto,
 } from 'apps/klubiq-dashboard/src/tenants/dto/responses/lease-tenant.dto';
-import { GetTenantDto } from 'apps/klubiq-dashboard/src/tenants/dto/requests/get-tenant-dto';
+import {
+	GetTenantDto,
+	TenantListDto,
+} from 'apps/klubiq-dashboard/src/tenants/dto/requests/get-tenant-dto';
 import { OrganizationTenants } from '../database/entities/organization-tenants.entity';
+import { PaymentStatus } from '../config/config.constants';
+import { Transaction } from '../database/entities/transaction.entity';
 
 @Injectable()
 export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
@@ -201,90 +206,230 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 	async organizationTenants(
 		organizationUuid: string,
 		getTenantDto?: GetTenantDto,
-	): Promise<[OrganizationTenants[], number]> {
-		console.log({ getTenantDto });
-
-		try {
-			if (!organizationUuid) {
-				throw new BadRequestException('Organization ID is required.');
-			}
-			const tenants = await this.manager
-				.createQueryBuilder(OrganizationTenants, 'orgTenant')
-				.leftJoinAndSelect('orgTenant.tenant', 'tenant')
-				.leftJoinAndSelect('tenant.profile', 'profile')
-				.where('orgTenant.organizationUuid = :organizationUuid', {
-					organizationUuid,
-				});
-
-			return await tenants.getManyAndCount();
-		} catch (error) {
-			throw error;
+	): Promise<[TenantListDto[], number]> {
+		if (!organizationUuid) {
+			throw new BadRequestException('Organization ID is required.');
 		}
+
+		const query = this.manager
+			.createQueryBuilder()
+			.select('tenant.id', 'id')
+			.addSelect('profile.profileUuid', 'profileUuid')
+			.addSelect("CONCAT(profile.firstName, ' ', profile.lastName)", 'fullName')
+			.addSelect('tenant.companyName', 'companyName')
+			.addSelect('COUNT(DISTINCT lease.id)', 'activeLeaseCount')
+			.addSelect('MAX(lease.startDate)', 'mostRecentLeaseStartDate')
+			.from(OrganizationTenants, 'orgTenant')
+			.innerJoin('orgTenant.tenant', 'tenant')
+			.leftJoin('tenant.profile', 'profile')
+			.leftJoin('tenant.leasesTenants', 'leasesTenants')
+			.leftJoin('leasesTenants.lease', 'lease', "lease.status = 'Active'")
+			.leftJoin('lease.unit', 'unit')
+			.leftJoin('unit.property', 'property')
+			.where('orgTenant.organizationUuid = :organizationUuid', {
+				organizationUuid,
+			})
+			.groupBy(
+				'tenant.id, profile.profileUuid, profile.firstName, profile.lastName, tenant.companyName',
+			);
+
+		if (getTenantDto?.sortBy && getTenantDto?.order) {
+			query.orderBy(
+				`tenant.${getTenantDto.sortBy}`,
+				getTenantDto.order.toUpperCase() as 'ASC' | 'DESC',
+			);
+		}
+
+		if (getTenantDto?.skip !== undefined) query.skip(getTenantDto.skip);
+		if (getTenantDto?.take !== undefined) query.take(getTenantDto.take);
+
+		const [rawTenants, total] = await Promise.all([
+			query.getRawMany(),
+			query.getCount(),
+		]);
+
+		const formattedTenantsList = await Promise.all(
+			rawTenants.map(async (tenant) => {
+				const lease = await this.manager
+					.createQueryBuilder(Lease, 'lease')
+					.innerJoinAndSelect('lease.unit', 'unit')
+					.innerJoinAndSelect('unit.property', 'property')
+					.innerJoin('lease.leasesTenants', 'lt')
+					.where('lt.tenantId = :tenantId', { tenantId: tenant.id })
+					.andWhere('lease.status = :status', { status: 'Active' })
+					.andWhere('lease.startDate = :startDate', {
+						startDate: tenant.mostRecentLeaseStartDate,
+					})
+					.orderBy('lease.startDate', 'DESC')
+					.getOne();
+
+				let mostRecentPaymentStatus: PaymentStatus | null = null;
+
+				if (lease?.id) {
+					const transaction = await this.manager
+						.createQueryBuilder(Transaction, 'transaction')
+						.where('transaction.leaseId = :leaseId', { leaseId: lease.id })
+						.orderBy('transaction.transactionDate', 'DESC')
+						.getOne();
+
+					mostRecentPaymentStatus = transaction?.status ?? null;
+				}
+
+				return {
+					...tenant,
+					mostRecentLeaseId: lease?.id || null,
+					mostRecentUnitId: lease?.unit?.id || null,
+					mostRecentUnitName: lease?.unit?.unitNumber || null,
+					mostRecentPropertyId: lease?.unit?.property?.id || null,
+					mostRecentPropertyName: lease?.unit?.property?.name || null,
+					mostRecentPaymentStatus,
+				};
+			}),
+		);
+
+		return [formattedTenantsList, total];
 	}
 
 	async getTenantById(tenantId: string): Promise<{
-		tenant: {
+		profile: {
 			id: string;
 			fullName: string;
-			email: string;
-			phone: string;
+			firstName: string;
+			lastName: string;
+			companyName: string;
+			email: string | null;
+			phoneNumber: string;
+			title: string | null;
+			profilePicUrl: string | null;
+			countryPhoneCode: string | null;
+			street: string | null;
+			addressLine2: string | null;
+			state: string | null;
+			city: string | null;
+			country: string | null;
+			postalCode: string | null;
+			formOfIdentity: string | null;
+			dateOfBirth: Date | null;
+			gender: string | null;
+			bio: string | null;
+			isTermsAndConditionAccepted: boolean;
+			isPrivacyPolicyAgreed: boolean;
+			createdDate: Date;
+			updatedDate: Date;
+			isKYCVerified: boolean;
 		};
-		leases: {
-			id: string;
-			leaseStart: Date;
-			leaseEnd: Date;
-			rentAmount: number;
-			unitId: object;
-			securityDeposit: number;
-			paymentFrequency: string;
-			nextDueDate: Date;
-			lastPaymentDate: Date;
-			lateFeeAmount: number;
-		}[];
+		summary: {
+			totalLeases: number;
+			activeLeases: number;
+			inactiveLeases: number;
+			totalRent: number;
+		};
+		activeLeases: any[];
+		inactiveLeases: any[];
 	}> {
-		try {
-			if (!tenantId) {
-				throw new BadRequestException('Tenant ID is required');
-			}
+		if (!tenantId) {
+			throw new BadRequestException('Tenant ID is required');
+		}
 
-			const records = await this.manager
-				.getRepository(LeasesTenants)
-				.createQueryBuilder('lt')
-				.leftJoinAndSelect('lt.tenant', 'tenant')
-				.leftJoinAndSelect('tenant.profile', 'profile')
-				.leftJoinAndSelect('lt.lease', 'lease')
-				.where('tenant.id = :tenantId', { tenantId: tenantId })
-				.getMany();
+		const records: any[] = await this.manager
+			.getRepository(TenantUser)
+			.createQueryBuilder('lt')
+			.leftJoinAndSelect('lt.profile', 'profile')
+			.leftJoinAndSelect('lt.leasesTenants', 'leasesTenants')
+			.leftJoinAndSelect('leasesTenants.lease', 'lease')
+			.leftJoinAndSelect('lease.unit', 'unit')
+			.leftJoinAndSelect('unit.property', 'property')
+			.leftJoinAndSelect('property.address', 'address')
+			.where('lt.ID = :tenantId', { tenantId })
+			.getMany();
 
-			if (records.length === 0) {
-				throw new NotFoundException('Tenant or leases not found.');
-			}
+		if (records.length === 0) {
+			throw new NotFoundException('Tenant not found.');
+		}
 
-			const profile = await records[0].tenant.profile;
+		const tenant = records[0];
+		const profile = await tenant.profile;
+
+		const validLeases = records
+			.flatMap((r) => r.leasesTenants || [])
+			.filter((lt: any) => lt.lease);
+
+		const mapLease = (lt: any) => {
+			const lease = lt.lease;
+			const unit = lease.unit;
+			const property = unit.property;
+			const address = property.address;
 
 			return {
-				tenant: {
-					id: records[0].tenant.id,
-					fullName: `${profile.firstName} ${profile.lastName}`,
-					email: profile.email,
-					phone: profile.phoneNumber,
-				},
-				leases: records.map((record) => ({
-					id: record.lease.id,
-					leaseStart: record.lease.startDate,
-					leaseEnd: record.lease.endDate,
-					rentAmount: record.lease.rentAmount,
-					unitId: record.lease.unit,
-					paymentFrequency: record.lease.paymentFrequency,
-					lastPaymentDate: record.lease.lastPaymentDate,
-					nextDueDate: record.lease.nextDueDate,
-					lateFeeAmount: record.lease.lateFeeAmount,
-					securityDeposit: record.lease.securityDeposit,
-				})),
+				id: lease.id,
+				leaseStart: lease.startDate,
+				leaseEnd: lease.endDate,
+				rentAmount: lease.rentAmount,
+				unit,
+				propertyName: property.name,
+				propertyAddress: `${address.addressLine1}, ${address.city}, ${address.state}`,
+				paymentFrequency: lease.paymentFrequency,
+				lastPaymentDate: lease.lastPaymentDate,
+				nextDueDate: lease.nextDueDate,
+				lateFeeAmount: lease.lateFeeAmount,
+				securityDeposit: lease.securityDeposit,
 			};
-		} catch (error) {
-			throw error;
-		}
+		};
+
+		const activeLeases = validLeases
+			.filter(
+				(lt) =>
+					lt.lease.status?.toUpperCase() === 'ACTIVE' && !lt.lease.isArchived,
+			)
+			.map(mapLease);
+
+		const inactiveLeases = validLeases
+			.filter(
+				(lt) =>
+					lt.lease.status?.toUpperCase() !== 'ACTIVE' || lt.lease.isArchived,
+			)
+			.map(mapLease);
+
+		return {
+			profile: {
+				id: tenant.id,
+				fullName: `${profile.firstName} ${profile.lastName}`,
+				firstName: profile.firstName,
+				lastName: profile.lastName,
+				companyName: tenant.companyName,
+				email: profile.email,
+				phoneNumber: profile.phoneNumber,
+				title: profile.title ?? null,
+				profilePicUrl: profile.profilePicUrl ?? null,
+				countryPhoneCode: profile.countryPhoneCode ?? null,
+				street: profile.street ?? null,
+				addressLine2: profile.addressLine2 ?? null,
+				state: profile.state ?? null,
+				city: profile.city ?? null,
+				country: profile.country ?? null,
+				postalCode: profile.postalCode ?? null,
+				formOfIdentity: profile.formOfIdentity ?? null,
+				dateOfBirth: profile.dateOfBirth ?? null,
+				gender: profile.gender ?? null,
+				bio: profile.bio ?? null,
+				isTermsAndConditionAccepted: profile.isTermsAndConditionAccepted,
+				isPrivacyPolicyAgreed: profile.isPrivacyPolicyAgreed,
+				createdDate: profile.createdDate,
+				updatedDate: profile.updatedDate,
+				isKYCVerified: profile.isKYCVerified,
+			},
+			summary: {
+				totalLeases: validLeases.length,
+				activeLeases: activeLeases.length,
+				inactiveLeases: inactiveLeases.length,
+				totalRent: validLeases.reduce(
+					(sum, lt) => sum + Number(lt.lease?.rentAmount ?? 0),
+					0,
+				),
+			},
+			activeLeases,
+			inactiveLeases,
+		};
 	}
 
 	async removeTenantFromOrganization(
@@ -337,5 +482,145 @@ export class LeaseTenantRepository extends BaseRepository<LeasesTenants> {
 		} catch (error) {
 			throw error;
 		}
+	}
+
+	async getTenantByProfileUuid(tenantId: string): Promise<{
+		profile: {
+			id: string;
+			fullName: string;
+			firstName: string;
+			lastName: string;
+			email: string;
+			phoneNumber: string;
+			title: string | null;
+			profilePicUrl: string | null;
+			countryPhoneCode: string | null;
+			street: string | null;
+			addressLine2: string | null;
+			state: string | null;
+			city: string | null;
+			country: string | null;
+			postalCode: string | null;
+			formOfIdentity: string | null;
+			dateOfBirth: Date | null;
+			gender: string | null;
+			bio: string | null;
+			isTermsAndConditionAccepted: boolean;
+			isPrivacyPolicyAgreed: boolean;
+			createdDate: Date;
+			updatedDate: Date;
+			isKYCVerified: boolean;
+		};
+		summary: {
+			totalLeases: number;
+			activeLeases: number;
+			inactiveLeases: number;
+			totalRent: number;
+		};
+		activeLeases: any[];
+		inactiveLeases: any[];
+	}> {
+		if (!tenantId) {
+			throw new BadRequestException('Tenant ID is required');
+		}
+
+		const records: any[] = await this.manager
+			.getRepository(TenantUser)
+			.createQueryBuilder('lt')
+			.leftJoinAndSelect('lt.profile', 'profile')
+			.leftJoinAndSelect('lt.leasesTenants', 'leasesTenants')
+			.leftJoinAndSelect('leasesTenants.lease', 'lease')
+			.leftJoinAndSelect('lease.unit', 'unit')
+			.leftJoinAndSelect('unit.property', 'property')
+			.leftJoinAndSelect('property.address', 'address')
+			.where('lt.profile = :tenantId', { tenantId })
+			.getMany();
+
+		if (records.length === 0) {
+			throw new NotFoundException('Tenant not found.');
+		}
+
+		const tenant = records[0];
+		const profile = await tenant.profile;
+
+		const validLeases = records
+			.flatMap((r) => r.leasesTenants || [])
+			.filter((lt: any) => lt.lease);
+
+		const mapLease = (lt: any) => {
+			const lease = lt.lease;
+			const unit = lease.unit;
+			const property = unit.property;
+			const address = property.address;
+
+			return {
+				id: lease.id,
+				leaseStart: lease.startDate,
+				leaseEnd: lease.endDate,
+				rentAmount: lease.rentAmount,
+				unit,
+				propertyName: property.name,
+				propertyAddress: `${address.addressLine1}, ${address.city}, ${address.state}`,
+				paymentFrequency: lease.paymentFrequency,
+				lastPaymentDate: lease.lastPaymentDate,
+				nextDueDate: lease.nextDueDate,
+				lateFeeAmount: lease.lateFeeAmount,
+				securityDeposit: lease.securityDeposit,
+			};
+		};
+
+		const activeLeases = validLeases
+			.filter(
+				(lt) =>
+					lt.lease.status?.toUpperCase() === 'ACTIVE' && !lt.lease.isArchived,
+			)
+			.map(mapLease);
+
+		const inactiveLeases = validLeases
+			.filter(
+				(lt) =>
+					lt.lease.status?.toUpperCase() !== 'ACTIVE' || lt.lease.isArchived,
+			)
+			.map(mapLease);
+
+		return {
+			profile: {
+				id: tenant.id,
+				fullName: `${profile.firstName} ${profile.lastName}`,
+				firstName: profile.firstName,
+				lastName: profile.lastName,
+				email: profile.email,
+				phoneNumber: profile.phoneNumber,
+				title: profile.title ?? null,
+				profilePicUrl: profile.profilePicUrl ?? null,
+				countryPhoneCode: profile.countryPhoneCode ?? null,
+				street: profile.street ?? null,
+				addressLine2: profile.addressLine2 ?? null,
+				state: profile.state ?? null,
+				city: profile.city ?? null,
+				country: profile.country ?? null,
+				postalCode: profile.postalCode ?? null,
+				formOfIdentity: profile.formOfIdentity ?? null,
+				dateOfBirth: profile.dateOfBirth ?? null,
+				gender: profile.gender ?? null,
+				bio: profile.bio ?? null,
+				isTermsAndConditionAccepted: profile.isTermsAndConditionAccepted,
+				isPrivacyPolicyAgreed: profile.isPrivacyPolicyAgreed,
+				createdDate: profile.createdDate,
+				updatedDate: profile.updatedDate,
+				isKYCVerified: profile.isKYCVerified,
+			},
+			summary: {
+				totalLeases: validLeases.length,
+				activeLeases: activeLeases.length,
+				inactiveLeases: inactiveLeases.length,
+				totalRent: validLeases.reduce(
+					(sum, lt) => sum + Number(lt.lease?.rentAmount ?? 0),
+					0,
+				),
+			},
+			activeLeases,
+			inactiveLeases,
+		};
 	}
 }

@@ -19,6 +19,7 @@ export class PropertyEvent {
 	currency?: string;
 	locale?: string;
 	language?: string;
+	invalidateCache?: boolean = true;
 }
 
 export class LeaseEvent extends PropertyEvent {
@@ -35,7 +36,7 @@ export class LeaseEvent extends PropertyEvent {
 	sendNotification: boolean = true;
 }
 
-export class TenantEvent extends IntersectionType(PropertyEvent, TenantDto) {
+export class TenantEvent extends IntersectionType(LeaseEvent, TenantDto) {
 	tenantId?: string;
 	tenantName?: string;
 	tenantEmail?: string;

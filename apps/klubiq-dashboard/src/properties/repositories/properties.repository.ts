@@ -36,6 +36,10 @@ import { PropertyAddress } from '@app/common/database/entities/property-address.
 import { Unit } from '@app/common/database/entities/unit.entity';
 import { PropertyImage } from '@app/common/database/entities/property-image.entity';
 import { CreateUnitDto } from '../dto/requests/create-unit.dto';
+import { ApiDebugger } from '@app/common/helpers/debug-loggers';
+import { Maintenance } from '@app/common/database/entities/maintenance.entity';
+import { Lease } from '@app/common/database/entities/lease.entity';
+import { LeasesTenants } from '@app/common/database/entities/leases-tenants.entity';
 
 @Injectable()
 export class PropertyRepository extends BaseRepository<Property> {
@@ -52,7 +56,10 @@ export class PropertyRepository extends BaseRepository<Property> {
 		'display',
 		'unitType',
 	];
-	constructor(manager: EntityManager) {
+	constructor(
+		manager: EntityManager,
+		private readonly apiDebugger: ApiDebugger,
+	) {
 		super(Property, manager);
 	}
 
@@ -378,35 +385,190 @@ export class PropertyRepository extends BaseRepository<Property> {
 	}
 
 	async deleteProperty(propertyUuid: string, orgUuid: string, userId: string) {
-		await this.createQueryBuilder('property')
-			.delete()
-			.where('uuid = :propertyUuid', { propertyUuid })
-			.andWhere('organizationUuid = :orgUuid', { orgUuid })
-			.andWhere(
-				new Brackets((qb) => {
-					qb.where('property."ownerUid" = :ownerUid', { ownerUid: userId })
-						.orWhere('property."managerUid" = :managerUid', {
-							managerUid: userId,
-						})
-						.orWhere(
-							'property."ownerUid" IS NULL AND property."managerUid" IS NULL',
-						);
+		await this.manager.transaction(async (transactionalEntityManager) => {
+			// First verify property exists and user has permission
+			const property = await transactionalEntityManager
+				.createQueryBuilder(Property, 'property')
+				.leftJoinAndSelect('property.address', 'address')
+				.where('property.uuid = :propertyUuid', { propertyUuid })
+				.andWhere('property.organizationUuid = :orgUuid', { orgUuid })
+				.andWhere(
+					new Brackets((qb) => {
+						qb.where('property."ownerUid" = :ownerUid', { ownerUid: userId })
+							.orWhere('property."managerUid" = :managerUid', {
+								managerUid: userId,
+							})
+							.orWhere(
+								'property."ownerUid" IS NULL AND property."managerUid" IS NULL',
+							);
+					}),
+				)
+				.getOne();
+
+			if (!property) {
+				throw new NotFoundException('Property not found or unauthorized');
+			}
+
+			// Delete all related records in parallel
+			await Promise.all([
+				// Delete all leases-tenants records for units in this property
+				transactionalEntityManager
+					.createQueryBuilder()
+					.delete()
+					.from(LeasesTenants)
+					.where(
+						'leaseId IN (SELECT id FROM poo.lease WHERE "unitId" IN (SELECT id FROM poo.unit WHERE "propertyUuid" = :propertyUuid))',
+						{ propertyUuid },
+					)
+					.execute(),
+
+				// Delete all leases for units in this property
+				transactionalEntityManager
+					.createQueryBuilder()
+					.delete()
+					.from(Lease)
+					.where(
+						'unitId IN (SELECT id FROM poo.unit WHERE "propertyUuid" = :propertyUuid)',
+						{ propertyUuid },
+					)
+					.execute(),
+
+				// Delete all property and unit images
+				transactionalEntityManager
+					.createQueryBuilder()
+					.delete()
+					.from(PropertyImage)
+					.where(
+						'"propertyUuid" = :propertyUuid OR unitId IN (SELECT id FROM poo.unit WHERE "propertyUuid" = :propertyUuid)',
+						{ propertyUuid },
+					)
+					.execute(),
+
+				// Delete maintenance records
+				transactionalEntityManager.delete(Maintenance, {
+					property: { uuid: propertyUuid },
 				}),
-			)
-			.execute();
-		// return deleteData.
+			]);
+
+			// Delete units
+			await transactionalEntityManager.delete(Unit, {
+				property: { uuid: propertyUuid },
+			});
+
+			// Finally delete the property
+			await transactionalEntityManager.delete(Property, { uuid: propertyUuid });
+
+			// Delete property address
+			await transactionalEntityManager.delete(PropertyAddress, {
+				id: property.address.id,
+			});
+		});
+	}
+
+	async updateUnit(id: string, data: UpdateUnitDto, orgUuid: string) {
+		await this.manager.transaction(async (transactionalEntityManager) => {
+			// Update basic unit properties
+			const updateData = {
+				unitNumber: data.unitNumber,
+				floor: data.floor,
+				rooms: data.rooms,
+				offices: data.offices,
+				bedrooms: data.bedrooms,
+				bathrooms: data.bathrooms,
+				toilets: data.toilets,
+				area: data.area,
+				rentAmount: data.rentAmount,
+				status: data.status,
+				amenities: data.amenities,
+			};
+
+			// Update unit
+			await transactionalEntityManager.update(Unit, id, updateData);
+
+			// Handle images if provided
+			if (data.images) {
+				// Remove existing images if specified
+				if (data.images.length === 0) {
+					await transactionalEntityManager.delete(PropertyImage, {
+						unit: { id },
+					});
+				} else {
+					// Get existing images
+					const existingImages = await transactionalEntityManager.find(
+						PropertyImage,
+						{
+							where: { unit: { id } },
+						},
+					);
+
+					// Delete images not in the new set
+					const newImageIds = data.images.map((img) => img.id).filter(Boolean);
+					const imagesToDelete = existingImages.filter(
+						(img) => !newImageIds.includes(img.id),
+					);
+
+					if (imagesToDelete.length > 0) {
+						await transactionalEntityManager.remove(
+							PropertyImage,
+							imagesToDelete,
+						);
+					}
+
+					// Add new images
+					const newImages = data.images
+						.filter((img) => !img.id)
+						.map((img) => ({
+							...img,
+							unit: { id },
+							organization: { organizationUuid: orgUuid },
+						}));
+
+					if (newImages.length > 0) {
+						await transactionalEntityManager.save(PropertyImage, newImages);
+					}
+
+					// Update existing images
+					const imagesToUpdate = data.images.filter((img) => img.id);
+					if (imagesToUpdate.length > 0) {
+						await Promise.all(
+							imagesToUpdate.map((img) =>
+								transactionalEntityManager.update(PropertyImage, img.id, {
+									url: img.url,
+									fileName: img.fileName,
+									fileSize: img.fileSize,
+									isMain: img.isMain,
+									isArchived: false,
+								}),
+							),
+						);
+					}
+				}
+			}
+
+			// Return updated unit with relations
+			return await transactionalEntityManager.findOne(Unit, {
+				where: { id },
+				relations: ['images'],
+			});
+		});
 	}
 
 	//UPDATE UNIT AND IT'S IMAGES
-	async updateUnit(id: string, data: UpdateUnitDto) {
-		await this.manager.update(Unit, id, data);
-		const updatedUnit = await this.manager.findOne(Unit, {
-			where: { id },
-		});
-		if (data.images && data.images.length > 0) {
-			await this.upsertUnitImages(updatedUnit, data.images);
-		}
-	}
+	// OLD VERSION
+	// async updateUnit(id: string, data: UpdateUnitDto) {
+	// 	this.apiDebugger.info('In property repository, about to update unit', data);
+	// 	const result = await this.manager.update(Unit, id, data);
+	// 	this.apiDebugger.info(
+	// 		'In property repository, result of updating unit',
+	// 		result.affected,
+	// 	);
+	// 	const updatedUnit = await this.manager.findOne(Unit, {
+	// 		where: { id },
+	// 	});
+	// 	if (data.images && data.images.length > 0) {
+	// 		await this.upsertUnitImages(updatedUnit, data.images);
+	// 	}
+	// }
 
 	// 5. Updating property images
 	private async upsertUnitImages(
@@ -463,51 +625,74 @@ export class PropertyRepository extends BaseRepository<Property> {
 			statusId,
 			address,
 			customAmenities,
-			...propertyData
+			name,
+			description,
+			note,
+			tags,
 		} = data;
+
 		return await this.manager.transaction(
 			async (transactionalEntityManager) => {
+				// Find and validate property
 				const property = await transactionalEntityManager.findOne(Property, {
 					where: { uuid: propertyUuid },
 					relations: ['organization'],
 				});
+
 				if (!property) {
 					throw new Error('Property not found');
 				}
+
+				// Validate authorization
 				if (property.organization.organizationUuid !== orgUuid) {
 					throw new Error('You are not authorized to update this property');
 				}
+
 				if (
 					!isOrgOwner &&
-					(property.owner?.profileUuid !== userId ||
-						property.manager?.profileUuid !== userId)
+					property.owner?.profileUuid !== userId &&
+					property.manager?.profileUuid !== userId
 				) {
 					throw new Error('You are not authorized to update this property');
 				}
-				if (typeId) {
-					property.type = await transactionalEntityManager.findOneBy(
-						PropertyType,
-						{ id: typeId },
-					);
-				}
-				if (categoryId) {
-					property.category = await transactionalEntityManager.findOneBy(
-						PropertyCategory,
-						{ id: categoryId },
-					);
-				}
-				if (purposeId) {
-					property.purpose = await transactionalEntityManager.findOneBy(
-						PropertyPurpose,
-						{ id: purposeId },
-					);
-				}
-				if (statusId) {
-					property.status = await transactionalEntityManager.findOneBy(
-						PropertyStatus,
-						{ id: statusId },
-					);
-				}
+
+				// Update property relations in parallel
+				const [type, category, purpose, status] = await Promise.all([
+					typeId
+						? transactionalEntityManager.findOneBy(PropertyType, { id: typeId })
+						: null,
+					categoryId
+						? transactionalEntityManager.findOneBy(PropertyCategory, {
+								id: categoryId,
+							})
+						: null,
+					purposeId
+						? transactionalEntityManager.findOneBy(PropertyPurpose, {
+								id: purposeId,
+							})
+						: null,
+					statusId
+						? transactionalEntityManager.findOneBy(PropertyStatus, {
+								id: statusId,
+							})
+						: null,
+				]);
+
+				// Update property fields
+				Object.assign(property, {
+					type: type || property.type,
+					category: category || property.category,
+					purpose: purpose || property.purpose,
+					status: status || property.status,
+					name: name || property.name,
+					description: description || property.description,
+					note: note || property.note,
+					tags: tags?.length
+						? [...(property.tags || []), ...tags.map((tag) => tag.trim())]
+						: property.tags,
+				});
+
+				// Update address if provided
 				if (address) {
 					await transactionalEntityManager.update(
 						PropertyAddress,
@@ -516,41 +701,31 @@ export class PropertyRepository extends BaseRepository<Property> {
 					);
 				}
 
-				await transactionalEntityManager.update(
-					Property,
-					propertyUuid,
-					propertyData,
+				// Save property changes
+				await transactionalEntityManager.save(Property, property);
+
+				// Handle units, images and amenities in parallel
+				await Promise.all(
+					[
+						units?.length &&
+							Promise.all(
+								units.map((unit) => this.updateUnit(unit.id, unit, orgUuid)),
+							),
+						images?.length && this.updatePropertyImages(property, images),
+						customAmenities?.length &&
+							transactionalEntityManager.save(
+								Amenity,
+								customAmenities.map((amenity) =>
+									transactionalEntityManager.create(Amenity, {
+										name: amenity,
+										isPrivate: true,
+									}),
+								),
+							),
+					].filter(Boolean),
 				);
-				if (units && units.length > 0) {
-					await Promise.all(
-						units.map((unit) => this.updateUnit(unit.id, unit)),
-					);
-				}
-				if (images && images.length > 0) {
-					await this.updatePropertyImages(property, images);
-				}
-				// create new amenities
-				if (customAmenities && customAmenities.length > 0) {
-					const newAmenities = map(customAmenities, (amenity) => {
-						return transactionalEntityManager.create(Amenity, {
-							name: amenity,
-							isPrivate: true,
-						});
-					});
-					await transactionalEntityManager.save(Amenity, newAmenities);
-				}
-				return transactionalEntityManager.findOne(Property, {
-					where: { uuid: propertyUuid },
-					relations: [
-						'type',
-						'category',
-						'purpose',
-						'status',
-						'address',
-						'units',
-						'images',
-					],
-				});
+
+				//return this.getAPropertyInAnOrganization(orgUuid, userId, propertyUuid);
 			},
 		);
 	}

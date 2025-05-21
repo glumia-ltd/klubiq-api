@@ -26,6 +26,7 @@ import { GetPropertyDto } from '../dto/requests/get-property.dto';
 import { IPropertyMetrics } from '../interfaces/property-metrics.service.interface';
 import { PropertyMetrics } from '@app/common/dto/responses/dashboard-metrics.dto';
 import {
+	CacheKeys,
 	CacheTTl,
 	UnitStatus,
 	UserRoles,
@@ -50,8 +51,7 @@ import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 @Injectable()
 export class PropertiesService implements IPropertyMetrics {
 	private readonly logger = new Logger(PropertiesService.name);
-	private readonly cacheKeyPrefix = 'properties';
-	private readonly cacheTTL = 90;
+	private readonly cacheTTL = CacheTTl.FIFTEEN_MINUTES;
 	constructor(
 		@InjectRepository(PropertyRepository)
 		private readonly propertyRepository: PropertyRepository,
@@ -63,6 +63,8 @@ export class PropertiesService implements IPropertyMetrics {
 		private readonly commonConfigService: CommonConfigService,
 		private readonly apiDebugger: ApiDebugger,
 	) {}
+
+	//#region Property Metrics and Insights Functions
 	async getTotalUnits(organizationUuid: string): Promise<number> {
 		try {
 			return await this.propertyRepository.getTotalUnits(organizationUuid);
@@ -178,7 +180,8 @@ export class PropertiesService implements IPropertyMetrics {
 			this.logger.error('Error getting occupancy rate', error);
 		}
 	}
-
+	//#endregion
+	//#region Mapper Functions
 	private mapUnitsToUnitListDto(units: Unit[], groups?: string[]) {
 		return plainToInstance(
 			UnitDto,
@@ -260,7 +263,9 @@ export class PropertiesService implements IPropertyMetrics {
 		if (unit.leases?.[0]?.leasesTenants) {
 			resolvedActiveLeaseTenants = await Promise.all(
 				unit.leases[0].leasesTenants.map(async (leaseTenant) => {
-					if (!leaseTenant?.tenant?.profile) return null;
+					if (!leaseTenant?.tenant?.profile) {
+						return null;
+					}
 
 					const tenantProfile = await Promise.resolve(
 						leaseTenant.tenant.profile,
@@ -274,6 +279,7 @@ export class PropertiesService implements IPropertyMetrics {
 							profileUuid: tenantProfile?.profileUuid || null,
 							profilePicUrl: tenantProfile?.profilePicUrl || null,
 							phoneNumber: tenantProfile?.phoneNumber || null,
+							companyName: leaseTenant?.tenant?.companyName || null,
 						},
 						isPrimaryTenant: leaseTenant.isPrimaryTenant || false,
 					};
@@ -352,19 +358,12 @@ export class PropertiesService implements IPropertyMetrics {
 			{ excludeExtraneousValues: true, groups: ['private'] },
 		);
 	}
+	//#endregion
 
-	private async updateOrgPropertiesCacheKeys(cacheKey: string) {
-		const currentUser = this.cls.get('currentUser');
-		const propertyListKeys =
-			(await this.cacheManager.get<string[]>(
-				`${currentUser.organizationId}:getPropertyListKeys`,
-			)) || [];
-		await this.cacheManager.set(
-			`${currentUser.organizationId}:getPropertyListKeys`,
-			[...propertyListKeys, cacheKey],
-			this.cacheTTL,
-		);
+	private getcacheKey(organizationUuid: string, cacheKeyExtension?: string) {
+		return `${organizationUuid}:${CacheKeys.PROPERTY}${cacheKeyExtension ? `:${cacheKeyExtension}` : ''}`;
 	}
+
 	/**
 	 * Retrieves a property by its UUID from the current organization.
 	 *
@@ -377,15 +376,17 @@ export class PropertiesService implements IPropertyMetrics {
 	async getPropertyById(uuid: string): Promise<PropertyDetailsDto> {
 		try {
 			const currentUser = this.cls.get('currentUser');
-			//console.log('currentUser', currentUser);
 			if (!currentUser) {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			}
-			const cacheKey = `${this.cacheKeyPrefix}:${uuid}`;
+			const cacheKey = this.getcacheKey(currentUser.organizationId, uuid);
+			// this.apiDebugger.info('cacheKey', cacheKey);
 			const cachedProperty =
 				await this.cacheManager.get<PropertyDetailsDto>(cacheKey);
+			// this.apiDebugger.info('cachedProperty', cachedProperty);
+
 			if (cachedProperty) {
-				//console.log('cachedProperty', cachedProperty);
+				// this.apiDebugger.info('cachedProperty found');
 				return cachedProperty;
 			}
 			const property =
@@ -394,11 +395,9 @@ export class PropertiesService implements IPropertyMetrics {
 					currentUser.kUid,
 					uuid,
 				);
-			this.apiDebugger.info('property found: ', property);
 			const propertyDetails = await this.mapPlainPropertyDetailToDto(property);
-			this.apiDebugger.info('propertyDetails after mapping: ', propertyDetails);
 			await this.cacheManager.set(cacheKey, propertyDetails, this.cacheTTL);
-			await this.updateOrgPropertiesCacheKeys(cacheKey);
+			// this.apiDebugger.info('About to update org properties cache keys');
 			return propertyDetails;
 		} catch (error) {
 			this.logger.error('Error getting Property Data', error);
@@ -424,18 +423,24 @@ export class PropertiesService implements IPropertyMetrics {
 			if (!currentUser) {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			}
-			const property = await this.propertyRepository.updateProperty(
+			await this.propertyRepository.updateProperty(
 				uuid,
 				currentUser.organizationId,
 				currentUser.kUid,
 				updateData,
 				currentUser.organizationRole === UserRoles.ORG_OWNER,
 			);
-			this.eventEmitter.emit('property.updated', {
-				organizationId: currentUser.organizationId,
-				propertyId: uuid,
-			} as PropertyEvent);
-			return await this.mapPlainPropertyDetailToDto(property);
+			this.emitPropertyEvent(
+				'property.updated',
+				currentUser.organizationId,
+				currentUser.email,
+				currentUser.name,
+				currentUser.kUid,
+				updateData,
+				false,
+			);
+			await this.invalidatePropertyCache(uuid, true);
+			return await this.getPropertyById(uuid);
 		} catch (error) {
 			this.logger.error('Error updating Property Data', error);
 			throw new Error(`Error updating Property Data. Error: ${error}`);
@@ -461,6 +466,7 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.organizationId,
 				currentUser.kUid,
 			);
+			await this.invalidatePropertyCache(deleteData.uuid, true);
 			const deletedTime = DateTime.utc()
 				.setZone(this.cls.get('clientTimeZoneName'))
 				.toLocaleString(DateTime.DATETIME_FULL);
@@ -497,6 +503,7 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.organizationId,
 				currentUser.kUid,
 			);
+			await this.invalidatePropertyCache(propertyUuid, true);
 			this.eventEmitter.emit('property.archived', {
 				organizationId: currentUser.organizationId,
 				propertyId: propertyUuid,
@@ -541,14 +548,16 @@ export class PropertiesService implements IPropertyMetrics {
 			createDto.orgUuid = currentUser.organizationId;
 			forEach(createDto.units, (unit, index) => {
 				if (!createDto.isMultiUnit) {
-					unit.unitNumber = `su-${createDto.name
+					unit.unitNumber = `su_${createDto.name
 						.toLowerCase()
 						.replace(/ /g, '-')}`;
 				} else {
-					unit.unitNumber = `mu-${createDto.name
-						.slice(0, 3)
-						.toLowerCase()
-						.replace(/ /g, '-')}-${unit.unitNumber}-${index + 1}`;
+					unit.unitNumber =
+						unit.unitNumber ??
+						`mu_${createDto.name
+							.slice(0, 2)
+							.toLowerCase()
+							.replace(/ /g, '-')}-uniit-${index + 1}`;
 				}
 			});
 			createDto.managerUid = currentUser.kUid;
@@ -556,16 +565,17 @@ export class PropertiesService implements IPropertyMetrics {
 				createDto,
 				isDraft,
 			);
-			this.eventEmitter.emitAsync('property.created', {
-				organizationId: currentUser.organizationId,
-				name: createdProperty.name,
-				totalUnits: createDto.units?.length || 1,
-				propertyManagerId: createdProperty.manager?.profileUuid,
-				propertyManagerEmail: currentUser.email,
-				propertyId: createdProperty.uuid,
-				propertyManagerName: currentUser.name,
-				propertyAddress: this.getPropertyAddress(createdProperty.address),
-			} as PropertyEvent);
+			await this.invalidatePropertyCache(undefined, true);
+			this.emitPropertyEvent(
+				'property.created',
+				currentUser.organizationId,
+				currentUser.email,
+				currentUser.name,
+				currentUser.kUid,
+				createDto,
+				true,
+				createdProperty.uuid,
+			);
 			return await this.mapPlainPropertyDetailToDto(createdProperty);
 		} catch (error) {
 			this.logger.error('Error creating Property Data', error.message);
@@ -597,11 +607,13 @@ export class PropertiesService implements IPropertyMetrics {
 			if (!currentUser) {
 				throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 			}
-			const cacheKey = `${this.cacheKeyPrefix}:${currentUser.organizationId}:${this.cls.get('requestUrl')}`;
+			const cacheKey = this.getcacheKey(
+				currentUser.organizationId,
+				this.cls.get('requestUrl'),
+			);
 			const cachedProperties =
 				await this.cacheManager.get<PageDto<PropertyListDto>>(cacheKey);
 			if (cachedProperties) {
-				this.apiDebugger.info('cachedProperties', cachedProperties);
 				return cachedProperties;
 			}
 			const [entities, count] =
@@ -619,7 +631,11 @@ export class PropertiesService implements IPropertyMetrics {
 				await this.mapPlainPropertyToPropertyListDto(entities);
 			const propertiesPageData = new PageDto(mappedEntities, pageMetaDto);
 			await this.cacheManager.set(cacheKey, propertiesPageData, this.cacheTTL);
-			await this.updateOrgPropertiesCacheKeys(cacheKey);
+			await this.util.updateOrganizationResourceCacheKeys(
+				currentUser.organizationId,
+				CacheKeys.PROPERTY,
+				cacheKey,
+			);
 			return propertiesPageData;
 		} catch (error) {
 			this.logger.error('Error retrieving organization properties', error);
@@ -650,12 +666,16 @@ export class PropertiesService implements IPropertyMetrics {
 			if (
 				!this.commonConfigService.isDevelopmentEnvironment() &&
 				!this.organizationSubscriptionService.canAddUnit(orgId, unitsDto.length)
-			)
+			) {
 				throw new PreconditionFailedException(ErrorMessages.UNIT_LIMIT_REACHED);
-			return await this.propertyRepository.addUnitsToAProperty(
+			}
+
+			const addedUnits = await this.propertyRepository.addUnitsToAProperty(
 				propertyUuid,
 				unitsDto,
 			);
+			await this.invalidatePropertyCache(propertyUuid, true);
+			return addedUnits;
 		} catch (error) {
 			this.logger.error('Error adding Unit to Property', error);
 			throw new BadRequestException(`Error adding Unit to Property.`, {
@@ -680,17 +700,24 @@ export class PropertiesService implements IPropertyMetrics {
 					currentUser.organizationId,
 					managerDto,
 				);
-			const eventTimestamp = DateTime.utc()
-				.setZone(this.cls.get('clientTimeZoneName'))
-				.toLocaleString(DateTime.DATETIME_FULL);
-			this.eventEmitter.emit('property.deleted', {
-				organizationId: currentUser.organizationId,
-				propertyId: propertyUuid,
-				propertyManagerName: currentUser.name,
-				name: managerDto.propertyName,
-				propertyAddress: managerDto.propertyAddress,
-				eventTimestamp,
-			} as PropertyEvent);
+			if (assigned) {
+				await this.invalidatePropertyCache(propertyUuid);
+				const eventTimestamp = DateTime.utc()
+					.setZone(this.cls.get('clientTimeZoneName'))
+					.toLocaleString(DateTime.DATETIME_FULL);
+				this.eventEmitter.emit('property.deleted', {
+					organizationId: currentUser.organizationId,
+					propertyId: propertyUuid,
+					propertyManagerName: currentUser.name,
+					name: managerDto.propertyName,
+					propertyAddress: managerDto.propertyAddress,
+					eventTimestamp,
+				} as PropertyEvent);
+			} else {
+				throw new BadRequestException(
+					`Error assigning property ${propertyUuid} to ${managerDto.isPropertyOwner ? 'owner' : 'manager'}`,
+				);
+			}
 			return assigned;
 		} catch (error) {
 			const logMessage = `Error assigning property ${propertyUuid} to ${managerDto.isPropertyOwner ? 'owner' : 'manager'}`;
@@ -727,6 +754,7 @@ export class PropertiesService implements IPropertyMetrics {
 				currentUser.kUid,
 				currentUser.organizationRole === UserRoles.ORG_OWNER,
 			);
+			await this.invalidatePropertyCache(propertyUuid, true);
 		} catch (error) {
 			this.logger.error('Error deleting Units from Property', error);
 			throw new BadRequestException(`Error deleting Units from Property.`, {
@@ -746,7 +774,10 @@ export class PropertiesService implements IPropertyMetrics {
 		if (!currentUser.organizationId) {
 			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
 		}
-		const cacheKey = `${this.cacheKeyPrefix}:grouped-units:${currentUser.organizationId}`;
+		const cacheKey = this.getcacheKey(
+			currentUser.organizationId,
+			'grouped-units',
+		);
 		const cachedProperties =
 			await this.cacheManager.get<PropertyDetailsDto[]>(cacheKey);
 		if (cachedProperties) {
@@ -758,7 +789,55 @@ export class PropertiesService implements IPropertyMetrics {
 			);
 		const mappedProperties =
 			await this.mapGroupedUnitsToPropertyListDto(properties);
-		await this.cacheManager.set(cacheKey, mappedProperties, CacheTTl.ONE_DAY);
+		await this.cacheManager.set(cacheKey, mappedProperties, this.cacheTTL);
 		return mappedProperties;
+	}
+
+	private emitPropertyEvent(
+		event: string,
+		organizationId: string,
+		currentUserEmail: string,
+		currentUserName: string,
+		currentUserId: string,
+		propertyData?: CreatePropertyDto | UpdatePropertyDto,
+		invalidateCache: boolean = true,
+		propertyId?: string,
+	) {
+		this.eventEmitter.emitAsync(event, {
+			totalUnits: propertyData.units?.length,
+			propertyAddress: this.getPropertyAddress(propertyData.address),
+			name: propertyData.name,
+			organizationId: organizationId,
+			propertyManagerId: currentUserId,
+			propertyManagerEmail: currentUserEmail,
+			propertyManagerName: currentUserName,
+			currency: this.cls.get('clientCurrency'),
+			locale: this.cls.get('clientLocale'),
+			language: this.cls.get('clientLanguage'),
+			invalidateCache,
+			propertyId,
+		});
+	}
+
+	private async invalidatePropertyCache(
+		propertyUuid?: string,
+		clearListKeys: boolean = false,
+	) {
+		const currentUser = this.cls.get('currentUser');
+		if (!currentUser.organizationId) {
+			throw new ForbiddenException(ErrorMessages.FORBIDDEN);
+		}
+		const cacheKeys = propertyUuid
+			? [this.getcacheKey(currentUser.organizationId, propertyUuid)]
+			: [];
+		if (clearListKeys) {
+			const listKeys = await this.cacheManager.get<string[]>(
+				`${this.getcacheKey(currentUser.organizationId, 'listKeys')}`,
+			);
+			if (listKeys) {
+				cacheKeys.push(...listKeys);
+			}
+		}
+		await this.cacheManager.mdel(cacheKeys);
 	}
 }

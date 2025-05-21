@@ -1,4 +1,4 @@
-import { MailerSendService } from '@app/common/email/email.service';
+import { ZohoEmailService } from '@app/common/email/zoho-email.service';
 import {
 	BadRequestException,
 	Injectable,
@@ -27,6 +27,7 @@ import { UserProfile } from '@app/common/database/entities/user-profile.entity';
 import {
 	CacheKeys,
 	CreateUserEventTypes,
+	OrganizationType,
 	UserRoles,
 } from '@app/common/config/config.constants';
 import { UserProfilesRepository } from '@app/common/repositories/user-profiles.repository';
@@ -55,6 +56,8 @@ import { Generators } from '@app/common/helpers/generators';
 import { TenantRepository } from '@app/common/repositories/tenant.repository';
 import { ApiDebugger } from '@app/common/helpers/debug-loggers';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AccessControlService } from './access-control.service';
+import { Util } from '@app/common/helpers/util';
 @Injectable()
 export class LandlordAuthService extends AuthService {
 	private readonly landlordEmailVerificationBaseUrl: string;
@@ -69,7 +72,7 @@ export class LandlordAuthService extends AuthService {
 		@Inject(CACHE_MANAGER) protected cacheManager: Cache,
 		@Inject('FIREBASE_ADMIN') firebaseAdminApp: admin.app.App,
 		@InjectMapper('MAPPER') mapper: Mapper,
-		protected readonly emailService: MailerSendService,
+		protected readonly emailService: ZohoEmailService,
 		private readonly organizationRepository: OrganizationRepository,
 		userProfilesRepository: UserProfilesRepository,
 		protected readonly errorMessageHelper: FirebaseErrorMessageHelper,
@@ -84,6 +87,8 @@ export class LandlordAuthService extends AuthService {
 		protected readonly generators: Generators,
 		protected readonly apiDebugger: ApiDebugger,
 		protected readonly eventEmitter: EventEmitter2,
+		protected readonly accessControlService: AccessControlService,
+		protected readonly util: Util,
 	) {
 		super(
 			firebaseAdminApp,
@@ -103,6 +108,8 @@ export class LandlordAuthService extends AuthService {
 			generators,
 			apiDebugger,
 			eventEmitter,
+			accessControlService,
+			util,
 		);
 		this.landlordEmailVerificationBaseUrl = this.configService.get<string>(
 			'EMAIL_VERIFICATION_BASE_URL',
@@ -146,8 +153,53 @@ export class LandlordAuthService extends AuthService {
 			}
 			throw new FirebaseException(ErrorMessages.USER_NOT_CREATED);
 		} catch (error) {
+			await this.deleteFailedUser(fbid);
 			await this.deleteUser(fbid);
 			throw new FirebaseException(error);
+		}
+	}
+
+	async deleteFailedUser(fbid: string) {
+		try {
+			const entityManager = this.organizationRepository.manager;
+			return entityManager.transaction(async (transactionalEntityManager) => {
+				const userProfile = await transactionalEntityManager.findOne(
+					UserProfile,
+					{
+						where: { firebaseId: fbid },
+					},
+				);
+				if (userProfile) {
+					const orgUser = await transactionalEntityManager.findOne(
+						OrganizationUser,
+						{
+							where: { profile: { profileUuid: userProfile.profileUuid } },
+							relations: ['organization'],
+						},
+					);
+					await transactionalEntityManager.update(
+						Organization,
+						{
+							organizationUuid: orgUser.organization.organizationUuid,
+						},
+						{
+							tenantId: null,
+							csrfSecret: null,
+							isActive: false,
+							isDeleted: true,
+							deletedDate: this.timestamp,
+						},
+					);
+					await transactionalEntityManager.delete(OrganizationUser, {
+						organizationUserUuid: orgUser.organizationUserUuid,
+					});
+					await transactionalEntityManager.delete(UserProfile, {
+						firebaseId: fbid,
+					});
+				}
+			});
+		} catch (error) {
+			this.logger.error('Error deleting user:', error);
 		}
 	}
 
@@ -190,7 +242,12 @@ export class LandlordAuthService extends AuthService {
 		try {
 			if (createEventType === CreateUserEventTypes.CREATE_ORG_USER) {
 				const newOrganization = new Organization();
-				newOrganization.name = name;
+				if (name && name.length > 0) {
+					newOrganization.name = name;
+					newOrganization.orgType = OrganizationType.COMPANY;
+				} else {
+					newOrganization.orgType = OrganizationType.INDIVIDUAL;
+				}
 				try {
 					newOrganization.tenantId = this.generators.generateSecureULID();
 					newOrganization.csrfSecret = this.generators.generateCsrfSecret();
@@ -334,7 +391,12 @@ export class LandlordAuthService extends AuthService {
 			invitation.propertyToOwnIds = invitedUserDto.propertiesToOwn
 				? map(invitedUserDto.propertiesToOwn, 'uuid')
 				: null;
-			invitation.token = await this.getInvitationToken(invitedUserDto);
+			invitation.token = await this.getInvitationToken({
+				email: invitedUserDto.email,
+				userId: user.organizationUserUuid,
+				fid: fireUser.uid,
+			});
+			invitation.userId = user.organizationUserUuid;
 			/// TRANSACTION SAVES DATA
 			await transactionalEntityManager.save(user);
 			await transactionalEntityManager.save(userProfile);
@@ -357,40 +419,46 @@ export class LandlordAuthService extends AuthService {
 	): Promise<UserProfile> {
 		this.apiDebugger.info(`Creating org owner profile for: ${fireUser}`);
 		const entityManager = this.organizationRepository.manager;
-		return entityManager.transaction(async (transactionalEntityManager) => {
-			const organization = await this.findOrCreateOrganization(
-				createUserDto.companyName,
-				transactionalEntityManager,
-				createEventType,
-				createUserDto.organizationCountry,
-			);
+		try {
+			return entityManager.transaction(async (transactionalEntityManager) => {
+				const organization = await this.findOrCreateOrganization(
+					createUserDto.companyName,
+					transactionalEntityManager,
+					createEventType,
+					createUserDto.organizationCountry,
+				);
 
-			/// CREATE ORGANIZATION USER
-			const user = new OrganizationUser();
-			user.organization = organization;
-			user.orgRole = createUserDto.role;
+				/// CREATE ORGANIZATION USER
+				const user = new OrganizationUser();
+				user.organization = organization;
+				user.orgRole = createUserDto.role;
 
-			///CREATE NEW USER PROFILE
-			const userProfile = new UserProfile();
-			userProfile.firstName = createUserDto.firstName;
-			userProfile.lastName = createUserDto.lastName;
-			userProfile.email = createUserDto.email;
-			userProfile.firebaseId = fireUser.uid;
-			userProfile.organizationUser = user;
-			userProfile.isPrivacyPolicyAgreed = true;
-			userProfile.isTermsAndConditionAccepted = true;
+				///CREATE NEW USER PROFILE
+				const userProfile = new UserProfile();
+				userProfile.firstName = createUserDto.firstName;
+				userProfile.lastName = createUserDto.lastName;
+				userProfile.email = createUserDto.email;
+				userProfile.firebaseId = fireUser.uid;
+				userProfile.organizationUser = user;
+				userProfile.isPrivacyPolicyAgreed = true;
+				userProfile.isTermsAndConditionAccepted = true;
 
-			await transactionalEntityManager.save(user);
-			await transactionalEntityManager.save(userProfile);
-			// await this.subscribeOrgToBasicPlan(organization, transactionalEntityManager);
-			await this.setCustomClaims(userProfile.firebaseId, {
-				kUid: userProfile.profileUuid,
-				organizationRole: createUserDto.role.name,
-				organizationId: organization.organizationUuid,
-				tenantId: organization.tenantId,
+				await transactionalEntityManager.save(user);
+				await transactionalEntityManager.save(userProfile);
+				// await this.subscribeOrgToBasicPlan(organization, transactionalEntityManager);
+				await this.setCustomClaims(userProfile.firebaseId, {
+					kUid: userProfile.profileUuid,
+					organizationRole: createUserDto.role.name,
+					organizationId: organization.organizationUuid,
+					tenantId: organization.tenantId,
+				});
+				return userProfile;
 			});
-			return userProfile;
-		});
+		} catch (error) {
+			throw new BadRequestException(
+				'An organization with this name already exists. Please use a different name or login to your existing organization.',
+			);
+		}
 	}
 
 	// OVERRIDE METHODS

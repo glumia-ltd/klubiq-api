@@ -28,6 +28,7 @@ import {
 	VerifyMfaOtpResponseDto,
 } from '../dto/responses/auth-response.dto';
 import {
+	CacheKeys,
 	LeaseStatus,
 	ROLE_ALIAS,
 	UserRoles,
@@ -43,7 +44,6 @@ import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import { SharedClsStore } from '@app/common/dto/public/shared-clsstore';
-import { createHmac } from 'crypto';
 import { UserInvitation } from '@app/common/database/entities/user-invitation.entity';
 import { ActiveUserData, RolesAndEntitlements } from '../types/firebase.types';
 import { plainToInstance } from 'class-transformer';
@@ -64,7 +64,7 @@ import { generateString } from '@nestjs/typeorm';
 import { TenantInvitation } from '@app/common/database/entities/tenant-invitation.entity';
 import { replace, split } from 'lodash';
 import { EmailTemplates } from '@app/common/email/types/email.types';
-import { MailerSendService } from '@app/common/email/email.service';
+import { ZohoEmailService } from '@app/common/email/zoho-email.service';
 import { OnboardingLeaseDto } from 'apps/klubiq-dashboard/src/lease/dto/requests/create-lease.dto';
 import { Lease } from '@app/common/database/entities/lease.entity';
 import { Unit } from '@app/common/database/entities/unit.entity';
@@ -77,12 +77,14 @@ import { OrganizationTenants } from '@app/common/database/entities/organization-
 import { CreateTenantDto } from '@app/common/dto/requests/create-tenant.dto';
 import { extractAccessToken } from '../helpers/cookie-helper';
 import { Request } from 'express';
+import { AccessControlService } from './access-control.service';
+import { Util } from '@app/common/helpers/util';
 @Injectable()
 export abstract class AuthService {
 	protected abstract readonly logger: Logger;
 	private readonly adminIdentityTenantId: string;
 	private readonly cacheKeyPrefix = 'auth';
-	private readonly cacheTTL = 90;
+	private readonly cacheTTL = 900000;
 	protected readonly cacheService = new CacheService(this.cacheManager);
 	protected readonly suid = new ShortUniqueId();
 	protected readonly timestamp = DateTime.utc().toSQL({ includeOffset: false });
@@ -109,10 +111,12 @@ export abstract class AuthService {
 		protected readonly organizationSubscriptionService: OrganizationSubscriptionService,
 		protected readonly notificationSubService: NotificationsSubscriptionService,
 		protected readonly tenantRepository: TenantRepository,
-		protected readonly emailService: MailerSendService,
+		protected readonly emailService: ZohoEmailService,
 		protected readonly generators: Generators,
 		protected readonly apiDebugger: ApiDebugger,
 		protected readonly eventEmitter: EventEmitter2,
+		protected readonly accessControlService: AccessControlService,
+		protected readonly util: Util,
 	) {
 		this.adminIdentityTenantId = this.configService.get<string>(
 			'ADMIN_IDENTITY_TENANT_ID',
@@ -124,7 +128,7 @@ export abstract class AuthService {
 			'TENANT_CONTINUE_URL_PATH',
 		);
 		this.landlordPortalClientId = this.configService.get<string>(
-			'LANDLORP_PORTAL_CLIENT_ID',
+			'LANDLORD_PORTAL_CLIENT_ID',
 		);
 		this.tenantPortalClientId = this.configService.get<string>(
 			'TENANT_PORTAL_CLIENT_ID',
@@ -137,6 +141,10 @@ export abstract class AuthService {
 		);
 		this.emailAuthContinueUrl =
 			this.configService.get<string>('CONTINUE_URL_PATH');
+	}
+
+	private getcacheKey(cacheKeyExtension?: string) {
+		return `${CacheKeys.AUTH}${cacheKeyExtension ? `:${cacheKeyExtension}` : ''}`;
 	}
 
 	get auth(): auth.Auth {
@@ -157,16 +165,26 @@ export abstract class AuthService {
 	async signOut(): Promise<void> {
 		this.currentUser = this.cls.get('currentUser');
 		if (this.currentUser) {
-			this.cacheManager.del(
-				`${this.cacheKeyPrefix}:user:${this.currentUser.kUid}`,
+			const landlordCacheKey = this.getcacheKey(
+				`user:landlord:${this.currentUser.kUid}`,
 			);
+			const tenantCacheKey = this.getcacheKey(
+				`user:tenant:${this.currentUser.kUid}`,
+			);
+			await this.accessControlService.invalidateCache(
+				this.currentUser.kUid,
+				this.currentUser.organizationId,
+			);
+			await this.accessControlService.invalidateAllCache([
+				landlordCacheKey,
+				tenantCacheKey,
+			]);
 			await this.auth.revokeRefreshTokens(this.currentUser.uid);
 			this.cls.set('currentUser', null);
 		}
 	}
 
 	async verifyAppCheckToken(appCheckToken: string): Promise<any> {
-		this.apiDebugger.info('Verifying app check token', appCheckToken);
 		return await getAppCheck().verifyToken(appCheckToken);
 	}
 	async getAppCheckToken(): Promise<any> {
@@ -174,7 +192,6 @@ export abstract class AuthService {
 		const appCheckToken = await getAppCheck().createToken(appId, {
 			ttlMillis: 1800000,
 		});
-		this.apiDebugger.info('App check token Details', appId, appCheckToken);
 		return { token: appCheckToken.token, appId: appId };
 	}
 
@@ -190,7 +207,7 @@ export abstract class AuthService {
 				preferences,
 			);
 		if (updatedUserPreferences) {
-			const cacheKey = `${this.cacheKeyPrefix}:user:${currentUser.kUid}`;
+			const cacheKey = this.getcacheKey(`user:${currentUser.kUid}`);
 			await this.cacheManager.del(cacheKey);
 		}
 		return updatedUserPreferences;
@@ -339,14 +356,25 @@ export abstract class AuthService {
 			throw new FirebaseException(firebaseErrorMessage || err.message);
 		}
 	}
+	async decodeInvitationToken(invitationToken: string) {
+		const tokenParts = invitationToken.split(':');
+		if (tokenParts.length !== 3) {
+			throw new BadRequestException('Invalid invitation token');
+		}
+		return this.generators.decodeShortJwt(tokenParts[0]);
+	}
 
 	private async validateInvitation(invitationToken: string) {
+		const tokenParts = invitationToken.split(':');
+		if (tokenParts.length !== 3) {
+			throw new BadRequestException('Invalid invitation token');
+		}
 		const invitationTimeStamp = DateTime.fromJSDate(
-			this.suid.parseStamp(invitationToken),
+			this.suid.parseStamp(tokenParts[1]),
 		);
-		const end = DateTime.utc();
+		const end = DateTime.fromJSDate(this.suid.parseStamp(tokenParts[2]));
 		return (
-			invitationTimeStamp && end.diff(invitationTimeStamp, 'hours').hours < 72
+			invitationTimeStamp && end.diff(invitationTimeStamp, 'hours').hours <= 72
 		);
 	}
 	// ACCEPTS INVITATION
@@ -359,9 +387,28 @@ export abstract class AuthService {
 			if (!(await this.validateInvitation(invitationToken))) {
 				throw new BadRequestException('Invitation link has expired');
 			}
-			const userData = await this.acceptInvitation(resetPassword);
+			const decodedToken = await this.decodeInvitationToken(invitationToken);
+			if (decodedToken.email !== resetPassword.email) {
+				throw new BadRequestException('Invalid invitation token');
+			}
+			const entityManager = this.userProfilesRepository.manager;
+			const userInvitation = await entityManager.findOne(UserInvitation, {
+				where: {
+					token: invitationToken,
+					acceptedAt: null,
+				},
+			});
+			if (!userInvitation) {
+				throw new BadRequestException(
+					'Invitation link has expired or already accepted',
+				);
+			}
+			const userData = await this.acceptInvitation(
+				resetPassword,
+				userInvitation.firebaseUid,
+			);
 			this.userProfilesRepository.acceptInvitation(
-				userData.localId,
+				userInvitation,
 				UserType.LANDLORD,
 			);
 			return userData;
@@ -380,11 +427,39 @@ export abstract class AuthService {
 			if (!(await this.validateInvitation(invitationToken))) {
 				throw new BadRequestException('Invitation link has expired');
 			}
-			const userData = await this.acceptInvitation(resetPassword);
+			const decodedToken = await this.decodeInvitationToken(invitationToken);
+			if (decodedToken.email !== resetPassword.email) {
+				throw new BadRequestException('Invalid invitation token');
+			}
+			const entityManager = this.tenantRepository.manager;
+			const tenantInvitation = await entityManager.findOne(TenantInvitation, {
+				where: {
+					token: invitationToken,
+					acceptedAt: null,
+				},
+			});
+			if (!tenantInvitation) {
+				throw new BadRequestException(
+					'Invitation link has expired or already accepted',
+				);
+			}
+			// const userData = await this.acceptInvitation(
+			// 	resetPassword,
+			// 	tenantInvitation.firebaseUid,
+			// );
 			this.userProfilesRepository.acceptInvitation(
-				userData.localId,
+				tenantInvitation,
 				UserType.TENANT,
 			);
+			const userData = await this.auth.updateUser(
+				tenantInvitation.firebaseUid,
+				{
+					email: resetPassword.email,
+					emailVerified: true,
+					password: resetPassword.password,
+				},
+			);
+			this.apiDebugger.info('Updated User', userData);
 			return userData;
 		} catch (err) {
 			const firebaseErrorMessage =
@@ -393,14 +468,22 @@ export abstract class AuthService {
 		}
 	}
 
-	async acceptInvitation(resetPassword: ResetPasswordDto) {
+	async acceptInvitation(resetPassword: ResetPasswordDto, firebaseUid: string) {
 		try {
+			this.apiDebugger.info('Accepting invitation', firebaseUid);
+			const customToken = await this.auth.createCustomToken(firebaseUid);
+			this.apiDebugger.info('Custom token', customToken);
+			const signInResponse = await this.signInWithCustomToken(customToken);
+			this.apiDebugger.info('Sign in response', signInResponse);
 			const body = {
 				oobCode: resetPassword.oobCode,
 				password: resetPassword.password,
 				email: resetPassword.email,
 				emailVerified: true,
+				idToken: signInResponse.idToken,
+				//localId: firebaseUid,
 			};
+
 			const { data } = await firstValueFrom(
 				this.httpService
 					.post(
@@ -537,7 +620,7 @@ export abstract class AuthService {
 			if (!this.currentUser.uid && !this.currentUser.kUid) {
 				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
 			}
-			const cacheKey = `${this.cacheKeyPrefix}:user:${this.currentUser.kUid}`;
+			const cacheKey = this.getcacheKey(`user:${this.currentUser.kUid}`);
 
 			const cachedUser =
 				await this.cacheManager.get<LandlordUserDetailsResponseDto>(cacheKey);
@@ -561,7 +644,7 @@ export abstract class AuthService {
 			if (!this.currentUser.uid && !this.currentUser.kUid) {
 				throw new UnauthorizedException(ErrorMessages.UNAUTHORIZED);
 			}
-			const cacheKey = `${this.cacheKeyPrefix}:user:${this.currentUser.kUid}`;
+			const cacheKey = this.getcacheKey(`user:${this.currentUser.kUid}`);
 
 			const cachedUser =
 				await this.cacheManager.get<TenantUserDetailsResponseDto>(cacheKey);
@@ -596,7 +679,7 @@ export abstract class AuthService {
 			);
 		const userData = await this.mapLandlordUserToDto(userDetails, currentUser);
 		userData.notificationSubscription = notificationsSubscription;
-		await this.cacheManager.set(cacheKey, userData, 3600);
+		await this.cacheManager.set(cacheKey, userData, this.cacheTTL);
 		return userData;
 	}
 
@@ -605,9 +688,10 @@ export abstract class AuthService {
 		firebaseId: string,
 		type: 'landlord' | 'tenant' | 'staff',
 	): Promise<LandlordUserDetailsResponseDto> {
+		const userMfaFactors = await this.getUserMfaFactors(firebaseId);
 		let userDetails: any;
 		let notificationsSubscription: any;
-		let cacheKey = `${this.cacheKeyPrefix}:user:`;
+		let cacheKey: string;
 		switch (type) {
 			case 'landlord':
 				userDetails =
@@ -617,11 +701,11 @@ export abstract class AuthService {
 					);
 				notificationsSubscription = userDetails?.profile_uuid
 					? await this.notificationSubService.getAUserSubscriptionDetails(
-							userDetails.profile_uuid,
+							userDetails.profileUuid,
 						)
 					: null;
 				userDetails = (await this.mapLandlordUserToDto(userDetails)) || {};
-				cacheKey = `${cacheKey}${userDetails.uuid}`;
+				cacheKey = this.getcacheKey(`landlord:${userDetails.profileUuid}`);
 				break;
 			case 'tenant':
 				userDetails =
@@ -635,7 +719,7 @@ export abstract class AuthService {
 						)
 					: null;
 				userDetails = (await this.mapTenantUserToDto(userDetails)) || {};
-				cacheKey = `${cacheKey}${userDetails.uuid}`;
+				cacheKey = this.getcacheKey(`tenant:${userDetails.profileUuid}`);
 				break;
 			default:
 				userDetails = {};
@@ -643,8 +727,10 @@ export abstract class AuthService {
 		if (!userDetails) {
 			throw new NotFoundException('User not found');
 		}
+
+		userDetails.mfaFactors = userMfaFactors;
 		userDetails.notificationSubscription = notificationsSubscription;
-		await this.cacheManager.set(cacheKey, userDetails, 3600);
+		await this.cacheManager.set(cacheKey, userDetails, this.cacheTTL);
 		return userDetails;
 	}
 
@@ -671,13 +757,12 @@ export abstract class AuthService {
 			phone: user.phone,
 			preferences: user.user_preferences,
 			profilePicUrl: user.profile_pic_url,
+			role: user.org_role,
 			roleName:
 				ROLE_ALIAS()[currentUser?.organizationRole || user.org_role] ||
 				currentUser?.organizationRole ||
 				user.org_role,
 			uuid: user.uuid,
-			// orgSettings,
-			// orgSubscription,
 		});
 	}
 
@@ -712,7 +797,6 @@ export abstract class AuthService {
 	// Creates a new tenant account without a lease
 	// A tenant is created and then we send an invitation email to activate their account
 	async createTenant(createUserDto: CreateTenantDto): Promise<UserProfile> {
-		this.apiDebugger.info('Creating tenant', createUserDto);
 		this.currentUser = this.cls.get('currentUser');
 
 		const { email, firstName, lastName } = createUserDto;
@@ -749,6 +833,11 @@ export abstract class AuthService {
 					`${ErrorMessages.USER_NOT_CREATED} due to an unknown error`,
 				);
 			}
+			this.emitEvent(
+				EVENTS.TENANT_CREATED,
+				this.currentUser.organizationId,
+				false,
+			);
 			return userProfile;
 		} catch (error) {
 			this.apiDebugger.error('Error creating tenant', error);
@@ -762,7 +851,6 @@ export abstract class AuthService {
 	// Onboards a new tenant account for a lease
 	// A tenant is created and then a lease is created for them
 	async onboardTenant(createUserDto: TenantSignUpDto): Promise<UserProfile> {
-		this.apiDebugger.info('Onboarding tenant', createUserDto);
 		this.currentUser = this.cls.get('currentUser');
 
 		const { email, firstName, lastName } = createUserDto;
@@ -801,7 +889,7 @@ export abstract class AuthService {
 				);
 			}
 			this.emitEvent(
-				EVENTS.LEASE_CREATED,
+				EVENTS.TENANT_ONBOARDED,
 				this.currentUser.organizationId,
 				false,
 			);
@@ -815,13 +903,12 @@ export abstract class AuthService {
 		}
 	}
 
-	async getInvitationToken(invitedUserDto: InviteUserDto): Promise<string> {
-		const secret = this.configService.get<string>('KLUBIQ_ADMIN_API_KEY');
-		return createHmac('sha256', secret)
-			.update(
-				`${invitedUserDto.email}|${invitedUserDto.firstName}||${invitedUserDto.lastName}`,
-			)
-			.digest('hex');
+	async getInvitationToken(data: Record<string, any>): Promise<string> {
+		const jwt = this.generators.generateShortJwt(data, '72h');
+		const expiration = DateTime.now().plus({ days: 3 }).toJSDate();
+		const expirationTimeStamp = this.suid.stamp(48, expiration);
+		const startTimeStamp = this.suid.stamp(48, DateTime.utc().toJSDate());
+		return Promise.resolve(`${jwt}:${startTimeStamp}:${expirationTimeStamp}`);
 	}
 	async ensureAuthorizedFirebaseRequest(
 		url: string,
@@ -842,8 +929,6 @@ export abstract class AuthService {
 			data: body,
 			headers,
 		});
-		console.log({ data });
-
 		return data;
 	}
 
@@ -897,26 +982,63 @@ export abstract class AuthService {
 			const { data } = await firstValueFrom(
 				response.pipe(
 					catchError((error: AxiosError | any) => {
-						this.apiDebugger.error(
-							'Error signing in with email password',
-							error,
+						this.apiDebugger.error('Sign in error: ', error.status);
+						this.logger.error('Sign In Error Code:', error.status);
+						throw new Error(
+							'Invalid email or password. Please check your credentials and try again.',
 						);
-						const firebaseError = error.response.data;
-						this.logger.error('Firebase sign-in error:', firebaseError);
-						throw new FirebaseException(firebaseError);
 					}),
 				),
 			);
-			this.apiDebugger.info('Sign in response', data);
 			return data;
 		} catch (err) {
-			this.apiDebugger.error('Error signing in with email password', err);
-			const message =
-				err instanceof FirebaseException
-					? err.message
-					: this.errorMessageHelper.parseFirebaseError(err) ||
-						'Unknown error during sign-in';
-			throw new FirebaseException(message);
+			if (err.message) {
+				throw new FirebaseException(err.message);
+			}
+			throw new FirebaseException(
+				'Invalid email or password. Please check your credentials and try again.',
+			);
+		}
+	}
+
+	/**
+	 * Calls the google identity endpoint to sign in with TOKEN
+	 * @param customToken
+	 * @returns
+	 */
+	async signInWithCustomToken(
+		customToken: string,
+	): Promise<SignInByFireBaseResponseDto> {
+		try {
+			const url = `${this.configService.get<string>('GOOGLE_IDENTITY_ENDPOINT')}:signInWithCustomToken?key=${this.configService.get<string>('FIREBASE_API_KEY')}`;
+			const payload = {
+				token: customToken,
+				returnSecureToken: true,
+			};
+			const response = await this.ensureAuthorizedFirebaseRequest(
+				url,
+				'POST',
+				payload,
+			);
+			const { data } = await firstValueFrom(
+				response.pipe(
+					catchError((error: AxiosError | any) => {
+						this.apiDebugger.error('Sign in error: ', error.status);
+						this.logger.error('Sign In Error Code:', error.status);
+						throw new Error(
+							'Invalid email or password. Please check your credentials and try again.',
+						);
+					}),
+				),
+			);
+			return data;
+		} catch (err) {
+			if (err.message) {
+				throw new FirebaseException(err.message);
+			}
+			throw new FirebaseException(
+				'Invalid email or password. Please check your credentials and try again.',
+			);
 		}
 	}
 
@@ -959,7 +1081,6 @@ export abstract class AuthService {
 					}),
 				),
 			);
-			this.apiDebugger.info('MFA Sign in response', data);
 			return data;
 		} catch (err) {
 			this.apiDebugger.error('Error verifying MFA OTP', err);
@@ -998,8 +1119,7 @@ export abstract class AuthService {
 				emailAddress,
 				password,
 			);
-			const { refreshToken, idToken, displayName, registered, expiresIn } =
-				signInData;
+			const { refreshToken, idToken, displayName, expiresIn } = signInData;
 			if (!refreshToken) {
 				const requiresMfa = signInData.mfaInfo?.length > 0;
 				//const factors = signInData.mfaInfo?.map((factor) => {return factor.displayName;});
@@ -1013,15 +1133,22 @@ export abstract class AuthService {
 				}
 				throw new FirebaseException(ErrorMessages.TOKEN_NOT_RETURNED);
 			}
+			const decodedToken = await this.auth.verifyIdToken(idToken);
 			const names = split(displayName, ' ');
-			if (!registered && clientId === this.landlordPortalClientId) {
+			if (
+				!decodedToken.email_verified &&
+				clientId === this.landlordPortalClientId
+			) {
 				await this.sendVerificationEmail(
 					emailAddress,
 					names[0] || '',
 					names[1] || '',
 				);
 				throw new ForbiddenException(ErrorMessages.EMAIL_NOT_VERIFIED);
-			} else if (!registered && clientId === this.tenantPortalClientId) {
+			} else if (
+				!decodedToken.email_verified &&
+				clientId === this.tenantPortalClientId
+			) {
 				await this.sendVerificationEmail(
 					emailAddress,
 					names[0] || '',
@@ -1062,12 +1189,6 @@ export abstract class AuthService {
 				Array.isArray(userRecord.multiFactor.enrolledFactors) &&
 				userRecord.multiFactor.enrolledFactors.length > 0
 			) {
-				this.apiDebugger.info(
-					`User ${uid} has the following MFA factors enrolled:`,
-				);
-				this.apiDebugger.info(
-					`User ${uid} has the following MFA factors enrolled:`,
-				);
 				enrolledFactors = userRecord.multiFactor.enrolledFactors.map(
 					(factor) => {
 						return factor.factorId;
@@ -1083,7 +1204,6 @@ export abstract class AuthService {
 
 				// Check specifically for TOTP
 			} else {
-				this.apiDebugger.info(`User ${uid} has NO MFA factors enrolled.`);
 			}
 		} catch (error) {
 			this.apiDebugger.error('Error fetching user:', error);
@@ -1114,7 +1234,6 @@ export abstract class AuthService {
 				leaseDto.propertyName,
 				leaseDto.unitNumber,
 			);
-			//console.log('leaseName', name);
 			const overlappingLease = await transactionalEntityManager
 				.createQueryBuilder(Lease, 'lease')
 				.where('lease."unitId" = :unitId', { unitId })
@@ -1131,8 +1250,11 @@ export abstract class AuthService {
 					'The unit already has an active lease during the specified period.',
 				);
 			}
-			const unit = await transactionalEntityManager.findOneBy(Unit, {
-				id: unitId,
+			const unit = await transactionalEntityManager.findOne(Unit, {
+				where: { id: unitId },
+				relations: {
+					property: true,
+				},
 			});
 			if (!unit) {
 				throw new BadRequestException('Invalid unit ID.');
@@ -1152,6 +1274,12 @@ export abstract class AuthService {
 				name,
 				...leaseData,
 			});
+			const propertyCacheKey = this.util.getcacheKey(
+				organizationUuid,
+				CacheKeys.PROPERTY,
+				unit.property.uuid,
+			);
+			await this.cacheManager.del(propertyCacheKey);
 			return await transactionalEntityManager.save(lease);
 		});
 	}
@@ -1239,10 +1367,14 @@ export abstract class AuthService {
 			await transactionalEntityManager.save(organizationTenant);
 
 			const invitation = new TenantInvitation();
-			invitation.userId = userProfile.profileUuid;
+			invitation.userId = tenantUser.id;
 			invitation.firebaseUid = fireUser.uid;
 			invitation.invitedAt = this.timestamp;
-			invitation.token = await this.getInvitationToken(createUserDto);
+			invitation.token = await this.getInvitationToken({
+				email: createUserDto.email,
+				userId: tenantUser.id,
+				fid: fireUser.uid,
+			});
 			await transactionalEntityManager.save(invitation);
 			await this.sendTenantInvitationEmail(createUserDto, invitation);
 
@@ -1257,15 +1389,8 @@ export abstract class AuthService {
 	): Promise<void> {
 		try {
 			const currentUser = this.cls.get<ActiveUserData>('currentUser');
-			let resetPasswordLink = await this.auth.generatePasswordResetLink(
-				invitedUserDto.email,
-				this.getActionCodeSettings(
-					this.tenantEmailVerificationBaseUrl,
-					this.tenantEmailAuthContinueUrl,
-				),
-			);
-			resetPasswordLink += `&email=${invitedUserDto.email}&type=tenant-invitation&token=${invitation.token}`;
-			const actionUrl = replace(resetPasswordLink, '_auth_', 'reset-password');
+			const actionUrl = `${this.tenantEmailVerificationBaseUrl}/reset-password?continueUrl=${this.tenantEmailAuthContinueUrl}&email=${invitedUserDto.email}&type=tenant-invitation&token=${invitation.token}`;
+
 			const recipient = {
 				email: invitedUserDto.email,
 				firstName:

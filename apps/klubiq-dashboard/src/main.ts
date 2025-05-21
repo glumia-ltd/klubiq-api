@@ -69,12 +69,21 @@ async function bootstrap() {
 			secret: process.env.APP_SECRET,
 			resave: false,
 			saveUninitialized: false,
-			cookie: {
-				sameSite: 'strict',
-				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production',
-				maxAge: 1000 * 60 * 60 * 24 * 30,
-			},
+			cookie:
+				process.env.NODE_ENV !== 'local'
+					? {
+							sameSite: 'none' as const,
+							httpOnly: true,
+							secure: process.env.NODE_ENV !== 'local',
+							domain: '.klubiq.com',
+							maxAge: 1000 * 60 * 60 * 24, // 1 day
+						}
+					: {
+							sameSite: 'lax' as const,
+							httpOnly: true,
+							secure: false,
+							maxAge: 1000 * 60 * 60 * 24, // 1 day
+						},
 		}),
 	);
 	app.setGlobalPrefix('/api');
@@ -169,13 +178,24 @@ async function bootstrap() {
 					'https://app.klubiq.com',
 					'https://dashboard.klubiq.com',
 					'https://admin.klubiq.com',
+					'https://api.klubiq.com',
 				]
 			: [
 					'http://localhost:3000',
+					'http://localhost:3001',
+					'http://localhost:3002',
+					'http://localhost:3003',
+					'http://localhost:3004',
+					'http://localhost:3005',
+					'http://localhost:3006',
+					'http://localhost:3007',
+					'http://localhost:3008',
+					'http://localhost:3009',
 					'http://localhost:5173',
 					'http://localhost:5174',
 					'https://dev.klubiq.com',
 					'https://dev-tenant.klubiq.com',
+					'https://devapi.klubiq.com',
 				];
 	app.enableCors({
 		// Allow CORS from any origin by echoing back the request's Origin header

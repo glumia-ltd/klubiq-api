@@ -75,9 +75,17 @@ export enum CreateUserEventTypes {
 	CREATE_ORG_USER,
 	INVITE_ORG_USER,
 }
+export enum OrganizationType {
+	INDIVIDUAL = 'individual',
+	COMPANY = 'company',
+	NG_ORGANIZATION = 'ngo',
+	GOVERNMENT = 'government',
+	OTHER = 'other',
+	SELF = 'self',
+}
 
 export enum CacheKeys {
-	ORG_ROLES = 'org-roles',
+	ORG_ROLES = 'klubiq-roles',
 	SYSTEM_ROLES = 'system-roles',
 	ROLES_PERMISSIONS = 'roles-permission',
 	PERMISSIONS = 'permissions',
@@ -99,6 +107,16 @@ export enum CacheKeys {
 	ORGANIZATION_SUBSCRIPTIONS = 'organization-subscriptions',
 	ORGANIZATION_TENANTS = 'organization-tenants',
 	ROLE_FEATURE_PERMISSIONS = 'role-feature-permissions',
+	PROPERTY = 'properties',
+	LEASE = 'leases',
+	TRANSACTION = 'transactions',
+	ORGANIZATION = 'organizations',
+	USER = 'users',
+	UNITS = 'units',
+	TENANT = 'tenants',
+	DASHBOARD = 'dashboard',
+	PERMISSION = 'permission',
+	AUTH = 'auth',
 }
 
 export enum TransactionType {
@@ -299,10 +317,15 @@ export enum PaymentStatus {
 	OTHER = 'Other',
 }
 export const CacheTTl = {
-	ONE_DAY: 60 * 60 * 24,
-	ONE_WEEK: 60 * 60 * 24 * 7,
-	ONE_MONTH: 60 * 60 * 24 * 30,
-	ONE_YEAR: 60 * 60 * 24 * 365,
+	FIVE_MINUTES: 5 * 60 * 1000,
+	TEN_MINUTES: 10 * 60 * 1000,
+	FIFTEEN_MINUTES: 15 * 60 * 1000,
+	THIRTY_MINUTES: 30 * 60 * 1000,
+	ONE_HOUR: 60 * 60 * 1000,
+	ONE_DAY: 60 * 60 * 24 * 1000,
+	ONE_WEEK: 60 * 60 * 24 * 7 * 1000,
+	ONE_MONTH: 60 * 60 * 24 * 30 * 1000,
+	ONE_YEAR: 60 * 60 * 24 * 365 * 1000,
 };
 
 export const LEASE_FILTER_OPTIONS: FilterData[] = [

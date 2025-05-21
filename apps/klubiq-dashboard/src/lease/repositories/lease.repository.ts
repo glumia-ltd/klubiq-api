@@ -318,18 +318,19 @@ export class LeaseRepository extends BaseRepository<Lease> {
 	// 	return lease;
 	// }
 
-	async updateLease(id: string, leaseDto: UpdateLeaseDto): Promise<Lease> {
-		if (leaseDto.startDate)
+	async updateLease(id: string, leaseDto: UpdateLeaseDto): Promise<void> {
+		if (leaseDto.startDate) {
 			leaseDto.startDate = DateTime.fromISO(leaseDto.startDate).toSQL({
 				includeOffset: false,
 			});
-		if (leaseDto.endDate)
+		}
+		if (leaseDto.endDate) {
 			leaseDto.endDate = DateTime.fromISO(leaseDto.endDate).toSQL({
 				includeOffset: false,
 			});
+		}
 		const lease = await this.preload({ id, ...leaseDto });
 		await this.update(id, lease);
-		return lease;
 	}
 
 	private async getLeaseFilterQueryString(
