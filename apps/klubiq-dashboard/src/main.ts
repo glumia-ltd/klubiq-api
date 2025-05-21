@@ -69,13 +69,21 @@ async function bootstrap() {
 			secret: process.env.APP_SECRET,
 			resave: false,
 			saveUninitialized: false,
-			cookie: {
-				sameSite: 'none' as const,
-				httpOnly: true,
-				secure: process.env.NODE_ENV !== 'local',
-				domain: '.klubiq.com',
-				maxAge: 1000 * 60 * 60 * 24, // 1 day
-			},
+			cookie:
+				process.env.NODE_ENV !== 'local'
+					? {
+							sameSite: 'none' as const,
+							httpOnly: true,
+							secure: process.env.NODE_ENV !== 'local',
+							domain: '.klubiq.com',
+							maxAge: 1000 * 60 * 60 * 24, // 1 day
+						}
+					: {
+							sameSite: 'lax' as const,
+							httpOnly: true,
+							secure: false,
+							maxAge: 1000 * 60 * 60 * 24, // 1 day
+						},
 		}),
 	);
 	app.setGlobalPrefix('/api');
@@ -97,16 +105,6 @@ async function bootstrap() {
 			in: 'header',
 			name: 'Authorization',
 			scheme: 'ApiKeyAuth',
-		})
-		.addCookieAuth('refresh_token', {
-			type: 'apiKey',
-			in: 'cookie',
-			name: 'refresh_token',
-		})
-		.addCookieAuth('access_token', {
-			type: 'apiKey',
-			in: 'cookie',
-			name: 'access_token',
 		})
 		.build();
 
