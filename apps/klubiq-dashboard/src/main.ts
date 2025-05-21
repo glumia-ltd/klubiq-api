@@ -196,6 +196,7 @@ async function bootstrap() {
 					'https://dev.klubiq.com',
 					'https://dev-tenant.klubiq.com',
 					'https://devapi.klubiq.com',
+					'http://local.klubiq.com:5173',
 				];
 	app.enableCors({
 		// Allow CORS from any origin by echoing back the request's Origin header
