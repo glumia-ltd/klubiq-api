@@ -69,12 +69,21 @@ async function bootstrap() {
 			secret: process.env.APP_SECRET,
 			resave: false,
 			saveUninitialized: false,
-			cookie: {
-				sameSite: 'strict',
-				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production',
-				maxAge: 1000 * 60 * 60 * 24, // 1 day
-			},
+			cookie:
+				process.env.NODE_ENV !== 'local'
+					? {
+							sameSite: 'none' as const,
+							httpOnly: true,
+							secure: process.env.NODE_ENV !== 'local',
+							domain: '.klubiq.com',
+							maxAge: 1000 * 60 * 60 * 24, // 1 day
+						}
+					: {
+							sameSite: 'lax' as const,
+							httpOnly: true,
+							secure: false,
+							maxAge: 1000 * 60 * 60 * 24, // 1 day
+						},
 		}),
 	);
 	app.setGlobalPrefix('/api');

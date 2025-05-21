@@ -688,6 +688,7 @@ export abstract class AuthService {
 		firebaseId: string,
 		type: 'landlord' | 'tenant' | 'staff',
 	): Promise<LandlordUserDetailsResponseDto> {
+		const userMfaFactors = await this.getUserMfaFactors(firebaseId);
 		let userDetails: any;
 		let notificationsSubscription: any;
 		let cacheKey: string;
@@ -726,6 +727,8 @@ export abstract class AuthService {
 		if (!userDetails) {
 			throw new NotFoundException('User not found');
 		}
+
+		userDetails.mfaFactors = userMfaFactors;
 		userDetails.notificationSubscription = notificationsSubscription;
 		await this.cacheManager.set(cacheKey, userDetails, this.cacheTTL);
 		return userDetails;
@@ -754,13 +757,12 @@ export abstract class AuthService {
 			phone: user.phone,
 			preferences: user.user_preferences,
 			profilePicUrl: user.profile_pic_url,
+			role: user.org_role,
 			roleName:
 				ROLE_ALIAS()[currentUser?.organizationRole || user.org_role] ||
 				currentUser?.organizationRole ||
 				user.org_role,
 			uuid: user.uuid,
-			// orgSettings,
-			// orgSubscription,
 		});
 	}
 
