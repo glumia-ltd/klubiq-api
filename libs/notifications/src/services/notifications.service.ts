@@ -57,15 +57,25 @@ export class NotificationsService {
 			this.currentUser = this.cls.get('currentUser');
 			userId = this.currentUser.kUid;
 		}
+		const dateMin = DateTime.utc().minus({ days }).toJSDate();
+		const dateMax = DateTime.utc().toJSDate();
+		console.log('dateMin', dateMin);
+		console.log('dateMax', dateMax);
 		return await this.notificationsRepository
 			.createQueryBuilder('notifications')
 			.where('notifications.userId = :userId', { userId })
-			.andWhere('notifications.createdAt >= :date', {
-				date: DateTime.utc().minus({ days }).toJSDate(),
+			.andWhere('notifications.createdAt >= :dateMin', {
+				dateMin: dateMin,
 			})
-			.andWhere('notifications.expiresAt >= :currentDate', {
-				currentDate: DateTime.utc().toJSDate(),
+			.andWhere('notifications.createdAt <= :dateMax', {
+				dateMax: dateMax,
 			})
+			.andWhere(
+				'(notifications.expiresAt IS NULL OR notifications.expiresAt >= :currentDate)',
+				{
+					currentDate: dateMax,
+				},
+			)
 			.andWhere('notifications.isRead = :isRead', { isRead: false })
 			.getCount();
 	}
