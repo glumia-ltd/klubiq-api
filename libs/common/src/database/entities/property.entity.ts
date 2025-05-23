@@ -162,4 +162,10 @@ export class Property {
 
 	mainUnit?: Unit;
 	mainPhoto?: PropertyImage;
+
+	@Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
+	sellingPrice?: number;
+
+	@Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
+	marketValue?: number;
 }

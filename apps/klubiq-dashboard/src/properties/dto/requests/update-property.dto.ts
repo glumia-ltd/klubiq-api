@@ -92,4 +92,12 @@ export class DeletePropertyDto {
 	@Expose()
 	@IsNumber()
 	unitCount: number;
+
+	@IsNumber()
+	@IsOptional()
+	sellingPrice?: string;
+
+	@IsNumber()
+	@IsOptional()
+	marketValue?: string;
 }

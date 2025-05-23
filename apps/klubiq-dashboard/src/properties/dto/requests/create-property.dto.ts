@@ -109,4 +109,12 @@ export class CreatePropertyDto {
 	@IsString()
 	@IsOptional()
 	orgUuid?: string;
+
+	@IsNumber()
+	@IsOptional()
+	sellingPrice?: number;
+
+	@IsNumber()
+	@IsOptional()
+	marketValue?: number;
 }

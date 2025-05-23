@@ -265,4 +265,14 @@ export class PropertyDetailsDto {
 	@IsBoolean()
 	@IsOptional()
 	isListingPublished?: boolean;
+
+	@Expose({ groups: ['private'] })
+	@IsOptional()
+	@IsNumber()
+	marketValue?: number;
+
+	@Expose({ groups: ['private'] })
+	@IsOptional()
+	@IsNumber()
+	sellingPrice?: number;
 }
