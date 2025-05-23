@@ -145,4 +145,14 @@ export class PropertyListDto {
 	@Expose()
 	@IsBoolean()
 	isDraft: boolean;
+
+	@Expose()
+	@IsOptional()
+	@IsNumber()
+	sellingPrice?: number;
+
+	@Expose()
+	@IsOptional()
+	@IsNumber()
+	marketValue?: number;
 }

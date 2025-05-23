@@ -100,6 +100,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 			statusId,
 			address,
 			orgUuid,
+			marketValue,
+			sellingPrice,
 			...propertyData
 		} = createData;
 		return await this.manager.transaction(
@@ -149,6 +151,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 					type: { id: typeId },
 					status: { id: statusId },
 					address: savedAddress,
+					sellingPrice: sellingPrice,
+					marketValue: marketValue,
 					organization: { organizationUuid: orgUuid },
 					manager: { profileUuid: createData.managerUid },
 					isDraft,
@@ -629,6 +633,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 			description,
 			note,
 			tags,
+			sellingPrice,
+			marketValue,
 		} = data;
 
 		return await this.manager.transaction(
@@ -687,6 +693,8 @@ export class PropertyRepository extends BaseRepository<Property> {
 					name: name || property.name,
 					description: description || property.description,
 					note: note || property.note,
+					sellingPrice: sellingPrice || property.sellingPrice,
+					marketValue: marketValue || property.marketValue,
 					tags: tags?.length
 						? [...(property.tags || []), ...tags.map((tag) => tag.trim())]
 						: property.tags,
