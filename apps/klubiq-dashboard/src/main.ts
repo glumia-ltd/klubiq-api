@@ -38,11 +38,23 @@ async function bootstrap() {
 			contentSecurityPolicy: {
 				directives: {
 					defaultSrc: ["'self'"],
-					scriptSrc: ["'self'", , "'unsafe-inline'"], // Adjust as needed
+					scriptSrc: [
+						"'self'",
+						'https://maps.googleapis.com',
+						"'unsafe-inline'",
+					], // Adjust as needed
 					styleSrc: ["'self'", "'unsafe-inline'"], // Adjust as needed
-					imgSrc: ["'self'", 'data:', 'https:'], // Allow images from self, data URIs, and HTTPS
+					imgSrc: [
+						"'self'",
+						'data:',
+						'https:',
+						'https://maps.googleapis.com',
+						'https://maps.gstatic.com',
+					], // Allow images from self, data URIs, and HTTPS
+					frameSrc: ["'self'", 'https://*.klubiq.com'], // Allow frames from self and Klubiq domains
 					connectSrc: [
 						"'self'",
+						'https://maps.googleapis.com',
 						'https://identitytoolkit.googleapis.com',
 						'https://securetoken.googleapis.com',
 						'https://*.klubiq.com',

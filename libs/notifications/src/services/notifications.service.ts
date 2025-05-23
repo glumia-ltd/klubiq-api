@@ -59,8 +59,6 @@ export class NotificationsService {
 		}
 		const dateMin = DateTime.utc().minus({ days }).toJSDate();
 		const dateMax = DateTime.utc().toJSDate();
-		console.log('dateMin', dateMin);
-		console.log('dateMax', dateMax);
 		return await this.notificationsRepository
 			.createQueryBuilder('notifications')
 			.where('notifications.userId = :userId', { userId })
