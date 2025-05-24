@@ -1,21 +1,7 @@
 name: Deploy Klubiq dasboard API
 on:
   push:
-    branches:
-      - dev
-    # paths:
-    #   - '!klubiq-db/**'
-    #   - '!.github/workflows/run-migrations-staging.yaml'
-    #   - '!.github/workflows/run-migrations-prod.yaml'
-    #   - '.github/workflows/klubiq-dashboard-CICD.yaml'
-    #   - 'apps/klubiq-dashboard/**'
-    #   - 'apps/klubiq-queue/**'
-    #   - 'libs/**'
-    #   - '.nest-cli.json'
-    #   - 'package.json'
-    #   - 'package-lock.json'
-    #   - 'tsconfig.json'
-    #   - 'tsconfig.build.json'
+    branches: [dev, prod, qa]
     paths:
     - 'apps/klubiq-dashboard/**'
     - 'apps/klubiq-queue/**'
@@ -25,13 +11,13 @@ on:
   #   types:
   #     - completed
 env:
+  NODE_ENV: ${{ github.ref == 'refs/heads/dev' && 'development' || github.ref == 'refs/heads/prod' && 'production' || github.ref == 'refs/heads/qa' && 'staging' ||'development'}}
   DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
   DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
   DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
   DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
   DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
   SYNCHRONIZE_DB: ${{ secrets.SYNCHRONIZE_DB }}
-  NODE_ENV: ${{ secrets.ENV }}
   FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
   FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
   FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
@@ -122,6 +108,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    environment: ${{ github.ref == 'refs/heads/dev' && 'development' || github.ref == 'refs/heads/prod' && 'production' || github.ref == 'refs/heads/qa' && 'staging' || 'development'}}
     steps:
       - name: Download prod artifacts
         uses: actions/download-artifact@v4
