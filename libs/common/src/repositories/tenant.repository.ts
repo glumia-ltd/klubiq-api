@@ -13,11 +13,22 @@ export class TenantRepository extends BaseRepository<TenantUser> {
 
 	async getOrganizationTenants(orgUuid: string) {
 		const userData = await this.manager
-			.createQueryBuilder(OrganizationTenants, 'org_tenants')
-			.leftJoin('org_tenants.tenant', 'tenant')
-			.select(['tenant.id', 'tenant.isActive', 'tenant.companyName'])
-			.where('org_tenants.organizationUuid = :orgUuid', { orgUuid })
+			.createQueryBuilder(OrganizationTenants, 'orgtenants')
+			.innerJoin('orgtenants.tenant', 'tenant')
+			.leftJoin('tenant.profile', 'profile')
+			.select([
+				'orgtenants.tenantId',
+				'tenant.id',
+				'tenant.companyName',
+				'profile.firstName',
+				'profile.lastName',
+				'profile.email',
+				'profile.title',
+			])
+			.where('orgtenants.organizationUuid = :orgUuid', { orgUuid })
+			.andWhere('tenant.isActive = :isActive', { isActive: true })
 			.getMany();
+		console.log('userData', userData);
 		return userData;
 	}
 }

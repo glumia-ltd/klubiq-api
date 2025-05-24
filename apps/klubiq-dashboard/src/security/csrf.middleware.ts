@@ -13,15 +13,15 @@ export class CsrfMiddleware implements NestMiddleware {
 
 	constructor(private readonly csrfService: CsrfService) {}
 
-	use(req: Request, res: Response, next: NextFunction) {
+	async use(req: Request, res: Response, next: NextFunction) {
 		const clientId = req.headers['x-client-id'];
 		const tenantId = req.headers['x-tenant-id'];
 
 		try {
 			if (clientId === this.LANDLORD_APP_ID) {
-				this.handleLandlordRequest(req, res, tenantId as string);
+				await this.handleLandlordRequest(req, res, tenantId as string);
 			} else {
-				this.handleOtherClientRequest(req, res, clientId as string);
+				await this.handleOtherClientRequest(req, res, clientId as string);
 			}
 			next();
 		} catch (error) {
@@ -29,7 +29,11 @@ export class CsrfMiddleware implements NestMiddleware {
 		}
 	}
 
-	private handleLandlordRequest(req: Request, res: Response, tenantId: string) {
+	private async handleLandlordRequest(
+		req: Request,
+		res: Response,
+		tenantId: string,
+	) {
 		if (!tenantId) {
 			throw new UnauthorizedException(
 				'Tenant ID is required for landlord portal',
@@ -37,17 +41,17 @@ export class CsrfMiddleware implements NestMiddleware {
 		}
 
 		const cookieKey = `${this.CSRF_COOKIE_PREFIX}-${tenantId}`;
-		this.handleCsrfToken(req, res, cookieKey, tenantId);
+		await this.handleCsrfToken(req, res, cookieKey, tenantId);
 	}
 
-	private handleOtherClientRequest(
+	private async handleOtherClientRequest(
 		req: Request,
 		res: Response,
 		clientId: string,
 	) {
 		const secretCombined = `${process.env.APP_SECRET}+${clientId}`;
 		const cookieKey = `${this.CSRF_COOKIE_PREFIX}-tp`;
-		this.handleCsrfToken(req, res, cookieKey, secretCombined);
+		await this.handleCsrfToken(req, res, cookieKey, secretCombined);
 	}
 
 	private async handleCsrfToken(
@@ -71,7 +75,21 @@ export class CsrfMiddleware implements NestMiddleware {
 		cookieKey: string,
 		token: string,
 	) {
-		res.cookie(cookieKey, token);
+		// Set cookie options based on environment
+		const cookieOptions =
+			process.env.NODE_ENV === 'local'
+				? {
+						httpOnly: true,
+						secure: false,
+						sameSite: 'lax' as const,
+					}
+				: {
+						httpOnly: true,
+						secure: true,
+						sameSite: 'none' as const,
+						domain: '.klubiq.com',
+					};
+		res.cookie(cookieKey, token, cookieOptions);
 		// Store in session if available
 		if (req.session) {
 			req.session[cookieKey] = token;
